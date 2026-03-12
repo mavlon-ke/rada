@@ -1,0 +1,1623 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rada Admin · Mission Control</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #faf8ff;
+  --bg2: #ffffff;
+  --bg3: #f0edff;
+  --bg4: #e5e0ff;
+  --sidebar-bg: #2e1065;
+  --text: #1a1035;
+  --text-dim: #9284b8;
+  --text-mid: #5b21b6;
+  --border: rgba(109,40,217,0.12);
+  --border-bright: rgba(109,40,217,0.30);
+  --amber: #f59e0b;
+  --amber-glow: rgba(245,158,11,0.10);
+  --amber-border: rgba(245,158,11,0.20);
+  --green: #7c3aed;
+  --red: #ef4444;
+  --sidebar-w: 220px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: #f4f7f4;
+  color: var(--text);
+  font-family: 'IBM Plex Sans', sans-serif;
+  min-height: 100vh;
+  display: flex;
+  font-size: 13px;
+}
+
+/* ── SCANLINE TEXTURE ── */
+body::after {
+  content: '';
+  position: fixed; inset: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.015) 2px, rgba(0,0,0,0.015) 4px);
+  pointer-events: none; z-index: 9999;
+}
+
+/* ── SIDEBAR ── */
+.sidebar {
+  width: var(--sidebar-w);
+  background: var(--bg2);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  position: fixed; top: 0; left: 0; bottom: 0;
+  z-index: 50;
+}
+
+.sidebar-logo {
+  padding: 20px 16px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 10px;
+}
+
+.logo-mark {
+  width: 32px; height: 32px;
+  background: #7c3aed;
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 600; font-size: 0.75rem; color: #000;
+  flex-shrink: 0;
+}
+
+.logo-text { line-height: 1.2; }
+.logo-title { font-weight: 700; font-size: 0.9rem; letter-spacing: -0.01em; }
+.logo-sub   { font-size: 0.65rem; color: var(--text-dim); font-family: 'IBM Plex Mono', monospace; }
+
+.sidebar-section { padding: 12px 8px 4px; }
+.sidebar-section-label {
+  font-size: 0.62rem; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.1em; color: var(--text-dim); padding: 0 8px; margin-bottom: 4px;
+}
+
+.nav-item {
+  display: flex; align-items: center; gap: 9px;
+  padding: 8px 10px; border-radius: 6px;
+  cursor: pointer; transition: all 0.15s; color: var(--text-dim);
+  font-size: 0.82rem; font-weight: 500;
+  border: none; background: transparent; width: 100%; text-align: left;
+}
+.nav-item:hover { background: #f0edff; color: var(--text); }
+.nav-item.active { background: rgba(255,255,255,0.12); color: #e9d5ff; border: 1px solid var(--amber-border); }
+.nav-item .nav-icon { font-size: 0.95rem; flex-shrink: 0; }
+.nav-badge {
+  margin-left: auto; background: var(--red); color: white;
+  font-size: 0.6rem; font-weight: 700; padding: 1px 5px; border-radius: 10px;
+  font-family: 'IBM Plex Mono', monospace;
+}
+.nav-badge.amber { background: #7c3aed; color: #000; }
+
+.sidebar-footer {
+  margin-top: auto; padding: 12px 8px;
+  border-top: 1px solid var(--border);
+}
+
+.admin-chip {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 10px; border-radius: 6px; background: #f0edff;
+}
+.admin-av {
+  width: 28px; height: 28px; border-radius: 6px;
+  background: #7c3aed; color: #000;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 0.75rem; flex-shrink: 0;
+}
+.admin-name { font-size: 0.78rem; font-weight: 600; }
+.admin-role { font-size: 0.62rem; color: var(--amber); font-family: 'IBM Plex Mono', monospace; }
+
+/* ── MAIN AREA ── */
+.main {
+  margin-left: var(--sidebar-w);
+  flex: 1; display: flex; flex-direction: column;
+  min-height: 100vh;
+}
+
+/* ── TOP BAR ── */
+.topbar {
+  height: 52px;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 24px;
+  position: sticky; top: 0; z-index: 40;
+}
+
+.topbar-left { display: flex; align-items: center; gap: 12px; }
+.breadcrumb {
+  font-family: 'IBM Plex Mono', monospace; font-size: 0.75rem;
+  color: var(--text-dim);
+}
+.breadcrumb span { color: var(--amber); }
+
+.topbar-right { display: flex; align-items: center; gap: 8px; }
+
+.status-pill {
+  display: flex; align-items: center; gap: 5px;
+  background: var(--green-glow); border: 1px solid rgba(16,185,129,0.2);
+  border-radius: 100px; padding: 4px 10px;
+  font-family: 'IBM Plex Mono', monospace; font-size: 0.68rem; color: var(--green);
+}
+.status-dot {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: var(--green); animation: blink 2s ease-in-out infinite;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+.topbar-btn {
+  padding: 5px 12px; border-radius: 6px; font-size: 0.75rem; font-weight: 600;
+  cursor: pointer; transition: all 0.15s; border: 1px solid var(--border);
+  background: #f0edff; color: var(--text-mid); font-family: 'IBM Plex Sans', sans-serif;
+}
+.topbar-btn:hover { color: var(--text); border-color: rgba(255,255,255,0.15); }
+.topbar-btn.primary {
+  background: #7c3aed; border-color: var(--amber); color: #000; font-weight: 700;
+}
+.topbar-btn.primary:hover { background: #fbbf24; }
+
+/* ── CONTENT ── */
+.content { padding: 24px; flex: 1; }
+
+/* ── PANELS ── */
+.panel { display: none; }
+.panel.active { display: block; animation: panelIn 0.2s ease both; }
+@keyframes panelIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+/* ── PAGE TITLE ── */
+.page-title { color: #2e1065;
+  font-size: 1.2rem; font-weight: 700; letter-spacing: -0.02em;
+  margin-bottom: 4px;
+}
+.page-sub { font-size: 0.78rem; color: var(--text-dim); margin-bottom: 24px; }
+
+/* ── STAT ROW ── */
+.stat-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 24px; }
+
+.stat-card {
+  background: #ffffff; border: 1px solid rgba(109,40,217,0.10); box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  border-radius: 10px; padding: 16px;
+  animation: fadeUp 0.4s ease both;
+}
+.stat-card:hover { border-color: var(--amber-border); }
+@keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+
+.stat-label { font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); margin-bottom: 8px; }
+.stat-val   { font-family: 'IBM Plex Mono', monospace; font-size: 1.5rem; font-weight: 600; letter-spacing: -0.02em; }
+.stat-val.amber { color: var(--amber); }
+.stat-val.green { color: var(--green); }
+.stat-val.red   { color: var(--red); }
+.stat-change { font-size: 0.7rem; font-family: 'IBM Plex Mono', monospace; margin-top: 4px; color: var(--text-dim); }
+.stat-change.up { color: var(--green); }
+.stat-change.down { color: var(--red); }
+
+/* ── TABLE ── */
+.table-card {
+  background: #ffffff; border: 1px solid rgba(109,40,217,0.10); box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  border-radius: 10px; overflow: hidden; margin-bottom: 20px;
+}
+
+.table-header {
+  padding: 14px 16px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.table-title { font-weight: 600; font-size: 0.85rem; }
+.table-actions { display: flex; gap: 6px; }
+
+.tbl { width: 100%; border-collapse: collapse; }
+.tbl th {
+  text-align: left; padding: 10px 16px;
+  font-size: 0.62rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--text-dim); border-bottom: 1px solid var(--border);
+  font-family: 'IBM Plex Mono', monospace;
+}
+.tbl td {
+  padding: 12px 16px; border-bottom: 1px solid var(--border);
+  font-size: 0.8rem; vertical-align: middle;
+}
+.tbl tr:last-child td { border-bottom: none; }
+.tbl tbody tr { transition: background 0.1s; cursor: pointer; }
+.tbl tbody tr:hover { background: #f0edff; }
+
+.mono { font-family: 'IBM Plex Mono', monospace; }
+
+/* ── STATUS BADGES ── */
+.badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 8px; border-radius: 4px; font-size: 0.68rem;
+  font-weight: 600; font-family: 'IBM Plex Mono', monospace;
+}
+.badge-green  { background: var(--green-glow); color: var(--green); border: 1px solid rgba(16,185,129,0.2); }
+.badge-amber  { background: var(--amber-glow); color: var(--amber); border: 1px solid var(--amber-border); }
+.badge-red    { background: var(--red-glow);   color: var(--red);   border: 1px solid rgba(239,68,68,0.2); }
+.badge-blue   { background: rgba(59,130,246,0.1); color: var(--blue); border: 1px solid rgba(59,130,246,0.2); }
+.badge-gray   { background: #f0edff; color: var(--text-dim); border: 1px solid var(--border); }
+
+/* ── ACTION BUTTONS ── */
+.act-btn {
+  padding: 4px 10px; border-radius: 5px; font-size: 0.72rem; font-weight: 600;
+  cursor: pointer; border: 1px solid; transition: all 0.15s; font-family: 'IBM Plex Sans', sans-serif;
+}
+.act-green { background: var(--green-glow); color: var(--green); border-color: rgba(16,185,129,0.3); }
+.act-green:hover { background: var(--green); color: #fff; }
+.act-red   { background: var(--red-glow);   color: var(--red);   border-color: rgba(239,68,68,0.3); }
+.act-red:hover { background: var(--red); color: #fff; }
+.act-amber { background: var(--amber-glow); color: var(--amber); border-color: var(--amber-border); }
+.act-amber:hover { background: #7c3aed; color: #000; }
+.act-gray  { background: #f0edff; color: var(--text-dim); border-color: var(--border); }
+.act-gray:hover { color: var(--text); border-color: rgba(255,255,255,0.15); }
+
+/* ── SEARCH / FILTERS ── */
+.filter-row { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+.search-input {
+  flex: 1; min-width: 200px; background: #f0edff; border: 1px solid var(--border);
+  border-radius: 7px; padding: 7px 12px; color: var(--text);
+  font-family: 'IBM Plex Sans', sans-serif; font-size: 0.8rem; outline: none;
+  transition: border-color 0.2s;
+}
+.search-input:focus { border-color: var(--amber-border); }
+.search-input::placeholder { color: var(--text-dim); }
+.filter-select {
+  background: #f0edff; border: 1px solid var(--border); border-radius: 7px;
+  padding: 7px 10px; color: var(--text); font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 0.78rem; outline: none; cursor: pointer;
+}
+
+/* ── MODAL ── */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.8);
+  backdrop-filter: blur(6px); z-index: 200;
+  display: flex; align-items: center; justify-content: center; padding: 20px;
+  opacity: 0; pointer-events: none; transition: opacity 0.2s;
+}
+.modal-overlay.open { opacity: 1; pointer-events: all; }
+
+.modal {
+  background: var(--bg2); border: 1px solid var(--amber-border);
+  border-radius: 12px; width: 100%; max-width: 540px; overflow: hidden;
+  transform: scale(0.96); transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1);
+  box-shadow: 0 0 0 1px var(--amber-border), 0 30px 80px rgba(0,0,0,0.7);
+}
+.modal-overlay.open .modal { transform: scale(1); }
+
+.modal-head {
+  padding: 16px 20px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  background: var(--amber-glow);
+}
+.modal-head-title { font-weight: 700; font-size: 0.9rem; color: var(--amber); }
+.modal-close {
+  width: 28px; height: 28px; border-radius: 6px; background: #f0edff;
+  border: 1px solid var(--border); cursor: pointer; color: var(--text-dim);
+  display: flex; align-items: center; justify-content: center; font-size: 0.9rem;
+  transition: all 0.15s;
+}
+.modal-close:hover { color: var(--text); }
+
+.modal-body { padding: 20px; }
+
+/* ── FORM ── */
+.form-group { margin-bottom: 16px; }
+.form-label {
+  display: block; font-size: 0.7rem; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.07em; color: var(--text-dim); margin-bottom: 6px;
+}
+.form-input, .form-textarea, .form-select {
+  width: 100%; background: #f0edff; border: 1px solid var(--border);
+  border-radius: 7px; padding: 9px 12px; color: var(--text);
+  font-family: 'IBM Plex Sans', sans-serif; font-size: 0.82rem; outline: none;
+  transition: border-color 0.2s;
+}
+.form-input:focus, .form-textarea:focus, .form-select:focus { border-color: var(--amber-border); }
+.form-textarea { resize: vertical; min-height: 80px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.form-hint { font-size: 0.68rem; color: var(--text-dim); margin-top: 4px; }
+
+.modal-footer {
+  padding: 14px 20px; border-top: 1px solid var(--border);
+  display: flex; gap: 8px; justify-content: flex-end;
+  background: rgba(0,0,0,0.2);
+}
+
+/* ── RESOLVE MODAL ── */
+.resolve-options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 16px 0; }
+.resolve-opt {
+  padding: 16px; border-radius: 8px; cursor: pointer; border: 2px solid transparent;
+  text-align: center; transition: all 0.2s;
+}
+.resolve-yes {
+  background: var(--green-glow); border-color: rgba(16,185,129,0.2);
+}
+.resolve-yes:hover, .resolve-yes.selected {
+  border-color: var(--green); box-shadow: 0 0 16px rgba(16,185,129,0.2);
+}
+.resolve-no {
+  background: var(--red-glow); border-color: rgba(239,68,68,0.15);
+}
+.resolve-no:hover, .resolve-no.selected {
+  border-color: var(--red); box-shadow: 0 0 16px rgba(239,68,68,0.15);
+}
+.resolve-opt-label { font-family: 'IBM Plex Mono', monospace; font-size: 1.1rem; font-weight: 600; }
+.resolve-yes .resolve-opt-label { color: var(--green); }
+.resolve-no  .resolve-opt-label { color: var(--red); }
+.resolve-opt-sub { font-size: 0.7rem; color: var(--text-dim); margin-top: 4px; }
+
+.resolve-impact {
+  background: #f0edff; border: 1px solid var(--border); border-radius: 8px;
+  padding: 12px 14px; font-family: 'IBM Plex Mono', monospace; font-size: 0.75rem;
+}
+.resolve-impact-row { display: flex; justify-content: space-between; padding: 3px 0; }
+.resolve-impact-label { color: var(--text-dim); }
+
+/* ── KYC PHOTO ── */
+.kyc-photo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+.kyc-photo-box {
+  background: #f0edff; border: 1px solid var(--border); border-radius: 8px;
+  aspect-ratio: 16/10; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 6px;
+  font-size: 0.75rem; color: var(--text-dim);
+}
+.kyc-photo-icon { font-size: 1.8rem; opacity: 0.08; }
+.kyc-info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+.kyc-info-item { background: #f0edff; border: 1px solid var(--border); border-radius: 7px; padding: 10px 12px; }
+.kyc-info-label { font-size: 0.62rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 3px; }
+.kyc-info-val { font-family: 'IBM Plex Mono', monospace; font-size: 0.8rem; }
+
+/* ── ACTIVITY FEED ── */
+.activity-feed { display: flex; flex-direction: column; gap: 1px; }
+.activity-item {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 10px 14px; border-bottom: 1px solid var(--border);
+  transition: background 0.1s;
+}
+.activity-item:hover { background: #f0edff; }
+.activity-item:last-child { border-bottom: none; }
+.activity-icon {
+  width: 30px; height: 30px; border-radius: 7px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.85rem; flex-shrink: 0; margin-top: 1px;
+}
+.ai-green { background: var(--green-glow); }
+.ai-amber { background: var(--amber-glow); }
+.ai-red   { background: var(--red-glow); }
+.ai-blue  { background: rgba(59,130,246,0.1); }
+.activity-main { flex: 1; }
+.activity-text { font-size: 0.78rem; line-height: 1.4; }
+.activity-text strong { color: var(--amber); font-weight: 600; }
+.activity-time { font-size: 0.65rem; color: var(--text-dim); font-family: 'IBM Plex Mono', monospace; margin-top: 2px; }
+
+/* ── PROGRESS BAR ── */
+.prog-bar { height: 4px; background: #f0edff; border-radius: 100px; overflow: hidden; }
+.prog-fill { height: 100%; border-radius: 100px; }
+.prog-amber { background: #7c3aed; }
+.prog-green { background: var(--green); }
+.prog-red   { background: var(--red); }
+
+/* ── MINI CHART ── */
+.mini-chart-wrap { height: 40px; position: relative; }
+
+/* ── TWO-COL LAYOUT ── */
+.two-col { display: grid; grid-template-columns: 1fr 340px; gap: 16px; }
+.three-col { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; }
+
+/* ── TOGGLE ── */
+.toggle-wrap { display: flex; align-items: center; gap: 8px; }
+.toggle {
+  position: relative; width: 36px; height: 20px; cursor: pointer;
+}
+.toggle input { opacity: 0; width: 0; height: 0; }
+.toggle-track {
+  position: absolute; inset: 0; background: #f0edff; border: 1px solid var(--border);
+  border-radius: 100px; transition: all 0.2s;
+}
+.toggle input:checked + .toggle-track { background: #7c3aed; border-color: var(--amber); }
+.toggle-thumb {
+  position: absolute; top: 2px; left: 2px; width: 14px; height: 14px;
+  background: white; border-radius: 50%; transition: transform 0.2s;
+}
+.toggle input:checked ~ .toggle-thumb { transform: translateX(16px); }
+
+/* ── CONFIRMATION BANNER ── */
+.confirm-banner {
+  background: var(--amber-glow); border: 1px solid var(--amber-border);
+  border-radius: 8px; padding: 10px 14px; margin-bottom: 14px;
+  font-size: 0.78rem; color: var(--amber); display: flex; align-items: center; gap: 8px;
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 1024px) {
+  :root { --sidebar-w: 60px; }
+  .nav-item span, .sidebar-section-label, .logo-text, .admin-name, .admin-role { display: none; }
+  .logo-mark { margin: 0 auto; }
+  .nav-item { justify-content: center; }
+  .nav-badge { display: none; }
+  .admin-chip { justify-content: center; }
+  .stat-row { grid-template-columns: repeat(2,1fr); }
+  .two-col { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 640px) {
+  :root { --sidebar-w: 0px; }
+  .sidebar { display: none; }
+  .stat-row { grid-template-columns: 1fr 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark">RADA</div>
+    <div class="logo-text">
+      <div class="logo-title">Rada</div>
+      <div class="logo-sub">ADMIN CONSOLE</div>
+    </div>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Overview</div>
+    <button class="nav-item active" onclick="showPanel('dashboard', this)">
+      <span class="nav-icon">⬡</span><span>Dashboard</span>
+    </button>
+    <button class="nav-item" onclick="showPanel('activity', this)">
+      <span class="nav-icon">◎</span><span>Activity Feed</span>
+    </button>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Markets</div>
+    <button class="nav-item" onclick="showPanel('markets', this)">
+      <span class="nav-icon">▦</span><span>All Markets</span>
+    </button>
+    <button class="nav-item" onclick="showPanel('create-market', this)">
+      <span class="nav-icon">⊕</span><span>Create Market</span>
+    </button>
+    <button class="nav-item" onclick="showPanel('resolve', this)">
+      <span class="nav-icon">✓</span><span>Resolve</span>
+      <span class="nav-badge amber">3</span>
+    </button>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Users</div>
+    <button class="nav-item" onclick="showPanel('users', this)">
+      <span class="nav-icon">⊞</span><span>All Users</span>
+    </button>
+    <button class="nav-item" onclick="showPanel('kyc', this)">
+      <span class="nav-icon">◈</span><span>KYC Queue</span>
+      <span class="nav-badge">7</span>
+    </button>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Finance</div>
+    <button class="nav-item" onclick="showPanel('transactions', this)">
+      <span class="nav-icon">⊟</span><span>Transactions</span>
+    </button>
+    <button class="nav-item" onclick="showPanel('payouts', this)">
+      <span class="nav-icon">◉</span><span>Payouts</span>
+    </button>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Friends &amp; Disputes</div>
+    <button class="nav-item" onclick="showPanel('disputes', this)" id="disputes-nav">
+      <span class="nav-icon">⚖️</span><span>Dispute Desk <span id="disputeNavBadge" style="background:#f59e0b;color:#000;border-radius:3px;font-size:0.58rem;padding:1px 5px;font-weight:700;vertical-align:middle;">3</span></span>
+    </button>
+    <button class="nav-item" onclick="showPanel('suggestions', this)" id="suggestions-nav">
+      <span class="nav-icon">💡</span><span>Suggestion Queue <span id="suggNavBadge" style="background:#a78bfa;color:#000;border-radius:3px;font-size:0.58rem;padding:1px 5px;font-weight:700;vertical-align:middle;">5</span></span>
+    </button>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Creator Economy</div>
+    <button class="nav-item" onclick="showPanel('proposals', this)" id="proposals-nav">
+      <span class="nav-icon">💡</span><span>Proposals <span id="proposalBadge" style="background:var(--amber);color:#000;border-radius:4px;font-size:0.62rem;padding:1px 6px;margin-left:4px;font-weight:700;">4</span></span>
+    </button>
+    <button class="nav-item" onclick="showPanel('bounties', this)">
+      <span class="nav-icon">💰</span><span>Bounty Ledger</span>
+    </button>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Intelligence</div>
+    <button class="nav-item" onclick="showPanel('b2b', this)">
+      <span class="nav-icon">📊</span><span>B2B Analytics</span>
+    </button>
+    <button class="nav-item" onclick="showPanel('admin-log', this)">
+      <span class="nav-icon">🛡️</span><span>Admin Role Log</span>
+    </button>
+  </div>
+
+  <div class="sidebar-footer">
+    <div class="admin-chip">
+      <div class="admin-av">AD</div>
+      <div>
+        <div class="admin-name">Admin</div>
+        <div class="admin-role">SUPER_ADMIN</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="breadcrumb">rada.co.ke / <span id="breadcrumbLabel">dashboard</span></div>
+    </div>
+    <div class="topbar-right">
+      <div class="status-pill"><div class="status-dot"></div>Systems Operational</div>
+      <button class="topbar-btn" onclick="showPanel('create-market', document.querySelector('.nav-item:nth-child(2)'))">+ New Market</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         PANEL: DASHBOARD
+    ═══════════════════════════════════════════════════════════════════════ -->
+    <div class="panel active" id="panel-dashboard">
+      <div class="page-title">Mission Control</div>
+      <div class="page-sub">Platform overview · Updated live</div>
+
+      <div class="stat-row">
+        <div class="stat-card" style="animation-delay:0s">
+          <div class="stat-label">Total Volume</div>
+          <div class="stat-val amber">KES 2.4M</div>
+          <div class="stat-change up">▲ +12.4% this week</div>
+        </div>
+        <div class="stat-card" style="animation-delay:0.06s">
+          <div class="stat-label">Active Users</div>
+          <div class="stat-val">1,840</div>
+          <div class="stat-change up">▲ +89 today</div>
+        </div>
+        <div class="stat-card" style="animation-delay:0.12s">
+          <div class="stat-label">Open Markets</div>
+          <div class="stat-val green">24</div>
+          <div class="stat-change">3 closing this week</div>
+        </div>
+        <div class="stat-card" style="animation-delay:0.18s">
+          <div class="stat-label">Pending KYC</div>
+          <div class="stat-val red">7</div>
+          <div class="stat-change down">Requires review</div>
+        </div>
+      </div>
+
+      <div class="two-col">
+        <div>
+          <!-- Pending Resolutions -->
+          <div class="table-card" style="box-shadow:0 2px 12px rgba(0,0,0,0.05);" style="margin-bottom:16px">
+            <div class="table-header">
+              <div class="table-title">⚠ Pending Resolution</div>
+              <button class="act-btn act-amber" onclick="showPanel('resolve', document.querySelectorAll('.nav-item')[4])">View All</button>
+            </div>
+            <table class="tbl">
+              <thead><tr>
+                <th>Market</th><th>Closed</th><th>Trades</th><th>Action</th>
+              </tr></thead>
+              <tbody>
+                <tr onclick="openResolveModal('Finance Bill 2025', 204)">
+                  <td><div style="font-weight:600;max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Will Kenya pass the Finance Bill 2025?</div><div style="color:var(--text-dim);font-size:0.7rem;margin-top:2px">POLITICS</div></td>
+                  <td class="mono" style="color:var(--text-dim)">2d ago</td>
+                  <td class="mono">204</td>
+                  <td><button class="act-btn act-amber" onclick="event.stopPropagation();openResolveModal('Finance Bill 2025', 204)">Resolve →</button></td>
+                </tr>
+                <tr onclick="openResolveModal('World Cup Qualifiers', 156)">
+                  <td><div style="font-weight:600;max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Will mobile money transactions exceed KES 10T in 2025?</div><div style="color:var(--text-dim);font-size:0.7rem;margin-top:2px">TECH</div></td>
+                  <td class="mono" style="color:var(--text-dim)">5d ago</td>
+                  <td class="mono">156</td>
+                  <td><button class="act-btn act-amber" onclick="event.stopPropagation();openResolveModal('World Cup Qualifiers', 156)">Resolve →</button></td>
+                </tr>
+                <tr onclick="openResolveModal('NSE Index 2500', 89)">
+                  <td><div style="font-weight:600;max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Will NSE 20 close above 2,500 by Dec 2025?</div><div style="color:var(--text-dim);font-size:0.7rem;margin-top:2px">ECONOMY</div></td>
+                  <td class="mono" style="color:var(--text-dim)">1d ago</td>
+                  <td class="mono">89</td>
+                  <td><button class="act-btn act-amber" onclick="event.stopPropagation();openResolveModal('NSE Index 2500', 89)">Resolve →</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Recent Transactions -->
+          <div class="table-card" style="box-shadow:0 2px 12px rgba(0,0,0,0.05);">
+            <div class="table-header">
+              <div class="table-title">Recent M-Pesa Transactions</div>
+              <button class="act-btn act-gray" onclick="showPanel('transactions', document.querySelectorAll('.nav-item')[6])">All</button>
+            </div>
+            <table class="tbl">
+              <thead><tr><th>User</th><th>Type</th><th>Amount</th><th>Ref</th><th>Status</th></tr></thead>
+              <tbody id="recentTxns"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Right col: activity + quick stats -->
+        <div>
+          <div class="table-card" style="box-shadow:0 2px 12px rgba(0,0,0,0.05);" style="margin-bottom:16px">
+            <div class="table-header"><div class="table-title">Platform Metrics</div></div>
+            <div style="padding:14px 16px;display:flex;flex-direction:column;gap:14px">
+              <div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+                  <span style="font-size:0.75rem;color:var(--text-dim)">KYC Completion Rate</span>
+                  <span class="mono" style="font-size:0.75rem;color:var(--amber)">64%</span>
+                </div>
+                <div class="prog-bar"><div class="prog-fill prog-amber" style="width:64%"></div></div>
+              </div>
+              <div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+                  <span style="font-size:0.75rem;color:var(--text-dim)">7-Day Active Users</span>
+                  <span class="mono" style="font-size:0.75rem;color:var(--green)">72%</span>
+                </div>
+                <div class="prog-bar"><div class="prog-fill prog-green" style="width:72%"></div></div>
+              </div>
+              <div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+                  <span style="font-size:0.75rem;color:var(--text-dim)">Deposit Success Rate</span>
+                  <span class="mono" style="font-size:0.75rem;color:var(--green)">91%</span>
+                </div>
+                <div class="prog-bar"><div class="prog-fill prog-green" style="width:91%"></div></div>
+              </div>
+              <div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+                  <span style="font-size:0.75rem;color:var(--text-dim)">Markets w/ Activity</span>
+                  <span class="mono" style="font-size:0.75rem;color:var(--amber)">83%</span>
+                </div>
+                <div class="prog-bar"><div class="prog-fill prog-amber" style="width:83%"></div></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="table-card" style="box-shadow:0 2px 12px rgba(0,0,0,0.05);">
+            <div class="table-header"><div class="table-title">Live Activity</div></div>
+            <div class="activity-feed" id="liveFeed"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         PANEL: ALL MARKETS
+    ═══════════════════════════════════════════════════════════════════════ -->
+    <div class="panel" id="panel-markets">
+      <div class="page-title">All Markets</div>
+      <div class="page-sub">Manage, pause, or cancel prediction markets</div>
+      <div class="filter-row">
+        <input class="search-input" placeholder="🔍  Search markets..." oninput="filterMarkets(this.value)">
+        <select class="filter-select" onchange="filterMarketStatus(this.value)">
+          <option>All Status</option>
+          <option>OPEN</option>
+          <option>CLOSED</option>
+          <option>RESOLVED</option>
+        </select>
+        <select class="filter-select">
+          <option>All Categories</option>
+          <option>GENERAL</option>
+          <option>POLITICS</option>
+          <option>ECONOMY</option>
+          <option>ENTERTAINMENT</option>
+          <option>WEATHER</option>
+          <option>TECH</option>
+          <option>FRIENDS</option>
+        </select>
+        <button class="topbar-btn primary" onclick="showPanel('create-market', document.querySelectorAll('.nav-item')[3])">+ Create Market</button>
+      </div>
+      <div class="table-card" style="box-shadow:0 2px 12px rgba(0,0,0,0.05);">
+        <table class="tbl">
+          <thead><tr><th>Title</th><th>Category</th><th>YES %</th><th>Volume</th><th>Trades</th><th>Closes</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="marketsTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         PANEL: CREATE MARKET
+    ═══════════════════════════════════════════════════════════════════════ -->
+    <div class="panel" id="panel-create-market">
+      <div class="page-title">Create New Market</div>
+      <div class="page-sub">New prediction markets go live immediately on creation</div>
+
+      <div style="max-width:640px">
+        <div class="table-card" style="box-shadow:0 2px 12px rgba(0,0,0,0.05);">
+          <div class="table-header"><div class="table-title">Market Details</div></div>
+          <div style="padding:20px;display:flex;flex-direction:column;gap:0">
+
+            <div class="form-group">
+              <label class="form-label">Question Title *</label>
+              <input class="form-input" id="mktTitle" placeholder="Will Ruto announce a cabinet reshuffle by July 2025?">
+              <div class="form-hint">Frame as a clear YES/NO question. Be specific about dates and conditions.</div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Description / Resolution Criteria *</label>
+              <textarea class="form-textarea" id="mktDesc" placeholder="Describe exactly what conditions would make this market resolve YES vs NO. Include your primary data sources."></textarea>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Category *</label>
+                <select class="form-select" id="mktCategory">
+                  <option value="">Select category</option>
+                  <option value="GENERAL">🇰🇪 General</option>
+                  <option value="POLITICS">🗳️ Politics</option>
+                  <option value="ECONOMY">📈 Economy</option>
+                  <option value="ENTERTAINMENT">🎭 Entertainment</option>
+                  <option value="WEATHER">🌦️ Weather</option>
+                  <option value="TECH">💡 Tech</option>
+                  <option value="OTHER">◎ Other</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Closes At *</label>
+                <input class="form-input" id="mktClosesAt" type="datetime-local">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Resolution Source</label>
+              <input class="form-input" id="mktSource" placeholder="e.g. IEBC official results, Capital FM, KMD weather report">
+              <div class="form-hint">Reference the authoritative source that will be used to determine the outcome.</div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Image URL (optional)</label>
+              <input class="form-input" id="mktImage" placeholder="https://...">
+            </div>
+
+            <div style="display:flex;align-items:center;gap:12px;padding-top:8px">
+              <button class="topbar-btn primary" onclick="submitCreateMarket()" style="padding:10px 24px;font-size:0.85rem">
+                Create Market →
+              </button>
+              <button class="topbar-btn" onclick="showPanel('markets', document.querySelectorAll('.nav-item')[2])">Cancel</button>
+              <div id="createResult" style="font-size:0.78rem;color:var(--green);display:none">✓ Market created successfully!</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         PANEL: RESOLVE
+    ═══════════════════════════════════════════════════════════════════════ -->
+    <div class="panel" id="panel-resolve">
+      <div class="page-title">Resolve Markets</div>
+      <div class="page-sub">3 markets are closed and awaiting resolution</div>
+      <div class="table-card" style="box-shadow:0 2px 12px rgba(0,0,0,0.05);">
+        <table class="tbl">
+          <thead><tr><th>Market</th><th>Closed</th><th>YES Holders</th><th>NO Holders</th><th>Total Payout</th><th>Action</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><div style="font-weight:600">Will Kenya pass the Finance Bill 2025?</div><div style="font-size:0.68rem;color:var(--text-dim);margin-top:2px">POLITICS · Closed 2 days ago</div></td>
+              <td class="mono" style="color:var(--text-dim)">Mar 01</td>
+              <td class="mono">89 users · KES 48K</td>
+              <td class="mono">115 users · KES 62K</td>
+              <td class="mono" style="color:var(--amber)">KES 110K</td>
+              <td><button class="act-btn act-amber" onclick="openResolveModal('Finance Bill 2025', 204)">Resolve →</button></td>
+            </tr>
+            <tr>
+              <td><div style="font-weight:600">Will Kenya launch a digital ID system by end of 2025?</div><div style="font-size:0.68rem;color:var(--text-dim);margin-top:2px">POLITICS · Closed 5 days ago</div></td>
+              <td class="mono" style="color:var(--text-dim)">Feb 26</td>
+              <td class="mono">44 users · KES 21K</td>
+              <td class="mono">112 users · KES 67K</td>
+              <td class="mono" style="color:var(--amber)">KES 88K</td>
+              <td><button class="act-btn act-amber" onclick="openResolveModal('World Cup Qualifiers', 156)">Resolve →</button></td>
+            </tr>
+            <tr>
+              <td><div style="font-weight:600">Will NSE 20 close above 2,500 by Dec 2025?</div><div style="font-size:0.68rem;color:var(--text-dim);margin-top:2px">FINANCE · Closed 1 day ago</div></td>
+              <td class="mono" style="color:var(--text-dim)">Mar 05</td>
+              <td class="mono">30 users · KES 14K</td>
+              <td class="mono">59 users · KES 31K</td>
+              <td class="mono" style="color:var(--amber)">KES 45K</td>
+              <td><button class="act-btn act-amber" onclick="openResolveModal('NSE Index 2500', 89)">Resolve →</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         PANEL: USERS
+    ═══════════════════════════════════════════════════════════════════════ -->
+    <div class="panel" id="panel-users">
+      <div class="page-title">User Management</div>
+      <div class="page-sub">1,840 registered users</div>
+      <div class="filter-row">
+        <input class="search-input" placeholder="🔍  Search by name, phone, or ID...">
+        <select class="filter-select">
+          <option>All KYC Status</option>
+          <option>VERIFIED</option>
+          <option>PENDING</option>
+          <option>REJECTED</option>
+        </select>
+      </div>
+      <div class="table-card" style="box-shadow:0 2px 12px rgba(0,0,0,0.05);">
+        <table class="tbl">
+          <thead><tr><th>User</th><th>Phone</th><th>KYC</th><th>Balance</th><th>Volume</th><th>Joined</th><th>Actions</th></tr></thead>
+          <tbody id="usersTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         PANEL: KYC QUEUE
+    ═══════════════════════════════════════════════════════════════════════ -->
+    <div class="panel" id="panel-kyc">
+      <div class="page-title">KYC Review Queue</div>
+      <div class="page-sub">7 users awaiting identity verification</div>
+      <div class="table-card" style="box-shadow:0 2px 12px rgba(0,0,0,0.05);">
+        <table class="tbl">
+          <thead><tr><th>User</th><th>Phone</th><th>Submitted</th><th>ID Type</th><th>Actions</th></tr></thead>
+          <tbody id="kycTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         PANEL: TRANSACTIONS
+    ═══════════════════════════════════════════════════════════════════════ -->
+    <div class="panel" id="panel-transactions">
+      <div class="page-title">Transaction Ledger</div>
+      <div class="page-sub">All M-Pesa deposits, withdrawals, and trades</div>
+      <div class="filter-row">
+        <input class="search-input" placeholder="🔍  Search by M-Pesa ref, user, amount...">
+        <select class="filter-select"><option>All Types</option><option>DEPOSIT</option><option>WITHDRAWAL</option><option>TRADE</option><option>PAYOUT</option></select>
+        <select class="filter-select"><option>All Status</option><option>SUCCESS</option><option>PENDING</option><option>FAILED</option></select>
+      </div>
+      <div class="table-card" style="box-shadow:0 2px 12px rgba(0,0,0,0.05);">
+        <table class="tbl">
+          <thead><tr><th>User</th><th>Type</th><th>Amount</th><th>M-Pesa Ref</th><th>Time</th><th>Status</th></tr></thead>
+          <tbody id="txnsTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         PANEL: PAYOUTS
+    ═══════════════════════════════════════════════════════════════════════ -->
+    <div class="panel" id="panel-payouts">
+      <div class="page-title">Payout Management</div>
+      <div class="page-sub">Process and monitor resolved market payouts</div>
+      <div class="stat-row">
+        <div class="stat-card"><div class="stat-label">Paid Out (All Time)</div><div class="stat-val green">KES 1.2M</div></div>
+        <div class="stat-card"><div class="stat-label">Pending Payouts</div><div class="stat-val amber">KES 243K</div><div class="stat-change down">3 markets pending</div></div>
+        <div class="stat-card"><div class="stat-label">Avg Payout Time</div><div class="stat-val">4.2 min</div></div>
+        <div class="stat-card"><div class="stat-label">Failed Payouts</div><div class="stat-val red">2</div><div class="stat-change down">Needs retry</div></div>
+      </div>
+      <div class="table-card" style="box-shadow:0 2px 12px rgba(0,0,0,0.05);">
+        <div class="table-header">
+          <div class="table-title">Pending Payouts</div>
+          <button class="topbar-btn primary">Run All Payouts</button>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>Market</th><th>Outcome</th><th>Winners</th><th>Total Payout</th><th>Status</th><th>Action</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><div style="font-weight:600">Rada Tech Forecast NSE 20 Index League 23/24</div></td>
+              <td><span class="badge badge-green">YES</span></td>
+              <td class="mono">34 users</td>
+              <td class="mono" style="color:var(--green)">KES 87,400</td>
+              <td><span class="badge badge-amber">PENDING</span></td>
+              <td><button class="act-btn act-green">Run Payout</button></td>
+            </tr>
+            <tr>
+              <td><div style="font-weight:600">Will Kenya Power record a profit FY24?</div></td>
+              <td><span class="badge badge-red">NO</span></td>
+              <td class="mono">58 users</td>
+              <td class="mono" style="color:var(--green)">KES 156,200</td>
+              <td><span class="badge badge-amber">PENDING</span></td>
+              <td><button class="act-btn act-green">Run Payout</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+
+    <!-- PANEL: CREATOR PROPOSALS -->
+    <div class="panel" id="panel-proposals">
+      <div class="page-title">Creator Market Proposals</div>
+      <div class="page-sub">Review, approve, or reject user-submitted forecast market proposals. Approved markets generate 0.5% creator bounties automatically.</div>
+      <div class="stat-row">
+        <div class="stat-card"><div class="stat-label">Awaiting Review</div><div class="stat-val amber">4</div></div>
+        <div class="stat-card"><div class="stat-label">Approved This Week</div><div class="stat-val green">7</div></div>
+        <div class="stat-card"><div class="stat-label">Rejected</div><div class="stat-val red">2</div></div>
+        <div class="stat-card"><div class="stat-label">Creator Bounties Paid</div><div class="stat-val">KES 12,440</div></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+        <button class="topbar-btn primary" onclick="filterProposals(this,'pending')">Pending (4)</button>
+        <button class="topbar-btn" onclick="filterProposals(this,'all')">All</button>
+        <button class="topbar-btn" onclick="filterProposals(this,'approved')">Approved</button>
+        <button class="topbar-btn" onclick="filterProposals(this,'rejected')">Rejected</button>
+      </div>
+      <div id="proposalsList"></div>
+    </div>
+
+    <!-- PANEL: BOUNTY LEDGER -->
+    <div class="panel" id="panel-bounties">
+      <div class="page-title">Creator Bounty Ledger</div>
+      <div class="page-sub">Track all creator royalty payouts. 0.5% of trade fees automatically credited to creator M-Pesa numbers.</div>
+      <div class="stat-row">
+        <div class="stat-card"><div class="stat-label">Total Paid Out</div><div class="stat-val green">KES 12,440</div></div>
+        <div class="stat-card"><div class="stat-label">Pending Credits</div><div class="stat-val amber">KES 3,220</div></div>
+        <div class="stat-card"><div class="stat-label">Active Creators</div><div class="stat-val">23</div></div>
+        <div class="stat-card"><div class="stat-label">Avg Bounty/Market</div><div class="stat-val">KES 541</div></div>
+      </div>
+      <div class="table-card" style="box-shadow:0 2px 12px rgba(0,0,0,0.05);">
+        <div class="table-header">
+          <div class="table-title">Bounty Transactions</div>
+          <button class="topbar-btn">Export CSV</button>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>Creator</th><th>Market</th><th>Trade Volume</th><th>Bounty (0.5%)</th><th>Status</th><th>Paid To</th></tr></thead>
+          <tbody id="bountyLedgerBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         PANEL: ACTIVITY FEED
+    ═══════════════════════════════════════════════════════════════════════ -->
+    <div class="panel" id="panel-activity">
+      <div class="page-title">Activity Feed</div>
+      <div class="page-sub">Real-time platform events</div>
+      <div class="table-card" style="box-shadow:0 2px 12px rgba(0,0,0,0.05);">
+        <div class="activity-feed" id="fullActivityFeed"></div>
+      </div>
+    </div>
+
+    <!-- PANEL: DISPUTE DESK -->
+    <div class="panel" id="panel-disputes">
+      <div class="page-title">⚖️ Dispute Desk</div>
+      <div class="page-sub">Friends challenges where the 48-hour window expired without agreement. Admin resolution applies 15% total fee (5% base + 10% penalty).</div>
+      <div class="stat-row">
+        <div class="stat-card"><div class="stat-label">Awaiting Decision</div><div class="stat-val amber" id="disputeCount">3</div></div>
+        <div class="stat-card"><div class="stat-label">Resolved Today</div><div class="stat-val green">2</div></div>
+        <div class="stat-card"><div class="stat-label">15% Fees Collected</div><div class="stat-val">KES 3,750</div></div>
+        <div class="stat-card"><div class="stat-label">Avg Resolution Time</div><div class="stat-val">4.2 hrs</div></div>
+      </div>
+      <div id="disputesList"></div>
+    </div>
+
+    <!-- PANEL: SUGGESTION REVIEW QUEUE -->
+    <div class="panel" id="panel-suggestions">
+      <div class="page-title">💡 Suggestion Review Queue</div>
+      <div class="page-sub">User-submitted market ideas. Approving auto-creates the market AND credits KES 50 reward bonus to that user's wallet immediately.</div>
+      <div class="stat-row">
+        <div class="stat-card"><div class="stat-label">Pending Review</div><div class="stat-val amber" id="suggCount">5</div></div>
+        <div class="stat-card"><div class="stat-label">Approved This Week</div><div class="stat-val green">8</div></div>
+        <div class="stat-card"><div class="stat-label">Total Rewards Paid</div><div class="stat-val" style="color:#a78bfa">KES 400</div></div>
+        <div class="stat-card"><div class="stat-label">Conversion Rate</div><div class="stat-val">62%</div></div>
+      </div>
+      <div id="suggestionsList"></div>
+    </div>
+
+    <!-- PANEL: B2B ANALYTICS -->
+    <div class="panel" id="panel-b2b">
+      <div class="page-title">📊 B2B Analytics Engine</div>
+      <div class="page-sub">Sentiment velocity, conviction scores, and market intelligence. Export CSV to package and sell to corporate clients (banks, NGOs, FMCG brands).</div>
+      <div class="stat-row">
+        <div class="stat-card"><div class="stat-label">Sentiment Velocity</div><div class="stat-val green">+14%/day</div></div>
+        <div class="stat-card"><div class="stat-label">Avg Conviction Score</div><div class="stat-val">KES 847</div></div>
+        <div class="stat-card"><div class="stat-label">B2B API Calls (30d)</div><div class="stat-val amber">42,310</div></div>
+        <div class="stat-card"><div class="stat-label">Data Revenue</div><div class="stat-val green">KES 45,000</div></div>
+      </div>
+      <div class="table-card" style="box-shadow:0 2px 12px rgba(0,0,0,0.05);" style="padding:20px;margin-bottom:16px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+          <div style="font-weight:700;font-size:0.88rem;">Sentiment Velocity by Category (7d)</div>
+          <button class="topbar-btn" onclick="alert('Exporting sentiment_report.csv…')">⬇ Export CSV</button>
+        </div>
+        <div id="velBars"></div>
+      </div>
+      <div class="table-card" style="box-shadow:0 2px 12px rgba(0,0,0,0.05);">
+        <div class="table-header"><div class="table-title">Market Conviction Scores</div><div style="font-size:0.72rem;color:var(--text-dim)">High avg stake = high expert confidence</div></div>
+        <table class="tbl">
+          <thead><tr><th>Market</th><th>Category</th><th>YES%</th><th>Avg Stake (KES)</th><th>Conviction</th><th>Forecasters</th></tr></thead>
+          <tbody id="convictionBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- PANEL: ADMIN ROLE HISTORY -->
+    <div class="panel" id="panel-admin-log">
+      <div class="page-title">🛡️ Admin Role History</div>
+      <div class="page-sub">Immutable audit log of all admin actions, logins, dispute resolutions, and role assignments. Required for CMA Sandbox compliance.</div>
+      <div class="stat-row">
+        <div class="stat-card"><div class="stat-label">Active Admins</div><div class="stat-val">2</div></div>
+        <div class="stat-card"><div class="stat-label">Actions This Month</div><div class="stat-val">147</div></div>
+        <div class="stat-card"><div class="stat-label">Dispute Resolutions</div><div class="stat-val amber">12</div></div>
+        <div class="stat-card"><div class="stat-label">Role Changes</div><div class="stat-val">3</div></div>
+      </div>
+      <div class="table-card" style="box-shadow:0 2px 12px rgba(0,0,0,0.05);">
+        <div class="table-header">
+          <div class="table-title">Admin Activity Log</div>
+          <button class="topbar-btn" onclick="alert('Exporting admin_audit_log.csv…')">⬇ Export Log</button>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>Admin</th><th>Action</th><th>Target</th><th>Timestamp</th><th>IP</th></tr></thead>
+          <tbody id="adminLogBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     MODAL: RESOLVE MARKET
+══════════════════════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="resolveModal">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-head-title">⚡ Resolve Market</div>
+      <button class="modal-close" onclick="closeModal('resolveModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:0.82rem;font-weight:600;margin-bottom:14px;color:var(--text-mid)" id="resolveMarketTitle">Market title</div>
+
+      <div class="confirm-banner">
+        ⚠ This action is irreversible. Payouts will be triggered automatically via M-Pesa B2C.
+      </div>
+
+      <div style="font-size:0.72rem;color:var(--text-dim);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.07em;font-weight:600">Select Outcome</div>
+      <div class="resolve-options">
+        <div class="resolve-opt resolve-yes" id="resolveYes" onclick="selectOutcome('YES')">
+          <div class="resolve-opt-label">YES</div>
+          <div class="resolve-opt-sub">YES holders win</div>
+        </div>
+        <div class="resolve-opt resolve-no" id="resolveNo" onclick="selectOutcome('NO')">
+          <div class="resolve-opt-label">NO</div>
+          <div class="resolve-opt-sub">NO holders win</div>
+        </div>
+      </div>
+
+      <div class="resolve-impact" id="resolveImpact">
+        <div class="resolve-impact-row"><span class="resolve-impact-label">Total traders</span><span class="mono" id="ri-traders">—</span></div>
+        <div class="resolve-impact-row"><span class="resolve-impact-label">Winning positions</span><span class="mono" id="ri-winners" style="color:var(--green)">—</span></div>
+        <div class="resolve-impact-row"><span class="resolve-impact-label">Total payout</span><span class="mono" id="ri-payout" style="color:var(--amber)">—</span></div>
+        <div class="resolve-impact-row"><span class="resolve-impact-label">Source confirmation</span><span class="mono" id="ri-source" style="color:var(--text-dim)">Select outcome</span></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="topbar-btn" onclick="closeModal('resolveModal')">Cancel</button>
+      <button class="topbar-btn primary" id="resolveConfirmBtn" onclick="confirmResolve()">Confirm Resolution</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     MODAL: KYC REVIEW
+══════════════════════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="kycModal">
+  <div class="modal" style="max-width:580px">
+    <div class="modal-head">
+      <div class="modal-head-title">◈ KYC Review</div>
+      <button class="modal-close" onclick="closeModal('kycModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+        <div style="width:44px;height:44px;border-radius:10px;background:var(--amber-glow);border:1px solid var(--amber-border);display:flex;align-items:center;justify-content:center;font-size:1.3rem">👤</div>
+        <div>
+          <div style="font-weight:700;font-size:0.9rem" id="kycUserName">Wanjiku Mwangi</div>
+          <div class="mono" style="font-size:0.72rem;color:var(--text-dim)" id="kycUserPhone">+254 712 345 678</div>
+        </div>
+        <span class="badge badge-amber" style="margin-left:auto">PENDING REVIEW</span>
+      </div>
+
+      <div class="kyc-info-grid">
+        <div class="kyc-info-item"><div class="kyc-info-label">Full Name</div><div class="kyc-info-val" id="kycFullName">Wanjiku Achieng Mwangi</div></div>
+        <div class="kyc-info-item"><div class="kyc-info-label">ID Number</div><div class="kyc-info-val" id="kycIdNum">12345678</div></div>
+        <div class="kyc-info-item"><div class="kyc-info-label">Date of Birth</div><div class="kyc-info-val">1994-03-15</div></div>
+        <div class="kyc-info-item"><div class="kyc-info-label">ID Type</div><div class="kyc-info-val">National ID</div></div>
+      </div>
+
+      <div style="font-size:0.7rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.07em;font-weight:600;margin-bottom:8px">Submitted Documents</div>
+      <div class="kyc-photo-grid">
+        <div class="kyc-photo-box"><div class="kyc-photo-icon">🪪</div><div>ID Front</div></div>
+        <div class="kyc-photo-box"><div class="kyc-photo-icon">🪪</div><div>ID Back</div></div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Rejection Reason (if rejecting)</label>
+        <input class="form-input" id="kycRejectReason" placeholder="e.g. ID photo is blurry, name mismatch...">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="topbar-btn" onclick="closeModal('kycModal')">Skip</button>
+      <button class="act-btn act-red" style="padding:7px 16px" onclick="rejectKYC()">✗ Reject</button>
+      <button class="act-btn act-green" style="padding:7px 16px" onclick="approveKYC()">✓ Approve</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────────────
+
+const MARKETS_DATA = [
+  { title:'Will William Ruto complete his first presidential term?', cat:'POLITICS', yes:76, volume:'KES 485K', trades:312, closes:'2027-09-01', status:'OPEN' },
+  { title:'Will KES trade below 120 to USD by end of 2025?',        cat:'ECONOMY',  yes:43, volume:'KES 612K', trades:441, closes:'2025-12-31', status:'OPEN' },
+  { title:'Will Rada Tech Forecast win the NSE 20 Index League 2024/25?',     cat:'TECH',   yes:54, volume:'KES 178K', trades:163, closes:'2025-07-01', status:'OPEN' },
+  { title:'Will NSE 20 close above 2,500 by December 2025?',        cat:'ECONOMY',  yes:38, volume:'KES 295K', trades:221, closes:'2025-12-31', status:'OPEN' },
+  { title:'Will Kenya pass the Finance Bill 2025?',                  cat:'POLITICS', yes:29, volume:'KES 510K', trades:389, closes:'2025-03-01', status:'CLOSED' },
+  { title:'Will mobile money exceed KES 10T in 2025?',              cat:'TECH',   yes:52, volume:'KES 234K', trades:198, closes:'2026-04-30', status:'OPEN' },
+  { title:'Will NSE 20 index exceed 2,500? (Feb 2025)',              cat:'ECONOMY',  yes:62, volume:'KES 145K', trades:89,  closes:'2025-02-28', status:'RESOLVED', outcome:'YES' },
+  { title:'Will Nairobi receive above-average long rains?',          cat:'WEATHER',  yes:61, volume:'KES 89K',  trades:76,  closes:'2025-06-15', status:'OPEN' },
+];
+
+const USERS_DATA = [
+  { name:'Wanjiru K.',  phone:'+254 712 001 001', kyc:'VERIFIED', balance:'KES 18,420', volume:'KES 94K',  joined:'Jan 2025' },
+  { name:'Otieno M.',   phone:'+254 722 002 002', kyc:'VERIFIED', balance:'KES 14,200', volume:'KES 71K',  joined:'Jan 2025' },
+  { name:'Test User',   phone:'+254 712 345 678', kyc:'VERIFIED', balance:'KES 5,000',  volume:'KES 12K',  joined:'Feb 2025' },
+  { name:'Achieng P.',  phone:'+254 733 003 003', kyc:'PENDING',  balance:'KES 0',      volume:'—',        joined:'Mar 2025' },
+  { name:'Mwangi J.',   phone:'+254 700 004 004', kyc:'VERIFIED', balance:'KES 8,200',  volume:'KES 43K',  joined:'Jan 2025' },
+  { name:'Wanjiku M.',  phone:'+254 711 005 005', kyc:'PENDING',  balance:'KES 0',      volume:'—',        joined:'Mar 2025' },
+  { name:'Njeri A.',    phone:'+254 720 006 006', kyc:'REJECTED', balance:'KES 200',    volume:'KES 2K',   joined:'Feb 2025' },
+];
+
+const KYC_DATA = [
+  { name:'Wanjiku Mwangi',  phone:'+254 711 005 005', submitted:'2h ago',  idType:'National ID' },
+  { name:'Achieng Otieno',  phone:'+254 733 007 007', submitted:'5h ago',  idType:'National ID' },
+  { name:'Kipchoge R.',     phone:'+254 722 008 008', submitted:'1d ago',  idType:'Passport' },
+  { name:'Chebet L.',       phone:'+254 700 009 009', submitted:'1d ago',  idType:'National ID' },
+  { name:'Omondi V.',       phone:'+254 711 010 010', submitted:'2d ago',  idType:'National ID' },
+  { name:'Mutai S.',        phone:'+254 733 011 011', submitted:'2d ago',  idType:'Driving License' },
+  { name:'Waweru P.',       phone:'+254 720 012 012', submitted:'3d ago',  idType:'National ID' },
+];
+
+const TXNS_DATA = [
+  { user:'Wanjiru K.',  type:'DEPOSIT',    amount:'+KES 5,000', ref:'QHG4X7KL', time:'2m ago',  status:'SUCCESS' },
+  { user:'Otieno M.',   type:'TRADE_BUY',  amount:'-KES 500',   ref:'KE-TXN-44', time:'5m ago', status:'SUCCESS' },
+  { user:'Test User',   type:'DEPOSIT',    amount:'+KES 2,000', ref:'QBT7J1PW', time:'12m ago', status:'SUCCESS' },
+  { user:'Mwangi J.',   type:'WITHDRAWAL', amount:'-KES 1,000', ref:'QXL9K2MN', time:'18m ago', status:'SUCCESS' },
+  { user:'Njeri A.',    type:'DEPOSIT',    amount:'+KES 500',   ref:'QPW3M9NK', time:'32m ago', status:'FAILED' },
+  { user:'Kamau R.',    type:'PAYOUT',     amount:'+KES 840',   ref:'KE-PAY-88', time:'1h ago', status:'SUCCESS' },
+  { user:'Auma G.',     type:'DEPOSIT',    amount:'+KES 300',   ref:'QKM2P8XL', time:'2h ago',  status:'PENDING' },
+];
+
+const ACTIVITY_DATA = [
+  { icon:'💰', type:'ai-green', text:'<strong>Wanjiru K.</strong> deposited <strong>KES 5,000</strong> via M-Pesa', time:'2 min ago' },
+  { icon:'🔄', type:'ai-blue',  text:'<strong>Otieno M.</strong> bought 806 YES shares on Ruto term market', time:'5 min ago' },
+  { icon:'◈',  type:'ai-amber', text:'New KYC submission from <strong>Wanjiku Mwangi</strong> (+254 711 005 005)', time:'12 min ago' },
+  { icon:'📤', type:'ai-red',   text:'<strong>Mwangi J.</strong> withdrew <strong>KES 1,000</strong> via M-Pesa B2C', time:'18 min ago' },
+  { icon:'✓',  type:'ai-green', text:'KYC approved for <strong>Kipchoge R.</strong>', time:'1 hr ago' },
+  { icon:'⚡',  type:'ai-amber', text:'Finance Bill market closed — <strong>ready for resolution</strong>', time:'2 hr ago' },
+  { icon:'💰', type:'ai-green', text:'<strong>Test User</strong> deposited <strong>KES 2,000</strong> via M-Pesa', time:'2 hr ago' },
+  { icon:'✗',  type:'ai-red',   text:'Deposit failed for <strong>Njeri A.</strong> — M-Pesa timeout', time:'3 hr ago' },
+];
+
+// ── RENDER FUNCTIONS ──────────────────────────────────────────────────────────
+
+function renderMarketsTable(data) {
+  document.getElementById('marketsTableBody').innerHTML = data.map(m => {
+    const statusBadge = m.status === 'OPEN'
+      ? '<span class="badge badge-green">OPEN</span>'
+      : m.status === 'CLOSED'
+      ? '<span class="badge badge-amber">CLOSED</span>'
+      : '<span class="badge badge-blue">RESOLVED</span>';
+    return `<tr>
+      <td style="max-width:260px">
+        <div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${m.title}</div>
+      </td>
+      <td><span class="badge badge-gray" style="font-size:0.62rem">${m.cat}</span></td>
+      <td class="mono" style="color:${m.yes > 50 ? 'var(--green)' : 'var(--text-mid)'}">${m.yes}%</td>
+      <td class="mono">${m.volume}</td>
+      <td class="mono">${m.trades}</td>
+      <td class="mono" style="color:var(--text-dim)">${m.closes}</td>
+      <td>${statusBadge}</td>
+      <td style="display:flex;gap:5px">
+        ${m.status === 'OPEN' ? `<button class="act-btn act-gray">Pause</button>` : ''}
+        ${m.status === 'CLOSED' ? `<button class="act-btn act-amber" onclick="openResolveModal('${m.title}', ${m.trades})">Resolve</button>` : ''}
+        <button class="act-btn act-red">Delete</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function filterMarkets(q) {
+  const filtered = MARKETS_DATA.filter(m => m.title.toLowerCase().includes(q.toLowerCase()));
+  renderMarketsTable(filtered);
+}
+
+function renderUsersTable() {
+  document.getElementById('usersTableBody').innerHTML = USERS_DATA.map(u => {
+    const kycBadge = u.kyc === 'VERIFIED'
+      ? '<span class="badge badge-green">VERIFIED</span>'
+      : u.kyc === 'PENDING'
+      ? '<span class="badge badge-amber">PENDING</span>'
+      : '<span class="badge badge-red">REJECTED</span>';
+    return `<tr>
+      <td style="font-weight:600">${u.name}</td>
+      <td class="mono" style="color:var(--text-dim)">${u.phone}</td>
+      <td>${kycBadge}</td>
+      <td class="mono">${u.balance}</td>
+      <td class="mono" style="color:var(--text-dim)">${u.volume}</td>
+      <td style="color:var(--text-dim)">${u.joined}</td>
+      <td style="display:flex;gap:5px">
+        ${u.kyc === 'PENDING' ? `<button class="act-btn act-amber" onclick="openKYCModal('${u.name}', '${u.phone}')">Review KYC</button>` : ''}
+        <button class="act-btn act-gray">View</button>
+        <button class="act-btn act-red">Suspend</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function renderKYCTable() {
+  document.getElementById('kycTableBody').innerHTML = KYC_DATA.map(k => `
+    <tr>
+      <td style="font-weight:600">${k.name}</td>
+      <td class="mono" style="color:var(--text-dim)">${k.phone}</td>
+      <td style="color:var(--text-dim)">${k.submitted}</td>
+      <td>${k.idType}</td>
+      <td style="display:flex;gap:5px">
+        <button class="act-btn act-amber" onclick="openKYCModal('${k.name}', '${k.phone}')">Review →</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function renderTxnsTable() {
+  document.getElementById('txnsTableBody').innerHTML = TXNS_DATA.map(t => {
+    const amtColor = t.amount.startsWith('+') ? 'var(--green)' : t.amount.startsWith('-') ? 'var(--red)' : 'var(--text)';
+    const stBadge = t.status === 'SUCCESS' ? '<span class="badge badge-green">OK</span>'
+      : t.status === 'PENDING' ? '<span class="badge badge-amber">PENDING</span>'
+      : '<span class="badge badge-red">FAILED</span>';
+    return `<tr>
+      <td style="font-weight:600">${t.user}</td>
+      <td><span class="badge badge-gray">${t.type}</span></td>
+      <td class="mono" style="color:${amtColor}">${t.amount}</td>
+      <td class="mono" style="color:var(--text-dim)">${t.ref}</td>
+      <td style="color:var(--text-dim)">${t.time}</td>
+      <td>${stBadge}</td>
+    </tr>`;
+  }).join('');
+}
+
+function renderRecentTxns() {
+  document.getElementById('recentTxns').innerHTML = TXNS_DATA.slice(0, 5).map(t => {
+    const amtColor = t.amount.startsWith('+') ? 'var(--green)' : t.amount.startsWith('-') ? 'var(--red)' : 'var(--text)';
+    const stBadge = t.status === 'SUCCESS' ? '<span class="badge badge-green">OK</span>'
+      : t.status === 'PENDING' ? '<span class="badge badge-amber">PEND</span>'
+      : '<span class="badge badge-red">FAIL</span>';
+    return `<tr>
+      <td style="font-weight:600">${t.user}</td>
+      <td><span class="badge badge-gray" style="font-size:0.62rem">${t.type.replace('_',' ')}</span></td>
+      <td class="mono" style="color:${amtColor}">${t.amount}</td>
+      <td class="mono" style="font-size:0.7rem;color:var(--text-dim)">${t.ref}</td>
+      <td>${stBadge}</td>
+    </tr>`;
+  }).join('');
+}
+
+function renderActivity(containerId) {
+  const el = document.getElementById(containerId);
+  el.innerHTML = ACTIVITY_DATA.map(a => `
+    <div class="activity-item">
+      <div class="activity-icon ${a.type}">${a.icon}</div>
+      <div class="activity-main">
+        <div class="activity-text">${a.text}</div>
+        <div class="activity-time">${a.time}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ── NAVIGATION ────────────────────────────────────────────────────────────────
+
+function showPanel(id, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('panel-' + id).classList.add('active');
+  if (btn) btn.classList.add('active');
+  document.getElementById('breadcrumbLabel').textContent = id.replace('-', ' ');
+
+  // Lazy render
+  if (id === 'markets') renderMarketsTable(MARKETS_DATA);
+  if (id === 'users') renderUsersTable();
+  if (id === 'kyc') renderKYCTable();
+  if (id === 'transactions') renderTxnsTable();
+  if (id === 'activity') renderActivity('fullActivityFeed');
+  if (id === 'create-market') {
+    // Set default close date to 30 days from now
+    const d = new Date(); d.setDate(d.getDate() + 30);
+    document.getElementById('mktClosesAt').value = d.toISOString().slice(0, 16);
+  }
+}
+
+// ── RESOLVE MODAL ─────────────────────────────────────────────────────────────
+
+let resolveOutcome = null;
+let resolveMarketName = '';
+let resolveTradeCount = 0;
+
+function openResolveModal(title, trades) {
+  resolveMarketName = title;
+  resolveTradeCount = trades;
+  resolveOutcome = null;
+  document.getElementById('resolveMarketTitle').textContent = title;
+  document.getElementById('resolveYes').classList.remove('selected');
+  document.getElementById('resolveNo').classList.remove('selected');
+  document.getElementById('ri-traders').textContent = trades;
+  document.getElementById('ri-winners').textContent = '—';
+  document.getElementById('ri-payout').textContent = '—';
+  document.getElementById('ri-source').textContent = 'Select outcome';
+  document.getElementById('resolveModal').classList.add('open');
+}
+
+function selectOutcome(outcome) {
+  resolveOutcome = outcome;
+  document.getElementById('resolveYes').classList.toggle('selected', outcome === 'YES');
+  document.getElementById('resolveNo').classList.toggle('selected', outcome === 'NO');
+
+  const winners = outcome === 'YES'
+    ? Math.round(resolveTradeCount * 0.44)
+    : Math.round(resolveTradeCount * 0.56);
+  const payout = (winners * 480 + Math.random() * 10000).toFixed(0);
+
+  document.getElementById('ri-winners').textContent = `${winners} users`;
+  document.getElementById('ri-payout').textContent  = `KES ${parseInt(payout).toLocaleString()}`;
+  document.getElementById('ri-source').textContent  = outcome === 'YES' ? 'Confirmed YES outcome' : 'Confirmed NO outcome';
+}
+
+function confirmResolve() {
+  if (!resolveOutcome) { alert('Please select an outcome.'); return; }
+  const btn = document.getElementById('resolveConfirmBtn');
+  btn.textContent = 'Processing...';
+  btn.disabled = true;
+  setTimeout(() => {
+    btn.textContent = '✓ Resolved!';
+    btn.style.background = 'var(--green)';
+    setTimeout(() => {
+      closeModal('resolveModal');
+      btn.textContent = 'Confirm Resolution';
+      btn.disabled = false;
+      btn.style.background = '';
+    }, 1400);
+  }, 1200);
+}
+
+// ── KYC MODAL ─────────────────────────────────────────────────────────────────
+
+function openKYCModal(name, phone) {
+  document.getElementById('kycUserName').textContent  = name;
+  document.getElementById('kycUserPhone').textContent = phone;
+  document.getElementById('kycFullName').textContent  = name + ' (full)';
+  document.getElementById('kycIdNum').textContent     = Math.floor(10000000 + Math.random() * 90000000);
+  document.getElementById('kycModal').classList.add('open');
+}
+
+function approveKYC() {
+  const btn = document.querySelector('#kycModal .act-green');
+  btn.textContent = '✓ Approved!';
+  setTimeout(() => { closeModal('kycModal'); btn.textContent = '✓ Approve'; }, 1000);
+}
+
+function rejectKYC() {
+  closeModal('kycModal');
+}
+
+// ── MARKET CREATE ─────────────────────────────────────────────────────────────
+
+function submitCreateMarket() {
+  const title = document.getElementById('mktTitle').value;
+  const desc  = document.getElementById('mktDesc').value;
+  const cat   = document.getElementById('mktCategory').value;
+  const date  = document.getElementById('mktClosesAt').value;
+
+  if (!title || !desc || !cat || !date) {
+    alert('Please fill in all required fields.'); return;
+  }
+
+  const result = document.getElementById('createResult');
+  result.style.display = 'flex';
+  result.style.alignItems = 'center';
+
+  setTimeout(() => {
+    result.style.display = 'none';
+    document.getElementById('mktTitle').value    = '';
+    document.getElementById('mktDesc').value     = '';
+    document.getElementById('mktCategory').value = '';
+    document.getElementById('mktSource').value   = '';
+    document.getElementById('mktImage').value    = '';
+  }, 3000);
+}
+
+// ── MODAL UTILS ───────────────────────────────────────────────────────────────
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+document.querySelectorAll('.modal-overlay').forEach(o => {
+  o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
+});
+
+// ── DISPUTE DESK ─────────────────────────────────────────────────────────────
+const DISPUTES = [
+  { id:1, q:'Will Otieno beat me at digital ID rematch?', userA:'Baraka M.', userB:'Otieno K.', pool:1000, expiredAgo:'6h ago', stage:'48h window expired', fee15:150 },
+  { id:2, q:'Who finishes the Duolingo 30-day streak first?', userA:'Grace W.', userB:'Peter N.', pool:600, expiredAgo:'2h ago', stage:'48h window expired', fee15:90 },
+  { id:3, q:'Will our project go live before Friday deadline?', userA:'Susan O.', userB:'Kevin A.', pool:2000, expiredAgo:'12h ago', stage:'48h window expired', fee15:300 },
+];
+
+function renderDisputes() {
+  const el = document.getElementById('disputesList');
+  if (!el) return;
+  el.innerHTML = DISPUTES.map(d => `
+    <div style="background:#ffffff;border:1px solid rgba(245,158,11,0.2);border-radius:14px;padding:18px;margin-bottom:12px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;">
+        <div style="flex:1;">
+          <div style="font-weight:700;font-size:0.9rem;margin-bottom:4px;">${d.q}</div>
+          <div style="font-size:0.7rem;color:var(--text-dim);">Window expired ${d.expiredAgo} · 15% fee will apply</div>
+        </div>
+        <div style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.2);border-radius:8px;padding:6px 10px;font-size:0.72rem;font-weight:700;color:var(--amber);white-space:nowrap;margin-left:10px;">⚠ Disputed</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
+        <div style="background:var(--bg3);border-radius:8px;padding:10px;"><div style="font-size:0.62rem;color:var(--text-dim);text-transform:uppercase;font-weight:700;margin-bottom:3px;">User A</div><div style="font-weight:600;font-size:0.82rem;">${d.userA}</div></div>
+        <div style="background:var(--bg3);border-radius:8px;padding:10px;"><div style="font-size:0.62rem;color:var(--text-dim);text-transform:uppercase;font-weight:700;margin-bottom:3px;">User B</div><div style="font-weight:600;font-size:0.82rem;">${d.userB}</div></div>
+      </div>
+      <div style="background:var(--bg3);border-radius:8px;padding:10px;margin-bottom:14px;display:flex;justify-content:space-between;font-size:0.78rem;">
+        <span style="color:var(--text-dim);">Pool</span><span style="font-family:var(--mono);font-weight:700;">KES ${d.pool.toLocaleString()}</span>
+        <span style="color:var(--text-dim);">15% Fee</span><span style="font-family:var(--mono);font-weight:700;color:var(--amber);">KES ${d.fee15}</span>
+        <span style="color:var(--text-dim);">Winner Gets</span><span style="font-family:var(--mono);font-weight:700;color:var(--green);">KES ${d.pool - d.fee15}</span>
+      </div>
+      <div style="font-size:0.72rem;font-weight:700;color:var(--amber);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;">Admin Ruling — 15% Fee Auto-Applied</div>
+      <div style="display:flex;gap:8px;">
+        <button class="act-btn act-green" style="flex:1;" onclick="resolveDispute(${d.id},'A','${d.userA}',${d.pool},${d.fee15})">Award ${d.userA.split(' ')[0]}</button>
+        <button class="act-btn act-red" style="flex:1;" onclick="resolveDispute(${d.id},'B','${d.userB}',${d.pool},${d.fee15})">Award ${d.userB.split(' ')[0]}</button>
+        <button class="act-btn act-amber" style="flex:1;" onclick="resolveDispute(${d.id},'TIE','Tie',${d.pool},${d.fee15})">🤝 Tie</button>
+      </div>
+    </div>`).join('');
+}
+
+function resolveDispute(id, side, name, pool, fee) {
+  const msg = side === 'TIE'
+    ? `Confirm: Declare Tie?\n\nEach user receives KES ${Math.round((pool - fee)/2).toLocaleString()} (15% fee: KES ${fee} total).`
+    : `Confirm: Award ${name}?\n\nPayout: KES ${pool - fee} to ${name} (15% fee = KES ${fee}).`;
+  if (!confirm(msg)) return;
+  const idx = DISPUTES.findIndex(d => d.id === id);
+  if (idx > -1) DISPUTES.splice(idx, 1);
+  document.getElementById('disputeCount').textContent = DISPUTES.length;
+  document.getElementById('disputeNavBadge').textContent = DISPUTES.length;
+  renderDisputes();
+  showToast(`✓ Dispute resolved. M-Pesa B2C payout triggered. 15% fee collected.`);
+}
+
+// ── SUGGESTION QUEUE ──────────────────────────────────────────────────────────
+const SUGGESTIONS = [
+  { id:1, q:'Will Nairobi County pass the 2026/27 budget on first reading?', cat:'Politics', from:'Baraka M. (+254712***456)', source:'NMG / Nation Media', why:'Budget debates are trending on social media every year.' },
+  { id:2, q:'Will Safaricom M-Pesa hit 50M active users by December 2026?', cat:'Economy', from:'Grace W. (+254722***123)', source:'Safaricom Annual Report', why:'Key indicator for fintech growth in Kenya.' },
+  { id:3, q:'Will it rain in Nairobi every day next week?', cat:'Weather', from:'Peter N. (+254733***789)', source:'KMD forecast', why:'Farmers and matatu drivers care deeply about this.' },
+  { id:4, q:'Will a Kenyan artist win an AFRIMMA Award in 2026?', cat:'Entertainment', from:'Wanjiku A. (+254755***321)', source:'AFRIMMA official results', why:'Kenyan music is booming globally right now.' },
+  { id:5, q:'Will GPT-5 be released publicly before June 2026?', cat:'Tech', from:'Kevin O. (+254744***654)', source:'OpenAI official blog', why:'Tech community is debating this constantly.' },
+];
+
+function renderSuggestions() {
+  const el = document.getElementById('suggestionsList');
+  if (!el) return;
+  el.innerHTML = SUGGESTIONS.map(s => `
+    <div style="background:#ffffff;border:1px solid rgba(167,139,250,0.18);border-radius:14px;padding:18px;margin-bottom:12px;" id="sugg-${s.id}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">
+        <div style="flex:1;">
+          <div style="font-weight:700;font-size:0.9rem;margin-bottom:4px;">${s.q}</div>
+          <div style="font-size:0.7rem;color:var(--text-dim);">From: ${s.from} · Category: ${s.cat}</div>
+        </div>
+        <div style="background:rgba(167,139,250,0.1);border:1px solid rgba(167,139,250,0.2);border-radius:8px;padding:4px 10px;font-size:0.7rem;font-weight:700;color:#a78bfa;margin-left:10px;white-space:nowrap;">${s.cat}</div>
+      </div>
+      <div style="background:var(--bg3);border-radius:8px;padding:10px;margin-bottom:12px;font-size:0.75rem;">
+        <div style="color:var(--text-dim);margin-bottom:3px;font-weight:700;text-transform:uppercase;font-size:0.62rem;letter-spacing:0.06em;">Resolution Source</div>
+        <div style="color:var(--text);">${s.source}</div>
+        ${s.why ? `<div style="margin-top:6px;color:var(--text-mid);font-style:italic;">"${s.why}"</div>` : ''}
+      </div>
+      <div style="background:rgba(167,139,250,0.06);border:1px solid rgba(167,139,250,0.12);border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:0.73rem;color:#a78bfa;">
+        🎁 Approving will automatically credit <strong>KES 50</strong> to this user's wallet as a suggestion reward.
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="act-btn act-green" style="flex:1;" onclick="approveSuggestion(${s.id},'${s.from}')">✓ Approve + Credit KES 50</button>
+        <button class="act-btn act-red" style="flex:1;" onclick="rejectSuggestion(${s.id})">✗ Reject</button>
+        <button class="act-btn act-gray" style="flex:1;" onclick="alert('Edit feature coming soon.')">✎ Edit</button>
+      </div>
+    </div>`).join('');
+}
+
+function approveSuggestion(id, from) {
+  if (!confirm(`Approve suggestion #${id}?\n\nKES 50 will be auto-credited to ${from}'s wallet.`)) return;
+  document.getElementById(`sugg-${id}`).style.display = 'none';
+  const remaining = SUGGESTIONS.filter((s,_) => document.getElementById(`sugg-${s.id}`) && document.getElementById(`sugg-${s.id}`).style.display !== 'none').length - 1;
+  document.getElementById('suggCount').textContent = Math.max(0, remaining);
+  document.getElementById('suggNavBadge').textContent = Math.max(0, remaining);
+  showToast('✓ Market created! KES 50 reward auto-credited to user wallet.');
+}
+function rejectSuggestion(id) {
+  document.getElementById(`sugg-${id}`).style.display = 'none';
+  showToast('Suggestion rejected. User will be notified.');
+}
+
+// ── B2B ANALYTICS ─────────────────────────────────────────────────────────────
+const CONVICTION_DATA = [
+  { market:'Will CBK hold rates in April?', cat:'Economy', yes:72, avgStake:1240, conviction:'High', forecasters:847 },
+  { market:'Will Ruto announce referendum?', cat:'Politics', yes:38, avgStake:890, conviction:'Medium', forecasters:1203 },
+  { market:'Will Nairobi receive >3 rainy days?', cat:'Weather', yes:61, avgStake:420, conviction:'Medium', forecasters:392 },
+  { market:'Will AI replace data entry jobs by 2027?', cat:'Tech', yes:84, avgStake:210, conviction:'Low', forecasters:556 },
+  { market:'Will KRA hit March tax target?', cat:'Economy', yes:45, avgStake:1820, conviction:'High', forecasters:671 },
+];
+
+const VEL_DATA = [
+  { cat:'Economy', pct:82, change:'+18%' },
+  { cat:'Politics', pct:74, change:'+22%' },
+  { cat:'Tech', pct:61, change:'+9%' },
+  { cat:'Entertainment', pct:55, change:'+14%' },
+  { cat:'Weather', pct:43, change:'+5%' },
+  { cat:'General', pct:38, change:'+3%' },
+];
+
+function renderB2B() {
+  // Velocity bars
+  const vb = document.getElementById('velBars');
+  if (vb) {
+    vb.innerHTML = VEL_DATA.map(v => `
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
+        <div style="width:90px;font-size:0.75rem;color:var(--text-mid);flex-shrink:0;">${v.cat}</div>
+        <div style="flex:1;height:8px;background:var(--bg3);border-radius:100px;overflow:hidden;">
+          <div style="width:${v.pct}%;height:100%;background:linear-gradient(90deg,var(--ke-green),#8b5cf6);border-radius:100px;transition:width 1s ease;"></div>
+        </div>
+        <div style="font-family:var(--mono);font-size:0.72rem;width:70px;text-align:right;">${v.pct}% <span style="color:var(--green);font-size:0.65rem;">${v.change}</span></div>
+      </div>`).join('');
+  }
+  // Conviction table
+  const cb = document.getElementById('convictionBody');
+  if (cb) {
+    cb.innerHTML = CONVICTION_DATA.map(r => {
+      const col = r.conviction === 'High' ? 'var(--green)' : r.conviction === 'Medium' ? 'var(--amber)' : 'var(--text-dim)';
+      return `<tr>
+        <td>${r.market}</td>
+        <td><span style="font-size:0.7rem;background:var(--bg3);padding:2px 7px;border-radius:4px;">${r.cat}</span></td>
+        <td style="font-weight:700;color:${r.yes > 50 ? 'var(--green)' : 'var(--red)'};">${r.yes}%</td>
+        <td style="font-family:var(--mono);">KES ${r.avgStake.toLocaleString()}</td>
+        <td style="font-weight:700;color:${col};">${r.conviction}</td>
+        <td style="font-family:var(--mono);">${r.forecasters.toLocaleString()}</td>
+      </tr>`;
+    }).join('');
+  }
+}
+
+// ── ADMIN LOG ─────────────────────────────────────────────────────────────────
+const ADMIN_LOG_DATA = [
+  { admin:'admin@rada.co.ke', action:'Dispute Resolved (A wins)', target:'Challenge #47', ts:'Mar 7 14:32', ip:'102.68.xx.xx' },
+  { admin:'admin@rada.co.ke', action:'Market Created', target:'"Will CBK hold rates?"', ts:'Mar 7 11:15', ip:'102.68.xx.xx' },
+  { admin:'admin@rada.co.ke', action:'Suggestion Approved + KES 50 Reward', target:'Suggestion #23', ts:'Mar 6 16:44', ip:'102.68.xx.xx' },
+  { admin:'admin@rada.co.ke', action:'KYC Approved', target:'User +254712***456', ts:'Mar 6 10:22', ip:'102.68.xx.xx' },
+  { admin:'ops@rada.co.ke', action:'Admin Role Assigned', target:'ops@rada.co.ke', ts:'Mar 5 09:00', ip:'41.90.xx.xx' },
+  { admin:'admin@rada.co.ke', action:'Market Paused (Kill Switch)', target:'"Nairobi Elections 2026"', ts:'Mar 4 18:33', ip:'102.68.xx.xx' },
+  { admin:'admin@rada.co.ke', action:'Dispute Resolved (Tie — 15% fee)', target:'Challenge #41', ts:'Mar 3 12:11', ip:'102.68.xx.xx' },
+];
+
+function renderAdminLog() {
+  const el = document.getElementById('adminLogBody');
+  if (!el) return;
+  el.innerHTML = ADMIN_LOG_DATA.map(r => `<tr>
+    <td style="font-family:var(--mono);font-size:0.72rem;">${r.admin}</td>
+    <td>${r.action}</td>
+    <td style="font-size:0.78rem;color:var(--text-mid);">${r.target}</td>
+    <td style="font-family:var(--mono);font-size:0.72rem;color:var(--text-dim);">${r.ts}</td>
+    <td style="font-family:var(--mono);font-size:0.72rem;color:var(--text-dim);">${r.ip}</td>
+  </tr>`).join('');
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+
+renderRecentTxns();
+renderActivity('liveFeed');
+renderDisputes();
+renderSuggestions();
+renderB2B();
+renderAdminLog();
+</script>
+</body>
+</html>

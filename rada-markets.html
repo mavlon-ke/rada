@@ -1,0 +1,1310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rada — Forecast Markets</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Archivo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+html { font-size: 106.25%; }
+:root{
+  --primary:#6d28d9;
+  --primary-bright:#7c3aed;
+  --primary-light:#8b5cf6;
+  --primary-glow:rgba(109,40,217,0.08);
+  --primary-dim:rgba(109,40,217,0.05);
+  --ke-green:#6d28d9;
+  --ke-green-bright:#7c3aed;
+  --ke-green-glow:rgba(109,40,217,0.08);
+  --ke-red:#CE1126;
+  --ke-red-dim:rgba(206,17,38,0.07);
+  --gold:#c97d0a;
+  --gold-dim:rgba(201,125,10,0.08);
+  --purple:#7c3aed;
+  --purple-dim:rgba(109,40,217,0.07);
+  --blue:#2563eb;
+  --blue-dim:rgba(37,99,235,0.08);
+  --bg:#faf8ff;
+  --bg2:#ffffff;
+  --bg3:#f0edff;
+  --bg4:#e5e0ff;
+  --border:rgba(109,40,217,0.12);
+  --border-bright:rgba(109,40,217,0.30);
+  --text:#1a1035;
+  --text-dim:#9284b8;
+  --text-mid:#5b21b6;
+  --font:'Outfit',sans-serif;
+  --mono:'Archivo',sans-serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── NOISE OVERLAY ── */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none; z-index: 0; opacity: 0.08;
+}
+
+/* ── TICKER ── */
+.ticker-wrap {
+  background: var(--ke-green);
+  overflow: hidden; white-space: nowrap;
+  padding: 7px 0; position: relative; z-index: 10;
+}
+.ticker-track {
+  display: inline-block;
+  animation: ticker 30s linear infinite;
+}
+.ticker-item {
+  display: inline-block; padding: 0 28px;
+  font-family: var(--mono); font-size: 0.7rem; font-weight: 700; color: #000;
+  letter-spacing: 0.05em;
+}
+.ticker-item span { opacity: 0.6; margin-right: 6px; }
+@keyframes ticker { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+
+/* ── NAV ── */
+nav {
+  padding: 14px 24px; display: flex; align-items: center; justify-content: space-between;
+  background: rgba(255,255,255,0.96); backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 50;
+}
+.nav-logo {
+  display: flex; align-items: center; gap: 10px;
+}
+.logo-badge {
+  background: var(--ke-green); color: #fff; font-family: var(--mono);
+  font-size: 0.65rem; font-weight: 700; padding: 4px 8px; border-radius: 4px;
+  letter-spacing: 0.05em;
+}
+.logo-text { font-size: 1.05rem; font-weight: 700; letter-spacing: -0.01em; }
+.logo-sub { font-size: 0.65rem; color: var(--text-dim); font-family: var(--mono); }
+
+.nav-links { display: flex; gap: 4px; }
+.nav-link {
+  padding: 6px 14px; border-radius: 6px; font-size: 0.8rem; font-weight: 500;
+  cursor: pointer; border: none; background: transparent; color: var(--text-mid);
+  text-decoration: none; transition: all 0.15s;
+}
+.nav-link:hover { color: var(--text); background: var(--bg3); }
+.nav-link.active { color: var(--ke-green); background: var(--ke-green-glow); }
+
+.nav-right { display: flex; align-items: center; gap: 8px; }
+.balance-chip {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 8px; padding: 6px 12px; font-family: var(--mono); font-size: 0.75rem;
+}
+.balance-chip .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--ke-green); }
+
+.btn-deposit {
+  background: var(--ke-green); color: #fff; font-weight: 700; font-size: 0.78rem;
+  padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer;
+  transition: all 0.15s; font-family: var(--font);
+}
+.btn-deposit:hover { background: var(--ke-green-bright); transform: translateY(-1px); }
+
+50%{transform:scale(1.4);opacity:0.6} }
+
+/* ── CREATOR BANNER ── */
+/* ── FILTERS ── */
+.filter-bar {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 20px; flex-wrap: wrap;
+}
+.filter-btn {
+  padding: 7px 16px; border-radius: 20px; font-size: 0.78rem; font-weight: 600;
+  cursor: pointer; border: 1px solid var(--border); background: transparent; color: var(--text-dim);
+  transition: all 0.15s; font-family: var(--font);
+}
+.filter-btn:hover { border-color: var(--border-bright); color: var(--text); }
+.filter-btn.active { background: var(--ke-green-glow); border-color: var(--border-bright); color: var(--ke-green); }
+
+.search-box {
+  margin-left: auto; background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 8px; padding: 7px 14px; color: var(--text); font-family: var(--font);
+  font-size: 0.8rem; outline: none; width: 200px; transition: border-color 0.2s;
+}
+.search-box:focus { border-color: var(--border-bright); }
+.search-box::placeholder { color: var(--text-dim); }
+
+/* ── MARKET GRID ── */
+.market-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px; max-width: 1200px; margin: 0 auto; padding: 0 24px 60px; position: relative; z-index: 1;
+}
+
+.market-card {
+  background: #ffffff; border: 1px solid rgba(109,40,217,0.12); box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  border-radius: 14px; padding: 20px; cursor: pointer;
+  transition: all 0.2s; display: flex; flex-direction: column; gap: 0;
+  animation: cardIn 0.4s ease both;
+}
+.market-card:hover { border-color: var(--border-bright); transform: translateY(-2px); box-shadow: 0 8px 32px rgba(109,40,217,0.06); }
+@keyframes cardIn { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+
+.card-category {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 0.62rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--text-dim); margin-bottom: 10px;
+}
+.cat-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--ke-green); }
+
+.card-question { font-size: 0.92rem; font-weight: 600; line-height: 1.45; margin-bottom: 16px; }
+
+/* Probability bar */
+.prob-bar-wrap { margin-bottom: 14px; }
+.prob-labels {
+  display: flex; justify-content: space-between; margin-bottom: 6px;
+  font-family: var(--mono); font-size: 0.72rem;
+}
+.prob-yes { color: var(--ke-green); font-weight: 700; }
+.prob-no  { color: var(--ke-red); font-weight: 700; }
+.prob-bar { height: 6px; background: var(--bg4); border-radius: 100px; overflow: hidden; }
+.prob-fill-yes { height: 100%; border-radius: 100px; background: linear-gradient(90deg, var(--ke-green-dim), var(--ke-green)); transition: width 0.6s; }
+
+.card-meta {
+  display: flex; gap: 12px; font-size: 0.7rem; color: var(--text-dim); margin-bottom: 16px;
+  font-family: var(--mono);
+}
+.card-meta-item { display: flex; align-items: center; gap: 4px; }
+
+.card-actions { display: flex; gap: 8px; margin-top: auto; }
+.btn-yes, .btn-no {
+  flex: 1; padding: 9px; border-radius: 8px; font-weight: 700; font-size: 0.8rem;
+  cursor: pointer; border: none; transition: all 0.15s; font-family: var(--font);
+}
+.btn-yes { background: var(--ke-green-glow); color: var(--ke-green); border: 1px solid rgba(109,40,217,0.22); }
+.btn-yes:hover { background: var(--ke-green); color: #fff; }
+.btn-no  { background: var(--ke-red-dim); color: var(--ke-red); border: 1px solid rgba(206,17,38,0.3); }
+.btn-no:hover  { background: var(--ke-red); color: #fff; }
+
+/* Creator badge */
+.creator-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 0.62rem; color: var(--gold); font-family: var(--mono);
+  background: var(--gold-dim); border: 1px solid rgba(244,185,66,0.2);
+  border-radius: 4px; padding: 2px 7px; margin-bottom: 8px;
+}
+
+/* ── FORECAST MODAL ── */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.55); backdrop-filter: blur(8px);
+  z-index: 200; display: flex; align-items: flex-end; justify-content: center; padding: 0;
+  opacity: 0; pointer-events: none; transition: opacity 0.25s;
+}
+.modal-overlay.open { opacity: 1; pointer-events: all; }
+
+.modal {
+  background: var(--bg2); border: 1px solid var(--border-bright);
+  border-radius: 20px 20px 0 0; width: 100%; max-width: 520px;
+  transform: translateY(100%); transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
+  overflow: hidden;
+  box-shadow: 0 -20px 60px rgba(109,40,217,0.09);
+}
+.modal-overlay.open .modal { transform: translateY(0); }
+
+.modal-handle {
+  width: 40px; height: 4px; border-radius: 2px; background: var(--border-bright);
+  margin: 12px auto 0; cursor: pointer;
+}
+
+.modal-head {
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.modal-market-q { font-weight: 600; font-size: 0.88rem; line-height: 1.4; margin-bottom: 10px; color: var(--text-mid); }
+
+/* Side selector */
+.side-selector { display: flex; gap: 8px; margin-bottom: 4px; }
+.side-btn {
+  flex: 1; padding: 10px; border-radius: 10px; font-weight: 700; font-size: 0.85rem;
+  cursor: pointer; border: 2px solid transparent; transition: all 0.2s; font-family: var(--font);
+}
+.side-btn-yes {
+  background: var(--ke-green-glow); color: var(--ke-green); border-color: rgba(109,40,217,0.18);
+}
+.side-btn-yes.selected { background: var(--ke-green); color: #fff; border-color: var(--ke-green); box-shadow: 0 0 16px rgba(109,40,217,0.22); }
+.side-btn-no {
+  background: var(--ke-red-dim); color: var(--ke-red); border-color: rgba(206,17,38,0.2);
+}
+.side-btn-no.selected { background: var(--ke-red); color: #fff; border-color: var(--ke-red); box-shadow: 0 0 16px rgba(206,17,38,0.2); }
+
+.modal-body { padding: 18px 20px; }
+
+/* Stake slider */
+.slider-section { margin-bottom: 20px; }
+.slider-label {
+  display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;
+}
+.slider-label-text { font-size: 0.72rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.07em; font-weight: 600; }
+.slider-val-input {
+  background: var(--bg3); border: 1px solid var(--border-bright); border-radius: 7px;
+  padding: 5px 10px; color: var(--ke-green); font-family: var(--mono); font-size: 0.85rem;
+  width: 120px; text-align: right; outline: none; font-weight: 700;
+}
+
+.quick-stakes { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
+.quick-btn {
+  padding: 5px 12px; border-radius: 6px; font-size: 0.72rem; font-weight: 700;
+  cursor: pointer; border: 1px solid var(--border); background: var(--bg3); color: var(--text-mid);
+  font-family: var(--mono); transition: all 0.15s;
+}
+.quick-btn:hover { border-color: var(--border-bright); color: var(--ke-green); }
+.quick-btn.active { background: var(--ke-green-glow); border-color: var(--border-bright); color: var(--ke-green); }
+
+.stake-slider {
+  width: 100%; -webkit-appearance: none; height: 6px;
+  background: var(--bg4); border-radius: 100px; outline: none; cursor: pointer;
+  margin-bottom: 6px;
+}
+.stake-slider::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%;
+  background: var(--ke-green); cursor: pointer; border: 3px solid var(--bg2);
+  box-shadow: 0 0 8px rgba(109,40,217,0.35);
+}
+.slider-range { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 0.65rem; color: var(--text-dim); }
+
+/* Payout display */
+.payout-box {
+  background: var(--bg3); border: 1px solid var(--border); border-radius: 12px;
+  padding: 16px; margin-bottom: 16px;
+}
+.payout-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.payout-item-label { font-size: 0.65rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 4px; }
+.payout-item-val { font-family: var(--mono); font-size: 1.1rem; font-weight: 700; }
+.payout-item-val.green { color: var(--ke-green); }
+.payout-item-val.gold { color: var(--gold); }
+
+/* Unanimous warning */
+.unanimous-warn {
+  background: rgba(244,185,66,0.08); border: 1px solid rgba(244,185,66,0.2);
+  border-radius: 8px; padding: 10px 14px; font-size: 0.75rem; color: var(--gold);
+  margin-bottom: 12px; display: none;
+}
+.unanimous-warn.show { display: block; }
+
+.btn-forecast {
+  width: 100%; padding: 14px; background: var(--ke-green); color: #fff;
+  font-weight: 700; font-size: 0.9rem; border-radius: 12px; border: none;
+  cursor: pointer; font-family: var(--font); transition: all 0.2s;
+}
+.btn-forecast:hover { background: var(--ke-green-bright); transform: translateY(-1px); }
+.btn-forecast:disabled { background: var(--bg3); color: var(--text-dim); cursor: not-allowed; transform: none; }
+
+.modal-legal {
+  text-align: center; font-size: 0.65rem; color: var(--text-dim); margin-top: 10px;
+  line-height: 1.5;
+}
+
+/* ── BOTTOM NAV ── */
+.bottom-nav {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: rgba(255,255,255,0.97); backdrop-filter: blur(12px);
+  border-top: 1px solid var(--border); z-index: 100;
+  display: flex; justify-content: space-around; padding: 10px 0 max(10px, env(safe-area-inset-bottom));
+}
+.bn-item {
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  cursor: pointer; padding: 4px 20px; border-radius: 8px;
+  color: var(--text-dim); text-decoration: none; transition: color 0.15s;
+}
+.bn-item.active { color: var(--primary); }
+.bn-item:hover { color: var(--text); }
+.bn-icon { font-size: 1.2rem; }
+.bn-label { font-size: 0.6rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
+
+@media (min-width: 768px) { .bottom-nav { display: none; } }
+
+
+/* ── Single share button on card ───────────────────────────────────────────── */
+.card-share-btn {
+  width: 100%; margin-top: 10px; padding: 8px 12px;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  border-radius: 9px; border: 1px solid var(--border);
+  background: var(--bg3); color: var(--text-mid);
+  font-family: var(--font); font-size: 0.75rem; font-weight: 700;
+  cursor: pointer; transition: all 0.18s;
+}
+.card-share-btn:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-dim); }
+.card-share-btn.shared { border-color: var(--primary); color: var(--primary); background: var(--primary-dim); }
+
+
+
+/* ── Modal close improvements ──────────────────────────────────────────────── */
+.modal-handle-row {
+  display: flex; align-items: center; justify-content: center;
+  position: relative; padding: 12px 16px 0;
+}
+.modal-handle {
+  width: 44px; height: 5px; border-radius: 3px; background: var(--border-bright);
+  cursor: pointer; flex-shrink: 0;
+  /* Increase touch target without changing visual size */
+  padding: 12px 16px; margin: -12px -16px; box-sizing: content-box;
+}
+.modal-close-btn {
+  position: absolute; right: 14px; top: 6px;
+  width: 32px; height: 32px; border-radius: 50%;
+  background: var(--bg3); border: 1px solid var(--border);
+  color: var(--text-dim); font-size: 0.85rem; font-weight: 700;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s; line-height: 1;
+}
+.modal-close-btn:hover { background: var(--primary-dim); color: var(--primary); border-color: var(--primary); }
+/* Single share button — full width */
+.msp-btn.native[style*="grid-column"] {
+  padding: 11px; font-size: 0.82rem;
+}
+
+
+/* ── Solo share button in modal ─────────────────────────────────────────────── */
+.btn-share-solo {
+  background: var(--bg3) !important;
+  color: var(--primary) !important;
+  border: 1px solid var(--border-bright) !important;
+  margin-top: 10px;
+  font-size: 0.82rem;
+}
+.btn-share-solo:hover { background: var(--primary-dim) !important; }
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   GREEN LAYOUT — YES buttons only. All other colours unchanged.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Card YES button */
+.btn-yes {
+  background: rgba(5,150,105,0.10) !important;
+  color: #059669 !important;
+  border: 1px solid rgba(5,150,105,0.30) !important;
+}
+.btn-yes:hover {
+  background: rgba(5,150,105,0.18) !important;
+}
+
+/* Modal YES side selector — unselected */
+.side-btn-yes {
+  background: rgba(5,150,105,0.10) !important;
+  color: #059669 !important;
+  border-color: rgba(5,150,105,0.25) !important;
+}
+/* Modal YES side selector — selected (solid) */
+.side-btn-yes.selected {
+  background: #059669 !important;
+  color: #fff !important;
+  border-color: #059669 !important;
+  box-shadow: 0 0 16px rgba(5,150,105,0.28) !important;
+}
+
+/* Forecast button — green when YES is active */
+.btn-forecast.yes-active {
+  background: #059669 !important;
+}
+.btn-forecast.yes-active:hover {
+  background: #047857 !important;
+}
+
+
+/* ── TRENDING SECTION ──────────────────────────────────────────────────────── */
+.trending-header {
+  display: flex; align-items: center; gap: 10px;
+  margin: 0 0 14px 0;
+}
+.trending-title {
+  font-size: 1rem; font-weight: 700; color: var(--text);
+}
+.trending-subtitle {
+  font-size: 0.72rem; color: var(--text-dim); font-family: var(--mono);
+}
+.trending-live-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: #ef4444; flex-shrink: 0;
+  animation: livePulse 1.4s ease-in-out infinite;
+}
+@keyframes livePulse {
+  0%,100%{opacity:1;transform:scale(1)}
+  50%{opacity:0.4;transform:scale(0.7)}
+}
+.trend-badge {
+  display: inline-flex; align-items: center; gap: 3px;
+  padding: 3px 8px; border-radius: 20px;
+  font-size: 0.62rem; font-weight: 700; letter-spacing: 0.03em;
+  margin-bottom: 8px; margin-right: 4px;
+}
+.trend-badge-shift-up {
+  background: rgba(5,150,105,0.12); color: #059669;
+  border: 1px solid rgba(5,150,105,0.25);
+}
+.trend-badge-shift-down {
+  background: rgba(206,17,38,0.1); color: #CE1126;
+  border: 1px solid rgba(206,17,38,0.2);
+}
+.trend-badge-hot {
+  background: rgba(234,88,12,0.1); color: #ea580c;
+  border: 1px solid rgba(234,88,12,0.2);
+}
+.trend-badge-closing {
+  background: rgba(201,125,10,0.12); color: #c97d0a;
+  border: 1px solid rgba(201,125,10,0.25);
+}
+.trend-badge-new {
+  background: rgba(109,40,217,0.1); color: #6d28d9;
+  border: 1px solid rgba(109,40,217,0.2);
+}
+.trend-rank {
+  font-family: var(--mono); font-size: 0.65rem; font-weight: 700;
+  color: var(--text-dim); margin-right: 2px;
+}
+.trending-section { margin-bottom: 6px; }
+.trending-empty {
+  text-align: center; padding: 40px 20px;
+  color: var(--text-dim); font-size: 0.85rem;
+}
+
+
+/* ═══════════════════════════════════════════════════════
+   STANDARD HEADER — logo left · nav center · actions right
+   ═══════════════════════════════════════════════════════ */
+.site-header {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(255,255,255,0.97);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(109,40,217,0.12);
+  padding: 0 32px; height: 64px;
+  display: flex; align-items: center;
+}
+/* Logo — far left */
+.site-header .h-logo {
+  display: flex; align-items: center; gap: 10px;
+  text-decoration: none; color: inherit;
+  flex-shrink: 0;
+}
+.site-header .h-logo-badge {
+  background: #6d28d9; color: #fff;
+  font-family: 'Archivo', sans-serif;
+  font-size: 0.62rem; font-weight: 700;
+  padding: 4px 9px; border-radius: 6px;
+  letter-spacing: 0.04em;
+}
+.site-header .h-logo-text { font-size: 1.05rem; font-weight: 700; letter-spacing: -0.01em; }
+.site-header .h-logo-sub  { font-size: 0.55rem; font-weight: 600; letter-spacing: 0.1em; color: #9284b8; font-family: 'Archivo', sans-serif; }
+
+/* Nav — centered via auto margins */
+.site-header .h-nav {
+  display: flex; gap: 2px; align-items: center;
+  margin: 0 auto;
+}
+.site-header .h-nav a {
+  color: #9284b8; text-decoration: none;
+  font-size: 0.85rem; font-weight: 500;
+  padding: 7px 13px; border-radius: 8px;
+  transition: all 0.18s; white-space: nowrap;
+}
+.site-header .h-nav a:hover  { color: #1a1035; background: #f0edff; }
+.site-header .h-nav a.active { color: #6d28d9; background: rgba(109,40,217,0.10); font-weight: 600; }
+
+/* Actions — far right */
+.site-header .h-actions {
+  display: flex; align-items: center; gap: 8px;
+  flex-shrink: 0;
+}
+.site-header .h-balance {
+  display: flex; align-items: center; gap: 6px;
+  background: #f0edff; border: 1px solid rgba(109,40,217,0.18);
+  border-radius: 10px; padding: 6px 14px;
+  font-family: 'Archivo', sans-serif;
+  font-size: 0.82rem; color: #6d28d9; font-weight: 500;
+}
+.site-header .h-dot {
+  width: 6px; height: 6px; border-radius: 50%; background: #6d28d9;
+}
+.site-header .h-btn {
+  padding: 7px 16px; border-radius: 9px;
+  font-size: 0.82rem; font-weight: 600;
+  font-family: 'Outfit', 'Outfit', sans-serif;
+  cursor: pointer; transition: all 0.18s; border: none;
+}
+.site-header .h-btn-ghost {
+  background: transparent; color: #6d28d9;
+  border: 1px solid rgba(109,40,217,0.30);
+}
+.site-header .h-btn-ghost:hover { background: #f0edff; }
+.site-header .h-btn-primary {
+  background: #6d28d9; color: #fff;
+}
+.site-header .h-btn-primary:hover {
+  background: #7c3aed;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(109,40,217,0.25);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   MOBILE TOP NAV — 5-tab bar pinned to top, mobile only
+   ═══════════════════════════════════════════════════════════════ */
+.mobile-top-nav {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  background: rgba(255,255,255,0.98);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1.5px solid rgba(109,40,217,0.13);
+  z-index: 500;
+  justify-content: space-around;
+  align-items: center;
+  padding: 8px 0 6px;
+  box-shadow: 0 2px 14px rgba(109,40,217,0.06);
+}
+.mobile-top-nav .bn-item {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  cursor: pointer; padding: 2px 10px; border-radius: 8px;
+  color: #9284b8; text-decoration: none; transition: color 0.15s;
+  min-width: 48px; flex: 1;
+}
+.mobile-top-nav .bn-item.active { color: #6d28d9; }
+.mobile-top-nav .bn-item:hover  { color: #1a1035; }
+.mobile-top-nav .bn-icon  { font-size: 1.15rem; line-height: 1.1; }
+.mobile-top-nav .bn-label {
+  font-size: 0.58rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.07em;
+}
+@media (max-width: 767px) {
+  .mobile-top-nav { display: flex !important; }
+  .site-header    { display: none !important; }
+  body { padding-top: 58px !important; }
+  .page, .page-wrap { padding-top: 16px; }
+}
+
+
+/* ── Empty state ── */
+.empty-state {
+  grid-column: 1 / -1;
+  display: flex; flex-direction: column; align-items: center;
+  text-align: center; padding: 56px 24px 48px;
+  animation: fadeUp 0.4s ease both;
+}
+@keyframes fadeUp { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
+.empty-icon {
+  width: 88px; height: 88px;
+  background: linear-gradient(135deg, #f0edff 0%, #e8e0ff 100%);
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-size: 2.6rem; margin-bottom: 20px;
+  box-shadow: 0 4px 24px rgba(109,40,217,0.10);
+}
+.empty-title {
+  font-size: 1.15rem; font-weight: 700; color: var(--text);
+  margin-bottom: 8px; letter-spacing: -0.01em;
+}
+.empty-sub {
+  font-size: 0.88rem; color: var(--text-dim); line-height: 1.6;
+  max-width: 260px; margin-bottom: 24px;
+}
+.empty-cta {
+  background: var(--ke-green); color: #fff;
+  border: none; padding: 12px 24px; border-radius: 50px;
+  font-size: 0.88rem; font-weight: 700; cursor: pointer;
+  font-family: var(--font); transition: all 0.18s;
+  display: flex; align-items: center; gap: 8px;
+}
+.empty-cta:hover { background: var(--ke-green-bright); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(109,40,217,0.22); }
+.empty-reward-tag {
+  margin-top: 12px; font-size: 0.75rem; color: var(--text-dim);
+  display: flex; align-items: center; gap: 5px;
+}
+.empty-reward-tag span { color: var(--gold); font-weight: 600; }
+
+</style>
+</head>
+<body>
+
+<div class="mobile-top-nav">
+  <a class="bn-item active" href="rada-markets.html"><div class="bn-icon">◈</div><div class="bn-label">Markets</div></a>
+  <a class="bn-item" href="rada-portfolio.html"><div class="bn-icon">◎</div><div class="bn-label">Portfolio</div></a>
+  <a class="bn-item" href="rada-leaderboard.html"><div class="bn-icon">⊞</div><div class="bn-label">Leaders</div></a>
+  <a class="bn-item" href="rada-creator.html"><div class="bn-icon">💡</div><div class="bn-label">Creator</div></a>
+  <a class="bn-item" href="rada-data.html"><div class="bn-icon">📊</div><div class="bn-label">Data</div></a>
+  <a class="bn-item" href="rada-friends.html"><div class="bn-icon">🤝</div><div class="bn-label">Social</div></a>
+</div>
+
+
+<!-- TICKER -->
+<div class="ticker-wrap">
+  <div class="ticker-track">
+    <span class="ticker-item"><span>POLITICS</span> Finance Bill 2025 · YES 29% · NO 71%</span>
+    <span class="ticker-item"><span>ECONOMY</span> KES/USD below 130 · YES 54% · NO 46%</span>
+    <span class="ticker-item"><span>TECH</span> M-Pesa exceeds KES 10T · YES 52% · NO 48%</span>
+    <span class="ticker-item"><span>WEATHER</span> Nairobi Heavy Rain Next 72h · YES 67% · NO 33%</span>
+    <span class="ticker-item"><span>ECONOMY</span> NSE 20 above 2500 · YES 43% · NO 57%</span>
+    <span class="ticker-item"><span>POLITICS</span> Finance Bill 2025 · YES 29% · NO 71%</span>
+    <span class="ticker-item"><span>ECONOMY</span> KES/USD below 130 · YES 54% · NO 46%</span>
+    <span class="ticker-item"><span>TECH</span> M-Pesa exceeds KES 10T · YES 52% · NO 48%</span>
+    <span class="ticker-item"><span>WEATHER</span> Nairobi Heavy Rain Next 72h · YES 67% · NO 33%</span>
+    <span class="ticker-item"><span>ECONOMY</span> NSE 20 above 2500 · YES 43% · NO 57%</span>
+  </div>
+</div>
+
+<!-- NAV -->
+<header class="site-header">
+  <a class="h-logo" href="rada-markets.html">
+    <div class="h-logo-badge">RADA</div>
+    <div>
+      <div class="h-logo-text">Rada</div>
+      <div class="h-logo-sub">CROWD INTELLIGENCE</div>
+    </div>
+  </a>
+  <nav class="h-nav">
+    <a class="active" href="rada-markets.html">Forecast Markets</a>
+    <a href="rada-portfolio.html">Portfolio</a>
+    <a href="rada-leaderboard.html">Leaderboard</a>
+    <a href="rada-data.html">Data Platform</a>
+    <a href="rada-creator.html">Creator Hub</a>
+    <a href="rada-friends.html">Social Challenge</a>
+    <a href="rada-about.html">About</a>
+  </nav>
+  <div class="h-actions">
+    <div class="h-balance"><div class="h-dot"></div><span>KES <strong id="balDisplay">5,000</strong></span></div>
+    <button class="h-btn h-btn-primary" onclick="openDeposit ? openDeposit() : null">+ Deposit</button>
+  </div>
+</header>
+
+<!-- FILTERS -->
+<div style="padding: 0 24px; position: relative; z-index: 1; max-width: 1200px; margin: 16px auto 0;">
+  <div class="filter-bar">
+    <button class="filter-btn" onclick="filterCat(this,'TRENDING')">🔥 Trending</button>
+    <button class="filter-btn active" onclick="filterCat(this,'ALL')">All Markets</button>
+    <button class="filter-btn" onclick="filterCat(this,'POLITICS')">🗳️ Politics</button>
+    <button class="filter-btn" onclick="filterCat(this,'ECONOMY')">📈 Economy</button>
+    <button class="filter-btn" onclick="filterCat(this,'WEATHER')">🌦️ Weather</button>
+    <button class="filter-btn" onclick="filterCat(this,'ENTERTAINMENT')">🎭 Entertainment</button>
+    <button class="filter-btn" onclick="filterCat(this,'TECH')">💡 Tech</button>
+    <button class="filter-btn" onclick="filterCat(this,'GENERAL')">🇰🇪 General</button>
+    <input class="search-box" placeholder="🔍 Search markets..." oninput="searchMarkets(this.value)">
+  </div>
+</div>
+
+<!-- MARKET GRID -->
+<div class="market-grid" id="marketGrid"></div>
+
+<!-- FORECAST MODAL -->
+<div class="modal-overlay" id="forecastModal">
+  <div class="modal">
+    <div class="modal-handle-row">
+      <div class="modal-handle" onclick="closeModal()"></div>
+      <button class="modal-close-btn" onclick="closeModal()" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-head">
+      <div class="modal-market-q" id="modalQuestion">Market question here</div>
+      <div class="side-selector">
+        <button class="side-btn side-btn-yes selected" id="sideYes" onclick="selectSide('YES')">
+          YES <span id="sideYesPct" style="font-size:0.75rem;opacity:0.8">· 65%</span>
+        </button>
+        <button class="side-btn side-btn-no" id="sideNo" onclick="selectSide('NO')">
+          NO <span id="sideNoPct" style="font-size:0.75rem;opacity:0.8">· 35%</span>
+        </button>
+      </div>
+    </div>
+    <div class="modal-body">
+      <!-- Stake Slider -->
+      <div class="slider-section">
+        <div class="slider-label">
+          <span class="slider-label-text">Stake Amount</span>
+          <div style="display:flex;align-items:center;gap:6px">
+            <span style="font-size:0.72rem;color:var(--text-dim)">KES</span>
+            <input class="slider-val-input" id="stakeInput" type="number" min="20" max="20000" value="500" oninput="updateStake(this.value)">
+          </div>
+        </div>
+        <div class="quick-stakes">
+          <button class="quick-btn" onclick="setStake(20)">20</button>
+          <button class="quick-btn" onclick="setStake(100)">100</button>
+          <button class="quick-btn active" onclick="setStake(500)">500</button>
+          <button class="quick-btn" onclick="setStake(1000)">1K</button>
+          <button class="quick-btn" onclick="setStake(5000)">5K</button>
+          <button class="quick-btn" onclick="setStake(10000)">10K</button>
+        </div>
+        <input type="range" class="stake-slider" id="stakeSlider"
+          min="20" max="20000" step="10" value="500"
+          oninput="updateSlider(this.value)">
+        <div class="slider-range"><span>KES 20</span><span>KES 20,000</span></div>
+      </div>
+
+      <!-- Payout Box -->
+      <div class="payout-box">
+        <div class="payout-grid">
+          <div>
+            <div class="payout-item-label">Forecast Contracts</div>
+            <div class="payout-item-val green" id="payContracts">769</div>
+          </div>
+          <div>
+            <div class="payout-item-label">Price Per Contract</div>
+            <div class="payout-item-val" id="payPrice">KES 0.65</div>
+          </div>
+          <div>
+            <div class="payout-item-label">Total Payout (If Correct)</div>
+            <div class="payout-item-val green" id="payTotal">KES 731</div>
+          </div>
+          <div>
+            <div class="payout-item-label">Net Profit</div>
+            <div class="payout-item-val gold" id="payProfit">+KES 231</div>
+          </div>
+        </div>
+        <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:0.68rem;color:var(--text-dim)">Platform fee (5%)</span>
+          <span class="payout-item-val" id="payFee" style="font-size:0.8rem;color:var(--text-dim)">KES 25</span>
+        </div>
+      </div>
+
+      <div class="unanimous-warn" id="unanimousWarn">
+        ⚠ This market has very low counterparty volume. If consensus reaches 100%, your full stake will be refunded (no gain, no loss).
+      </div>
+
+      <button class="btn-forecast" id="forecastBtn" onclick="submitForecast()">
+        Forecast YES via M-Pesa →
+      </button>
+      <!-- Share Panel -->
+      <div class="modal-share-panel">
+        <span id="mspLinkText" data-url="" style="display:none"></span>
+        <button class="btn-forecast btn-share-solo" onclick="smartShareModal()" id="shareModalBtn">⤴ Share</button>
+        <div class="msp-toast" id="mspToast">✓ Link copied!</div>
+      </div>
+      <div class="modal-legal">
+        By forecasting, you agree to the Rada Analyst Agreement. This is an incentivised information contribution, not a wager. Min stake: KES 20.
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="bottom-nav">
+  <a class="bn-item active" href="rada-markets.html"><div class="bn-icon">◈</div><div class="bn-label">Markets</div></a>
+  <a class="bn-item" href="rada-portfolio.html"><div class="bn-icon">◎</div><div class="bn-label">Portfolio</div></a>
+  <a class="bn-item" href="rada-leaderboard.html"><div class="bn-icon">⊞</div><div class="bn-label">Leaders</div></a>
+  <a class="bn-item" href="rada-creator.html"><div class="bn-icon">💡</div><div class="bn-label">Creator</div></a>
+  <a class="bn-item" href="rada-data.html"><div class="bn-icon">📊</div><div class="bn-label">Data</div></a>
+  <a class="bn-item" href="rada-friends.html"><div class="bn-icon">🤝</div><div class="bn-label">Social</div></a>
+</div>
+
+<script>
+// ── DATA ─────────────────────────────────────────────────────────────────────
+const MARKETS = [
+  {
+    id:1, q:'Will Kenya pass the Finance Bill 2025?', slug:'will-kenya-pass-finance-bill-2025', cat:'POLITICS',
+    yes:29, vol:'KES 510K', traders:389, closes:'Mar 15', shift:+22, velocity:18, closingSoon:true,  isNew:false, creator:null,
+  },
+  {
+    id:2, q:'Will the KES/USD exchange rate stay below 130 by Friday?', slug:'kes-usd-exchange-rate-below-130', cat:'ECONOMY',
+    yes:54, vol:'KES 612K', traders:441, closes:'Mar 08', shift:-14, velocity:31, closingSoon:true,  isNew:false, creator:'@murambi_k',
+  },
+  {
+    id:3, q:'Will Kenya launch a national digital ID by end of 2025?', slug:'kenya-digital-id-launch-2025', cat:'TECH',
+    yes:18, vol:'KES 234K', traders:198, closes:'Mar 31', shift:+7,  velocity:5,  closingSoon:false, isNew:false, creator:null,
+  },
+  {
+    id:4, q:'Will Nairobi receive above-average long rains this season?', slug:'nairobi-above-average-long-rains', cat:'WEATHER',
+    yes:67, vol:'KES 89K', traders:76, closes:'Jun 30', shift:+11, velocity:9,  closingSoon:false, isNew:true, creator:'@forecaster_nbi',
+  },
+  {
+    id:5, q:'Will NSE 20 Index close above 2,500 by December 2025?', slug:'nse-20-above-2500-december-2025', cat:'ECONOMY',
+    yes:43, vol:'KES 295K', traders:221, closes:'Dec 31', shift:-3,  velocity:4,  closingSoon:false, isNew:false, creator:null,
+  },
+  {
+    id:6, q:'Will William Ruto complete his first presidential term?', slug:'will-ruto-complete-first-term', cat:'POLITICS',
+    yes:76, vol:'KES 485K', traders:312, closes:'Sep 01 2027', shift:+4,  velocity:12, closingSoon:false, isNew:false, creator:null,
+  },
+  {
+    id:7, q:'Will the NSE 20 Index close above 2,500 by December 2025?', slug:'nse-20-above-2500-dec-2025-b', cat:'TECH',
+    yes:54, vol:'KES 178K', traders:163, closes:'Jul 01', shift:+19, velocity:22, closingSoon:false, isNew:true, creator:'@gor_fan_254',
+  },
+  {
+    id:8, q:'Will super petrol price drop below KES 175 in the next EPRA review?', slug:'petrol-below-kes-175-epra-review', cat:'ECONOMY',
+    yes:38, vol:'KES 145K', traders:89, closes:'Mar 14', shift:-8,  velocity:14, closingSoon:true,  isNew:false, creator:'@energia_ke',
+  },
+];
+
+let activeFilter = 'ALL';
+let activeSide = 'YES';
+let activeMarket = null;
+let stakeAmount = 500;
+
+// ── RENDER MARKETS ───────────────────────────────────────────────────────────
+function renderMarkets(data) {
+  const grid = document.getElementById('marketGrid');
+
+  if (!data || data.length === 0) {
+    // Find which category is active for personalised copy
+    const activeBtn = document.querySelector('.filter-btn.active');
+    const catLabel  = activeBtn ? activeBtn.textContent.trim() : 'this category';
+    const catEmoji  = { 'ALL':'🌍','TRENDING':'🔥','POLITICS':'🗳️','ECONOMY':'📈','WEATHER':'🌦️','ENTERTAINMENT':'🎭','TECH':'💡','GENERAL':'🇰🇪' };
+    const activeCat = activeBtn ? activeBtn.getAttribute('onclick').match(/'([A-Z]+)'/)?.[1] : 'ALL';
+    const emoji     = catEmoji[activeCat] || '📭';
+
+    grid.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">${emoji}</div>
+        <div class="empty-title">No markets yet in ${catLabel}</div>
+        <div class="empty-sub">Be the first to shape the conversation — propose a YES/NO question and earn a royalty on every trade while it's active.</div>
+        <button class="empty-cta" onclick="window.location='rada-creator.html'">
+          💡 Propose a Market
+        </button>
+        <div class="empty-reward-tag">🎁 <span>Earn 0.5% per trade</span> — credited to your Rada wallet while the market is live</div>
+      </div>
+    `;
+    return;
+  }
+
+  grid.innerHTML = data.map((m, i) => `
+    <div class="market-card" style="animation-delay:${i*0.05}s" onclick="openForecast(${m.id})">
+      <div class="card-category"><div class="cat-dot"></div>${m.cat}</div>
+      ${m.creator ? `<div class="creator-badge">💡 ${m.creator} · Creator</div>` : ''}
+      <div class="card-question">${m.q}</div>
+      <div class="prob-bar-wrap">
+        <div class="prob-labels">
+          <span class="prob-yes">YES ${m.yes}%</span>
+          <span class="prob-no">NO ${100 - m.yes}%</span>
+        </div>
+        <div class="prob-bar"><div class="prob-fill-yes" style="width:${m.yes}%"></div></div>
+      </div>
+      <div class="card-meta">
+        <div class="card-meta-item">📊 ${m.vol}</div>
+        <div class="card-meta-item">👥 ${m.traders}</div>
+        <div class="card-meta-item">⏰ ${m.closes}</div>
+      </div>
+      <div class="card-actions">
+        <button class="btn-yes" onclick="event.stopPropagation();openForecast(${m.id},'YES')">Forecast YES</button>
+        <button class="btn-no"  onclick="event.stopPropagation();openForecast(${m.id},'NO')">Forecast NO</button>
+      </div>
+      <button class="card-share-btn" onclick="event.stopPropagation();smartShare(${m.id},'${m.slug}',this)">⤴ Share</button>
+    </div>
+  `).join('');
+}
+
+
+// ── TRENDING SCORE + RENDER ──────────────────────────────────────────────────
+function trendingScore(m) {
+  return (m.velocity * 3) + (Math.abs(m.shift) * 2) + (m.closingSoon ? 20 : 0) + (m.isNew ? 10 : 0);
+}
+
+function trendBadges(m) {
+  let badges = '';
+  if (m.shift > 0)  badges += `<span class="trend-badge trend-badge-shift-up">↑ YES +${m.shift}% in 24h</span>`;
+  if (m.shift < 0)  badges += `<span class="trend-badge trend-badge-shift-down">↓ YES ${m.shift}% in 24h</span>`;
+  if (m.closingSoon) badges += `<span class="trend-badge trend-badge-closing">⏳ Closing Soon</span>`;
+  if (m.velocity >= 15) badges += `<span class="trend-badge trend-badge-hot">🔥 ${m.velocity} trades/hr</span>`;
+  if (m.isNew)      badges += `<span class="trend-badge trend-badge-new">✦ New</span>`;
+  return badges;
+}
+
+function renderTrending() {
+  const grid = document.getElementById('marketGrid');
+  const ranked = [...MARKETS]
+    .filter(m => m.shift !== undefined)
+    .sort((a, b) => trendingScore(b) - trendingScore(a))
+    .slice(0, 5);
+
+  grid.innerHTML = `
+    <div class="trending-section">
+      <div class="trending-header">
+        <div class="trending-live-dot"></div>
+        <div>
+          <div class="trending-title">Trending Now</div>
+          <div class="trending-subtitle">Ranked by price movement · trade velocity · urgency</div>
+        </div>
+      </div>
+    </div>
+  ` + ranked.map((m, i) => `
+    <div class="market-card" style="animation-delay:${i*0.06}s" onclick="openForecast(${m.id})">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+        <span class="trend-rank">#${i+1}</span>
+        <div class="card-category" style="margin-bottom:0"><div class="cat-dot"></div>${m.cat}</div>
+      </div>
+      <div style="margin-bottom:6px;">${trendBadges(m)}</div>
+      ${m.creator ? `<div class="creator-badge">💡 ${m.creator} · Creator</div>` : ''}
+      <div class="card-question">${m.q}</div>
+      <div class="prob-bar-wrap">
+        <div class="prob-labels">
+          <span class="prob-yes">YES ${m.yes}%</span>
+          <span class="prob-no">NO ${100 - m.yes}%</span>
+        </div>
+        <div class="prob-bar"><div class="prob-fill-yes" style="width:${m.yes}%"></div></div>
+      </div>
+      <div class="card-meta">
+        <div class="card-meta-item">📊 ${m.vol}</div>
+        <div class="card-meta-item">👥 ${m.traders}</div>
+        <div class="card-meta-item">⏰ ${m.closes}</div>
+      </div>
+      <div class="card-actions">
+        <button class="btn-yes" onclick="event.stopPropagation();openForecast(${m.id},'YES')">Forecast YES</button>
+        <button class="btn-no"  onclick="event.stopPropagation();openForecast(${m.id},'NO')">Forecast NO</button>
+      </div>
+      <button class="card-share-btn" onclick="event.stopPropagation();smartShare(${m.id},'${m.slug}',this)">⤴ Share</button>
+    </div>
+  `).join('');
+}
+
+function filterCat(btn, cat) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  activeFilter = cat;
+  if (cat === 'TRENDING') { renderTrending(); return; }
+  const filtered = cat === 'ALL' ? MARKETS : MARKETS.filter(m => m.cat === cat);
+  renderMarkets(filtered);
+}
+
+function searchMarkets(q) {
+  const filtered = MARKETS.filter(m =>
+    m.q.toLowerCase().includes(q.toLowerCase()) &&
+    (activeFilter === 'ALL' || m.cat === activeFilter)
+  );
+  renderMarkets(filtered);
+}
+
+// ── FORECAST MODAL ───────────────────────────────────────────────────────────
+function openForecast(id, side = 'YES') {
+  activeMarket = MARKETS.find(m => m.id === id);
+  activeSide = side;
+
+  document.getElementById('modalQuestion').textContent = activeMarket.q;
+  document.getElementById('sideYesPct').textContent = `· ${activeMarket.yes}%`;
+  document.getElementById('sideNoPct').textContent  = `· ${100 - activeMarket.yes}%`;
+
+  selectSide(side);
+  setStake(500);
+  document.getElementById('forecastModal').classList.add('open');
+  setModalShareUrl(activeMarket.slug || activeMarket.id);
+  document.getElementById('forecastBtn').classList.toggle('yes-active', activeSide === 'YES');
+}
+
+function closeModal() {
+  document.getElementById('forecastModal').classList.remove('open');
+}
+
+document.getElementById('forecastModal').addEventListener('click', function(e) {
+  // Close when tapping the dark backdrop (anything outside .modal)
+  var sheet = document.querySelector('#forecastModal .modal');
+  if (sheet && !sheet.contains(e.target)) closeModal();
+});
+// Also close on touchstart for faster mobile response
+document.getElementById('forecastModal').addEventListener('touchstart', function(e) {
+  var sheet = document.querySelector('#forecastModal .modal');
+  if (sheet && !sheet.contains(e.target)) closeModal();
+}, { passive: true });
+
+function selectSide(side) {
+  activeSide = side;
+  document.getElementById('sideYes').classList.toggle('selected', side === 'YES');
+  document.getElementById('sideNo').classList.toggle('selected',  side === 'NO');
+  document.getElementById('forecastBtn').textContent = `Forecast ${side} via M-Pesa →`;
+  document.getElementById('forecastBtn').classList.toggle('yes-active', side === 'YES');
+  computePayout();
+}
+
+function setStake(val) {
+  stakeAmount = Math.max(20, Math.min(20000, parseInt(val)));
+  document.getElementById('stakeInput').value = stakeAmount;
+  document.getElementById('stakeSlider').value = stakeAmount;
+  document.querySelectorAll('.quick-btn').forEach(b => {
+    b.classList.toggle('active', parseInt(b.textContent.replace('K','000')) === stakeAmount ||
+      (b.textContent === '1K' && stakeAmount === 1000));
+  });
+  computePayout();
+}
+
+function updateStake(val) { setStake(parseInt(val) || 20); }
+function updateSlider(val) { setStake(parseInt(val)); }
+
+// ── UNIFIED PAYOUT FORMULA ───────────────────────────────────────────────────
+function computePayout() {
+  if (!activeMarket) return;
+  const fee = 0.05;
+  const yesPct = activeMarket.yes / 100;
+  const noPct  = (100 - activeMarket.yes) / 100;
+  const prob = activeSide === 'YES' ? yesPct : noPct;
+
+  // Unanimous consensus check
+  const isUnanimous = activeMarket.yes >= 99 || activeMarket.yes <= 1;
+  document.getElementById('unanimousWarn').classList.toggle('show', isUnanimous);
+
+  if (isUnanimous) {
+    // Full refund — no gain
+    document.getElementById('payContracts').textContent = stakeAmount;
+    document.getElementById('payPrice').textContent = 'KES ' + prob.toFixed(2);
+    document.getElementById('payTotal').textContent = 'KES ' + stakeAmount.toLocaleString() + ' (refund)';
+    document.getElementById('payProfit').textContent = 'KES 0';
+    document.getElementById('payFee').textContent = 'KES 0';
+    return;
+  }
+
+  // Standard payout
+  const contracts  = Math.floor(stakeAmount / prob);
+  const gross      = contracts; // each contract = KES 1
+  const netPayout  = gross * (1 - fee);
+  const platformFee= Math.floor(gross * fee);
+  const profit     = netPayout - stakeAmount;
+
+  document.getElementById('payContracts').textContent = contracts.toLocaleString();
+  document.getElementById('payPrice').textContent = 'KES ' + prob.toFixed(2);
+  document.getElementById('payTotal').textContent = 'KES ' + Math.floor(netPayout).toLocaleString();
+  document.getElementById('payProfit').textContent = (profit >= 0 ? '+' : '') + 'KES ' + Math.floor(profit).toLocaleString();
+  document.getElementById('payProfit').style.color = profit >= 0 ? 'var(--gold)' : 'var(--ke-red)';
+  document.getElementById('payFee').textContent = 'KES ' + platformFee.toLocaleString();
+}
+
+function submitForecast() {
+  if (stakeAmount < 20) { alert('Minimum stake is KES 20'); return; }
+  const btn = document.getElementById('forecastBtn');
+  btn.disabled = true;
+  btn.textContent = 'Sending STK Push...';
+
+  setTimeout(() => {
+    btn.textContent = '⏳ Enter M-Pesa PIN on your phone...';
+    setTimeout(() => {
+      btn.style.background = 'var(--ke-green)';
+      btn.textContent = '✓ Forecast Confirmed!';
+      const bal = parseInt(document.getElementById('balDisplay').textContent.replace(/,/g,'')) - stakeAmount;
+      document.getElementById('balDisplay').textContent = bal.toLocaleString();
+      setTimeout(() => {
+        closeModal();
+        btn.disabled = false;
+        btn.textContent = 'Forecast via M-Pesa →';
+        btn.style.background = '';
+      }, 1500);
+    }, 1800);
+  }, 1200);
+}
+
+function openDeposit() { alert('M-Pesa STK Push deposit flow would open here.'); }
+
+// ── INIT ─────────────────────────────────────────────────────────────────────
+renderMarkets(MARKETS);
+
+function smartShareModal() {
+  var url = getModalUrl();
+  var q   = activeMarket ? activeMarket.q : 'Rada Forecast';
+  var shareText = activeMarket
+    ? '🇰🇪 Rada Forecast: "' + q + '" — YES ' + activeMarket.yes + '%:'
+    : '🇰🇪 Check out this forecast on Rada:';
+
+  if (navigator.share) {
+    navigator.share({ title: 'Rada Forecast', text: shareText, url: url })
+      .then(function() { showMspToast(); })
+      .catch(function(err) {
+        if (err.name === 'AbortError') return;
+        modalFallbackShare(url, shareText);
+      });
+    return;
+  }
+  modalFallbackShare(url, shareText);
+}
+
+function modalFallbackShare(url, shareText) {
+  var isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+  if (isMobile) {
+    var waUrl = 'https://wa.me/?text=' + encodeURIComponent(shareText + ' ' + url);
+    var win = window.open(waUrl, '_blank');
+    if (win) { showMspToast(); return; }
+  }
+  robustCopy(url, showMspToast);
+}
+
+</script>
+
+<script>
+// ════════════════════════════════════════════════════════════════════
+// RADA SHARE FUNCTIONS  —  clean, single block, no remnants
+// ════════════════════════════════════════════════════════════════════
+
+const BASE_URL = 'https://rada.co.ke';
+
+function marketUrl(slug) {
+  return BASE_URL + '/m/' + slug;
+}
+
+function marketShareText(id) {
+  var m = MARKETS.find(function(x) { return x.id === id; });
+  if (!m) return 'Check out this forecast on Rada: ';
+  return '🇰🇪 Rada Forecast: "' + m.q + '" — YES ' + m.yes + '% · ' + m.vol + ' staked. Join the crowd intelligence: ';
+}
+
+// ── Robust clipboard ────────────────────────────────────────────────
+// Tier A: modern navigator.clipboard API
+// Tier B: hidden textarea + execCommand (older Android, in-app browsers, HTTP)
+function robustCopy(text, onSuccess) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text)
+      .then(function() { if (onSuccess) onSuccess(); })
+      .catch(function() { legacyCopy(text, onSuccess); });
+  } else {
+    legacyCopy(text, onSuccess);
+  }
+}
+
+function legacyCopy(text, onSuccess) {
+  var ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.cssText = 'position:fixed;left:-9999px;top:-9999px;opacity:0;pointer-events:none';
+  document.body.appendChild(ta);
+  ta.focus();
+  ta.select();
+  ta.setSelectionRange(0, 99999); // iOS fix
+  try {
+    var ok = document.execCommand('copy');
+    if (ok && onSuccess) onSuccess();
+  } catch(e) {}
+  document.body.removeChild(ta);
+}
+
+// ── Smart single Share button ────────────────────────────────────────
+// Tier 1: navigator.share  → native OS sheet (all apps: WA, Telegram, iMessage, X…)
+// Tier 2: WhatsApp deep-link → universal fallback on Kenyan Android phones
+// Tier 3: robustCopy       → clipboard copy (desktop + pop-up blocked)
+function smartShare(id, slug, btn) {
+  var m   = MARKETS.find(function(x) { return x.id === id; });
+  var url = marketUrl(slug);
+  var shareText = m
+    ? '🇰🇪 Rada Forecast: "' + m.q + '" — YES ' + m.yes + '% · ' + m.vol + ' staked:'
+    : '🇰🇪 Check out this forecast on Rada:';
+
+  // Tier 1 — Web Share API (opens native OS share sheet on mobile)
+  if (navigator.share) {
+    navigator.share({ title: 'Rada Forecast', text: shareText, url: url })
+      .then(function() { flashShareBtn(btn, '✓ Shared!'); })
+      .catch(function(err) {
+        if (err.name === 'AbortError') return; // user dismissed, do nothing
+        fallbackShare(url, shareText, btn);
+      });
+    return;
+  }
+
+  // Tier 2 + 3 for browsers without Web Share API
+  fallbackShare(url, shareText, btn);
+}
+
+function fallbackShare(url, shareText, btn) {
+  var isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+  if (isMobile) {
+    var waUrl = 'https://wa.me/?text=' + encodeURIComponent(shareText + ' ' + url);
+    var win = window.open(waUrl, '_blank');
+    if (win) {
+      flashShareBtn(btn, '📲 Opening WA...');
+      return;
+    }
+  }
+  // Tier 3 — clipboard (desktop or pop-up blocked)
+  robustCopy(url, function() { flashShareBtn(btn, '✓ Link copied!'); });
+}
+
+function flashShareBtn(btn, msg) {
+  if (!btn) return;
+  var orig = btn.innerHTML;
+  btn.innerHTML = msg;
+  btn.classList.add('shared');
+  setTimeout(function() {
+    btn.innerHTML = '&#x2934; Share';
+    btn.classList.remove('shared');
+  }, 2200);
+}
+
+// ── Modal share panel ────────────────────────────────────────────────
+function setModalShareUrl(slug) {
+  var url = marketUrl(slug);
+  var el = document.getElementById('mspLinkText');
+  if (el) {
+    el.textContent = url.replace('https://', '');
+    el.dataset.url = url;
+  }
+}
+
+function getModalUrl() {
+  var el = document.getElementById('mspLinkText');
+  return (el && el.dataset.url) ? el.dataset.url : '';
+}
+
+function showMspToast() {
+  var t = document.getElementById('mspToast');
+  if (!t) return;
+  t.classList.add('show');
+  setTimeout(function() { t.classList.remove('show'); }, 2200);
+}
+
+function copyModalLink() {
+  var url = getModalUrl();
+  if (!url) return;
+  robustCopy(url, showMspToast);
+  // Also flash the link box
+  var box = document.getElementById('mspLinkBox');
+  if (box) {
+    box.style.borderColor = 'var(--primary)';
+    setTimeout(function() { box.style.borderColor = ''; }, 1000);
+  }
+}
+
+function shareModalWA() {
+  if (!activeMarket) return;
+  var url = getModalUrl();
+  var text = encodeURIComponent(marketShareText(activeMarket.id) + url);
+  window.open('https://wa.me/?text=' + text, '_blank');
+}
+
+function shareModalSMS() {
+  if (!activeMarket) return;
+  var url = getModalUrl();
+  var body = encodeURIComponent(marketShareText(activeMarket.id) + url);
+  window.open('sms:?&body=' + body, '_blank');
+}
+
+function nativeShareModal() {
+  var url = getModalUrl();
+  var q = activeMarket ? activeMarket.q : 'Rada Forecast';
+  if (navigator.share) {
+    navigator.share({ title: 'Rada Forecast', text: q, url: url })
+      .catch(function() { robustCopy(url, showMspToast); });
+  } else {
+    robustCopy(url, showMspToast);
+  }
+}
+
+function smartShareModal() {
+  var url = getModalUrl();
+  var q   = activeMarket ? activeMarket.q : 'Rada Forecast';
+  var shareText = activeMarket
+    ? '🇰🇪 Rada Forecast: "' + q + '" — YES ' + activeMarket.yes + '%:'
+    : '🇰🇪 Check out this forecast on Rada:';
+
+  if (navigator.share) {
+    navigator.share({ title: 'Rada Forecast', text: shareText, url: url })
+      .then(function() { showMspToast(); })
+      .catch(function(err) {
+        if (err.name === 'AbortError') return;
+        modalFallbackShare(url, shareText);
+      });
+    return;
+  }
+  modalFallbackShare(url, shareText);
+}
+
+function modalFallbackShare(url, shareText) {
+  var isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+  if (isMobile) {
+    var waUrl = 'https://wa.me/?text=' + encodeURIComponent(shareText + ' ' + url);
+    var win = window.open(waUrl, '_blank');
+    if (win) { showMspToast(); return; }
+  }
+  robustCopy(url, showMspToast);
+}
+
+</script>
+
+</body>
+</html>

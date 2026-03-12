@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rada — Sign In</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --primary:#6d28d9;
+  --primary-bright:#7c3aed;
+  --primary-light:#8b5cf6;
+  --primary-glow:rgba(109,40,217,0.08);
+  --primary-dim:rgba(109,40,217,0.05);
+  --ke-green:#6d28d9;
+  --ke-green-bright:#7c3aed;
+  --ke-green-glow:rgba(109,40,217,0.08);
+  --ke-red:#CE1126;
+  --ke-red-dim:rgba(206,17,38,0.07);
+  --gold:#c97d0a;
+  --gold-dim:rgba(201,125,10,0.08);
+  --purple:#7c3aed;
+  --purple-dim:rgba(109,40,217,0.07);
+  --blue:#2563eb;
+  --blue-dim:rgba(37,99,235,0.08);
+  --bg:#faf8ff;
+  --bg2:#ffffff;
+  --bg3:#f0edff;
+  --bg4:#e5e0ff;
+  --border:rgba(109,40,217,0.12);
+  --border-bright:rgba(109,40,217,0.30);
+  --text:#1a1035;
+  --text-dim:#9284b8;
+  --text-mid:#5b21b6;
+  --font:'Outfit',sans-serif;
+  --mono:'DM Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;}
+body{background:#faf8ff;color:var(--text);font-family:var(--font);display:flex;flex-direction:column;min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");pointer-events:none;z-index:0;opacity:0.08;}
+
+/* Ambient glow */
+body::after{content:'';position:fixed;top:-200px;left:50%;transform:translateX(-50%);width:600px;height:600px;background:radial-gradient(circle,rgba(109,40,217,0.04),transparent 70%);pointer-events:none;z-index:0;}
+
+.page{display:flex;flex:1;align-items:center;justify-content:center;padding:24px 20px;position:relative;z-index:1;}
+
+/* CARD */
+.auth-card{width:100%;max-width:420px;}
+
+/* LOGO */
+.logo-area{text-align:center;margin-bottom:32px;}
+.logo-badge-lg{display:inline-flex;align-items:center;gap:6px;background:var(--ke-green);color:#fff;font-family:var(--font);font-size:1.1rem;font-weight:800;padding:10px 22px;border-radius:100px;margin-bottom:12px;letter-spacing:-0.01em;}
+.logo-tagline{font-size:0.82rem;color:var(--text-mid);line-height:1.5;}
+.logo-tagline strong{color:var(--text);}
+
+/* MODE SWITCHER */
+.mode-switch{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:5px;display:flex;gap:4px;margin-bottom:24px;}
+.mode-btn{flex:1;padding:9px;border-radius:10px;font-size:0.8rem;font-weight:700;cursor:pointer;border:none;background:transparent;color:var(--text-dim);font-family:var(--font);transition:all 0.2s;text-align:center;}
+.mode-btn.active{background:var(--ke-green-glow);color:var(--ke-green);border:1px solid rgba(109,40,217,0.14);}
+
+/* FORM PANELS */
+.form-panel{background:#ffffff;border:1px solid rgba(109,40,217,0.14);border-radius:18px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);}
+.fp-head{padding:20px 22px 16px;border-bottom:1px solid rgba(109,40,217,0.12);}
+.fp-title{font-size:1rem;font-weight:700;}
+.fp-sub{font-size:0.75rem;color:var(--text-mid);margin-top:4px;line-height:1.5;}
+.fp-body{padding:20px 22px;}
+
+/* INPUTS */
+.field{margin-bottom:16px;}
+.f-label{font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--text-dim);display:block;margin-bottom:6px;}
+.f-input{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px 14px;color:var(--text);font-family:var(--font);font-size:0.88rem;outline:none;transition:border-color 0.2s;}
+.f-input:focus{border-color:var(--border-bright);}
+.f-input::placeholder{color:var(--text-dim);}
+.f-input:disabled{opacity:0.5;cursor:not-allowed;}
+
+/* PHONE + COUNTRY */
+.phone-row{display:flex;gap:8px;}
+.country-sel{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px 10px;color:var(--text-mid);font-family:var(--mono);font-size:0.82rem;outline:none;cursor:pointer;min-width:95px;}
+.country-sel:focus{border-color:var(--border-bright);}
+
+/* OTP INPUTS */
+.otp-row{display:flex;gap:8px;justify-content:center;margin-bottom:6px;}
+.otp-box{width:44px;height:52px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;text-align:center;font-family:var(--mono);font-size:1.3rem;font-weight:700;color:#6d28d9;outline:none;transition:border-color 0.2s;}
+.otp-box:focus{border-color:var(--ke-green);}
+.otp-hint{text-align:center;font-size:0.72rem;color:var(--text-dim);margin-bottom:16px;}
+.otp-hint a{color:#6d28d9;cursor:pointer;text-decoration:underline;}
+
+/* CHECKBOXES */
+.compliance-section{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:18px;}
+.comp-label{font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--text-dim);margin-bottom:10px;}
+.check-row{display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;}
+.check-row:last-child{margin-bottom:0;}
+.check-box{width:18px;height:18px;border-radius:4px;border:1.5px solid var(--border-bright);background:transparent;cursor:pointer;appearance:none;-webkit-appearance:none;flex-shrink:0;margin-top:1px;transition:all 0.15s;position:relative;}
+.check-box:checked{background:var(--ke-green);border-color:var(--ke-green);}
+.check-box:checked::after{content:'✓';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#000;font-size:0.7rem;font-weight:700;}
+.check-text{font-size:0.75rem;color:var(--text-mid);line-height:1.5;}
+.check-text a{color:#6d28d9;text-decoration:none;}
+.check-text a:hover{text-decoration:underline;}
+
+/* BUTTONS */
+.btn-primary{width:100%;padding:14px;background:var(--ke-green);color:#fff;font-weight:700;font-size:0.92rem;border-radius:12px;border:none;cursor:pointer;font-family:var(--font);transition:all 0.2s;letter-spacing:0.01em;}
+.btn-primary:hover{background:var(--ke-green-bright);}
+.btn-primary:disabled{background:var(--bg3);color:var(--text-dim);cursor:not-allowed;}
+.btn-outline{width:100%;padding:12px;background:transparent;color:var(--text-mid);font-weight:600;font-size:0.85rem;border-radius:12px;border:1px solid var(--border);cursor:pointer;font-family:var(--font);margin-top:8px;transition:all 0.15s;}
+.btn-outline:hover{border-color:var(--border-bright);color:var(--text);}
+
+/* ERROR / INFO */
+.err-msg{background:rgba(206,17,38,0.08);border:1px solid rgba(206,17,38,0.2);border-radius:8px;padding:10px 12px;font-size:0.75rem;color:var(--ke-red);margin-bottom:12px;display:none;}
+.info-msg{background:var(--ke-green-glow);border:1px solid rgba(109,40,217,0.14);border-radius:8px;padding:10px 12px;font-size:0.75rem;color:var(--ke-green);margin-bottom:12px;display:none;}
+
+/* STEPS INDICATOR */
+.steps{display:flex;align-items:center;gap:6px;margin-bottom:20px;justify-content:center;}
+.step-dot{width:8px;height:8px;border-radius:50%;background:var(--bg3);border:1.5px solid var(--border);transition:all 0.2s;}
+.step-dot.active{background:var(--ke-green);border-color:var(--ke-green);width:20px;border-radius:4px;}
+.step-dot.done{background:var(--ke-green);border-color:var(--ke-green);}
+
+/* ADMIN FORM */
+.admin-notice{background:rgba(244,185,66,0.06);border:1px solid rgba(244,185,66,0.2);border-radius:10px;padding:12px 14px;font-size:0.75rem;color:var(--gold);line-height:1.55;margin-bottom:16px;}
+
+/* SUCCESS */
+.success-view{text-align:center;padding:16px 0;}
+.sv-icon{font-size:3rem;margin-bottom:12px;}
+.sv-title{font-size:1.05rem;font-weight:700;margin-bottom:6px;color:#6d28d9;}
+.sv-sub{font-size:0.8rem;color:var(--text-mid);line-height:1.6;margin-bottom:20px;}
+
+/* FOOTER */
+.auth-footer{text-align:center;font-size:0.7rem;color:var(--text-dim);margin-top:16px;line-height:1.7;}
+.auth-footer a{color:var(--text-mid);text-decoration:none;}
+.auth-footer a:hover{color:var(--ke-green);}
+</style>
+</head>
+<body>
+<div style="height:4px;background:linear-gradient(90deg,#6d28d9,#7c3aed,#6d28d9);position:fixed;top:0;left:0;right:0;z-index:100;"></div><div class="page" style="padding-top:28px;">
+  <div class="auth-card">
+
+    <!-- LOGO -->
+    <div class="logo-area">
+      <a href="rada-markets.html" style="text-decoration:none;"><div class="logo-badge-lg">Rada</div></a>
+      <div class="logo-tagline">Kenya's <strong>Forecasting Intelligence</strong> Platform.<br>Stake your conviction. Earn for being right.</div>
+    </div>
+
+    <!-- MODE SWITCH -->
+    <div class="mode-switch">
+      <button class="mode-btn active" onclick="setMode(this,'user')">📱 Sign In / Register</button>
+      <button class="mode-btn" onclick="setMode(this,'admin')">🔐 Admin Access</button>
+    </div>
+
+    <!-- ── USER FLOW ── -->
+    <div id="userFlow">
+      <!-- STEP 1: PHONE -->
+      <div id="step1">
+        <div class="form-panel">
+          <div class="fp-head">
+            <div class="fp-title">Enter Your Phone Number</div>
+            <div class="fp-sub">We'll send a 6-digit OTP via SMS. No email needed — this is your Rada identity.</div>
+          </div>
+          <div class="fp-body">
+            <div class="steps">
+              <div class="step-dot active" id="dot1"></div>
+              <div class="step-dot" id="dot2"></div>
+              <div class="step-dot" id="dot3"></div>
+            </div>
+
+            <div id="phoneErr" class="err-msg">Please enter a valid Kenyan phone number (e.g. 0712 345 678)</div>
+
+            <div class="field">
+              <label class="f-label">Mobile Number</label>
+              <div class="phone-row">
+                <select class="country-sel" id="countryCode">
+                  <option value="+254">🇰🇪 +254</option>
+                  <option value="+255">🇹🇿 +255</option>
+                  <option value="+256">🇺🇬 +256</option>
+                  <option value="+251">🇪🇹 +251</option>
+                  <option value="+234">🇳🇬 +234</option>
+                  <option value="+27">🇿🇦 +27</option>
+                </select>
+                <input class="f-input" id="phoneInput" type="tel" placeholder="0712 345 678" maxlength="10" oninput="formatPhone(this)">
+              </div>
+            </div>
+
+            <button class="btn-primary" id="sendOtpBtn" onclick="sendOTP()">Send OTP →</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 2: OTP -->
+      <div id="step2" style="display:none;">
+        <div class="form-panel">
+          <div class="fp-head">
+            <div class="fp-title">Verify Your Number</div>
+            <div class="fp-sub" id="otpSentTo">OTP sent to +254 712 345 678 via SMS (Africa's Talking)</div>
+          </div>
+          <div class="fp-body">
+            <div class="steps">
+              <div class="step-dot done"></div>
+              <div class="step-dot active"></div>
+              <div class="step-dot" id="dot3b"></div>
+            </div>
+
+            <div id="otpErr" class="err-msg">Incorrect OTP. Please try again.</div>
+            <div id="otpInfo" class="info-msg">For demo: use code <strong>123456</strong></div>
+
+            <div class="otp-row">
+              <input class="otp-box" id="otp1" maxlength="1" oninput="otpStep(this,null,'otp2')" onkeydown="otpBack(this,event,null)">
+              <input class="otp-box" id="otp2" maxlength="1" oninput="otpStep(this,'otp1','otp3')" onkeydown="otpBack(this,event,'otp1')">
+              <input class="otp-box" id="otp3" maxlength="1" oninput="otpStep(this,'otp2','otp4')" onkeydown="otpBack(this,event,'otp2')">
+              <input class="otp-box" id="otp4" maxlength="1" oninput="otpStep(this,'otp3','otp5')" onkeydown="otpBack(this,event,'otp3')">
+              <input class="otp-box" id="otp5" maxlength="1" oninput="otpStep(this,'otp4','otp6')" onkeydown="otpBack(this,event,'otp4')">
+              <input class="otp-box" id="otp6" maxlength="1" oninput="otpStep(this,'otp5',null)" onkeydown="otpBack(this,event,'otp5')">
+            </div>
+            <div class="otp-hint">Didn't receive it? <a onclick="resendOTP()">Resend OTP</a> · <a onclick="goBack('step1','step2')">Change number</a></div>
+
+            <button class="btn-primary" onclick="verifyOTP()">Verify →</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 3: NEW USER — COMPLIANCE -->
+      <div id="step3" style="display:none;">
+        <div class="form-panel">
+          <div class="fp-head">
+            <div class="fp-title">Almost There!</div>
+            <div class="fp-sub">Just confirm a few things before your account is created.</div>
+          </div>
+          <div class="fp-body">
+            <div class="steps">
+              <div class="step-dot done"></div>
+              <div class="step-dot done"></div>
+              <div class="step-dot active"></div>
+            </div>
+
+            <div class="compliance-section">
+              <div class="comp-label">Legal Agreement Required</div>
+
+              <div class="check-row">
+                <input class="check-box" type="checkbox" id="chkAge">
+                <label class="check-text" for="chkAge">
+                  I confirm I am <strong>18 years of age or older.</strong> Rada is not available to minors as required by the Gambling Control Act 2025.
+                </label>
+              </div>
+
+              <div class="check-row">
+                <input class="check-box" type="checkbox" id="chkTerms">
+                <label class="check-text" for="chkTerms">
+                  I have read and agree to the <a href="#">Terms of Service</a>, <a href="#">Privacy Policy</a>, and the <a href="#">Forecasting Analyst Agreement.</a> I understand this platform is an information-based forecasting tool, not a gambling service.
+                </label>
+              </div>
+            </div>
+
+            <div id="complianceErr" class="err-msg">You must confirm your age and agree to the Terms to continue.</div>
+
+            <button class="btn-primary" onclick="completeRegistration()">Create My Account →</button>
+            <button class="btn-outline" onclick="goBack('step2','step3')">← Back</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 4: SUCCESS -->
+      <div id="step4" style="display:none;">
+        <div class="form-panel">
+          <div class="fp-body">
+            <div class="success-view">
+              <div class="sv-icon">🎉</div>
+              <div class="sv-title">Welcome to Rada!</div>
+              <div class="sv-sub">Your account is live. Start by depositing via M-Pesa and making your first forecast.<br><br>Your phone number is your identity. Keep it safe.</div>
+              <button class="btn-primary" onclick="window.location='rada-dashboard.html'">Go to My Dashboard →</button>
+              <button class="btn-outline" onclick="window.location='rada-markets.html'" style="margin-top:8px;">Browse Markets</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── ADMIN FLOW ── -->
+    <div id="adminFlow" style="display:none;">
+      <div class="form-panel">
+        <div class="fp-head">
+          <div class="fp-title" style="color:var(--gold)">🔐 Admin Access</div>
+          <div class="fp-sub">Restricted to authorised platform administrators only. Phone sign-in is not available for admin accounts.</div>
+        </div>
+        <div class="fp-body">
+          <div class="admin-notice">
+            ⚠️ This login is for <strong>admin accounts only</strong>. Regular users must sign in with their phone number. Unauthorised access attempts are logged.
+          </div>
+
+          <div id="adminErr" class="err-msg">Invalid email or password. Please try again.</div>
+
+          <div class="field">
+            <label class="f-label">Admin Email</label>
+            <input class="f-input" id="adminEmail" type="email" placeholder="admin@rada.co.ke">
+          </div>
+
+          <div class="field">
+            <label class="f-label">Password</label>
+            <input class="f-input" id="adminPass" type="password" placeholder="Enter password" onkeydown="if(event.key==='Enter')adminLogin()">
+          </div>
+
+          <button class="btn-primary" style="background:var(--gold);color:#000;" onmouseover="this.style.background='#ffd060'" onmouseout="this.style.background='var(--gold)'" onclick="adminLogin()">Access Admin Dashboard →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="auth-footer">
+      <span>Rada · Kenya's Forecasting Platform</span><br>
+      <span>Operating under <a href="#">CMA Regulatory Sandbox</a> · <a href="#">Privacy Policy</a> · <a href="#">Terms of Service</a></span><br>
+      <span style="margin-top:4px;display:inline-block;">Min. 18+ · No sports markets · M-Pesa KES only (MVP)</span>
+    </div>
+
+  </div>
+</div>
+
+<script>
+let currentMode = 'user';
+let isNewUser = false;
+
+// ── MODE SWITCH ───────────────────────────────────────────────────────────────
+function setMode(btn, mode) {
+  currentMode = mode;
+  document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('userFlow').style.display = mode === 'user' ? '' : 'none';
+  document.getElementById('adminFlow').style.display = mode === 'admin' ? '' : 'none';
+}
+
+// ── PHONE FORMATTING ──────────────────────────────────────────────────────────
+function formatPhone(input) {
+  let v = input.value.replace(/\D/g,'');
+  input.value = v;
+}
+
+// ── OTP FLOW ──────────────────────────────────────────────────────────────────
+function sendOTP() {
+  const phone = document.getElementById('phoneInput').value.trim();
+  const err = document.getElementById('phoneErr');
+  if (phone.length < 9) { err.style.display = 'block'; return; }
+  err.style.display = 'none';
+  const btn = document.getElementById('sendOtpBtn');
+  const code = document.getElementById('countryCode').value;
+  btn.textContent = 'Sending…';
+  btn.disabled = true;
+  setTimeout(() => {
+    document.getElementById('step1').style.display = 'none';
+    document.getElementById('step2').style.display = '';
+    document.getElementById('otpSentTo').textContent = `OTP sent to ${code} ${phone} via SMS`;
+    document.getElementById('otpInfo').style.display = 'block';
+    document.getElementById('otp1').focus();
+    btn.textContent = 'Send OTP →';
+    btn.disabled = false;
+  }, 1200);
+}
+
+function otpStep(el, prevId, nextId) {
+  if (el.value && nextId) document.getElementById(nextId).focus();
+  // Auto-verify if all filled
+  const code = ['otp1','otp2','otp3','otp4','otp5','otp6'].map(id => document.getElementById(id).value).join('');
+  if (code.length === 6) verifyOTP();
+}
+function otpBack(el, e, prevId) {
+  if (e.key === 'Backspace' && !el.value && prevId) document.getElementById(prevId).focus();
+}
+
+function verifyOTP() {
+  const code = ['otp1','otp2','otp3','otp4','otp5','otp6'].map(id => document.getElementById(id).value).join('');
+  const err = document.getElementById('otpErr');
+  if (code !== '123456') { err.style.display = 'block'; return; }
+  err.style.display = 'none';
+  isNewUser = true; // Simulate new user for demo
+  document.getElementById('step2').style.display = 'none';
+  if (isNewUser) {
+    document.getElementById('step3').style.display = '';
+  } else {
+    document.getElementById('step4').style.display = '';
+  }
+}
+
+function resendOTP() {
+  ['otp1','otp2','otp3','otp4','otp5','otp6'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('otp1').focus();
+  document.getElementById('otpErr').style.display = 'none';
+  alert('New OTP sent! Demo code is still: 123456');
+}
+
+function goBack(showId, hideId) {
+  document.getElementById(hideId).style.display = 'none';
+  document.getElementById(showId).style.display = '';
+}
+
+// ── COMPLIANCE ────────────────────────────────────────────────────────────────
+function completeRegistration() {
+  const age = document.getElementById('chkAge').checked;
+  const terms = document.getElementById('chkTerms').checked;
+  const err = document.getElementById('complianceErr');
+  if (!age || !terms) { err.style.display = 'block'; return; }
+  err.style.display = 'none';
+  document.getElementById('step3').style.display = 'none';
+  document.getElementById('step4').style.display = '';
+}
+
+// ── ADMIN LOGIN ───────────────────────────────────────────────────────────────
+function adminLogin() {
+  const email = document.getElementById('adminEmail').value.trim();
+  const pass = document.getElementById('adminPass').value;
+  const err = document.getElementById('adminErr');
+  // Demo: any @rada.co.ke email with "admin" password
+  if (!email.includes('@') || pass.length < 4) {
+    err.style.display = 'block';
+    return;
+  }
+  err.style.display = 'none';
+  document.getElementById('adminEmail').disabled = true;
+  document.getElementById('adminPass').disabled = true;
+  setTimeout(() => window.location = 'rada-admin.html', 800);
+}
+</script>
+</body>
+</html>

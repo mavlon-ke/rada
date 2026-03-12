@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rada — About</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Archivo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+html { font-size: 106.25%; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --primary: #6d28d9;
+  --primary-bright: #7c3aed;
+  --primary-light: #8b5cf6;
+  --primary-glow: rgba(109,40,217,0.08);
+  --ke-green: #6d28d9;
+  --gold: #c97d0a;
+  --bg: #faf9ff;
+  --surface: #ffffff;
+  --border: rgba(109,40,217,0.12);
+  --text: #12101e;
+  --text-mid: #5a5270;
+  --text-dim: #9284b8;
+  --font: 'Outfit', sans-serif;
+  --mono: 'Archivo', sans-serif;
+}
+body { background: var(--bg); color: var(--text); font-family: var(--font); min-height: 100vh; overflow-x: hidden; }
+
+/* ── STANDARD HEADER ── */
+.site-header {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(255,255,255,0.97);
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 32px; height: 64px;
+  display: flex; align-items: center;
+}
+.site-header .h-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: inherit; flex-shrink: 0; }
+.site-header .h-logo-badge { background: var(--primary); color: #fff; font-family: var(--mono); font-size: 0.62rem; font-weight: 700; padding: 4px 9px; border-radius: 6px; letter-spacing: 0.04em; }
+.site-header .h-logo-text { font-size: 1.05rem; font-weight: 700; letter-spacing: -0.01em; }
+.site-header .h-logo-sub  { font-size: 0.55rem; font-weight: 600; letter-spacing: 0.1em; color: var(--text-dim); font-family: var(--mono); }
+.site-header .h-nav { display: flex; gap: 2px; align-items: center; margin: 0 auto; }
+.site-header .h-nav a { color: var(--text-dim); text-decoration: none; font-size: 0.85rem; font-weight: 500; padding: 7px 13px; border-radius: 8px; transition: all 0.18s; white-space: nowrap; }
+.site-header .h-nav a:hover  { color: var(--text); background: var(--primary-glow); }
+.site-header .h-nav a.active { color: var(--primary); background: rgba(109,40,217,0.10); font-weight: 600; }
+.site-header .h-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.site-header .h-balance { display: flex; align-items: center; gap: 6px; background: var(--primary-glow); border: 1px solid var(--border); border-radius: 10px; padding: 6px 14px; font-family: var(--mono); font-size: 0.82rem; color: var(--primary); font-weight: 500; }
+.site-header .h-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--primary); }
+.site-header .h-btn { padding: 7px 16px; border-radius: 9px; font-size: 0.82rem; font-weight: 600; font-family: var(--font); cursor: pointer; transition: all 0.18s; border: none; }
+.site-header .h-btn-ghost { background: transparent; color: var(--primary); border: 1px solid rgba(109,40,217,0.30); }
+.site-header .h-btn-ghost:hover { background: var(--primary-glow); }
+.site-header .h-btn-primary { background: var(--primary); color: #fff; }
+.site-header .h-btn-primary:hover { background: var(--primary-bright); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(109,40,217,0.25); }
+
+/* ── MOBILE TOP NAV ── */
+.mobile-top-nav {
+  display: none; position: fixed; top: 0; left: 0; right: 0;
+  background: rgba(255,255,255,0.98); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1.5px solid var(--border); z-index: 500;
+  justify-content: space-around; align-items: center;
+  padding: 8px 0 6px; box-shadow: 0 2px 14px rgba(109,40,217,0.06);
+}
+.mobile-top-nav .bn-item { display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer; padding: 2px 10px; border-radius: 8px; color: var(--text-dim); text-decoration: none; transition: color 0.15s; min-width: 48px; flex: 1; }
+.mobile-top-nav .bn-item.active { color: var(--primary); }
+.mobile-top-nav .bn-icon  { font-size: 1.15rem; line-height: 1.1; }
+.mobile-top-nav .bn-label { font-size: 0.58rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; }
+@media (max-width: 767px) {
+  .mobile-top-nav { display: flex !important; }
+  .site-header    { display: none !important; }
+  body { padding-top: 58px !important; }
+}
+
+/* ── PAGE ── */
+.page { max-width: 720px; margin: 0 auto; padding: 48px 24px 100px; }
+
+/* ── HERO ── */
+.hero-tag {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--primary-glow); border: 1px solid var(--border);
+  border-radius: 20px; padding: 6px 16px;
+  font-family: var(--mono); font-size: 0.72rem; font-weight: 600;
+  color: var(--primary); letter-spacing: 0.04em; text-transform: uppercase;
+  margin-bottom: 24px;
+}
+.hero-tag-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--primary); animation: pulse 2s ease infinite; }
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(1.4)} }
+
+.hero-title { font-size: 2.2rem; font-weight: 800; line-height: 1.15; letter-spacing: -0.02em; margin-bottom: 16px; }
+.hero-title em { font-style: normal; color: var(--primary); }
+.hero-sub { font-size: 1.05rem; color: var(--text-mid); line-height: 1.65; margin-bottom: 36px; }
+
+/* ── STATS ── */
+.stats-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 16px; margin-bottom: 40px;
+}
+.stat-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 14px; padding: 20px 22px;
+}
+.stat-val { font-family: var(--mono); font-size: 1.8rem; font-weight: 700; color: var(--primary); letter-spacing: -0.02em; }
+.stat-lbl { font-size: 0.72rem; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.07em; margin-top: 4px; }
+
+/* ── DIVIDER ── */
+.section-divider { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
+
+/* ── SECTION TITLE ── */
+.section-title { font-size: 1.3rem; font-weight: 700; margin-bottom: 12px; letter-spacing: -0.01em; }
+.section-body  { font-size: 0.95rem; color: var(--text-mid); line-height: 1.7; margin-bottom: 20px; }
+
+/* ── HOW IT WORKS ── */
+.steps { display: flex; flex-direction: column; gap: 16px; margin-bottom: 40px; }
+.step  { display: flex; gap: 16px; align-items: flex-start; }
+.step-num { width: 32px; height: 32px; border-radius: 50%; background: var(--primary); color: #fff; font-weight: 700; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px; }
+.step-title { font-weight: 700; font-size: 0.95rem; margin-bottom: 4px; }
+.step-desc  { font-size: 0.88rem; color: var(--text-mid); line-height: 1.6; }
+
+/* ── CREATOR CTA ── */
+.creator-card {
+  background: linear-gradient(135deg, #fffbea 0%, #fff8e0 100%);
+  border: 1.5px solid #e8c84a;
+  border-radius: 16px; padding: 24px 28px;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 20px; flex-wrap: wrap; margin-bottom: 40px;
+}
+.creator-card-icon { font-size: 2rem; flex-shrink: 0; }
+.creator-card-title { font-weight: 700; font-size: 1rem; color: var(--gold); margin-bottom: 4px; }
+.creator-card-sub   { font-size: 0.85rem; color: var(--text-mid); line-height: 1.5; }
+.btn-creator { background: var(--gold); color: #fff; border: none; padding: 11px 22px; border-radius: 10px; font-weight: 700; font-size: 0.88rem; cursor: pointer; font-family: var(--font); white-space: nowrap; transition: all 0.18s; }
+.btn-creator:hover { background: #b56e08; transform: translateY(-1px); }
+
+/* ── FAQ ── */
+.faq-item { border-bottom: 1px solid var(--border); padding: 18px 0; }
+.faq-q { font-weight: 700; font-size: 0.95rem; margin-bottom: 8px; }
+.faq-a { font-size: 0.88rem; color: var(--text-mid); line-height: 1.65; }
+
+/* ── CTA BOTTOM ── */
+.cta-block {
+  background: var(--primary); border-radius: 18px;
+  padding: 36px 32px; text-align: center; margin-top: 48px;
+}
+.cta-block h2 { color: #fff; font-size: 1.5rem; font-weight: 800; margin-bottom: 10px; letter-spacing: -0.01em; }
+.cta-block p  { color: rgba(255,255,255,0.75); font-size: 0.92rem; margin-bottom: 24px; line-height: 1.6; }
+.btn-cta { background: #fff; color: var(--primary); border: none; padding: 13px 28px; border-radius: 11px; font-weight: 700; font-size: 0.95rem; cursor: pointer; font-family: var(--font); transition: all 0.18s; }
+.btn-cta:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.15); }
+</style>
+</head>
+<body>
+
+<div class="mobile-top-nav">
+  <a class="bn-item" href="rada-markets.html"><div class="bn-icon">◈</div><div class="bn-label">Markets</div></a>
+  <a class="bn-item" href="rada-portfolio.html"><div class="bn-icon">◎</div><div class="bn-label">Portfolio</div></a>
+  <a class="bn-item" href="rada-leaderboard.html"><div class="bn-icon">⊞</div><div class="bn-label">Leaders</div></a>
+  <a class="bn-item" href="rada-creator.html"><div class="bn-icon">💡</div><div class="bn-label">Creator</div></a>
+  <a class="bn-item" href="rada-data.html"><div class="bn-icon">📊</div><div class="bn-label">Data</div></a>
+  <a class="bn-item" href="rada-friends.html"><div class="bn-icon">🤝</div><div class="bn-label">Social</div></a>
+</div>
+
+<header class="site-header">
+  <a class="h-logo" href="rada-markets.html">
+    <div class="h-logo-badge">RADA</div>
+    <div>
+      <div class="h-logo-text">Rada</div>
+      <div class="h-logo-sub">CROWD INTELLIGENCE</div>
+    </div>
+  </a>
+  <nav class="h-nav">
+    <a href="rada-markets.html">Forecast Markets</a>
+    <a href="rada-portfolio.html">Portfolio</a>
+    <a href="rada-leaderboard.html">Leaderboard</a>
+    <a href="rada-data.html">Data Platform</a>
+    <a href="rada-creator.html">Creator Hub</a>
+    <a class="active" href="rada-about.html">About</a>
+  </nav>
+  <div class="h-actions">
+    <div class="h-balance"><div class="h-dot"></div><span>KES <strong id="balDisplay">5,000</strong></span></div>
+    <button class="h-btn h-btn-ghost">Withdraw</button>
+    <button class="h-btn h-btn-primary">+ Deposit</button>
+  </div>
+</header>
+
+<div class="page">
+
+  <!-- HERO -->
+  <div class="hero-tag">
+    <div class="hero-tag-dot"></div>
+    24 Active Markets · KES 2.4M Forecast Volume
+  </div>
+  <h1 class="hero-title">Stake on the <em>Truth.</em><br>Win with Accuracy.</h1>
+  <p class="hero-sub">Rada is Kenya's incentivised crowd intelligence platform. Forecast real events, stake KES via M-Pesa, and earn when you're right. Your data shapes a national sentiment index.</p>
+
+  <!-- STATS -->
+  <div class="stats-grid">
+    <div class="stat-card"><div class="stat-val">1,840</div><div class="stat-lbl">Active Forecasters</div></div>
+    <div class="stat-card"><div class="stat-val">KES 2.4M</div><div class="stat-lbl">Total Volume</div></div>
+    <div class="stat-card"><div class="stat-val">24</div><div class="stat-lbl">Live Markets</div></div>
+    <div class="stat-card"><div class="stat-val">68%</div><div class="stat-lbl">Avg Accuracy Rate</div></div>
+  </div>
+
+  <hr class="section-divider">
+
+  <!-- WHAT IS RADA -->
+  <h2 class="section-title">What is Rada?</h2>
+  <p class="section-body">Rada is Kenya's first incentivised forecasting platform. We use the wisdom of crowds — real Kenyans staking real money — to generate probability signals on political, economic, and social events. When your forecast is right, you earn. When thousands of people forecast together, the signal becomes data.</p>
+  <p class="section-body">We are not a sports betting platform. Rada markets are based on real-world outcomes: government policy decisions, economic indicators, public health targets, and more. Every forecast made on Rada contributes to a national sentiment index that businesses, NGOs, and researchers can access.</p>
+
+  <hr class="section-divider">
+
+  <!-- HOW IT WORKS -->
+  <h2 class="section-title">How it works</h2>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div>
+        <div class="step-title">Deposit via M-Pesa</div>
+        <div class="step-desc">Top up your Rada wallet using M-Pesa. Minimum KES 20. Your balance is always yours — withdraw anytime back to your phone number.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div>
+        <div class="step-title">Browse & Forecast</div>
+        <div class="step-desc">Pick a market — a YES/NO question about a real event. Stake KES on YES or NO. The market shows the live probability based on all forecaster stakes combined.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div>
+        <div class="step-title">Market Resolves</div>
+        <div class="step-desc">When the event outcome is confirmed, Rada resolves the market. Correct forecasters share the pool proportionally. Winnings are automatically credited to your wallet.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <div>
+        <div class="step-title">Withdraw Anytime</div>
+        <div class="step-desc">Cash out your winnings directly to M-Pesa. No delays, no paperwork. Minimum withdrawal KES 50.</div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="section-divider">
+
+  <!-- CREATOR CTA -->
+  <div class="creator-card">
+    <div style="display:flex;align-items:center;gap:14px;flex:1">
+      <div class="creator-card-icon">💡</div>
+      <div>
+        <div class="creator-card-title">Propose a Forecast Market · Earn 0.5% Per Trade</div>
+        <div class="creator-card-sub">Submit a YES/NO question. If approved and it hits KES 1,000 in volume, you earn 0.5% of every trade fee — credited to your Rada wallet while the market is active. Withdraw to M-Pesa anytime.</div>
+      </div>
+    </div>
+    <button class="btn-creator" onclick="window.location='rada-creator.html'">Become a Creator →</button>
+  </div>
+
+  <hr class="section-divider">
+
+  <!-- FAQ -->
+  <h2 class="section-title">Common questions</h2>
+  <div class="faq-item">
+    <div class="faq-q">Is this gambling?</div>
+    <div class="faq-a">No. Rada is a forecasting platform, not a gambling site. Our markets are based on real-world events — not sports or games of chance. We are pursuing registration under the Capital Markets Authority's regulatory sandbox as an incentivised data platform.</div>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q">What happens if a market is cancelled?</div>
+    <div class="faq-a">If a market cannot be resolved (e.g. the event was postponed or the outcome was ambiguous), all stakes are refunded in full to every forecaster's wallet. No fees are deducted on cancelled markets.</div>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q">How is the payout calculated?</div>
+    <div class="faq-a">Rada uses a logarithmic market scoring rule (LMSR). The earlier and more accurately you forecast, the higher your share of the winning pool. A 5% platform fee is deducted from gross winnings. Creator royalties are credited to the creator's Rada wallet — not sent directly to M-Pesa — and can be withdrawn once earned.</div>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q">What is the minimum stake?</div>
+    <div class="faq-a">KES 20 on public markets. KES 20 on private friend challenges (max KES 2,000 per challenge).</div>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q">Who resolves the markets?</div>
+    <div class="faq-a">The Rada admin team resolves markets based on publicly verifiable outcomes from credible Kenyan news sources. For friend challenges, a nominated Referee approves the outcome — with a 48-hour dispute window.</div>
+  </div>
+
+  <!-- CTA BOTTOM -->
+  <div class="cta-block">
+    <h2>Ready to start forecasting?</h2>
+    <p>Join 1,840 Kenyans already earning by being right. Deposit as little as KES 20 via M-Pesa and place your first forecast today.</p>
+    <button class="btn-cta" onclick="window.location='rada-markets.html'">View Open Markets →</button>
+  </div>
+
+</div>
+
+<script>
+// About page share
+document.querySelectorAll('[data-share]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const url  = 'https://rada.co.ke';
+    const text = 'Discover Rada — Kenya's incentivised crowd intelligence platform. Forecast real events, earn via M-Pesa! 🇰🇪';
+    if (navigator.share) {
+      navigator.share({ title: 'Rada — Crowd Intelligence', text, url }).catch(() => {});
+    } else {
+      navigator.clipboard && navigator.clipboard.writeText(url);
+    }
+  });
+});
+</script>
+</body>
+</html>

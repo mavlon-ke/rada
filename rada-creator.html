@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rada — Creator Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Archivo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+html { font-size: 106.25%; }
+:root{
+  --primary:#6d28d9;
+  --primary-bright:#7c3aed;
+  --primary-light:#8b5cf6;
+  --primary-glow:rgba(109,40,217,0.08);
+  --primary-dim:rgba(109,40,217,0.05);
+  --ke-green:#6d28d9;
+  --ke-green-bright:#7c3aed;
+  --ke-green-glow:rgba(109,40,217,0.08);
+  --ke-red:#CE1126;
+  --ke-red-dim:rgba(206,17,38,0.07);
+  --gold:#c97d0a;
+  --gold-dim:rgba(201,125,10,0.08);
+  --purple:#7c3aed;
+  --purple-dim:rgba(109,40,217,0.07);
+  --blue:#2563eb;
+  --blue-dim:rgba(37,99,235,0.08);
+  --bg:#faf8ff;
+  --bg2:#ffffff;
+  --bg3:#f0edff;
+  --bg4:#e5e0ff;
+  --border:rgba(109,40,217,0.12);
+  --border-bright:rgba(109,40,217,0.30);
+  --text:#1a1035;
+  --text-dim:#9284b8;
+  --text-mid:#5b21b6;
+  --font:'Outfit',sans-serif;
+  --mono:'Archivo',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#faf9ff;color:var(--text);font-family:var(--font);min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");pointer-events:none;z-index:0;opacity:0.08;}
+
+nav{padding:14px 24px;display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,0.96);backdrop-filter:blur(12px);border-bottom:1px solid rgba(109,40,217,0.12);position:sticky;top:0;z-index:50;}
+.logo-badge{background:var(--ke-green);color:#fff;font-family:var(--mono);font-size:0.65rem;font-weight:700;padding:4px 8px;border-radius:4px;letter-spacing:0.05em;}
+.logo-text{font-size:1.05rem;font-weight:700;letter-spacing:-0.01em;}
+.nav-logo{display:flex;align-items:center;gap:10px;}
+.nav-links{display:flex;gap:4px;}
+.nav-link{padding:6px 14px;border-radius:6px;font-size:0.8rem;font-weight:600;cursor:pointer;border:none;background:transparent;color:#5b21b6;text-decoration:none;transition:all 0.15s;}
+.nav-link:hover{color:var(--text);background:#f0f7f2;}
+.nav-link.active{color:var(--gold);background:var(--gold-dim);}
+
+/* HERO */
+.page-wrap{max-width:960px;margin:0 auto;padding:40px 24px 100px;position:relative;z-index:1;}
+.hero-tag{display:inline-flex;align-items:center;gap:6px;background:var(--gold-dim);border:1px solid rgba(244,185,66,0.3);border-radius:100px;padding:5px 14px;margin-bottom:18px;font-size:0.7rem;font-weight:700;color:var(--gold);letter-spacing:0.07em;text-transform:uppercase;font-family:var(--mono);}
+.hero-dot{width:5px;height:5px;border-radius:50%;background:var(--gold);animation:pulse 2s ease infinite;}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.5);opacity:0.5}}
+.page-title{font-size:clamp(2rem,4vw,3rem);font-weight:700;letter-spacing:-0.03em;line-height:1.1;margin-bottom:12px;}
+.page-title em{font-style:normal;color:var(--gold);}
+.page-sub{font-size:0.95rem;color:var(--text-mid);max-width:540px;line-height:1.65;margin-bottom:36px;}
+
+/* HOW IT WORKS */
+.how-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:44px;}
+.how-card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:22px 18px;position:relative;overflow:hidden;}
+.how-card::before{content:attr(data-n);position:absolute;top:-10px;right:12px;font-family:var(--mono);font-size:5rem;font-weight:700;color:var(--bg3);line-height:1;}
+.how-icon{font-size:1.6rem;margin-bottom:12px;}
+.how-title{font-weight:700;font-size:0.88rem;margin-bottom:6px;color:var(--gold);}
+.how-body{font-size:0.78rem;color:var(--text-mid);line-height:1.55;}
+
+/* BOUNTY STATS */
+.bounty-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;background:var(--bg2);border:1px solid rgba(244,185,66,0.2);border-radius:16px;padding:24px;margin-bottom:44px;}
+.b-stat-val{font-family:var(--mono);font-size:1.5rem;font-weight:700;color:var(--gold);}
+.b-stat-lbl{font-size:0.68rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.07em;margin-top:3px;}
+
+/* FORM CARD */
+.form-card{background:var(--bg2);border:1px solid var(--border);border-radius:18px;overflow:hidden;margin-bottom:44px;}
+.form-card-head{padding:22px 26px;border-bottom:1px solid rgba(109,40,217,0.12);display:flex;align-items:center;gap:12px;}
+.form-card-icon{width:40px;height:40px;border-radius:10px;background:var(--gold-dim);border:1px solid rgba(244,185,66,0.3);display:flex;align-items:center;justify-content:center;font-size:1.2rem;}
+.form-card-title{font-weight:700;font-size:1rem;}
+.form-card-sub{font-size:0.75rem;color:var(--text-mid);margin-top:2px;}
+.form-body{padding:26px;}
+
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+.form-row.single{grid-template-columns:1fr;}
+.form-field{display:flex;flex-direction:column;gap:7px;}
+.field-label{font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--text-dim);}
+.field-hint{font-size:0.68rem;color:var(--text-dim);opacity:0.8;}
+.field-input,.field-select,.field-textarea{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:11px 14px;color:var(--text);font-family:var(--font);font-size:0.85rem;outline:none;transition:border-color 0.2s;width:100%;}
+.field-input:focus,.field-select:focus,.field-textarea:focus{border-color:var(--border-bright);}
+.field-input::placeholder,.field-textarea::placeholder{color:var(--text-dim);}
+.field-select{cursor:pointer;}
+.field-textarea{resize:vertical;min-height:80px;}
+
+/* char counter */
+.char-row{display:flex;justify-content:space-between;align-items:center;}
+.char-count{font-family:var(--mono);font-size:0.65rem;color:var(--text-dim);}
+.char-count.warn{color:var(--ke-red);}
+
+/* URL preview */
+.url-preview{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-family:var(--mono);font-size:0.72rem;color:var(--text-mid);margin-top:8px;word-break:break-all;}
+.url-preview span{color:var(--ke-green);}
+
+/* wallet field */
+.wallet-field{position:relative;}
+.wallet-field .field-input{padding-right:90px;}
+.wallet-method{position:absolute;right:10px;top:50%;transform:translateY(-50%);display:flex;gap:4px;}
+.wm-btn{padding:3px 8px;border-radius:4px;font-size:0.65rem;font-weight:700;cursor:pointer;border:1px solid var(--border);background:var(--bg4);color:var(--text-mid);transition:all 0.15s;}
+.wm-btn.active{background:var(--ke-green-glow);border-color:var(--border-bright);color:var(--ke-green);}
+
+/* AGREEMENT */
+.agreement-box{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:20px;display:flex;gap:12px;align-items:flex-start;}
+.agreement-checkbox{width:18px;height:18px;border-radius:4px;border:2px solid var(--border-bright);flex-shrink:0;cursor:pointer;margin-top:1px;appearance:none;background:transparent;transition:all 0.15s;}
+.agreement-checkbox:checked{background:var(--ke-green);border-color:var(--ke-green);}
+.agreement-text{font-size:0.75rem;color:var(--text-mid);line-height:1.6;}
+.agreement-text a{color:var(--ke-green);text-decoration:none;}
+
+.btn-submit{width:100%;padding:15px;background:var(--gold);color:#000;font-weight:700;font-size:0.95rem;border-radius:12px;border:none;cursor:pointer;font-family:var(--font);transition:all 0.2s;}
+.btn-submit:hover{background:#fac94e;transform:translateY(-1px);}
+.btn-submit:disabled{background:var(--bg3);color:var(--text-dim);cursor:not-allowed;transform:none;}
+
+/* SUCCESS */
+.success-panel{background:var(--bg2);border:1px solid rgba(244,185,66,0.3);border-radius:18px;padding:40px 28px;text-align:center;display:none;}
+.success-panel.show{display:block;animation:fadeUp 0.4s ease both;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.success-icon{font-size:3.5rem;margin-bottom:16px;}
+.success-title{font-size:1.4rem;font-weight:700;margin-bottom:8px;color:var(--gold);}
+.success-sub{font-size:0.85rem;color:var(--text-mid);line-height:1.6;margin-bottom:24px;}
+.share-link-box{background:var(--bg3);border:1px solid var(--border-bright);border-radius:10px;padding:14px 16px;font-family:var(--mono);font-size:0.75rem;color:var(--ke-green);margin-bottom:20px;word-break:break-all;cursor:pointer;transition:background 0.15s;}
+.share-link-box:hover{background:var(--bg4);}
+.share-link-label{font-size:0.65rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:6px;}
+.btn-share{background:var(--ke-green);color:#fff;font-weight:700;padding:11px 24px;border-radius:10px;border:none;cursor:pointer;font-family:var(--font);font-size:0.85rem;margin-right:8px;}
+.btn-another{background:var(--bg3);color:var(--text-mid);font-weight:700;padding:11px 24px;border-radius:10px;border:1px solid var(--border);cursor:pointer;font-family:var(--font);font-size:0.85rem;}
+
+/* MY MARKETS TABLE */
+.my-markets{background:var(--bg2);border:1px solid var(--border);border-radius:18px;overflow:hidden;}
+.section-head{padding:18px 22px;border-bottom:1px solid rgba(109,40,217,0.12);display:flex;align-items:center;justify-content:space-between;}
+.section-title{font-weight:700;font-size:1rem;}
+.section-sub{font-size:0.75rem;color:var(--text-mid);}
+table{width:100%;border-collapse:collapse;}
+th{padding:10px 16px;text-align:left;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--text-dim);border-bottom:1px solid rgba(109,40,217,0.12);}
+td{padding:14px 16px;font-size:0.8rem;border-bottom:1px solid rgba(109,40,217,0.04);}
+.status-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:100px;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;}
+.status-live{background:var(--ke-green-glow);color:var(--ke-green);border:1px solid rgba(109,40,217,0.14);}
+.status-pending{background:var(--gold-dim);color:var(--gold);border:1px solid rgba(244,185,66,0.2);}
+.status-review{background:rgba(100,100,255,0.08);color:#8080ff;border:1px solid rgba(100,100,255,0.2);}
+.earn-val{font-family:var(--mono);color:var(--gold);}
+.copy-link-btn{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:0.65rem;font-weight:700;color:var(--text-mid);cursor:pointer;font-family:var(--font);transition:all 0.15s;}
+.copy-link-btn:hover{border-color:var(--border-bright);color:var(--ke-green);}
+.empty-row{padding:40px;text-align:center;color:var(--text-dim);font-size:0.82rem;}
+
+@media(max-width:640px){
+  .form-row{grid-template-columns:1fr;}
+  .nav-links{display:none;}
+}
+
+/* ── Creator share buttons ─────────────────────────────────────────────────── */
+.creator-share-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px;
+}
+.creator-share-grid-3 {
+  display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;
+}
+.csb {
+  display: flex; align-items: center; justify-content: center; gap: 5px;
+  padding: 10px 8px; border-radius: 10px; border: 1px solid var(--border);
+  background: var(--bg3); font-family: var(--font); font-size: 0.75rem; font-weight: 700;
+  cursor: pointer; color: var(--text); transition: all 0.15s;
+}
+.csb:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-dim); }
+.csb.wa   { border-color: rgba(37,211,102,0.4); color: #25d366; }
+.csb.wa:hover { background: rgba(37,211,102,0.08); }
+.csb.copied { background: var(--primary-dim); color: var(--primary); border-color: var(--primary); }
+.copy-toast-c {
+  display: none; text-align: center; font-size: 0.72rem; color: var(--primary);
+  font-weight: 700; padding: 6px; border-radius: 8px; background: var(--primary-dim); margin-top: 8px;
+}
+.copy-toast-c.show { display: block; }
+
+.bn-item {
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  cursor: pointer; padding: 4px 16px; border-radius: 8px;
+  color: #a78bfa; text-decoration: none; transition: color 0.15s;
+}
+.bn-item.active { color: #6d28d9; }
+.bn-item:hover { color: #1a1035; }
+.bn-icon { font-size: 1.2rem; }
+.bn-label { font-size: 0.6rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
+@media (min-width: 768px) { }
+@media (max-width: 767px) { .nav-links { display: none !important; } nav { padding: 12px 16px; } body { padding-bottom: 72px; } }
+
+/* single smart share button */
+.btn-smart-share { width:100%; padding:13px; background:#6d28d9; color:#fff; font-weight:700; font-size:0.9rem; border-radius:12px; border:none; cursor:pointer; font-family:var(--font); margin-bottom:12px; transition:all 0.2s; }
+.btn-smart-share:hover { background:#7c3aed; transform:translateY(-1px); }
+
+/* ═══════════════════════════════════════════════════════
+   STANDARD HEADER — logo left · nav center · actions right
+   ═══════════════════════════════════════════════════════ */
+.site-header {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(255,255,255,0.97);
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(109,40,217,0.12);
+  padding: 0 32px; height: 64px;
+  display: flex; align-items: center;
+}
+.site-header .h-logo {
+  display: flex; align-items: center; gap: 10px;
+  text-decoration: none; color: inherit; flex-shrink: 0;
+}
+.site-header .h-logo-badge {
+  background: #6d28d9; color: #fff;
+  font-family: 'Archivo', sans-serif;
+  font-size: 0.62rem; font-weight: 700;
+  padding: 4px 9px; border-radius: 6px; letter-spacing: 0.04em;
+}
+.site-header .h-logo-text { font-size: 1.05rem; font-weight: 700; letter-spacing: -0.01em; }
+.site-header .h-logo-sub  { font-size: 0.55rem; font-weight: 600; letter-spacing: 0.1em; color: #9284b8; font-family: 'Archivo', sans-serif; }
+.site-header .h-nav { display: flex; gap: 2px; align-items: center; margin: 0 auto; }
+.site-header .h-nav a {
+  color: #9284b8; text-decoration: none;
+  font-size: 0.85rem; font-weight: 500;
+  padding: 7px 13px; border-radius: 8px;
+  transition: all 0.18s; white-space: nowrap;
+}
+.site-header .h-nav a:hover  { color: #1a1035; background: #f0edff; }
+.site-header .h-nav a.active { color: #6d28d9; background: rgba(109,40,217,0.10); font-weight: 600; }
+.site-header .h-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.site-header .h-balance {
+  display: flex; align-items: center; gap: 6px;
+  background: #f0edff; border: 1px solid rgba(109,40,217,0.18);
+  border-radius: 10px; padding: 6px 14px;
+  font-family: 'Archivo', sans-serif;
+  font-size: 0.82rem; color: #6d28d9; font-weight: 500;
+}
+.site-header .h-dot { width: 6px; height: 6px; border-radius: 50%; background: #6d28d9; }
+.site-header .h-btn {
+  padding: 7px 16px; border-radius: 9px;
+  font-size: 0.82rem; font-weight: 600;
+  font-family: 'Outfit', 'Outfit', sans-serif;
+  cursor: pointer; transition: all 0.18s; border: none;
+}
+.site-header .h-btn-ghost {
+  background: transparent; color: #6d28d9;
+  border: 1px solid rgba(109,40,217,0.30);
+}
+.site-header .h-btn-ghost:hover { background: #f0edff; }
+.site-header .h-btn-primary { background: #6d28d9; color: #fff; }
+.site-header .h-btn-primary:hover { background: #7c3aed; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(109,40,217,0.25); }
+
+/* ═══════════════════════════════════════════════════════════════
+   MOBILE TOP NAV — 5-tab bar pinned to top, mobile only
+   ═══════════════════════════════════════════════════════════════ */
+.mobile-top-nav {
+  display: none; position: fixed; top: 0; left: 0; right: 0;
+  background: rgba(255,255,255,0.98);
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1.5px solid rgba(109,40,217,0.13);
+  z-index: 500; justify-content: space-around; align-items: center;
+  padding: 8px 0 6px;
+  box-shadow: 0 2px 14px rgba(109,40,217,0.06);
+}
+.mobile-top-nav .bn-item {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  cursor: pointer; padding: 2px 10px; border-radius: 8px;
+  color: #9284b8; text-decoration: none; transition: color 0.15s;
+  min-width: 48px; flex: 1;
+}
+.mobile-top-nav .bn-item.active { color: #6d28d9; }
+.mobile-top-nav .bn-item:hover  { color: #1a1035; }
+.mobile-top-nav .bn-icon  { font-size: 1.15rem; line-height: 1.1; }
+.mobile-top-nav .bn-label { font-size: 0.58rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; }
+
+@media (max-width: 767px) {
+  .mobile-top-nav { display: flex !important; }
+  .site-header    { display: none !important; }
+  body { padding-top: 58px !important; }
+  .page-wrap { padding-top: 16px; }
+}
+
+</style>
+</head>
+<body>
+
+<div class="mobile-top-nav">
+  <a class="bn-item" href="rada-markets.html"><div class="bn-icon">◈</div><div class="bn-label">Markets</div></a>
+  <a class="bn-item" href="rada-portfolio.html"><div class="bn-icon">◎</div><div class="bn-label">Portfolio</div></a>
+  <a class="bn-item" href="rada-leaderboard.html"><div class="bn-icon">⊞</div><div class="bn-label">Leaders</div></a>
+  <a class="bn-item active" href="rada-creator.html"><div class="bn-icon">💡</div><div class="bn-label">Creator</div></a>
+  <a class="bn-item" href="rada-data.html"><div class="bn-icon">📊</div><div class="bn-label">Data</div></a>
+  <a class="bn-item" href="rada-friends.html"><div class="bn-icon">🤝</div><div class="bn-label">Social</div></a>
+</div>
+
+<header class="site-header">
+  <a class="h-logo" href="rada-markets.html">
+    <div class="h-logo-badge">RADA</div>
+    <div>
+      <div class="h-logo-text">Rada</div>
+      <div class="h-logo-sub">CROWD INTELLIGENCE</div>
+    </div>
+  </a>
+  <nav class="h-nav">
+    <a href="rada-markets.html">Forecast Markets</a>
+    <a href="rada-portfolio.html">Portfolio</a>
+    <a href="rada-leaderboard.html">Leaderboard</a>
+    <a href="rada-data.html">Data Platform</a>
+    <a class="active" href="rada-creator.html">Creator Hub</a>
+    <a href="rada-friends.html">Social Challenge</a>
+    <a href="rada-about.html">About</a>
+  </nav>
+  <div class="h-actions">
+    <div class="h-balance"><div class="h-dot"></div><span>KES <strong id="balDisplay">5,000</strong></span></div>
+    <button class="h-btn h-btn-ghost">Withdraw</button>
+    <button class="h-btn h-btn-primary">+ Deposit</button>
+  </div>
+</header>
+
+
+
+<div class="page-wrap">
+
+  <!-- HERO -->
+  <div class="hero-tag"><div class="hero-dot"></div>Creator Bounty Programme · Active</div>
+  <h1 class="page-title">Propose a Market.<br><em>Earn While It's Live.</em></h1>
+  <p class="page-sub">Submit a YES/NO forecast question. When your market goes live and generates trading volume, you automatically earn <strong style="color:var(--gold)">0.5% of every trade fee</strong> — credited to your M-Pesa continuously. No ID needed. Just your phone number.</p>
+
+  <!-- HOW IT WORKS -->
+  <div class="how-grid">
+    <div class="how-card" data-n="1">
+      <div class="how-icon">💡</div>
+      <div class="how-title">Propose</div>
+      <div class="how-body">Submit a clear YES/NO question with a verifiable truth source (e.g., EPRA website, CBK data, KMD bulletins).</div>
+    </div>
+    <div class="how-card" data-n="2">
+      <div class="how-icon">✅</div>
+      <div class="how-title">Get Approved</div>
+      <div class="how-body">Our team reviews within 48h. Markets must be clearly resolvable, locally relevant, and have an unambiguous truth source.</div>
+    </div>
+    <div class="how-card" data-n="3">
+      <div class="how-icon">🔗</div>
+      <div class="how-title">Share Your Link</div>
+      <div class="how-body">You receive a unique shareable link. Every trade via your link is tracked back to you for royalty attribution — for as long as the market is active.</div>
+    </div>
+    <div class="how-card" data-n="4">
+      <div class="how-icon">💰</div>
+      <div class="how-title">Earn Royalties</div>
+      <div class="how-body">0.5% of every trade fee on your market is credited to your Rada wallet while the market is active. Once the market resolves, royalties stop. You can withdraw your balance to M-Pesa at any time.</div>
+    </div>
+  </div>
+
+  <!-- BOUNTY STATS -->
+  <div class="bounty-stats">
+    <div>
+      <div class="b-stat-val">KES 12,440</div>
+      <div class="b-stat-lbl">Paid to Creators This Month</div>
+    </div>
+    <div>
+      <div class="b-stat-val">48</div>
+      <div class="b-stat-lbl">Creator Markets Active</div>
+    </div>
+    <div>
+      <div class="b-stat-val">0.5%</div>
+      <div class="b-stat-lbl">Royalty Rate Per Trade</div>
+    </div>
+    <div>
+      <div class="b-stat-val">KES 1K+</div>
+      <div class="b-stat-lbl">Min Volume to Activate Payout</div>
+    </div>
+  </div>
+
+  <!-- PROPOSAL FORM -->
+  <div class="form-card" id="proposalForm">
+    <div class="form-card-head">
+      <div class="form-card-icon">📋</div>
+      <div>
+        <div class="form-card-title">Propose Your Forecast Market</div>
+        <div class="form-card-sub">All fields are required. Proposals are reviewed within 48 hours.</div>
+      </div>
+    </div>
+    <div class="form-body">
+
+      <!-- Question -->
+      <div class="form-row single" style="margin-bottom:16px;">
+        <div class="form-field">
+          <div class="char-row">
+            <label class="field-label">The YES/NO Question</label>
+            <span class="char-count" id="qCount">0 / 120</span>
+          </div>
+          <input class="field-input" id="qInput" maxlength="120"
+            placeholder="Will the price of Super Petrol in Nairobi drop below KES 175 in the next EPRA review?"
+            oninput="updateQCount(this.value)">
+          <span class="field-hint">Must be answerable with a clear YES or NO. Avoid vague phrasing.</span>
+        </div>
+      </div>
+
+      <!-- Category + Close Date -->
+      <div class="form-row">
+        <div class="form-field">
+          <label class="field-label">Category</label>
+          <select class="field-select" id="catSelect">
+            <option value="">Select category...</option>
+            <option value="GENERAL">🇰🇪 General</option>
+            <option value="POLITICS">🗳️ Politics</option>
+            <option value="ECONOMY">📈 Economy</option>
+            <option value="ENTERTAINMENT">🎭 Entertainment</option>
+            <option value="WEATHER">🌦️ Weather</option>
+            <option value="TECH">💡 Tech</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label class="field-label">Resolution Date</label>
+          <input class="field-input" id="resDate" type="date">
+          <span class="field-hint">When can this be definitively answered?</span>
+        </div>
+      </div>
+
+      <!-- Truth Source -->
+      <div class="form-row single">
+        <div class="form-field">
+          <label class="field-label">Truth Source (Resolution Source)</label>
+          <input class="field-input" id="truthSource"
+            placeholder="https://www.epra.go.ke/petroleum-prices  (official source URL or description)">
+          <span class="field-hint">Link to the official website, database, or public record that will determine the outcome. No social media.</span>
+        </div>
+      </div>
+
+      <!-- Why will people care -->
+      <div class="form-row single">
+        <div class="form-field">
+          <label class="field-label">Iko Rada? — Why will Kenyans care about this?</label>
+          <textarea class="field-textarea" id="whyCare"
+            placeholder="EPRA reviews fuel prices every 2 weeks. With inflation still high, every matatu operator and driver is watching this. It's one of the most-discussed topics on Kenyan Twitter right now..."></textarea>
+          <span class="field-hint">Convince us this market will attract both YES and NO forecasters. Markets that attract both sides generate the most accurate data.</span>
+        </div>
+      </div>
+
+      <!-- Phone / Wallet -->
+      <div class="form-row">
+        <div class="form-field">
+          <label class="field-label">M-Pesa Number (Bounty Destination)</label>
+          <div class="wallet-field">
+            <input class="field-input" id="phoneInput" placeholder="07XX XXX XXX" type="tel">
+            <div class="wallet-method">
+              <button class="wm-btn active" id="wm-mpesa" onclick="setWalletMethod('mpesa')">M-Pesa</button>
+              <button class="wm-btn" id="wm-wallet" onclick="setWalletMethod('wallet')">Wallet</button>
+            </div>
+          </div>
+          <span class="field-hint">Royalties are credited to your Rada wallet when your market trades. You can withdraw to this M-Pesa number anytime.</span>
+        </div>
+        <div class="form-field">
+          <label class="field-label">Your Creator Handle (Optional)</label>
+          <input class="field-input" id="handleInput" placeholder="@your_handle or leave blank">
+          <span class="field-hint">Displayed on the market card as creator attribution.</span>
+        </div>
+      </div>
+
+      <!-- URL Preview -->
+      <div class="form-row single" style="margin-bottom:20px;">
+        <div class="form-field">
+          <label class="field-label">Your Creator Link (Auto-generated on Approval)</label>
+          <div class="url-preview" id="urlPreview">
+            rada.co.ke/m/<span id="urlSlug">your-market-slug</span>?c=<span id="urlPhone">07XXXXXXXX</span>
+          </div>
+          <span class="field-hint">Share this link. Every trade from it credits your Rada wallet for as long as the market is open.</span>
+        </div>
+      </div>
+
+      <!-- Agreement -->
+      <div class="agreement-box">
+        <input type="checkbox" class="agreement-checkbox" id="agreeCheck">
+        <div class="agreement-text">
+          I agree to the <a href="#">Rada Creator Agreement</a>. By submitting, I grant Rada the exclusive right to host this market. I confirm the resolution source is publicly accessible and the question has a clear YES/NO answer. Creator royalties are credited to your Rada wallet (not directly to M-Pesa) once your market exceeds KES 1,000 in traded volume. Royalties are earned only while the market is active and stop when the market resolves. Wallet balances can be withdrawn to M-Pesa at any time. Amounts may be subject to withholding tax.
+        </div>
+      </div>
+
+      <button class="btn-submit" id="submitBtn" onclick="submitProposal()">
+        Submit Market Proposal → Start Earning
+      </button>
+    </div>
+  </div>
+
+  <!-- SUCCESS PANEL -->
+  <div class="success-panel" id="successPanel">
+    <div class="success-icon">🎉</div>
+    <div class="success-title">Rada Safi! Your Proposal Is In Review.</div>
+    <div class="success-sub">
+      We'll review your market within 48 hours. If approved, you'll receive an SMS confirmation and your unique creator link. Start building your audience now — the more people you bring to the market, the more you earn.
+    </div>
+    <div class="share-link-label">Your Provisional Creator Link</div>
+    <div class="share-link-box" id="shareLink" onclick="copyLink()">
+      rada.co.ke/m/pending-review?c=<span id="shareLinkPhone"></span>
+      <div style="font-size:0.62rem;color:var(--text-dim);margin-top:4px;">Click to copy</div>
+    </div>
+    <button class="btn-smart-share" onclick="smartCreatorShare()">⤴ Share</button>
+    <div class="copy-toast-c" id="creatorCopyToast">✓ Link copied!</div>
+    <button class="btn-another" onclick="resetForm()">Propose Another Market</button>
+  </div>
+
+  <!-- MY MARKETS -->
+  <div class="my-markets" style="margin-top:16px;">
+    <div class="section-head">
+      <div>
+        <div class="section-title">My Creator Markets</div>
+        <div class="section-sub">Track earnings and status for all your proposed markets</div>
+      </div>
+    </div>
+    <table id="myMarketsTable">
+      <thead>
+        <tr>
+          <th>Market</th>
+          <th>Status</th>
+          <th>Volume</th>
+          <th>Earned (KES)</th>
+          <th>Creator Link</th>
+        </tr>
+      </thead>
+      <tbody id="myMarketsBody">
+        <!-- populated by JS -->
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<script>
+// ── SAMPLE DATA ───────────────────────────────────────────────────────────────
+const MY_MARKETS = [
+  { q:'Will KES/USD stay below 130 by Friday?', status:'live', vol:'KES 612K', earned:'KES 1,530', slug:'kes-usd-130-fri' },
+  { q:'Will it rain every day in Nairobi CBD next 72h?', status:'live', vol:'KES 89K', earned:'KES 222', slug:'nairobi-rain-72h' },
+  { q:'Will the Nairobi Expressway tolls increase in Q2?', status:'pending', vol:'—', earned:'—', slug:'expressway-tolls-q2' },
+  { q:'Will Sauti Sol release a new album this year?', status:'review', vol:'—', earned:'—', slug:'sauti-sol-album' },
+];
+
+function renderMyMarkets() {
+  const body = document.getElementById('myMarketsBody');
+  if (!MY_MARKETS.length) {
+    body.innerHTML = `<tr><td colspan="5" class="empty-row">No creator markets yet. Propose one above to start earning!</td></tr>`;
+    return;
+  }
+  body.innerHTML = MY_MARKETS.map(m => `
+    <tr>
+      <td style="max-width:240px;line-height:1.45">${m.q}</td>
+      <td><span class="status-badge ${m.status === 'live' ? 'status-live' : m.status === 'pending' ? 'status-pending' : 'status-review'}">
+        ${m.status === 'live' ? '● Live' : m.status === 'pending' ? '◎ Pending' : '↻ In Review'}
+      </span></td>
+      <td style="font-family:var(--mono);font-size:0.78rem">${m.vol}</td>
+      <td class="earn-val">${m.earned}</td>
+      <td>
+        ${m.status === 'live'
+          ? `<button class="copy-link-btn" onclick="copySlug('${m.slug}')">Copy Link</button>`
+          : '<span style="font-size:0.7rem;color:var(--text-dim)">Awaiting approval</span>'}
+      </td>
+    </tr>
+  `).join('');
+}
+
+// ── FORM LOGIC ────────────────────────────────────────────────────────────────
+let walletMethod = 'mpesa';
+
+function setWalletMethod(m) {
+  walletMethod = m;
+  document.getElementById('wm-mpesa').classList.toggle('active', m === 'mpesa');
+  document.getElementById('wm-wallet').classList.toggle('active', m === 'wallet');
+}
+
+function updateQCount(val) {
+  const count = document.getElementById('qCount');
+  count.textContent = `${val.length} / 120`;
+  count.classList.toggle('warn', val.length > 100);
+  // live slug preview
+  const slug = val.toLowerCase().replace(/[^a-z0-9\s]/g,'').replace(/\s+/g,'-').slice(0,40) || 'your-market-slug';
+  document.getElementById('urlSlug').textContent = slug;
+}
+
+document.getElementById('phoneInput').addEventListener('input', function() {
+  const phone = this.value.replace(/\s+/g,'') || '07XXXXXXXX';
+  document.getElementById('urlPhone').textContent = phone;
+});
+
+// Min date = tomorrow
+const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate()+1);
+document.getElementById('resDate').min = tomorrow.toISOString().split('T')[0];
+
+function submitProposal() {
+  const q       = document.getElementById('qInput').value.trim();
+  const cat     = document.getElementById('catSelect').value;
+  const date    = document.getElementById('resDate').value;
+  const truth   = document.getElementById('truthSource').value.trim();
+  const why     = document.getElementById('whyCare').value.trim();
+  const phone   = document.getElementById('phoneInput').value.trim();
+  const agreed  = document.getElementById('agreeCheck').checked;
+
+  if (!q || q.length < 20)    { shake('qInput');      return alert('Please enter a more detailed question (min 20 chars)'); }
+  if (!cat)                    { shake('catSelect');   return alert('Please select a category'); }
+  if (!date)                   { shake('resDate');     return alert('Please set a resolution date'); }
+  if (!truth)                  { shake('truthSource'); return alert('Please provide a truth source'); }
+  if (!why || why.length < 20) { shake('whyCare');     return alert('Please explain why Kenyans will care about this'); }
+  if (!phone || phone.length < 9) { shake('phoneInput'); return alert('Please enter your M-Pesa number'); }
+  if (!agreed)                 { shake('agreeCheck');  return alert('Please agree to the Creator Agreement'); }
+
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.textContent = 'Submitting...';
+
+  setTimeout(() => {
+    document.getElementById('proposalForm').style.display = 'none';
+    document.getElementById('shareLinkPhone').textContent = phone;
+    document.getElementById('successPanel').classList.add('show');
+  }, 900);
+}
+
+function shake(id) {
+  const el = document.getElementById(id);
+  el.style.animation = 'none';
+  el.style.borderColor = 'var(--ke-red)';
+  setTimeout(() => { el.style.borderColor = ''; }, 1500);
+}
+
+
+
+function copySlug(slug) {
+  const link = `https://rada.co.ke/m/${slug}?c=MY_PHONE`;
+  navigator.clipboard.writeText(link).catch(()=>{});
+  alert('Creator link copied! Share it to earn on every trade.');
+}
+
+
+
+function resetForm() {
+  document.getElementById('successPanel').classList.remove('show');
+  document.getElementById('proposalForm').style.display = '';
+  document.getElementById('submitBtn').disabled = false;
+  document.getElementById('submitBtn').textContent = 'Submit Market Proposal → Start Earning';
+  document.getElementById('qInput').value = '';
+  document.getElementById('whyCare').value = '';
+  document.getElementById('phoneInput').value = '';
+  document.getElementById('agreeCheck').checked = false;
+  document.getElementById('qCount').textContent = '0 / 120';
+}
+
+renderMyMarkets();
+</script>
+
+<script>
+
+// ── UTILITIES ─────────────────────────────────────────────────────────────────
+
+function robustCopyC(text, onSuccess) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(onSuccess).catch(() => legacyCopyC(text, onSuccess));
+  } else { legacyCopyC(text, onSuccess); }
+}
+function legacyCopyC(text, onSuccess) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.cssText = 'position:fixed;left:-9999px;top:-9999px;opacity:0';
+  document.body.appendChild(ta);
+  ta.focus(); ta.select();
+  try { document.execCommand('copy'); if (onSuccess) onSuccess(); } catch(e) {}
+  document.body.removeChild(ta);
+}
+
+function getCreatorLink() {
+  const phone = document.getElementById('phoneInput')?.value || '07XXXXXXXX';
+  const slug  = document.getElementById('urlSlug')?.textContent || 'pending-review';
+  return `https://rada.co.ke/m/${slug}?c=${encodeURIComponent(phone)}`;
+}
+
+function showCreatorToast() {
+  const t = document.getElementById('creatorCopyToast');
+  if (t) { t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2200); }
+}
+
+// ── SINGLE NATIVE SHARE — used by ALL share buttons on this page ───────────
+function radaShare(title, text, url, onFallback) {
+  if (navigator.share) {
+    navigator.share({ title, text, url }).catch(() => onFallback && onFallback());
+  } else {
+    robustCopyC(url, () => {
+      showCreatorToast();
+      if (onFallback) onFallback();
+    });
+  }
+}
+
+// ── SHARE BUTTONS ────────────────────────────────────────────────────────────
+
+function smartCreatorShare() {
+  const phone = document.getElementById('shareLinkPhone').textContent || '0000000000';
+  const link  = 'https://rada.co.ke/m/pending-review?c=' + phone;
+  radaShare(
+    'Rada — Forecast Market',
+    '🇰🇪 I just proposed a market on Rada — Kenya's forecasting platform. Join and forecast: ' + link,
+    link
+  );
+}
+
+function copyLink() {
+  const link = getCreatorLink();
+  radaShare(
+    'Rada — Creator Link',
+    'Jiunge na Rada! Forecast real events, earn via M-Pesa 🇰🇪',
+    link,
+    () => {
+      const box = document.getElementById('shareLink');
+      if (box) { box.style.background = 'var(--primary-dim)'; setTimeout(() => box.style.background = '', 700); }
+    }
+  );
+}
+
+function creatorCopyLink(btn) {
+  const link = getCreatorLink();
+  radaShare(
+    'Rada — Creator Link',
+    'Jiunge na Rada! Forecast real events, earn via M-Pesa 🇰🇪',
+    link,
+    () => {
+      if (btn) {
+        const orig = btn.textContent;
+        btn.textContent = '✓ Copied!';
+        btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 2000);
+      }
+    }
+  );
+}
+
+// Keep these as aliases so any existing onclick="shareToWhatsApp()" / "creatorNativeShare()" still works
+function shareToWhatsApp()   { copyLink(); }
+function creatorShareSMS()   { copyLink(); }
+function creatorNativeShare(){ copyLink(); }
+
+function copySlug(slug) {
+  const link = `https://rada.co.ke/m/${slug}`;
+  radaShare('Rada Market', 'Check out this forecast market on Rada 🇰🇪', link);
+}
+
+</script>
+
+</body>
+</html>

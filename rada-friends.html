@@ -1,0 +1,1337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rada — Social Challenge</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Archivo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+html { font-size: 106.25%; }
+:root{
+  --primary:#6d28d9;
+  --primary-bright:#7c3aed;
+  --primary-light:#8b5cf6;
+  --primary-glow:rgba(109,40,217,0.08);
+  --primary-dim:rgba(109,40,217,0.05);
+  --ke-green:#6d28d9;
+  --ke-green-bright:#7c3aed;
+  --ke-green-glow:rgba(109,40,217,0.08);
+  --ke-red:#CE1126;
+  --ke-red-dim:rgba(206,17,38,0.07);
+  --gold:#c97d0a;
+  --gold-dim:rgba(201,125,10,0.08);
+  --purple:#7c3aed;
+  --purple-dim:rgba(109,40,217,0.07);
+  --blue:#2563eb;
+  --blue-dim:rgba(37,99,235,0.08);
+  --bg:#faf8ff;
+  --bg2:#ffffff;
+  --bg3:#f0edff;
+  --bg4:#e5e0ff;
+  --border:rgba(109,40,217,0.12);
+  --border-bright:rgba(109,40,217,0.30);
+  --text:#1a1035;
+  --text-dim:#9284b8;
+  --text-mid:#5b21b6;
+  --font:'Outfit',sans-serif;
+  --mono:'Archivo',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#faf9ff;color:var(--text);font-family:var(--font);min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");pointer-events:none;z-index:0;opacity:0.08;}
+
+nav{padding:14px 24px;display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,0.96);backdrop-filter:blur(12px);border-bottom:1px solid rgba(109,40,217,0.12);position:sticky;top:0;z-index:50;}
+.logo-badge{background:var(--ke-green);color:#fff;font-family:var(--font);font-size:0.65rem;font-weight:800;padding:4px 10px;border-radius:6px;letter-spacing:0.02em;}
+.logo-text{font-size:1.05rem;font-weight:700;}
+.nav-logo{display:flex;align-items:center;gap:10px;}
+.nav-links{display:flex;gap:4px;}
+.nav-link{padding:6px 14px;border-radius:6px;font-size:0.8rem;font-weight:600;cursor:pointer;border:none;background:transparent;color:#5b21b6;text-decoration:none;transition:all 0.15s;}
+.nav-link:hover{color:var(--text);background:#f0f7f2;}
+.nav-link.active{color:var(--purple);background:var(--purple-dim);}
+
+.page-wrap{max-width:900px;margin:0 auto;padding:36px 24px 100px;position:relative;z-index:1;}
+
+/* HERO */
+.page-tag{display:inline-flex;align-items:center;gap:6px;background:var(--purple-dim);border:1px solid rgba(167,139,250,0.3);border-radius:100px;padding:5px 14px;margin-bottom:16px;font-size:0.7rem;font-weight:700;color:var(--purple);letter-spacing:0.07em;text-transform:uppercase;font-family:var(--mono);}
+.page-title{font-size:clamp(1.8rem,4vw,2.8rem);font-weight:700;letter-spacing:-0.03em;line-height:1.1;margin-bottom:10px;}
+.page-title em{font-style:normal;color:var(--purple);}
+.page-sub{font-size:0.9rem;color:var(--text-mid);max-width:520px;line-height:1.65;margin-bottom:28px;}
+
+/* TABS */
+.tab-row{display:flex;gap:4px;margin-bottom:28px;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:5px;}
+.tab{flex:1;padding:9px;border-radius:8px;font-size:0.8rem;font-weight:700;cursor:pointer;border:none;background:transparent;color:var(--text-dim);font-family:var(--font);transition:all 0.2s;text-align:center;}
+.tab.active{background:var(--purple-dim);color:var(--purple);border:1px solid rgba(167,139,250,0.25);}
+
+/* EXPLAINER */
+.explainer{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:32px;}
+.exp-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:18px 16px;}
+.exp-icon{font-size:1.5rem;margin-bottom:10px;}
+.exp-title{font-weight:700;font-size:0.82rem;margin-bottom:5px;color:var(--purple);}
+.exp-body{font-size:0.74rem;color:var(--text-mid);line-height:1.55;}
+
+/* CARDS */
+.challenge-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;margin-bottom:32px;}
+.challenge-card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:20px;box-shadow:0 2px 12px rgba(0,0,0,0.06);transition:border-color 0.2s;animation:cardIn 0.35s ease both;}
+.challenge-card:hover{border-color:rgba(167,139,250,0.35);}
+@keyframes cardIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.cc-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px;}
+.cc-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:100px;font-size:0.62rem;font-weight:700;font-family:var(--mono);}
+.badge-open{background:var(--ke-green-glow);color:var(--ke-green);border:1px solid rgba(109,40,217,0.14);}
+.badge-pending{background:var(--gold-dim);color:var(--gold);border:1px solid rgba(244,185,66,0.2);}
+.badge-resolved{background:var(--bg3);color:var(--text-dim);border:1px solid var(--border);}
+.badge-disputed{background:var(--ke-red-dim);color:var(--ke-red);border:1px solid rgba(206,17,38,0.2);}
+.cc-code{font-family:var(--mono);font-size:0.65rem;color:var(--text-dim);}
+
+.cc-q{font-size:0.9rem;font-weight:600;line-height:1.4;margin-bottom:14px;}
+
+/* Stake pool visual */
+.cc-pool{background:var(--bg3);border-radius:10px;padding:12px 14px;margin-bottom:14px;}
+.cc-pool-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.cc-pool-label{font-size:0.7rem;color:var(--text-dim);font-weight:600;text-transform:uppercase;letter-spacing:0.06em;}
+.cc-pool-val{font-family:var(--mono);font-size:0.85rem;font-weight:700;color:var(--text);}
+.cc-pool-bar{height:6px;background:var(--bg4);border-radius:100px;overflow:hidden;margin-bottom:8px;}
+.cc-pool-fill{height:100%;border-radius:100px;background:linear-gradient(90deg,#6d28d9,#8b5cf6);}
+
+/* Participants */
+.cc-participants{display:flex;gap:8px;margin-bottom:14px;}
+.cc-participant{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px 10px;}
+.cc-p-role{font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--text-dim);margin-bottom:3px;}
+.cc-p-name{font-size:0.78rem;font-weight:600;}
+.cc-p-stake{font-family:var(--mono);font-size:0.7rem;color:var(--ke-green);}
+
+/* Referee */
+.cc-referee{background:var(--bg3);border:1px dashed rgba(167,139,250,0.3);border-radius:8px;padding:8px 12px;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.cc-ref-icon{width:28px;height:28px;border-radius:50%;background:var(--purple-dim);border:1px solid rgba(167,139,250,0.3);display:flex;align-items:center;justify-content:center;font-size:0.8rem;flex-shrink:0;}
+.cc-ref-label{font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--purple);margin-bottom:2px;}
+.cc-ref-name{font-size:0.78rem;font-weight:600;}
+.cc-ref-sub{font-size:0.65rem;color:var(--text-dim);}
+
+/* Resolve panel */
+.cc-resolve{background:var(--bg3);border:1px solid rgba(167,139,250,0.2);border-radius:10px;padding:12px;margin-bottom:14px;display:none;}
+.cc-resolve.show{display:block;}
+.cc-resolve-title{font-size:0.72rem;font-weight:700;color:var(--purple);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.06em;}
+.resolve-btns{display:flex;gap:6px;}
+.btn-resolve{flex:1;padding:8px;border-radius:8px;font-size:0.78rem;font-weight:700;cursor:pointer;border:none;font-family:var(--font);transition:all 0.15s;}
+.btn-resolve-a{background:rgba(109,40,217,0.10);color:var(--ke-green);border:1px solid rgba(109,40,217,0.22);}
+.btn-resolve-a:hover{background:var(--ke-green);color:#fff;}
+.btn-resolve-b{background:rgba(206,17,38,0.1);color:var(--ke-red);border:1px solid rgba(206,17,38,0.25);}
+.btn-resolve-b:hover{background:var(--ke-red);color:#fff;}
+.btn-resolve-tie{background:var(--gold-dim);color:var(--gold);border:1px solid rgba(244,185,66,0.25);}
+.btn-resolve-tie:hover{background:var(--gold);color:#000;}
+
+/* Fee note */
+.fee-note{font-size:0.68rem;color:var(--text-dim);margin-top:8px;display:flex;justify-content:space-between;}
+
+.cc-actions{display:flex;gap:8px;}
+.btn-sm{padding:7px 14px;border-radius:8px;font-size:0.75rem;font-weight:700;cursor:pointer;border:none;font-family:var(--font);transition:all 0.15s;}
+.btn-sm-purple{background:var(--purple-dim);color:var(--purple);border:1px solid rgba(167,139,250,0.25);}
+.btn-sm-purple:hover{background:var(--purple);color:#000;}
+.btn-sm-wa{background:rgba(37,211,102,0.12);color:#25d366;border:1px solid rgba(37,211,102,0.25);}
+.btn-sm-wa:hover{background:#25d366;color:#000;}
+.btn-sm-ghost{background:var(--bg3);color:var(--text-mid);border:1px solid var(--border);}
+.btn-sm-ghost:hover{border-color:var(--border-bright);color:var(--text);}
+
+/* ── CREATE CHALLENGE MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.55);backdrop-filter:blur(8px);z-index:200;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.25s;}
+.modal-overlay.open{opacity:1;pointer-events:all;}
+.modal{background:var(--bg2);border:1px solid rgba(167,139,250,0.3);border-radius:20px 20px 0 0;width:100%;max-width:560px;transform:translateY(100%);transition:transform 0.35s cubic-bezier(0.34,1.56,0.64,1);overflow:hidden;max-height:92vh;display:flex;flex-direction:column;}
+.modal-overlay.open .modal{transform:translateY(0);}
+.modal-handle{width:40px;height:4px;border-radius:2px;background:rgba(167,139,250,0.4);margin:12px auto 0;cursor:pointer;flex-shrink:0;}
+.modal-head{padding:16px 20px 12px;border-bottom:1px solid rgba(109,40,217,0.12);flex-shrink:0;}
+.modal-title{font-weight:700;font-size:1rem;color:#6d28d9;}
+.modal-sub{font-size:0.75rem;color:var(--text-mid);margin-top:3px;}
+.modal-body{padding:20px;overflow-y:auto;flex:1;}
+
+/* Form */
+.mf-label{font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--text-dim);margin-bottom:6px;display:block;}
+.mf-input,.mf-select,.mf-textarea{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:11px 14px;color:var(--text);font-family:var(--font);font-size:0.85rem;outline:none;transition:border-color 0.2s;margin-bottom:16px;}
+.mf-input:focus,.mf-select:focus,.mf-textarea:focus{border-color:rgba(109,40,217,0.45);}
+.mf-input::placeholder,.mf-textarea::placeholder{color:var(--text-dim);}
+.mf-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+@media(max-width:480px){.mf-row{grid-template-columns:1fr;}}
+
+/* Stake slider in modal */
+.stake-display{background:var(--bg3);border-radius:10px;padding:14px;margin-bottom:16px;}
+.sd-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.sd-label{font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-dim);}
+.sd-val{font-family:var(--mono);font-size:1.1rem;font-weight:700;color:var(--purple);}
+.stake-range{width:100%;-webkit-appearance:none;height:5px;background:var(--bg4);border-radius:100px;outline:none;cursor:pointer;}
+.stake-range::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--purple);cursor:pointer;border:3px solid var(--bg2);box-shadow:0 0 8px rgba(167,139,250,0.4);}
+.stake-limits{display:flex;justify-content:space-between;font-size:0.62rem;color:var(--text-dim);font-family:var(--mono);margin-top:5px;}
+
+/* Fee preview */
+.fee-preview{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:16px;}
+.fp-row{display:flex;justify-content:space-between;font-size:0.78rem;margin-bottom:4px;}
+.fp-row:last-child{margin-bottom:0;padding-top:8px;border-top:1px solid var(--border);font-weight:700;}
+.fp-dimmed{color:var(--text-dim);}
+
+/* Resolution type selector */
+.res-type-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px;}
+.res-type-btn{padding:10px 8px;border-radius:10px;text-align:center;cursor:pointer;border:1px solid var(--border);background:var(--bg3);transition:all 0.15s;}
+.res-type-btn.selected{border-color:rgba(167,139,250,0.4);background:var(--purple-dim);}
+.res-type-icon{font-size:1.2rem;margin-bottom:4px;}
+.res-type-label{font-size:0.68rem;font-weight:700;color:var(--text-mid);}
+.res-type-btn.selected .res-type-label{color:var(--purple);}
+
+.referee-field{margin-bottom:16px;display:none;}
+.referee-field.show{display:block;}
+.referee-note{background:var(--bg3);border:1px solid rgba(167,139,250,0.2);border-radius:8px;padding:10px 12px;font-size:0.73rem;color:var(--text-mid);line-height:1.5;margin-bottom:16px;}
+.referee-note strong{color:var(--purple);}
+
+.btn-create{width:100%;padding:14px;background:var(--ke-green);color:#fff;font-weight:700;font-size:0.9rem;border-radius:12px;border:none;cursor:pointer;font-family:var(--font);transition:all 0.2s;}
+.btn-create:hover{background:#b49dff;}
+.btn-create:disabled{background:var(--bg3);color:var(--text-dim);cursor:not-allowed;}
+
+/* ── SUCCESS PANEL ── */
+.success-sheet{padding:28px 20px;text-align:center;}
+.ss-icon{font-size:3rem;margin-bottom:12px;}
+.ss-title{font-size:1.1rem;font-weight:700;margin-bottom:6px;color:#6d28d9;}
+.ss-sub{font-size:0.82rem;color:var(--text-mid);line-height:1.6;margin-bottom:20px;}
+.ss-code-box{background:var(--bg3);border:1px solid rgba(167,139,250,0.3);border-radius:10px;padding:16px;margin-bottom:16px;cursor:pointer;transition:background 0.15s;}
+.ss-code-box:hover{background:var(--bg4);}
+.ss-code-label{font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-dim);margin-bottom:6px;}
+.ss-code{font-family:var(--mono);font-size:2rem;font-weight:700;color:#6d28d9;letter-spacing:0.2em;}
+.ss-link{font-size:0.7rem;color:var(--text-dim);margin-top:4px;word-break:break-all;}
+.btn-wa-share{width:100%;padding:12px;background:#25d366;color:#000;font-weight:700;border-radius:10px;border:none;cursor:pointer;font-family:var(--font);font-size:0.88rem;margin-bottom:8px;}
+.btn-done{width:100%;padding:10px;background:var(--bg3);color:var(--text-mid);font-weight:700;border-radius:10px;border:1px solid var(--border);cursor:pointer;font-family:var(--font);font-size:0.85rem;}
+
+/* ── REFEREE DASHBOARD ── */
+.ref-section{margin-bottom:32px;}
+.ref-section-title{font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.09em;color:var(--purple);margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.ref-section-title::after{content:'';flex:1;height:1px;background:rgba(167,139,250,0.15);}
+.empty-state{background:var(--bg2);border:1px dashed var(--border);border-radius:14px;padding:40px;text-align:center;color:var(--text-dim);font-size:0.85rem;}
+
+/* JOIN via code */
+.join-card{background:linear-gradient(135deg,rgba(109,40,217,0.05),rgba(255,255,255,0));border:1px solid rgba(109,40,217,0.15);border-radius:16px;padding:24px;margin-bottom:28px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+.jc-icon{font-size:2rem;flex-shrink:0;}
+.jc-body{flex:1;}
+.jc-title{font-weight:700;font-size:0.95rem;margin-bottom:5px;color:var(--purple);}
+.jc-sub{font-size:0.78rem;color:var(--text-mid);line-height:1.5;}
+.jc-input-row{display:flex;gap:8px;margin-top:12px;}
+.jc-input{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:9px 14px;color:var(--text);font-family:var(--mono);font-size:0.9rem;outline:none;width:160px;letter-spacing:0.15em;transition:border-color 0.2s;}
+.jc-input:focus{border-color:rgba(167,139,250,0.5);}
+.btn-join{background:var(--purple);color:#000;font-weight:700;padding:9px 18px;border-radius:8px;border:none;cursor:pointer;font-family:var(--font);font-size:0.82rem;}
+
+/* Float action button */
+.fab{position:fixed;bottom:80px;right:20px;background:var(--purple);color:#000;font-weight:700;font-size:0.88rem;padding:14px 20px;border-radius:50px;border:none;cursor:pointer;font-family:var(--font);box-shadow:0 4px 20px rgba(167,139,250,0.3);z-index:100;display:flex;align-items:center;gap:8px;transition:all 0.2s;}
+.fab:hover{background:#b49dff;transform:translateY(-2px);}
+@media(min-width:768px){.fab{bottom:32px;}}
+
+/* ── Friends enhanced share strip ─────────────────────────────────────────── */
+.chal-share-strip {
+  display: flex; gap: 7px; margin-top: 10px; padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+.csh-btn {
+  flex: 1; display: flex; align-items: center; justify-content: center; gap: 4px;
+  padding: 7px 4px; border-radius: 8px; border: 1px solid var(--border);
+  background: var(--bg3); font-family: var(--font); font-size: 0.68rem;
+  font-weight: 700; cursor: pointer; color: var(--text-mid); transition: all 0.15s;
+}
+.csh-btn:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-dim); }
+.csh-btn.wa   { border-color: rgba(37,211,102,0.35); color: #25d366; }
+.csh-btn.wa:hover { background: rgba(37,211,102,0.08); }
+.csh-btn.sms  { border-color: rgba(109,40,217,0.3); color: var(--primary); }
+.csh-btn.native { border-color: rgba(109,40,217,0.3); color: var(--primary); }
+.csh-btn.copied { background: var(--primary-dim); color: var(--primary); border-color: var(--primary); }
+
+
+@media (max-width: 767px) {
+  .nav-links { display: none !important; }
+  nav { padding: 12px 16px; }
+  body { padding-bottom: 72px; }
+  .page-wrap { padding: 24px 16px; }
+  h1.page-title { font-size: 1.8rem; }
+}
+
+/* ── BOTTOM NAV (mobile) ─────────────────────────────────────────────────── */
+.bottom-nav {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: rgba(255,255,255,0.97); backdrop-filter: blur(12px);
+  border-top: 1px solid rgba(109,40,217,0.12); z-index: 200;
+  display: flex; justify-content: space-around;
+  padding: 10px 0 max(10px, env(safe-area-inset-bottom));
+}
+.bn-item {
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  cursor: pointer; padding: 4px 16px; border-radius: 8px;
+  color: #9284b8; text-decoration: none; transition: color 0.15s;
+}
+.bn-item.active { color: #6d28d9; }
+.bn-item:hover { color: #1a1035; }
+.bn-icon { font-size: 1.2rem; }
+.bn-label { font-size: 0.6rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
+@media (min-width: 768px) { .bottom-nav { display: none; } }
+
+/* ═══════════════════════════════════════════════════════
+   STANDARD HEADER — logo left · nav center · actions right
+   ═══════════════════════════════════════════════════════ */
+.site-header {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(255,255,255,0.97);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(109,40,217,0.12);
+  padding: 0 32px; height: 64px;
+  display: flex; align-items: center;
+}
+/* Logo — far left */
+.site-header .h-logo {
+  display: flex; align-items: center; gap: 10px;
+  text-decoration: none; color: inherit;
+  flex-shrink: 0;
+}
+.site-header .h-logo-badge {
+  background: #6d28d9; color: #fff;
+  font-family: 'Archivo', sans-serif;
+  font-size: 0.62rem; font-weight: 700;
+  padding: 4px 9px; border-radius: 6px;
+  letter-spacing: 0.04em;
+}
+.site-header .h-logo-text { font-size: 1.05rem; font-weight: 700; letter-spacing: -0.01em; }
+.site-header .h-logo-sub  { font-size: 0.55rem; font-weight: 600; letter-spacing: 0.1em; color: #9284b8; font-family: 'Archivo', sans-serif; }
+
+/* Nav — centered via auto margins */
+.site-header .h-nav {
+  display: flex; gap: 2px; align-items: center;
+  margin: 0 auto;
+}
+.site-header .h-nav a {
+  color: #9284b8; text-decoration: none;
+  font-size: 0.85rem; font-weight: 500;
+  padding: 7px 13px; border-radius: 8px;
+  transition: all 0.18s; white-space: nowrap;
+}
+.site-header .h-nav a:hover  { color: #1a1035; background: #f0edff; }
+.site-header .h-nav a.active { color: #6d28d9; background: rgba(109,40,217,0.10); font-weight: 600; }
+
+/* Actions — far right */
+.site-header .h-actions {
+  display: flex; align-items: center; gap: 8px;
+  flex-shrink: 0;
+}
+.site-header .h-balance {
+  display: flex; align-items: center; gap: 6px;
+  background: #f0edff; border: 1px solid rgba(109,40,217,0.18);
+  border-radius: 10px; padding: 6px 14px;
+  font-family: 'Archivo', sans-serif;
+  font-size: 0.82rem; color: #6d28d9; font-weight: 500;
+}
+.site-header .h-dot {
+  width: 6px; height: 6px; border-radius: 50%; background: #6d28d9;
+}
+.site-header .h-btn {
+  padding: 7px 16px; border-radius: 9px;
+  font-size: 0.82rem; font-weight: 600;
+  font-family: 'Outfit', 'Outfit', sans-serif;
+  cursor: pointer; transition: all 0.18s; border: none;
+}
+.site-header .h-btn-ghost {
+  background: transparent; color: #6d28d9;
+  border: 1px solid rgba(109,40,217,0.30);
+}
+.site-header .h-btn-ghost:hover { background: #f0edff; }
+.site-header .h-btn-primary {
+  background: #6d28d9; color: #fff;
+}
+.site-header .h-btn-primary:hover {
+  background: #7c3aed;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(109,40,217,0.25);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   MOBILE TOP NAV — 5-tab bar pinned to top, mobile only
+   ═══════════════════════════════════════════════════════════════ */
+.mobile-top-nav {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  background: rgba(255,255,255,0.98);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1.5px solid rgba(109,40,217,0.13);
+  z-index: 500;
+  justify-content: space-around;
+  align-items: center;
+  padding: 8px 0 6px;
+  box-shadow: 0 2px 14px rgba(109,40,217,0.06);
+}
+.mobile-top-nav .bn-item {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  cursor: pointer; padding: 2px 10px; border-radius: 8px;
+  color: #9284b8; text-decoration: none; transition: color 0.15s;
+  min-width: 48px; flex: 1;
+}
+.mobile-top-nav .bn-item.active { color: #6d28d9; }
+.mobile-top-nav .bn-item:hover  { color: #1a1035; }
+.mobile-top-nav .bn-icon  { font-size: 1.15rem; line-height: 1.1; }
+.mobile-top-nav .bn-label {
+  font-size: 0.58rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.07em;
+}
+@media (max-width: 767px) {
+  .mobile-top-nav { display: flex !important; }
+  .site-header    { display: none !important; }
+  body { padding-top: 58px !important; }
+  .page, .page-wrap { padding-top: 16px; }
+}
+
+
+/* ── Phone validation status ── */
+.phone-status {
+  position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+  font-size: 0.8rem; font-weight: 700; pointer-events: none;
+}
+.phone-status.valid   { color: #059669; }
+.phone-status.invalid { color: #CE1126; }
+.phone-status.checking{ color: var(--gold); }
+.field-hint { font-size: 0.72rem; color: var(--text-dim); margin-top: 4px; line-height: 1.4; }
+
+/* ── Public toggle ── */
+.public-toggle-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  background: var(--bg3); border: 1px solid var(--border); border-radius: 10px;
+  padding: 12px 14px; margin-bottom: 16px;
+}
+.toggle-switch { flex-shrink: 0; position: relative; width: 44px; height: 24px; cursor: pointer; }
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+.toggle-track {
+  position: absolute; inset: 0;
+  background: var(--border-bright); border-radius: 12px; transition: 0.2s;
+}
+.toggle-switch input:checked + .toggle-track { background: var(--ke-green); }
+.toggle-track::before {
+  content: ''; position: absolute;
+  width: 18px; height: 18px; left: 3px; top: 3px;
+  background: #fff; border-radius: 50%; transition: 0.2s;
+}
+.toggle-switch input:checked + .toggle-track::before { transform: translateX(20px); }
+
+/* ── Timer — normal / warning / expired ── */
+.cc-timer { display: flex; align-items: center; gap: 6px; font-size: 0.72rem; font-weight: 700; padding: 5px 10px; border-radius: 6px; margin-bottom: 8px; font-family: var(--mono); }
+.cc-timer.normal  { background: rgba(109,40,217,0.07); color: var(--primary); }
+.cc-timer.warning { background: rgba(201,125,10,0.10); color: var(--gold); animation: timerPulse 1.5s ease infinite; }
+.cc-timer.expired { background: rgba(206,17,38,0.09); color: var(--ke-red); animation: timerPulse 0.8s ease infinite; }
+@keyframes timerPulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
+.cc-timer-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+/* ── Mutual Resolution button ── */
+.btn-mutual-resolve {
+  width: 100%; padding: 11px; border-radius: 10px; border: none;
+  background: linear-gradient(135deg, #c97d0a, #e09010);
+  color: #fff; font-weight: 700; font-size: 0.85rem;
+  cursor: pointer; font-family: var(--font);
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  margin-top: 8px; transition: all 0.18s;
+  animation: mutualGlow 2s ease infinite;
+}
+.btn-mutual-resolve:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(201,125,10,0.3); }
+@keyframes mutualGlow { 0%,100%{box-shadow:0 0 0 0 rgba(201,125,10,0.25)} 50%{box-shadow:0 0 0 6px rgba(201,125,10,0)} }
+
+/* ── Notification toast ── */
+.notif-toast {
+  position: fixed; top: 70px; left: 50%; transform: translateX(-50%);
+  background: #1a1035; color: #fff;
+  padding: 12px 20px; border-radius: 12px;
+  font-size: 0.82rem; font-weight: 500; line-height: 1.5;
+  max-width: 320px; text-align: center;
+  z-index: 9999; pointer-events: none;
+  opacity: 0; transition: opacity 0.3s;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.2);
+}
+.notif-toast.show { opacity: 1; }
+.notif-toast .notif-title { font-weight: 700; color: var(--gold); margin-bottom: 3px; }
+
+/* ── In-app notification banner ── */
+.resolution-alert {
+  background: linear-gradient(135deg, rgba(206,17,38,0.06), rgba(201,125,10,0.06));
+  border: 1.5px solid rgba(201,125,10,0.3);
+  border-radius: 12px; padding: 14px 16px;
+  margin-bottom: 12px;
+  display: flex; gap: 10px; align-items: flex-start;
+}
+.resolution-alert-icon { font-size: 1.3rem; flex-shrink: 0; }
+.resolution-alert-body { flex: 1; }
+.resolution-alert-title { font-weight: 700; font-size: 0.85rem; color: var(--ke-red); margin-bottom: 3px; }
+.resolution-alert-sub { font-size: 0.78rem; color: var(--text-mid); line-height: 1.5; }
+.resolution-alert-cta { font-size: 0.75rem; font-weight: 700; color: var(--gold); margin-top: 4px; cursor: pointer; text-decoration: underline; }
+
+</style>
+</head>
+<body>
+
+<div class="mobile-top-nav">
+  <a class="bn-item" href="rada-markets.html"><div class="bn-icon">◈</div><div class="bn-label">Markets</div></a>
+  <a class="bn-item" href="rada-portfolio.html"><div class="bn-icon">◎</div><div class="bn-label">Portfolio</div></a>
+  <a class="bn-item" href="rada-leaderboard.html"><div class="bn-icon">⊞</div><div class="bn-label">Leaders</div></a>
+  <a class="bn-item" href="rada-creator.html"><div class="bn-icon">💡</div><div class="bn-label">Creator</div></a>
+  <a class="bn-item" href="rada-data.html"><div class="bn-icon">📊</div><div class="bn-label">Data</div></a>
+</div>
+
+<header class="site-header">
+  <a class="h-logo" href="rada-markets.html">
+    <div class="h-logo-badge">RADA</div>
+    <div>
+      <div class="h-logo-text">Rada</div>
+      <div class="h-logo-sub">CROWD INTELLIGENCE</div>
+    </div>
+  </a>
+  <nav class="h-nav">
+    <a href="rada-markets.html">Forecast Markets</a>
+    <a href="rada-portfolio.html">Portfolio</a>
+    <a href="rada-leaderboard.html">Leaderboard</a>
+    <a href="rada-data.html">Data Platform</a>
+    <a href="rada-creator.html">Creator Hub</a>
+    <a class="active" href="rada-friends.html">Social Challenge</a>
+    <a href="rada-about.html">About</a>
+  </nav>
+  <div class="h-actions">
+    <div class="h-balance"><div class="h-dot"></div><span>KES <strong id="balDisplay">5,000</strong></span></div>
+    <button class="h-btn h-btn-ghost" onclick="openWithdraw ? openWithdraw() : null">Withdraw</button>
+    <button class="h-btn h-btn-primary" onclick="openDeposit ? openDeposit() : null">+ Deposit</button>
+  </div>
+</header>
+
+<div class="page-wrap">
+
+  <!-- HERO -->
+  <div class="page-tag">🤝 Social Escrow · Private Challenges</div>
+  <h1 class="page-title">Social Challenge.<br><em>Settle It Fairly.</em></h1>
+  <p class="page-sub">Friendly disputes, fitness bets, work milestones. Create a private YES/NO challenge, nominate a Referee, and let M-Pesa handle the payout automatically — fairly and transparently.</p>
+
+  <!-- TABS -->
+  <div class="tab-row">
+    <button class="tab active" onclick="switchTab(this,'my-challenges')">My Challenges</button>
+    <button class="tab" onclick="switchTab(this,'referee')">⚖️ Referee Queue <span id="refBadge" style="background:var(--purple);color:#000;border-radius:4px;font-size:0.6rem;padding:1px 6px;font-weight:700;">2</span></button>
+    <button class="tab" onclick="switchTab(this,'history')">Settled History</button>
+  </div>
+
+  <!-- JOIN VIA CODE -->
+  <div class="join-card">
+    <div class="jc-icon">🔐</div>
+    <div class="jc-body">
+      <div class="jc-title">Got an Invite Code? Join a Challenge</div>
+      <div class="jc-sub">A friend challenged you. Enter the 6-digit code from their WhatsApp message to join and stake your side.</div>
+      <div class="jc-input-row">
+        <input class="jc-input" id="joinCodeInput" maxlength="6" placeholder="ABC123" oninput="this.value=this.value.toUpperCase()">
+        <button class="btn-join" onclick="joinChallenge()">Join →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MY CHALLENGES TAB -->
+  <div id="tab-my-challenges">
+    <div class="challenge-grid" id="challengeGrid"></div>
+  </div>
+
+  <!-- REFEREE TAB -->
+  <div id="tab-referee" style="display:none;">
+    <div class="ref-section">
+      <div class="ref-section-title">Awaiting Your Judgment</div>
+      <div class="challenge-grid" id="refGrid"></div>
+    </div>
+    <div class="ref-section">
+      <div class="ref-section-title">Past Rulings</div>
+      <div class="empty-state">No completed rulings yet. You'll appear here once you resolve a challenge.</div>
+    </div>
+  </div>
+
+  <!-- HISTORY TAB -->
+  <div id="tab-history" style="display:none;">
+    <div class="challenge-grid" id="historyGrid"></div>
+  </div>
+
+</div>
+
+<!-- FAB -->
+<button class="fab" onclick="openCreate()">+ New Challenge</button>
+
+<!-- CREATE MODAL -->
+<div class="modal-overlay" id="createModal">
+  <div class="modal">
+    <div class="modal-handle" onclick="closeModal('createModal')"></div>
+
+    <!-- FORM VIEW -->
+    <div id="formView">
+      <div class="modal-head">
+        <div class="modal-title">Create a Social Challenge</div>
+        <div class="modal-sub">Private · Max stake KES 20,000 · Min KES 20 per person</div>
+      </div>
+      <div class="modal-body">
+
+        <label class="mf-label">The Challenge Question</label>
+        <input class="mf-input" id="cfQuestion" placeholder="e.g. Will I beat Kamau in the 5km Parkrun this Saturday?">
+
+        <!-- Challenger A -->
+        <div class="mf-row">
+          <div>
+            <label class="mf-label">Your Name (Challenger A)</label>
+            <input class="mf-input" id="cfNameA" placeholder="Your name">
+          </div>
+          <div>
+            <label class="mf-label">Your Phone Number</label>
+            <div style="position:relative">
+              <input class="mf-input" id="cfPhoneA" placeholder="07XX XXX XXX" maxlength="12" oninput="validatePhone('cfPhoneA','phoneStatusA')">
+              <span id="phoneStatusA" class="phone-status"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Challenger B -->
+        <div class="mf-row">
+          <div>
+            <label class="mf-label">Friend's Name (Challenger B)</label>
+            <input class="mf-input" id="cfNameB" placeholder="Friend's name">
+          </div>
+          <div>
+            <label class="mf-label">Friend's Phone Number</label>
+            <div style="position:relative">
+              <input class="mf-input" id="cfPhoneB" placeholder="07XX XXX XXX" maxlength="12" oninput="validatePhone('cfPhoneB','phoneStatusB')">
+              <span id="phoneStatusB" class="phone-status"></span>
+            </div>
+            <div class="field-hint">Must be a registered Rada user</div>
+          </div>
+        </div>
+
+        <!-- Make Public toggle -->
+        <div class="public-toggle-row">
+          <div>
+            <div class="mf-label" style="margin-bottom:2px">Make Challenge Public</div>
+            <div style="font-size:0.75rem;color:var(--text-dim);line-height:1.4">Appears on the Markets page under General for others to view. Stakes remain private.</div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="cfPublic" onchange="togglePublic(this)">
+            <span class="toggle-track"></span>
+          </label>
+        </div>
+
+        <label class="mf-label">Stake Per Person</label>
+        <div class="stake-display">
+          <div class="sd-row">
+            <span class="sd-label">Each stakes</span>
+            <span class="sd-val">KES <span id="sdVal">500</span></span>
+          </div>
+          <input type="range" class="stake-range" id="stakeRangeF" min="20" max="20000" step="100" value="500" oninput="updateFriendStake(this.value)">
+          <div class="stake-limits"><span>KES 20 min</span><span>KES 20,000 max</span></div>
+        </div>
+
+        <div class="fee-preview" id="feePreview">
+          <div class="fp-row"><span class="fp-dimmed">Total pool</span><span id="fpPool">KES 1,000</span></div>
+          <div class="fp-row"><span class="fp-dimmed">Platform fee (5%)</span><span id="fpFee">KES 50</span></div>
+          <div class="fp-row"><span class="fp-dimmed fp-bold" style="color:var(--ke-green)">Winner receives</span><span id="fpWinner" style="color:var(--ke-green);font-family:var(--mono)">KES 950</span></div>
+          <div class="fp-row fp-dimmed" style="font-size:0.65rem;color:var(--text-dim);border:none;padding-top:4px;margin-top:0;">
+            <span>If tie: each refunded KES <span id="fpTie">490</span> (KES 10 processing fee each)</span>
+            <span>Dispute fee: 15%</span>
+          </div>
+        </div>
+
+        <label class="mf-label">Resolution Type</label>
+        <div class="res-type-grid">
+          <div class="res-type-btn selected" onclick="selectResType(this,'referee')" data-type="referee">
+            <div class="res-type-icon">⚖️</div>
+            <div class="res-type-label">Referee</div>
+          </div>
+          <div class="res-type-btn" onclick="selectResType(this,'timer')" data-type="timer">
+            <div class="res-type-icon">⏱️</div>
+            <div class="res-type-label">Timer</div>
+          </div>
+          <div class="res-type-btn" onclick="selectResType(this,'mutual')" data-type="mutual">
+            <div class="res-type-icon">🤝</div>
+            <div class="res-type-label">Mutual</div>
+          </div>
+        </div>
+
+        <div class="referee-note">
+          <strong>Referee:</strong> A trusted third party (must be a registered Rada user) who judges the outcome. Only the Referee can release funds — no collusion possible. Referee earns no fee but builds their Integrity Score.
+        </div>
+
+        <div class="referee-field show" id="refereeField">
+          <label class="mf-label">Referee's Phone Number</label>
+          <div style="position:relative">
+            <input class="mf-input" id="cfReferee" placeholder="07XX XXX XXX" maxlength="12" oninput="validatePhone('cfReferee','phoneStatusRef')">
+            <span id="phoneStatusRef" class="phone-status"></span>
+          </div>
+          <div class="field-hint">Referee must be a registered Rada user. They will receive an SMS nomination alert.</div>
+        </div>
+
+        <div id="timerField" style="display:none;">
+          <label class="mf-label">Auto-Resolve At</label>
+          <input class="mf-input" id="cfTimer" type="datetime-local">
+        </div>
+
+        <label class="mf-label">Resolution Deadline</label>
+        <input class="mf-input" id="cfDeadline" type="date">
+
+        <button class="btn-create" id="createBtn" onclick="createChallenge()">Create Challenge & Pay via M-Pesa →</button>
+        <div style="text-align:center;font-size:0.65rem;color:var(--text-dim);margin-top:8px;line-height:1.5;">
+          This is a Peer-to-Peer Escrow Agreement. Funds are held securely until resolution.
+          By creating, you agree to the Rada Social Escrow Terms.
+        </div>
+      </div>
+    </div>
+
+    <!-- SUCCESS VIEW -->
+    <div id="successView" style="display:none;">
+      <div class="success-sheet">
+        <div class="ss-icon">🎉</div>
+        <div class="ss-title">Challenge Created! Share the Code.</div>
+        <div class="ss-sub">Your stake has been locked. Share the invite code or link with your opponent — they must stake their side before the challenge is live.</div>
+        <div class="ss-code-box" onclick="copyCode()">
+          <div class="ss-code-label">Your Challenge Code — tap to copy</div>
+          <div class="ss-code" id="generatedCode">K7X4P2</div>
+          <div class="ss-link">rada.co.ke/join/<span id="challengeSlug">marathon-challenge</span>?code=<span id="challengeCode2">K7X4P2</span></div>
+        </div>
+        <button class="btn-create" style="margin-bottom:8px" onclick="nativeChallengeShare()">⤴ Share Challenge</button>
+        <button class="btn-done" onclick="closeModal('createModal');resetForm()">Done</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- RESOLVE MODAL -->
+<div class="modal-overlay" id="resolveModal">
+  <div class="modal">
+    <div class="modal-handle" onclick="closeModal('resolveModal')"></div>
+    <div class="modal-head">
+      <div class="modal-title">⚖️ Referee Decision</div>
+      <div class="modal-sub" id="resModalSub">Settle the challenge fairly. Your ruling is final.</div>
+    </div>
+    <div class="modal-body">
+      <div style="background:var(--bg3);border-radius:10px;padding:14px;margin-bottom:18px;">
+        <div style="font-size:0.72rem;color:var(--text-dim);margin-bottom:5px;text-transform:uppercase;font-weight:700;letter-spacing:0.06em;">The Challenge</div>
+        <div style="font-weight:600;font-size:0.9rem;line-height:1.4" id="resModalQ">Question here</div>
+      </div>
+      <div style="margin-bottom:16px;display:grid;grid-template-columns:1fr 1fr;gap:12px;" id="resParties">
+        <!-- populated by JS -->
+      </div>
+      <div style="background:rgba(167,139,250,0.06);border:1px solid rgba(167,139,250,0.15);border-radius:8px;padding:10px 12px;font-size:0.73rem;color:var(--text-mid);margin-bottom:18px;line-height:1.55;">
+        ⚖️ Your ruling is irreversible. Winner takes the full pool minus 5% platform fee. If you select "Tie", both parties are refunded minus a KES 10 processing fee each. If dispute is escalated to admin, the dispute fee increases to 15%.
+      </a>
+  <div style="display:flex;gap:8px;">
+        <button class="btn-resolve btn-resolve-a" style="flex:1;padding:12px;font-size:0.85rem;" id="resBtn1" onclick="submitRuling('A')">A Won</button>
+        <button class="btn-resolve btn-resolve-b" style="flex:1;padding:12px;font-size:0.85rem;" id="resBtn2" onclick="submitRuling('B')">B Won</button>
+        <button class="btn-resolve btn-resolve-tie" style="flex:1;padding:12px;font-size:0.85rem;" onclick="submitRuling('TIE')">🤝 Tie</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── DATA ─────────────────────────────────────────────────────────────────────
+const MY_CHALLENGES = [
+  {
+    id:1, q:'Will I beat Kamau in the Parkrun 5km this Saturday?',
+    a:{name:'Me (Baraka)', stake:500}, b:{name:'Kamau K.', stake:500},
+    referee:{name:'Amina O.', phone:'+254711222333'},
+    status:'open', resType:'referee', deadline:'Mar 14 2026',
+    code:'K7X4P2', slug:'parkrun-baraka-kamau',
+    pool:1000, fee:50, winner:950
+  },
+  {
+    id:2, q:'Will our team hit the Q1 sales target of KES 2M?',
+    a:{name:'Me (Grace)', stake:1000}, b:{name:'Peter M.', stake:1000},
+    referee:{name:'Sarah W.', phone:'+254700111222'},
+    status:'pending', resType:'referee', deadline:'Apr 01 2026',
+    code:'QM9R7T', slug:'q1-sales-target',
+    pool:2000, fee:100, winner:1900
+  },
+  {
+    id:3, q:'Will you finish reading "Atomic Habits" before end of month?',
+    a:{name:'Me (John)', stake:200}, b:{name:'Wanjiku N.', stake:200},
+    referee:null, resType:'mutual', deadline:'Mar 14 2026',
+    code:'HB2XL5', slug:'atomic-habits-challenge',
+    pool:400, fee:20, winner:380
+  },
+];
+
+const REF_QUEUE = [
+  {
+    id:10, q:'Will Mike run a sub-50 minute 10km at the Nairobi race?',
+    a:{name:'Mike O.', stake:500}, b:{name:'Susan K.', stake:500},
+    status:'awaiting_referee', deadline:'Mar 09 2026',
+    pool:1000, fee:50, winner:950
+  },
+  {
+    id:11, q:'Who will finish the Duolingo 7-day streak challenge?',
+    a:{name:'Kevin A.', stake:300}, b:{name:'Diana M.', stake:300},
+    status:'awaiting_referee', deadline:'Mar 12 2026',
+    pool:600, fee:30, winner:570
+  },
+];
+
+const HISTORY = [
+  {
+    id:20, q:'Who would win the IEBC elections rematch?',
+    a:{name:'Me', stake:500}, b:{name:'Otieno', stake:500},
+    status:'resolved', winner_side:'A', payout:'KES 950',
+    deadline:'Feb 15 2026'
+  },
+  {
+    id:21, q:'Who could go 30 days without eating nyama choma?',
+    a:{name:'Me', stake:200}, b:{name:'Purity', stake:200},
+    status:'tie', payout:'KES 190 each (refund)',
+    deadline:'Mar 01 2026'
+  },
+];
+
+// ── RENDER ────────────────────────────────────────────────────────────────────
+function renderChallenges() {
+  renderMyChallenges();
+  renderRefQueue();
+  renderHistory();
+}
+
+function renderMyChallenges() {
+  document.getElementById('challengeGrid').innerHTML = MY_CHALLENGES.map(c => challengeCard(c, true)).join('');
+}
+
+function renderRefQueue() {
+  document.getElementById('refGrid').innerHTML = REF_QUEUE.map(c => challengeCard(c, false, true)).join('');
+}
+
+function renderHistory() {
+  document.getElementById('historyGrid').innerHTML = HISTORY.map(c => historyCard(c)).join('');
+}
+
+function challengeCard(c, isMine, isRef = false) {
+  const statusBadge = {
+    open:`<span class="cc-badge badge-open">● Live</span>`,
+    pending:`<span class="cc-badge badge-pending">◎ Awaiting B</span>`,
+    awaiting_referee:`<span class="cc-badge badge-pending">⚖️ Ref Needed</span>`,
+    disputed:`<span class="cc-badge badge-disputed">⚠ Disputed</span>`,
+  }[c.status] || '';
+
+  const pctFilled = c.status === 'open' || isRef ? 100 : 50;
+
+  const refBlock = c.referee
+    ? `<div class="cc-referee">
+        <div class="cc-ref-icon">⚖️</div>
+        <div>
+          <div class="cc-ref-label">Referee</div>
+          <div class="cc-ref-name">${c.referee.name}</div>
+          <div class="cc-ref-sub">${c.resType === 'referee' ? 'Only they can resolve' : 'Mutual consent mode'}</div>
+        </div>
+       </div>`
+    : `<div class="cc-referee">
+        <div class="cc-ref-icon">🤝</div>
+        <div>
+          <div class="cc-ref-label">Resolution</div>
+          <div class="cc-ref-name">Mutual Consent</div>
+          <div class="cc-ref-sub">Both parties must agree on winner</div>
+        </div>
+       </div>`;
+
+  const resolveBlock = isRef
+    ? `<div class="cc-resolve show">
+        <div class="cc-resolve-title">⚖️ Your Turn to Judge</div>
+        <div class="resolve-btns">
+          <button class="btn-resolve btn-resolve-a" onclick="openResolveModal(${c.id})">${c.a.name.split(' ')[0]} Won</button>
+          <button class="btn-resolve btn-resolve-b" onclick="openResolveModal(${c.id})">${c.b.name.split(' ')[0]} Won</button>
+          <button class="btn-resolve btn-resolve-tie" onclick="openResolveModal(${c.id})">🤝 Tie</button>
+        </div>
+        <div class="fee-note"><span>5% fee on win · KES 10 each if tie</span><span>Deadline: ${c.deadline}</span></div>
+      </div>`
+    : '';
+
+  // Timer state
+  const now = new Date();
+  const deadline = c.deadline ? new Date(c.deadline) : null;
+  const msLeft = deadline ? deadline - now : null;
+  const hoursLeft = msLeft ? msLeft / 3600000 : null;
+  let timerClass = 'normal', timerLabel = '';
+  if (deadline) {
+    if (hoursLeft <= 0) {
+      timerClass = 'expired'; timerLabel = '⏰ Resolution window EXPIRED';
+    } else if (hoursLeft <= 48) {
+      timerClass = 'warning'; timerLabel = `⚠ ${Math.ceil(hoursLeft)}h left in resolution window`;
+    } else {
+      timerClass = 'normal'; timerLabel = `Deadline: ${c.deadline}`;
+    }
+  }
+  const timerBadge = deadline
+    ? `<div class="cc-timer ${timerClass}"><div class="cc-timer-dot"></div>${timerLabel}</div>`
+    : '';
+
+  // Mutual resolution — visible to both participants during 48h window
+  const showMutual = isMine && c.resType === 'mutual' && hoursLeft !== null && hoursLeft <= 48 && hoursLeft > 0;
+  const mutualBtn = showMutual
+    ? `<button class="btn-mutual-resolve" onclick="openMutualResolve(${c.id})">🤝 Mutual Resolution — Agree on Winner Now <span style="font-size:0.72rem;opacity:0.85">(Save 10% in fees)</span></button>`
+    : '';
+
+  // Resolution alert banner for 48h window
+  const resAlert = (isMine || isRef) && hoursLeft !== null && hoursLeft <= 48 && hoursLeft > 0
+    ? `<div class="resolution-alert">
+        <div class="resolution-alert-icon">⚠️</div>
+        <div class="resolution-alert-body">
+          <div class="resolution-alert-title">48-Hour Resolution Window</div>
+          <div class="resolution-alert-sub">Time is running out! Agree on a winner now to save 10% in fees. If unresolved, the platform will step in and charge a 15% dispute fee.</div>
+          ${showMutual ? `<div class="resolution-alert-cta" onclick="openMutualResolve(${c.id})">Tap to resolve mutually →</div>` : ''}
+        </div>
+      </div>`
+    : '';
+
+  const actions = isMine
+    ? `<div class="cc-actions">
+        ${resAlert}
+        ${mutualBtn}
+        <div style="display:flex;gap:6px;flex:1">
+          <button class="csh-btn native" style="flex:1" onclick="nativeShareChallenge('${c.slug}','${c.code}','${c.q}')">⤴ Share</button>
+        </div>
+        ${c.status === 'pending' ? `<button class="btn-sm btn-sm-ghost">Wait for Friend</button>` : ''}
+        ${c.status === 'open' ? `<button class="btn-sm btn-sm-ghost">View Details</button>` : ''}
+      </div>`
+    : `<div class="cc-actions">
+        ${resAlert}
+        <button class="btn-sm btn-sm-purple" onclick="openResolveModal(${c.id})">⚖️ Resolve</button>
+        <button class="btn-sm btn-sm-ghost">View Details</button>
+      </div>`;
+
+  return `
+    <div class="challenge-card">
+      <div class="cc-header">
+        ${statusBadge}
+        ${isMine ? `<span class="cc-code">CODE: ${c.code}</span>` : ''}
+      </div>
+      <div class="cc-q">${c.q}</div>
+      <div class="cc-pool">
+        <div class="cc-pool-row">
+          <span class="cc-pool-label">Total Pool</span>
+          <span class="cc-pool-val">KES ${c.pool?.toLocaleString() || '—'}</span>
+        </div>
+        <div class="cc-pool-bar"><div class="cc-pool-fill" style="width:${pctFilled}%"></div></div>
+        <div class="cc-pool-row" style="margin-bottom:0">
+          <span style="font-size:0.68rem;color:var(--text-dim)">Winner gets KES ${c.winner?.toLocaleString() || '—'} · Fee KES ${c.fee?.toLocaleString() || '—'}</span>
+        </div>
+      </div>
+      <div class="cc-participants">
+        <div class="cc-participant">
+          <div class="cc-p-role">Challenger A</div>
+          <div class="cc-p-name">${c.a.name}</div>
+          <div class="cc-p-stake">KES ${c.a.stake.toLocaleString()}</div>
+        </div>
+        <div class="cc-participant" style="border-color:${c.status === 'open' || isRef ? 'rgba(109,40,217,0.14)' : 'var(--border)'}">
+          <div class="cc-p-role">Challenger B</div>
+          <div class="cc-p-name">${c.b.name}</div>
+          <div class="cc-p-stake">${c.status === 'pending' ? '<span style="color:var(--gold)">Awaiting stake</span>' : `KES ${c.b.stake.toLocaleString()}`}</div>
+        </div>
+      </div>
+      ${timerBadge}
+      ${refBlock}
+      ${resolveBlock}
+      ${actions}
+    </div>`;
+}
+
+function historyCard(c) {
+  const won = c.status === 'resolved' && c.winner_side === 'A';
+  return `
+    <div class="challenge-card" style="opacity:0.8">
+      <div class="cc-header">
+        ${c.status === 'tie'
+          ? `<span class="cc-badge badge-pending">🤝 Tie</span>`
+          : `<span class="cc-badge ${won ? 'badge-open' : 'badge-disputed'}">${won ? '✓ Won' : '✗ Lost'}</span>`}
+        <span class="cc-code">${c.deadline}</span>
+      </div>
+      <div class="cc-q">${c.q}</div>
+      <div class="cc-participants">
+        <div class="cc-participant">
+          <div class="cc-p-role">You</div>
+          <div class="cc-p-name">${c.a.name}</div>
+        </div>
+        <div class="cc-participant">
+          <div class="cc-p-role">Opponent</div>
+          <div class="cc-p-name">${c.b.name}</div>
+        </div>
+      </div>
+      <div style="background:var(--bg3);border-radius:8px;padding:10px 12px;text-align:center">
+        <div style="font-size:0.7rem;color:var(--text-dim);margin-bottom:3px">M-Pesa Payout</div>
+        <div style="font-family:var(--mono);font-weight:700;color:${won ? 'var(--ke-green)' : 'var(--text-dim)'}">${c.payout}</div>
+      </div>
+    </div>`;
+}
+
+// ── TABS ──────────────────────────────────────────────────────────────────────
+function switchTab(btn, tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  ['my-challenges','referee','history'].forEach(id => {
+    document.getElementById(`tab-${id}`).style.display = id === tab ? '' : 'none';
+  });
+}
+
+// ── CREATE FLOW ───────────────────────────────────────────────────────────────
+let friendStake = 500;
+let resolutionType = 'referee';
+
+function openCreate() { document.getElementById('createModal').classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+document.getElementById('createModal').addEventListener('click', e => {
+  if (e.target === document.getElementById('createModal')) closeModal('createModal');
+});
+document.getElementById('resolveModal').addEventListener('click', e => {
+  if (e.target === document.getElementById('resolveModal')) closeModal('resolveModal');
+});
+
+function updateFriendStake(val) {
+  friendStake = parseInt(val);
+  const pool = friendStake * 2;
+  const fee5 = Math.round(pool * 0.05);
+  const winner = pool - fee5;
+  const tie = friendStake - 10;
+  document.getElementById('sdVal').textContent = friendStake.toLocaleString();
+  document.getElementById('fpPool').textContent = 'KES ' + pool.toLocaleString();
+  document.getElementById('fpFee').textContent = 'KES ' + fee5.toLocaleString();
+  document.getElementById('fpWinner').textContent = 'KES ' + winner.toLocaleString();
+  document.getElementById('fpTie').textContent = tie.toLocaleString();
+}
+
+function selectResType(btn, type) {
+  resolutionType = type;
+  document.querySelectorAll('.res-type-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  document.getElementById('refereeField').classList.toggle('show', type === 'referee');
+  document.getElementById('timerField').style.display = type === 'timer' ? '' : 'none';
+}
+
+function generateCode() {
+  return Math.random().toString(36).substring(2, 8).toUpperCase();
+}
+
+function createChallenge() {
+  const q = document.getElementById('cfQuestion').value.trim();
+  const a = document.getElementById('cfNameA').value.trim();
+  const b = document.getElementById('cfNameB').value.trim();
+  const dl = document.getElementById('cfDeadline').value;
+  if (!q || !a || !b || !dl) { return alert('Please fill in all required fields.'); }
+  if (resolutionType === 'referee' && !document.getElementById('cfReferee').value.trim()) {
+    return alert('Please enter the Referee\'s phone number.');
+  }
+
+  const btn = document.getElementById('createBtn');
+  btn.disabled = true;
+  btn.textContent = 'Sending STK Push to your phone...';
+  setTimeout(() => {
+    btn.textContent = '⏳ Enter M-Pesa PIN...';
+    setTimeout(() => {
+      const code = generateCode();
+      const slug = q.toLowerCase().replace(/[^a-z0-9\s]/g,'').replace(/\s+/g,'-').slice(0,30);
+      document.getElementById('generatedCode').textContent = code;
+      document.getElementById('challengeSlug').textContent = slug;
+      document.getElementById('challengeCode2').textContent = code;
+      document.getElementById('formView').style.display = 'none';
+      document.getElementById('successView').style.display = '';
+    }, 1800);
+  }, 1200);
+}
+
+
+
+
+
+
+
+function resetForm() {
+  document.getElementById('formView').style.display = '';
+  document.getElementById('successView').style.display = 'none';
+  document.getElementById('cfQuestion').value = '';
+  document.getElementById('cfNameA').value = '';
+  document.getElementById('cfNameB').value = '';
+  document.getElementById('cfReferee').value = '';
+  document.getElementById('createBtn').disabled = false;
+  document.getElementById('createBtn').textContent = 'Create Challenge & Pay via M-Pesa →';
+}
+
+// ── JOIN VIA CODE ─────────────────────────────────────────────────────────────
+function joinChallenge() {
+  const code = document.getElementById('joinCodeInput').value.trim();
+  if (code.length !== 6) { return alert('Please enter a valid 6-character code.'); }
+  alert(`Looking up challenge ${code}...\n\nIn the live app, this would load the challenge details and allow you to stake your side via M-Pesa STK Push.`);
+}
+
+// ── RESOLVE MODAL ─────────────────────────────────────────────────────────────
+function openResolveModal(challengeId) {
+  const c = [...REF_QUEUE, ...MY_CHALLENGES].find(x => x.id === challengeId) || REF_QUEUE[0];
+  document.getElementById('resModalQ').textContent = c.q || 'Challenge question';
+  document.getElementById('resBtn1').textContent = (c.a?.name?.split(' ')[0] || 'A') + ' Won';
+  document.getElementById('resBtn2').textContent = (c.b?.name?.split(' ')[0] || 'B') + ' Won';
+  document.getElementById('resParties').innerHTML = `
+    <div style="background:var(--bg3);border-radius:8px;padding:12px;">
+      <div style="font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--text-dim);margin-bottom:4px;">Challenger A</div>
+      <div style="font-weight:700">${c.a?.name || 'User A'}</div>
+      <div style="font-family:var(--mono);font-size:0.75rem;color:var(--ke-green)">Staked KES ${c.a?.stake?.toLocaleString() || '—'}</div>
+    </div>
+    <div style="background:var(--bg3);border-radius:8px;padding:12px;">
+      <div style="font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--text-dim);margin-bottom:4px;">Challenger B</div>
+      <div style="font-weight:700">${c.b?.name || 'User B'}</div>
+      <div style="font-family:var(--mono);font-size:0.75rem;color:var(--ke-green)">Staked KES ${c.b?.stake?.toLocaleString() || '—'}</div>
+    </div>`;
+  document.getElementById('resolveModal').classList.add('open');
+}
+
+function submitRuling(side) {
+  const labels = {A:'Challenger A wins', B:'Challenger B wins', TIE:'It\'s a Tie — both refunded'};
+  const confirmMsg = side === 'TIE'
+    ? 'Confirm Tie? Both parties will be refunded minus KES 10 processing fee each.'
+    : `Confirm ${labels[side]}? This is irreversible. M-Pesa B2C payout will be triggered.`;
+  if (!confirm(confirmMsg)) return;
+  closeModal('resolveModal');
+  setTimeout(() => {
+    alert(`✓ Ruling submitted: ${labels[side]}.\n\nM-Pesa payout triggered. Funds will arrive within 2 minutes.`);
+  }, 300);
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+renderChallenges();
+// Set min date
+const tom = new Date(); tom.setDate(tom.getDate()+1);
+document.getElementById('cfDeadline').min = tom.toISOString().split('T')[0];
+</script>
+<div class="bottom-nav">
+  <a class="bn-item" href="rada-markets.html"><div class="bn-icon">◈</div><div class="bn-label">Markets</div></a>
+  <a class="bn-item" href="rada-portfolio.html"><div class="bn-icon">◎</div><div class="bn-label">Portfolio</div></a>
+  <a class="bn-item" href="rada-leaderboard.html"><div class="bn-icon">⊞</div><div class="bn-label">Leaders</div></a>
+  <a class="bn-item" href="rada-creator.html"><div class="bn-icon">💡</div><div class="bn-label">Creator</div></a>
+  <a class="bn-item" href="rada-data.html"><div class="bn-icon">📊</div><div class="bn-label">Data</div></a>
+</div>
+
+<script>
+
+// ── ROBUST CLIPBOARD ─────────────────────────────────────────────────────────
+function robustCopy(text, onSuccess) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(onSuccess).catch(() => legacyCopy(text, onSuccess));
+  } else { legacyCopy(text, onSuccess); }
+}
+function legacyCopy(text, onSuccess) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.cssText = 'position:fixed;left:-9999px;top:-9999px;opacity:0';
+  document.body.appendChild(ta);
+  ta.focus(); ta.select();
+  try { document.execCommand('copy'); if (onSuccess) onSuccess(); } catch(e) {}
+  document.body.removeChild(ta);
+}
+
+// ── CHALLENGE SHARE FUNCTIONS ────────────────────────────────────────────────
+function challengeUrl(slug, code) {
+  return `https://rada.co.ke/join/${slug}?code=${code}`;
+}
+function challengeShareText(slug, code, q, stake) {
+  return `Nimekuchallenge kwenye Rada! 🤝\n\n"${q || 'a challenge'}"\n\nStake: KES ${stake || ''} — inahifadhiwa kwenye escrow.\n\nJoini hapa:\n${challengeUrl(slug, code)}\n\nCode: ${code}\n\nMay the best one win! 🏆`;
+}
+
+// Replace copyCode with robust version
+function copyCode() {
+  const code = document.getElementById('generatedCode').textContent;
+  const slug = document.getElementById('challengeSlug').textContent;
+  const url  = challengeUrl(slug, code);
+  robustCopy(url, () => {
+    const box = document.querySelector('.ss-code-box');
+    const orig = box.style.background;
+    box.style.background = 'var(--primary-dim)';
+    // Show toast
+    let toast = document.getElementById('copyToast');
+    if (!toast) {
+      toast = document.createElement('div');
+      toast.id = 'copyToast';
+      toast.style.cssText = 'text-align:center;font-size:0.72rem;color:var(--primary);font-weight:700;margin-top:6px;padding:5px;border-radius:6px;background:var(--primary-dim)';
+      box.parentNode.insertBefore(toast, box.nextSibling);
+    }
+    toast.textContent = '✓ Link copied to clipboard!';
+    toast.style.display = 'block';
+    setTimeout(() => { box.style.background = orig; toast.style.display = 'none'; }, 2200);
+  });
+}
+
+// ── SINGLE NATIVE SHARE helper ───────────────────────────────────────────────
+function radaFriendShare(title, text, url) {
+  if (navigator.share) {
+    navigator.share({ title, text, url }).catch(() => robustCopy(url, () => showShareToast('Link copied!')));
+  } else {
+    robustCopy(url, () => showShareToast('Link copied!'));
+  }
+}
+
+function showShareToast(msg) {
+  let t = document.getElementById('friendShareToast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'friendShareToast';
+    t.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#6d28d9;color:#fff;padding:10px 22px;border-radius:20px;font-size:0.82rem;font-weight:600;z-index:9999;pointer-events:none';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.opacity = '1';
+  setTimeout(() => { t.style.opacity = '0'; }, 2000);
+}
+
+// All share entry points funnel through radaFriendShare
+function shareWA() {
+  const code  = document.getElementById('generatedCode').textContent;
+  const slug  = document.getElementById('challengeSlug').textContent;
+  const q     = document.getElementById('cfQuestion') ? document.getElementById('cfQuestion').value : 'a challenge';
+  const stake = friendStake;
+  radaFriendShare('Rada Challenge', challengeShareText(slug, code, q, stake), challengeUrl(slug, code));
+}
+
+function shareViaSMS() { shareWA(); }
+
+function nativeChallengeShare() { shareWA(); }
+
+// Per-card share
+function shareChallenge(slug, code, q) {
+  const url  = challengeUrl(slug, code);
+  const text = `Join my Rada Challenge! "${q || 'Check it out'}"\n\n${url}\n\nCode: ${code}`;
+  radaFriendShare('Rada Challenge', text, url);
+}
+
+function nativeShareChallenge(slug, code, q) {
+  shareChallenge(slug, code, q);
+}
+function copyChallenge(slug, code, btn) {
+  robustCopy(challengeUrl(slug, code), () => {
+    const orig = btn.textContent;
+    btn.textContent = '✓ Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+
+
+// ── PHONE VALIDATION ─────────────────────────────────────────────────────────
+// Simulates a registered-user check (in production calls /api/users/check-phone)
+const DEMO_REGISTERED = ['0712345678','0700111222','0711222333','0722333444','0733444555','0744555666'];
+function normalisePhone(val) {
+  return val.replace(/\s/g,'').replace(/^254/,'0').replace(/^\+254/,'0');
+}
+function validatePhone(inputId, statusId) {
+  const input  = document.getElementById(inputId);
+  const status = document.getElementById(statusId);
+  const phone  = normalisePhone(input.value);
+  if (!status) return;
+  if (phone.length < 10) { status.textContent = ''; status.className = 'phone-status'; return; }
+  status.textContent = '...'; status.className = 'phone-status checking';
+  // Simulate async lookup
+  setTimeout(() => {
+    const ok = /^07\d{8}$/.test(phone);
+    const registered = DEMO_REGISTERED.includes(phone);
+    if (!ok) {
+      status.textContent = '✗'; status.className = 'phone-status invalid';
+    } else if (registered) {
+      status.textContent = '✓'; status.className = 'phone-status valid';
+    } else {
+      // Accept for demo — in production would reject unregistered
+      status.textContent = '✓'; status.className = 'phone-status valid';
+    }
+  }, 400);
+}
+
+// ── PUBLIC TOGGLE ─────────────────────────────────────────────────────────────
+let isPublicChallenge = false;
+function togglePublic(checkbox) {
+  isPublicChallenge = checkbox.checked;
+}
+
+// ── MUTUAL RESOLVE MODAL ──────────────────────────────────────────────────────
+function openMutualResolve(id) {
+  const ch = MY_CHALLENGES.find(c => c.id === id) || {};
+  const html = `
+    <div style="text-align:center;padding:20px 0 10px">
+      <div style="font-size:2rem;margin-bottom:12px">🤝</div>
+      <div style="font-weight:700;font-size:1rem;margin-bottom:6px">Mutual Resolution</div>
+      <div style="font-size:0.82rem;color:var(--text-mid);margin-bottom:20px;line-height:1.5">"${ch.q || 'The Challenge'}"<br>Both parties must agree. Save 10% vs dispute fee.</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+        <button class="btn-resolve btn-resolve-a" onclick="submitMutual(${id},'a')">🏆 ${ch.a?.name?.split(' ')[0] || 'A'} Won</button>
+        <button class="btn-resolve btn-resolve-b" onclick="submitMutual(${id},'b')">🏆 ${ch.b?.name?.split(' ')[0] || 'B'} Won</button>
+      </div>
+      <button class="btn-resolve btn-resolve-tie" onclick="submitMutual(${id},'tie')">🤝 It's a Tie</button>
+    </div>`;
+  document.getElementById('resParties').innerHTML = html;
+  document.getElementById('resModalQ').textContent = ch.q || '';
+  document.getElementById('resModalSub').textContent = 'Mutual agreement — both participants must confirm.';
+  openModal('resolveModal');
+}
+function submitMutual(id, winner) {
+  closeModal('resolveModal');
+  showNotifToast('✅ Mutual resolution submitted!', 'Waiting for the other participant to confirm. Once both agree, funds are released instantly at 5% fee.');
+}
+
+// ── NOTIFICATION HELPERS ──────────────────────────────────────────────────────
+function showNotifToast(title, msg, duration = 4000) {
+  let t = document.getElementById('globalNotifToast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'globalNotifToast';
+    t.className = 'notif-toast';
+    document.body.appendChild(t);
+  }
+  t.innerHTML = `<div class="notif-title">${title}</div>${msg}`;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), duration);
+}
+
+// ── SMS NOTIFICATION SIMULATION ───────────────────────────────────────────────
+// In production these call POST /api/notifications/sms via Africa's Talking
+function sendRefereeSMS(refPhone, challengerName, question, code) {
+  console.log(`[SMS] → ${refPhone}: You have been nominated as Referee by ${challengerName} on Rada. Challenge: "${question}". Code: ${code}. rada.co.ke/referee/${code}`);
+  showNotifToast('📱 Referee Notified', `An SMS has been sent to the referee at ${refPhone} with the challenge details.`);
+}
+
+function sendResolutionWindowSMS(phoneA, phoneB, question, hoursLeft) {
+  [phoneA, phoneB].forEach(phone => {
+    console.log(`[SMS] → ${phone}: ⚠ Rada: Time is running out on your challenge! "${question}" — ${Math.ceil(hoursLeft)}h left in the resolution window. Agree now to save 10% in fees. rada.co.ke`);
+  });
+  showNotifToast('⚠️ Resolution Reminder Sent', `Both participants have been sent an SMS: "Time is running out! Agree on a winner now to save 10% in fees."`);
+}
+
+// ── AUTO-CHECK CHALLENGES FOR 48h WINDOW ─────────────────────────────────────
+function checkResolutionWindows() {
+  const now = new Date();
+  MY_CHALLENGES.forEach(ch => {
+    if (!ch.deadline || ch.status !== 'open') return;
+    const deadline = new Date(ch.deadline);
+    const hoursLeft = (deadline - now) / 3600000;
+    if (hoursLeft <= 48 && hoursLeft > 47.9 && !ch._smsNotified) {
+      ch._smsNotified = true;
+      sendResolutionWindowSMS(ch.a?.phone || '', ch.b?.phone || '', ch.q, hoursLeft);
+    }
+  });
+}
+// Run on load and every 30min
+checkResolutionWindows();
+setInterval(checkResolutionWindows, 30 * 60 * 1000);
+
+// ── HOOK INTO createChallenge TO SEND REFEREE SMS ────────────────────────────
+const _origCreateChallenge = typeof createChallenge === 'function' ? createChallenge : null;
+function createChallengeWithNotifs() {
+  const refPhone  = normalisePhone(document.getElementById('cfReferee')?.value || '');
+  const nameA     = document.getElementById('cfNameA')?.value || 'Challenger';
+  const question  = document.getElementById('cfQuestion')?.value || '';
+  const code      = Math.random().toString(36).substr(2,6).toUpperCase();
+
+  // Call original
+  if (_origCreateChallenge) _origCreateChallenge();
+
+  // Send referee SMS if referee was selected
+  const resType = document.querySelector('.res-type-btn.selected')?.dataset?.type;
+  if (resType === 'referee' && refPhone) {
+    sendRefereeSMS(refPhone, nameA, question, code);
+  }
+  // If public, simulate adding to markets
+  if (isPublicChallenge) {
+    showNotifToast('🌍 Challenge Made Public', 'Your challenge will appear on the Markets page under General once both participants have staked.', 5000);
+  }
+}
+
+</script>
+
+</body>
+</html>

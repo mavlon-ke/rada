@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rada — Data Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Archivo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+html { font-size: 106.25%; }
+:root{
+  --primary:#6d28d9;
+  --primary-bright:#7c3aed;
+  --primary-light:#8b5cf6;
+  --primary-glow:rgba(109,40,217,0.08);
+  --primary-dim:rgba(109,40,217,0.05);
+  --ke-green:#6d28d9;
+  --ke-green-bright:#7c3aed;
+  --ke-green-glow:rgba(109,40,217,0.08);
+  --ke-red:#CE1126;
+  --ke-red-dim:rgba(206,17,38,0.07);
+  --gold:#c97d0a;
+  --gold-dim:rgba(201,125,10,0.08);
+  --purple:#7c3aed;
+  --purple-dim:rgba(109,40,217,0.07);
+  --blue:#2563eb;
+  --blue-dim:rgba(37,99,235,0.08);
+  --bg:#faf8ff;
+  --bg2:#ffffff;
+  --bg3:#f0edff;
+  --bg4:#e5e0ff;
+  --border:rgba(109,40,217,0.12);
+  --border-bright:rgba(109,40,217,0.30);
+  --text:#1a1035;
+  --text-dim:#9284b8;
+  --text-mid:#5b21b6;
+  --font:'Outfit',sans-serif;
+  --mono:'Archivo',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:var(--font);overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");pointer-events:none;z-index:0;opacity:0.08;}
+
+nav{padding:14px 24px;display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,0.96);backdrop-filter:blur(12px);border-bottom:1px solid rgba(109,40,217,0.12);position:sticky;top:0;z-index:50;}
+.logo-badge{background:var(--ke-green);color:#fff;font-family:var(--font);font-size:0.65rem;font-weight:800;padding:4px 10px;border-radius:6px;letter-spacing:0.02em;}
+.logo-text{font-size:1.05rem;font-weight:700;}
+.nav-logo{display:flex;align-items:center;gap:10px;}
+.nav-links{display:flex;gap:4px;}
+.nav-link{padding:6px 14px;border-radius:6px;font-size:0.8rem;font-weight:600;cursor:pointer;border:none;background:transparent;color:#5b21b6;text-decoration:none;transition:all 0.15s;}
+.nav-link:hover{color:var(--text);background:#f0f7f2;}
+.nav-link.active{color:var(--blue);background:var(--blue-dim);}
+
+.page-wrap{max-width:1080px;margin:0 auto;padding:48px 24px 100px;position:relative;z-index:1;}
+
+/* HERO */
+.data-hero-tag{display:inline-flex;align-items:center;gap:6px;background:var(--blue-dim);border:1px solid rgba(79,156,249,0.3);border-radius:100px;padding:5px 14px;margin-bottom:18px;font-size:0.7rem;font-weight:700;color:var(--blue);letter-spacing:0.07em;text-transform:uppercase;font-family:var(--mono);}
+.page-title{font-size:clamp(2rem,4vw,3rem);font-weight:700;letter-spacing:-0.03em;line-height:1.1;margin-bottom:12px;}
+.page-title em{font-style:normal;color:var(--blue);}
+.page-sub{font-size:0.95rem;color:var(--text-mid);max-width:580px;line-height:1.65;margin-bottom:44px;}
+
+/* INTRO GRID */
+.intro-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:52px;}
+@media(max-width:640px){.intro-grid{grid-template-columns:1fr;}}
+.intro-card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:26px;}
+.intro-card-icon{font-size:2rem;margin-bottom:14px;}
+.intro-card-title{font-weight:700;font-size:0.95rem;margin-bottom:8px;color:var(--text);}
+.intro-card-body{font-size:0.8rem;color:var(--text-mid);line-height:1.65;}
+.intro-accent{color:var(--blue);}
+
+/* SENTIMENT DASHBOARD */
+.section-label{font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-dim);margin-bottom:18px;display:flex;align-items:center;gap:8px;}
+.section-label::after{content:'';flex:1;height:1px;background:var(--border);}
+
+.sentiment-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;margin-bottom:52px;}
+.sentiment-card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:20px;box-shadow:0 2px 12px rgba(0,0,0,0.06);transition:border-color 0.2s;}
+.sentiment-card:hover{border-color:var(--border-bright);}
+.sc-cat{font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-dim);margin-bottom:8px;}
+.sc-q{font-size:0.86rem;font-weight:600;line-height:1.4;margin-bottom:14px;}
+.sc-bar-wrap{margin-bottom:10px;}
+.sc-bar-labels{display:flex;justify-content:space-between;font-family:var(--mono);font-size:0.7rem;margin-bottom:5px;}
+.sc-bar{height:8px;background:var(--bg4);border-radius:100px;overflow:hidden;}
+.sc-fill{height:100%;border-radius:100px;transition:width 1s cubic-bezier(0.34,1.56,0.64,1);}
+.fill-green{background:linear-gradient(90deg,#007a3d,var(--ke-green));}
+.fill-gold{background:linear-gradient(90deg,#c7921a,var(--gold));}
+.fill-blue{background:linear-gradient(90deg,#1a5eb8,var(--blue));}
+
+.sc-meta{display:flex;justify-content:space-between;font-size:0.68rem;color:var(--text-dim);font-family:var(--mono);}
+.sc-brier{display:inline-flex;align-items:center;gap:4px;padding:2px 7px;border-radius:100px;font-size:0.62rem;font-weight:700;font-family:var(--mono);}
+.brier-good{background:rgba(109,40,217,0.09);color:var(--ke-green);}
+.brier-ok{background:var(--gold-dim);color:var(--gold);}
+.brier-poor{background:rgba(206,17,38,0.08);color:#e05a70;}
+
+/* ACCURACY REPORT */
+.accuracy-panel{background:var(--bg2);border:1px solid var(--border);border-radius:18px;overflow:hidden;margin-bottom:52px;}
+.panel-head{padding:22px 24px;border-bottom:1px solid rgba(109,40,217,0.12);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;}
+.panel-title{font-weight:700;font-size:1rem;}
+.panel-sub{font-size:0.75rem;color:var(--text-mid);}
+.panel-actions{display:flex;gap:8px;}
+.btn-outline{padding:7px 16px;border-radius:8px;font-size:0.78rem;font-weight:700;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text-mid);font-family:var(--font);transition:all 0.15s;}
+.btn-outline:hover{border-color:var(--border-bright);color:var(--text);}
+.btn-blue{background:var(--blue-dim);border-color:rgba(79,156,249,0.3);color:var(--blue);}
+.btn-blue:hover{background:var(--blue);color:#000;}
+
+.accuracy-table{width:100%;border-collapse:collapse;}
+.accuracy-table th{padding:10px 18px;text-align:left;font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-dim);border-bottom:1px solid rgba(109,40,217,0.12);}
+.accuracy-table td{padding:14px 18px;font-size:0.8rem;border-bottom:1px solid rgba(109,40,217,0.04);}
+.accuracy-table tr:last-child td{border-bottom:none;}
+.lead-time{font-family:var(--mono);color:var(--ke-green);font-weight:700;}
+.outcome-yes{color:var(--ke-green);}
+.outcome-no{color:#CE1126;}
+.prob-val{font-family:var(--mono);}
+
+/* API TIERS */
+.api-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;margin-bottom:52px;}
+.api-card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:24px;display:flex;flex-direction:column;gap:0;transition:border-color 0.2s;}
+.api-card:hover{border-color:var(--border-bright);}
+.api-card.featured{border-color:rgba(79,156,249,0.4);background:linear-gradient(135deg,var(--blue-dim),transparent);}
+.api-tier-badge{display:inline-block;padding:3px 9px;border-radius:100px;font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;font-family:var(--mono);margin-bottom:14px;}
+.badge-free{background:var(--ke-green-glow);color:var(--ke-green);border:1px solid rgba(109,40,217,0.18);}
+.badge-pro{background:var(--blue-dim);color:var(--blue);border:1px solid rgba(79,156,249,0.25);}
+.badge-enterprise{background:var(--gold-dim);color:var(--gold);border:1px solid rgba(244,185,66,0.25);}
+.api-price{font-family:var(--mono);font-size:1.6rem;font-weight:700;margin-bottom:4px;}
+.api-price-sub{font-size:0.72rem;color:var(--text-dim);margin-bottom:16px;}
+.api-features{list-style:none;display:flex;flex-direction:column;gap:8px;margin-bottom:24px;flex:1;}
+.api-feature{display:flex;align-items:flex-start;gap:8px;font-size:0.8rem;color:var(--text-mid);}
+.api-check{color:var(--ke-green);font-size:0.85rem;flex-shrink:0;margin-top:1px;}
+.api-cross{color:var(--text-dim);font-size:0.85rem;flex-shrink:0;margin-top:1px;}
+.btn-api{width:100%;padding:11px;border-radius:10px;font-weight:700;font-size:0.83rem;cursor:pointer;border:none;font-family:var(--font);transition:all 0.15s;}
+.btn-api-free{background:var(--bg3);color:var(--text-mid);border:1px solid var(--border);}
+.btn-api-free:hover{border-color:var(--border-bright);color:var(--text);}
+.btn-api-pro{background:var(--blue);color:#000;}
+.btn-api-pro:hover{filter:brightness(1.1);}
+.btn-api-ent{background:var(--gold);color:#000;}
+.btn-api-ent:hover{background:#fac94e;}
+
+/* SNIPPET */
+.code-panel{background:var(--bg2);border:1px solid var(--border);border-radius:18px;overflow:hidden;margin-bottom:52px;}
+.code-tabs{display:flex;gap:2px;padding:8px 8px 0;background:var(--bg3);border-bottom:1px solid rgba(109,40,217,0.12);}
+.code-tab{padding:8px 16px;font-size:0.75rem;font-weight:600;cursor:pointer;border-radius:6px 6px 0 0;color:var(--text-dim);transition:all 0.15s;}
+.code-tab.active{background:var(--bg2);color:var(--ke-green);}
+.code-body{padding:22px 24px;font-family:var(--mono);font-size:0.78rem;line-height:1.7;color:#c9d9c9;overflow-x:auto;}
+.code-body .kw{color:var(--blue);}
+.code-body .str{color:var(--gold);}
+.code-body .cmt{color:var(--text-dim);}
+.code-body .fn{color:var(--ke-green);}
+.code-body .num{color:#f4b942;}
+
+/* CLIENTS STRIP */
+.clients-strip{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:20px 24px;margin-bottom:52px;display:flex;align-items:center;gap:24px;flex-wrap:wrap;}
+.client-label{font-size:0.68rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-dim);font-weight:700;white-space:nowrap;}
+.client-logos{display:flex;gap:16px;flex-wrap:wrap;}
+.client-logo{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px 16px;font-family:var(--mono);font-size:0.72rem;color:var(--text-mid);font-weight:700;}
+
+/* CTA */
+.cta-box{background:linear-gradient(135deg,var(--blue-dim),var(--ke-green-glow));border:1px solid rgba(79,156,249,0.2);border-radius:18px;padding:40px 32px;text-align:center;}
+.cta-title{font-size:1.5rem;font-weight:700;margin-bottom:10px;}
+.cta-title em{font-style:normal;color:var(--blue);}
+.cta-sub{font-size:0.88rem;color:var(--text-mid);max-width:440px;margin:0 auto 24px;line-height:1.6;}
+.cta-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;}
+.btn-cta-primary{background:var(--blue);color:#000;font-weight:700;padding:13px 28px;border-radius:10px;border:none;cursor:pointer;font-family:var(--font);font-size:0.88rem;transition:all 0.15s;}
+.btn-cta-primary:hover{filter:brightness(1.1);transform:translateY(-1px);}
+.btn-cta-secondary{background:transparent;color:var(--text-mid);font-weight:700;padding:13px 28px;border-radius:10px;border:1px solid var(--border);cursor:pointer;font-family:var(--font);font-size:0.88rem;transition:all 0.15s;}
+.btn-cta-secondary:hover{border-color:var(--border-bright);color:var(--text);}
+
+@media (max-width: 767px) {
+  .nav-links { display: none !important; }
+  nav { padding: 12px 16px; }
+  body { padding-bottom: 72px; }
+  .page-wrap { padding: 24px 16px; }
+  h1.page-title { font-size: 1.8rem; }
+}
+
+/* ── BOTTOM NAV (mobile) ─────────────────────────────────────────────────── */
+.bottom-nav {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: rgba(255,255,255,0.97); backdrop-filter: blur(12px);
+  border-top: 1px solid rgba(109,40,217,0.12); z-index: 200;
+  display: flex; justify-content: space-around;
+  padding: 10px 0 max(10px, env(safe-area-inset-bottom));
+}
+.bn-item {
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  cursor: pointer; padding: 4px 16px; border-radius: 8px;
+  color: #9284b8; text-decoration: none; transition: color 0.15s;
+}
+.bn-item.active { color: #6d28d9; }
+.bn-item:hover { color: #1a1035; }
+.bn-icon { font-size: 1.2rem; }
+.bn-label { font-size: 0.6rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
+@media (min-width: 768px) { .bottom-nav { display: none; } }
+
+/* ═══════════════════════════════════════════════════════
+   STANDARD HEADER — logo left · nav center · actions right
+   ═══════════════════════════════════════════════════════ */
+.site-header {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(255,255,255,0.97);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(109,40,217,0.12);
+  padding: 0 32px; height: 64px;
+  display: flex; align-items: center;
+}
+/* Logo — far left */
+.site-header .h-logo {
+  display: flex; align-items: center; gap: 10px;
+  text-decoration: none; color: inherit;
+  flex-shrink: 0;
+}
+.site-header .h-logo-badge {
+  background: #6d28d9; color: #fff;
+  font-family: 'Archivo', sans-serif;
+  font-size: 0.62rem; font-weight: 700;
+  padding: 4px 9px; border-radius: 6px;
+  letter-spacing: 0.04em;
+}
+.site-header .h-logo-text { font-size: 1.05rem; font-weight: 700; letter-spacing: -0.01em; }
+.site-header .h-logo-sub  { font-size: 0.55rem; font-weight: 600; letter-spacing: 0.1em; color: #9284b8; font-family: 'Archivo', sans-serif; }
+
+/* Nav — centered via auto margins */
+.site-header .h-nav {
+  display: flex; gap: 2px; align-items: center;
+  margin: 0 auto;
+}
+.site-header .h-nav a {
+  color: #9284b8; text-decoration: none;
+  font-size: 0.85rem; font-weight: 500;
+  padding: 7px 13px; border-radius: 8px;
+  transition: all 0.18s; white-space: nowrap;
+}
+.site-header .h-nav a:hover  { color: #1a1035; background: #f0edff; }
+.site-header .h-nav a.active { color: #6d28d9; background: rgba(109,40,217,0.10); font-weight: 600; }
+
+/* Actions — far right */
+.site-header .h-actions {
+  display: flex; align-items: center; gap: 8px;
+  flex-shrink: 0;
+}
+.site-header .h-balance {
+  display: flex; align-items: center; gap: 6px;
+  background: #f0edff; border: 1px solid rgba(109,40,217,0.18);
+  border-radius: 10px; padding: 6px 14px;
+  font-family: 'Archivo', sans-serif;
+  font-size: 0.82rem; color: #6d28d9; font-weight: 500;
+}
+.site-header .h-dot {
+  width: 6px; height: 6px; border-radius: 50%; background: #6d28d9;
+}
+.site-header .h-btn {
+  padding: 7px 16px; border-radius: 9px;
+  font-size: 0.82rem; font-weight: 600;
+  font-family: 'Outfit', 'Outfit', sans-serif;
+  cursor: pointer; transition: all 0.18s; border: none;
+}
+.site-header .h-btn-ghost {
+  background: transparent; color: #6d28d9;
+  border: 1px solid rgba(109,40,217,0.30);
+}
+.site-header .h-btn-ghost:hover { background: #f0edff; }
+.site-header .h-btn-primary {
+  background: #6d28d9; color: #fff;
+}
+.site-header .h-btn-primary:hover {
+  background: #7c3aed;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(109,40,217,0.25);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   MOBILE TOP NAV — 5-tab bar pinned to top, mobile only
+   ═══════════════════════════════════════════════════════════════ */
+.mobile-top-nav {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  background: rgba(255,255,255,0.98);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1.5px solid rgba(109,40,217,0.13);
+  z-index: 500;
+  justify-content: space-around;
+  align-items: center;
+  padding: 8px 0 6px;
+  box-shadow: 0 2px 14px rgba(109,40,217,0.06);
+}
+.mobile-top-nav .bn-item {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  cursor: pointer; padding: 2px 10px; border-radius: 8px;
+  color: #9284b8; text-decoration: none; transition: color 0.15s;
+  min-width: 48px; flex: 1;
+}
+.mobile-top-nav .bn-item.active { color: #6d28d9; }
+.mobile-top-nav .bn-item:hover  { color: #1a1035; }
+.mobile-top-nav .bn-icon  { font-size: 1.15rem; line-height: 1.1; }
+.mobile-top-nav .bn-label {
+  font-size: 0.58rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.07em;
+}
+@media (max-width: 767px) {
+  .mobile-top-nav { display: flex !important; }
+  .site-header    { display: none !important; }
+  body { padding-top: 58px !important; }
+  .page, .page-wrap { padding-top: 16px; }
+}
+
+</style>
+</head>
+<body>
+
+<div class="mobile-top-nav">
+  <a class="bn-item" href="rada-markets.html"><div class="bn-icon">◈</div><div class="bn-label">Markets</div></a>
+  <a class="bn-item" href="rada-portfolio.html"><div class="bn-icon">◎</div><div class="bn-label">Portfolio</div></a>
+  <a class="bn-item" href="rada-leaderboard.html"><div class="bn-icon">⊞</div><div class="bn-label">Leaders</div></a>
+  <a class="bn-item" href="rada-creator.html"><div class="bn-icon">💡</div><div class="bn-label">Creator</div></a>
+  <a class="bn-item active" href="rada-data.html"><div class="bn-icon">📊</div><div class="bn-label">Data</div></a>
+</div>
+
+<header class="site-header">
+  <a class="h-logo" href="rada-markets.html">
+    <div class="h-logo-badge">RADA</div>
+    <div>
+      <div class="h-logo-text">Rada</div>
+      <div class="h-logo-sub">CROWD INTELLIGENCE</div>
+    </div>
+  </a>
+  <nav class="h-nav">
+    <a href="rada-markets.html">Forecast Markets</a>
+    <a href="rada-portfolio.html">Portfolio</a>
+    <a href="rada-leaderboard.html">Leaderboard</a>
+    <a class="active" href="rada-data.html">Data Platform</a>
+    <a href="rada-creator.html">Creator Hub</a>
+    <a href="rada-friends.html">Social Challenge</a>
+    <a href="rada-about.html">About</a>
+  </nav>
+  <div class="h-actions">
+    <div class="h-balance"><div class="h-dot"></div><span>KES <strong id="balDisplay">5,000</strong></span></div>
+    <button class="h-btn h-btn-ghost" onclick="openWithdraw ? openWithdraw() : null">Withdraw</button>
+    <button class="h-btn h-btn-primary" onclick="openDeposit ? openDeposit() : null">+ Deposit</button>
+  </div>
+</header>
+
+<div class="page-wrap">
+
+  <!-- HERO -->
+  <div class="data-hero-tag">◎ B2B Intelligence Feed · Real-Time</div>
+  <h1 class="page-title">Kenya's Sentiment <em>Signal.</em><br>Before the Headlines.</h1>
+  <p class="page-sub">Rada aggregates real-money crowd intelligence from thousands of Kenyan forecasters. When our crowd shifts to 85% on a policy outcome — hours before the official announcement — that signal is worth money to banks, NGOs, and research institutions.</p>
+
+  <!-- INTRO CARDS -->
+  <div class="intro-grid">
+    <div class="intro-card">
+      <div class="intro-card-icon">📡</div>
+      <div class="intro-card-title">What is the Rada Sentiment Index?</div>
+      <div class="intro-card-body">Every forecast on Rada is a real-money data point. Unlike polls (which people answer lazily), our forecasters have <strong style="color:var(--ke-green)">skin in the game.</strong> The aggregate probability is a statistically calibrated signal of crowd belief — not opinion, but conviction.</div>
+    </div>
+    <div class="intro-card">
+      <div class="intro-card-icon">⚡</div>
+      <div class="intro-card-title">Why the Data is Valuable</div>
+      <div class="intro-card-body">In a 2025 case study, our market moved from 40% to <strong class="intro-accent">85% YES</strong> on a CBK rate cut <strong class="intro-accent">3.5 hours before the official announcement.</strong> For a trader, fund manager, or policy analyst — that's an information edge measured in millions.</div>
+    </div>
+  </div>
+
+  <!-- LIVE SENTIMENT MARKETS -->
+  <div class="section-label">Live Sentiment Index · Top Markets</div>
+  <div class="sentiment-grid" id="sentimentGrid"></div>
+
+  <!-- ACCURACY / BRIER REPORT -->
+  <div class="section-label">Accuracy Report · Resolved Markets</div>
+  <div class="accuracy-panel">
+    <div class="panel-head">
+      <div>
+        <div class="panel-title">Prediction Accuracy Report</div>
+        <div class="panel-sub">Calibration, lead time, and Brier scores for all resolved markets</div>
+      </div>
+      <div class="panel-actions">
+        <button class="btn-outline" onclick="exportCSV()">↓ Export CSV</button>
+        <button class="btn-outline btn-blue" onclick="viewFull()">Full Report →</button>
+      </div>
+    </div>
+    <table class="accuracy-table">
+      <thead>
+        <tr>
+          <th>Market</th>
+          <th>Category</th>
+          <th>Final Prob</th>
+          <th>Outcome</th>
+          <th>Lead Time</th>
+          <th>Brier Score</th>
+          <th>Forecasters</th>
+        </tr>
+      </thead>
+      <tbody id="accuracyBody"></tbody>
+    </table>
+  </div>
+
+  <!-- API TIERS -->
+  <div class="section-label">Data API — Institutional Access</div>
+  <div class="api-grid">
+    <div class="api-card">
+      <span class="api-tier-badge badge-free">Free</span>
+      <div class="api-price">KES 0<span style="font-size:0.9rem;font-weight:400;color:var(--text-dim)">/mo</span></div>
+      <div class="api-price-sub">Public sentiment snapshot</div>
+      <ul class="api-features">
+        <li class="api-feature"><span class="api-check">✓</span> Current YES/NO probabilities for all public markets</li>
+        <li class="api-feature"><span class="api-check">✓</span> Daily snapshot (24h delay)</li>
+        <li class="api-feature"><span class="api-check">✓</span> 100 API calls/month</li>
+        <li class="api-feature"><span class="api-cross">✗</span> Real-time feed</li>
+        <li class="api-feature"><span class="api-cross">✗</span> Brier scores & calibration data</li>
+        <li class="api-feature"><span class="api-cross">✗</span> Historical data export</li>
+        <li class="api-feature"><span class="api-cross">✗</span> Demographic breakdowns</li>
+      </ul>
+      <button class="btn-api btn-api-free" onclick="getApiKey('free')">Get Free API Key</button>
+    </div>
+
+    <div class="api-card featured">
+      <span class="api-tier-badge badge-pro">Pro</span>
+      <div class="api-price">KES 15,000<span style="font-size:0.9rem;font-weight:400;color:var(--text-dim)">/mo</span></div>
+      <div class="api-price-sub">Real-time institutional feed</div>
+      <ul class="api-features">
+        <li class="api-feature"><span class="api-check">✓</span> Real-time probability updates (sub-60s latency)</li>
+        <li class="api-feature"><span class="api-check">✓</span> Brier scores + calibration metrics</li>
+        <li class="api-feature"><span class="api-check">✓</span> Full historical data (24 months)</li>
+        <li class="api-feature"><span class="api-check">✓</span> 10,000 API calls/month</li>
+        <li class="api-feature"><span class="api-check">✓</span> Probability trend charts (webhook push)</li>
+        <li class="api-feature"><span class="api-check">✓</span> Volume & trader depth data</li>
+        <li class="api-feature"><span class="api-cross">✗</span> Demographic breakdowns</li>
+      </ul>
+      <button class="btn-api btn-api-pro" onclick="getApiKey('pro')">Start Pro Trial →</button>
+    </div>
+
+    <div class="api-card">
+      <span class="api-tier-badge badge-enterprise">Enterprise</span>
+      <div class="api-price">Custom</div>
+      <div class="api-price-sub">Fund managers & research institutions</div>
+      <ul class="api-features">
+        <li class="api-feature"><span class="api-check">✓</span> Everything in Pro, plus:</li>
+        <li class="api-feature"><span class="api-check">✓</span> Regional demographic breakdowns (county-level)</li>
+        <li class="api-feature"><span class="api-check">✓</span> Custom markets on request</li>
+        <li class="api-feature"><span class="api-check">✓</span> Whitelabelled sentiment reports</li>
+        <li class="api-feature"><span class="api-check">✓</span> Dedicated data analyst support</li>
+        <li class="api-feature"><span class="api-check">✓</span> Unlimited API calls</li>
+        <li class="api-feature"><span class="api-check">✓</span> SLA with 99.9% uptime guarantee</li>
+      </ul>
+      <button class="btn-api btn-api-ent" onclick="contactEnterprise()">Contact Enterprise Sales</button>
+    </div>
+  </div>
+
+  <!-- CODE SNIPPET -->
+  <div class="section-label">API Quick Start</div>
+  <div class="code-panel">
+    <div class="code-tabs">
+      <div class="code-tab active" onclick="switchTab(this,'js')">JavaScript</div>
+      <div class="code-tab" onclick="switchTab(this,'python')">Python</div>
+      <div class="code-tab" onclick="switchTab(this,'curl')">cURL</div>
+    </div>
+    <div class="code-body" id="codeBody">
+<span class="cmt">// Rada Sentiment API — Real-time probability feed</span>
+
+<span class="kw">const</span> <span class="fn">getProbability</span> = <span class="kw">async</span> (marketId) => {
+  <span class="kw">const</span> response = <span class="kw">await</span> fetch(
+    <span class="str">`https://api.rada.co.ke/v1/markets/${marketId}/probability`</span>,
+    {
+      headers: {
+        <span class="str">'Authorization'</span>: <span class="str">`Bearer YOUR_API_KEY`</span>,
+        <span class="str">'Content-Type'</span>: <span class="str">'application/json'</span>
+      }
+    }
+  );
+
+  <span class="kw">const</span> data = <span class="kw">await</span> response.json();
+  <span class="cmt">// Returns: { yes_probability: 0.72, no_probability: 0.28,</span>
+  <span class="cmt">//   brier_score: 0.14, lead_time_hours: 3.5,</span>
+  <span class="cmt">//   total_volume_kes: 612000, unique_forecasters: 441 }</span>
+
+  console.log(<span class="str">`YES: </span><span class="num">${</span>data.yes_probability * <span class="num">100</span><span class="num">}</span><span class="str">%`</span>);
+  <span class="kw">return</span> data;
+};
+
+<span class="cmt">// Subscribe to real-time updates via WebSocket</span>
+<span class="kw">const</span> ws = <span class="kw">new</span> WebSocket(
+  <span class="str">'wss://api.rada.co.ke/v1/stream?token=YOUR_API_KEY'</span>
+);
+ws.onmessage = (e) => {
+  <span class="kw">const</span> { market_id, yes_prob, timestamp } = JSON.parse(e.data);
+  <span class="cmt">// Handle real-time probability shift</span>
+};
+    </div>
+  </div>
+
+  <!-- CLIENTS -->
+  <div class="clients-strip">
+    <div class="client-label">Trusted By</div>
+    <div class="client-logos">
+      <div class="client-logo">NCBA Research</div>
+      <div class="client-logo">Strathmore Uni</div>
+      <div class="client-logo">Africa Practice</div>
+      <div class="client-logo">Daily Nation</div>
+      <div class="client-logo">Kenya Institute</div>
+    </div>
+  </div>
+
+  <!-- CTA -->
+  <div class="cta-box">
+    <div class="cta-title">Turn Crowd Intelligence Into <em>Alpha.</em></div>
+    <div class="cta-sub">Join 12 institutional clients already using Rada data to get ahead of Kenyan economic and policy shifts.</div>
+    <div class="cta-btns">
+      <button class="btn-cta-primary" onclick="getApiKey('pro')">Start Free Trial</button>
+      <button class="btn-cta-secondary" onclick="downloadSample()">↓ Download Sample Report</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── SENTIMENT DATA ────────────────────────────────────────────────────────────
+const SENTIMENT = [
+  { cat:'SIASA', q:'Will Kenya pass the Finance Bill 2025?', yes:29, vol:'KES 510K', forecasters:389, brier:0.19 },
+  { cat:'UCHUMI', q:'Will KES/USD stay below 130 by Friday?', yes:54, vol:'KES 612K', forecasters:441, brier:0.11 },
+  { cat:'MICHEZO', q:'Will Harambee Stars qualify for WC 2026?', yes:18, vol:'KES 234K', forecasters:198, brier:0.22 },
+  { cat:'UCHUMI', q:'Will CBK cut rates again in Q2 2025?', yes:71, vol:'KES 445K', forecasters:312, brier:0.09 },
+  { cat:'HALI YA HEWA', q:'Will Nairobi receive above-average long rains?', yes:67, vol:'KES 89K', forecasters:76, brier:0.16 },
+  { cat:'SIASA', q:'Will the opposition coalition reunite before 2027?', yes:34, vol:'KES 291K', forecasters:226, brier:0.21 },
+];
+
+const RESOLVED = [
+  { q:'Will CBK hold rates at 12.5% in Jan meeting?', cat:'UCHUMI', prob:'88%', outcome:'YES', lead:'4.2h', brier:0.06, fc:318 },
+  { q:'Will KES hit 140/USD by end of Q3 2024?', cat:'UCHUMI', prob:'22%', outcome:'NO', lead:'11h', brier:0.12, fc:589 },
+  { q:'Will Gor Mahia win the FKF Shield Cup?', cat:'MICHEZO', prob:'61%', outcome:'YES', lead:'1.5h', brier:0.18, fc:214 },
+  { q:'Will Nairobi receive rain every day in Jan?', cat:'HALI YA HEWA', prob:'34%', outcome:'NO', lead:'6.8h', brier:0.09, fc:87 },
+  { q:'Will Treasury CS resign before 2025?', cat:'SIASA', prob:'15%', outcome:'NO', lead:'0h', brier:0.22, fc:445 },
+  { q:'Will Super Petrol exceed KES 200 in 2024?', cat:'UCHUMI', prob:'74%', outcome:'YES', lead:'3.1h', brier:0.07, fc:671 },
+];
+
+const BRIER_COLORS = {
+  good: 'brier-good', ok: 'brier-ok', poor: 'brier-poor'
+};
+function brierClass(s) { return s <= 0.12 ? 'brier-good' : s <= 0.20 ? 'brier-ok' : 'brier-poor'; }
+function brierLabel(s) { return s <= 0.12 ? '● Excellent' : s <= 0.20 ? '◎ Good' : '△ Fair'; }
+
+// ── RENDER SENTIMENT ─────────────────────────────────────────────────────────
+function renderSentiment() {
+  const colors = ['fill-green','fill-blue','fill-gold'];
+  document.getElementById('sentimentGrid').innerHTML = SENTIMENT.map((m,i) => `
+    <div class="sentiment-card">
+      <div class="sc-cat">${m.cat}</div>
+      <div class="sc-q">${m.q}</div>
+      <div class="sc-bar-wrap">
+        <div class="sc-bar-labels">
+          <span style="color:var(--ke-green);font-weight:700">YES ${m.yes}%</span>
+          <span style="color:#CE1126;font-weight:700">NO ${100-m.yes}%</span>
+        </div>
+        <div class="sc-bar"><div class="sc-fill ${colors[i%3]}" style="width:0" data-w="${m.yes}%"></div></div>
+      </div>
+      <div class="sc-meta">
+        <span>${m.vol} · ${m.forecasters} forecasters</span>
+        <span class="sc-brier ${brierClass(m.brier)}">${brierLabel(m.brier)} ${m.brier}</span>
+      </div>
+    </div>
+  `).join('');
+
+  // Animate bars
+  setTimeout(() => {
+    document.querySelectorAll('.sc-fill').forEach(el => {
+      el.style.width = el.dataset.w;
+    });
+  }, 100);
+}
+
+// ── RENDER ACCURACY TABLE ────────────────────────────────────────────────────
+function renderAccuracy() {
+  document.getElementById('accuracyBody').innerHTML = RESOLVED.map(r => `
+    <tr>
+      <td style="max-width:240px;line-height:1.45;font-size:0.78rem">${r.q}</td>
+      <td style="font-size:0.72rem;color:var(--text-dim)">${r.cat}</td>
+      <td class="prob-val">${r.prob}</td>
+      <td class="${r.outcome === 'YES' ? 'outcome-yes' : 'outcome-no'}" style="font-weight:700;font-family:var(--mono)">${r.outcome}</td>
+      <td class="lead-time">${r.lead}</td>
+      <td><span class="sc-brier ${brierClass(r.brier)}">${r.brier}</span></td>
+      <td style="font-family:var(--mono);color:var(--text-mid)">${r.fc}</td>
+    </tr>
+  `).join('');
+}
+
+// ── CODE TABS ─────────────────────────────────────────────────────────────────
+const CODE = {
+  python: `<span class="cmt"># Rada Sentiment API — Python</span>
+
+<span class="kw">import</span> requests
+
+API_KEY = <span class="str">"YOUR_API_KEY"</span>
+BASE    = <span class="str">"https://api.rada.co.ke/v1"</span>
+
+<span class="kw">def</span> <span class="fn">get_probability</span>(market_id):
+    resp = requests.get(
+        f<span class="str">"{BASE}/markets/{market_id}/probability"</span>,
+        headers={<span class="str">"Authorization"</span>: f<span class="str">"Bearer {API_KEY}"</span>}
+    )
+    data = resp.json()
+    <span class="cmt"># { yes_probability, brier_score, lead_time_hours, ... }</span>
+    <span class="kw">return</span> data
+
+result = get_probability(<span class="str">"kes-usd-130"</span>)
+print(f<span class="str">"YES: {result['yes_probability']*100:.1f}%"</span>)
+print(f<span class="str">"Brier: {result['brier_score']}"</span>)`,
+
+  curl: `<span class="cmt"># Rada Sentiment API — cURL</span>
+
+<span class="cmt"># Get current probability for a market</span>
+curl -X GET \\
+  <span class="str">"https://api.rada.co.ke/v1/markets/kes-usd-130/probability"</span> \\
+  -H <span class="str">"Authorization: Bearer YOUR_API_KEY"</span> \\
+  -H <span class="str">"Content-Type: application/json"</span>
+
+<span class="cmt"># Response:</span>
+<span class="cmt"># {</span>
+<span class="cmt">#   "yes_probability": 0.54,</span>
+<span class="cmt">#   "no_probability":  0.46,</span>
+<span class="cmt">#   "brier_score":     0.11,</span>
+<span class="cmt">#   "lead_time_hours": 3.5,</span>
+<span class="cmt">#   "volume_kes":      612000,</span>
+<span class="cmt">#   "forecasters":     441</span>
+<span class="cmt"># }</span>
+
+<span class="cmt"># List all active markets</span>
+curl -X GET \\
+  <span class="str">"https://api.rada.co.ke/v1/markets?status=active"</span> \\
+  -H <span class="str">"Authorization: Bearer YOUR_API_KEY"</span>`,
+};
+
+function switchTab(btn, lang) {
+  document.querySelectorAll('.code-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  if (CODE[lang]) document.getElementById('codeBody').innerHTML = CODE[lang];
+}
+
+function getApiKey(tier)     { alert(`${tier.toUpperCase()} API key request — connect to your backend to handle signups.`); }
+function contactEnterprise() { alert('Enterprise sales form would open here.'); }
+function exportCSV()         { alert('CSV export would download here.'); }
+function viewFull()          { alert('Full accuracy report page would open here.'); }
+function downloadSample()    { alert('Sample PDF report would download here.'); }
+
+renderSentiment();
+renderAccuracy();
+</script>
+<div class="bottom-nav">
+  <a class="bn-item" href="rada-markets.html"><div class="bn-icon">◈</div><div class="bn-label">Markets</div></a>
+  <a class="bn-item" href="rada-portfolio.html"><div class="bn-icon">◎</div><div class="bn-label">Portfolio</div></a>
+  <a class="bn-item" href="rada-leaderboard.html"><div class="bn-icon">⊞</div><div class="bn-label">Leaders</div></a>
+  <a class="bn-item" href="rada-creator.html"><div class="bn-icon">💡</div><div class="bn-label">Creator</div></a>
+  <a class="bn-item active" href="rada-data.html"><div class="bn-icon">📊</div><div class="bn-label">Data</div></a>
+</div>
+
+</body>
+</html>

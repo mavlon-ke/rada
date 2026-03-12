@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rada — Leaderboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Archivo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+html { font-size: 106.25%; }
+:root{
+  --primary:#6d28d9;
+  --primary-bright:#7c3aed;
+  --primary-light:#8b5cf6;
+  --primary-glow:rgba(109,40,217,0.08);
+  --primary-dim:rgba(109,40,217,0.05);
+  --ke-green:#6d28d9;
+  --ke-green-bright:#7c3aed;
+  --ke-green-glow:rgba(109,40,217,0.08);
+  --ke-red:#CE1126;
+  --ke-red-dim:rgba(206,17,38,0.07);
+  --gold:#c97d0a;
+  --gold-dim:rgba(201,125,10,0.08);
+  --purple:#7c3aed;
+  --purple-dim:rgba(109,40,217,0.07);
+  --blue:#2563eb;
+  --blue-dim:rgba(37,99,235,0.08);
+  --bg:#faf8ff;
+  --bg2:#ffffff;
+  --bg3:#f0edff;
+  --bg4:#e5e0ff;
+  --border:rgba(109,40,217,0.12);
+  --border-bright:rgba(109,40,217,0.30);
+  --text:#1a1035;
+  --text-dim:#9284b8;
+  --text-mid:#5b21b6;
+  --font:'Outfit',sans-serif;
+  --mono:'Archivo',sans-serif;
+  --black:#faf8ff;
+  --surface:#ffffff;
+  --surface2:#f0edff;
+  --surface3:#e5e0ff;
+  --green:#6d28d9;
+  --green-dim:#7c3aed;
+  --red:#CE1126;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--black);
+  color: var(--text);
+  font-family: 'Outfit', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+  pointer-events: none; z-index: 0;
+}
+
+/* ── HEADER ── */
+header {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(255,255,255,0.97); backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 32px; height: 64px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.logo {
+  display: flex; align-items: center; gap: 10px;
+  font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 1.25rem;
+  letter-spacing: -0.02em; color: var(--text); text-decoration: none;
+}
+.logo-icon { width: 30px; height: 30px; background: linear-gradient(135deg, #7c3aed, #6d28d9); border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; }
+.logo span { color: #8b5cf6; }
+nav { display: flex; gap: 2px; }
+nav a { color: #9284b8; text-decoration: none; font-size: 0.85rem; font-weight: 500; padding: 7px 14px; border-radius: 8px; transition: all 0.2s; }
+nav a:hover { color: #1a1035; background: #f0edff; }
+nav a.active { color: #8b5cf6; background: rgba(109,40,217,0.12); }
+.header-right { display: flex; align-items: center; gap: 10px; }
+.balance-chip { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 6px 14px; font-family: 'Archivo', sans-serif; font-size: 0.85rem; color: #8b5cf6; font-weight: 500; }
+.btn { padding: 8px 18px; border-radius: 10px; font-size: 0.85rem; font-weight: 600; font-family: 'Outfit', sans-serif; cursor: pointer; transition: all 0.2s; border: none; }
+.btn-primary { background: var(--green); color: white; }
+.btn-primary:hover { background: var(--green-dim); transform: translateY(-1px); box-shadow: 0 4px 20px rgba(109,40,217,0.22); }
+
+/* ── PAGE ── */
+.page { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 48px 32px 100px; }
+
+/* ── HERO PODIUM ── */
+.podium-section {
+  text-align: center;
+  margin-bottom: 56px;
+  animation: fadeDown 0.5s ease both;
+}
+
+@keyframes fadeDown { from { opacity:0; transform:translateY(-16px); } to { opacity:1; transform:translateY(0); } }
+@keyframes fadeUp   { from { opacity:0; transform:translateY(16px);  } to { opacity:1; transform:translateY(0); } }
+@keyframes scaleIn  { from { opacity:0; transform:scale(0.9); } to { opacity:1; transform:scale(1); } }
+
+.section-eyebrow {
+  font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--text-dim); margin-bottom: 8px;
+}
+.section-title {
+  font-family: 'Outfit', sans-serif; font-size: 2.4rem;
+  font-weight: 800; letter-spacing: -0.03em;
+  margin-bottom: 6px;
+}
+.section-title .gold-txt { color: var(--gold); }
+.section-sub { color: var(--text-mid); font-size: 0.9rem; margin-bottom: 40px; }
+
+/* ── PODIUM ── */
+.podium-wrap {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.podium-col { display: flex; flex-direction: column; align-items: center; }
+
+.podium-avatar {
+  width: 64px; height: 64px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.6rem; margin-bottom: 10px;
+  border: 3px solid;
+  position: relative;
+  background: var(--surface2);
+}
+
+.podium-avatar .crown {
+  position: absolute; top: -18px; left: 50%; transform: translateX(-50%);
+  font-size: 1.2rem;
+}
+
+.rank-1 .podium-avatar { border-color: var(--gold); box-shadow: 0 0 20px rgba(212,168,39,0.4); animation: float 3s ease-in-out infinite; }
+.rank-2 .podium-avatar { border-color: var(--silver); box-shadow: 0 0 12px rgba(155,168,176,0.3); }
+.rank-3 .podium-avatar { border-color: var(--bronze); box-shadow: 0 0 12px rgba(205,127,50,0.3); }
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+.podium-name {
+  font-family: 'Outfit', sans-serif; font-size: 0.85rem;
+  font-weight: 700; margin-bottom: 3px;
+  white-space: nowrap;
+}
+.podium-profit {
+  font-family: 'Archivo', sans-serif; font-size: 0.78rem;
+  color: var(--green); margin-bottom: 8px;
+}
+
+.podium-block {
+  border-radius: 10px 10px 0 0;
+  display: flex; align-items: flex-end; justify-content: center;
+  padding-bottom: 10px;
+  font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 1.6rem;
+  color: rgba(255,255,255,0.15);
+  min-width: 90px;
+}
+
+.rank-1 .podium-block { height: 110px; background: linear-gradient(to top, rgba(212,168,39,0.25), rgba(212,168,39,0.08)); border: 1px solid rgba(212,168,39,0.3); }
+.rank-2 .podium-block { height: 76px;  background: linear-gradient(to top, rgba(155,168,176,0.2), rgba(155,168,176,0.05)); border: 1px solid rgba(155,168,176,0.2); }
+.rank-3 .podium-block { height: 55px;  background: linear-gradient(to top, rgba(205,127,50,0.2), rgba(205,127,50,0.05)); border: 1px solid rgba(205,127,50,0.2); }
+
+/* ── FILTER TABS ── */
+.filter-row {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 20px; flex-wrap: wrap; gap: 12px;
+  animation: fadeUp 0.4s 0.1s ease both;
+}
+.period-tabs { display: flex; background: var(--surface2); border-radius: 10px; padding: 3px; gap: 2px; }
+.period-tab {
+  padding: 7px 16px; border-radius: 7px; font-size: 0.8rem;
+  font-weight: 600; cursor: pointer; border: none; background: transparent;
+  color: var(--text-dim); font-family: 'Outfit', sans-serif; transition: all 0.2s;
+}
+.period-tab.active { background: var(--surface3); color: var(--text); box-shadow: 0 1px 4px rgba(109,40,217,0.12); }
+
+.category-tabs {
+  display: flex; gap: 6px; flex-wrap: wrap; align-items: center;
+}
+.cat-chip {
+  padding: 7px 16px; border-radius: 20px; font-size: 0.78rem; font-weight: 600;
+  cursor: pointer; border: 1px solid rgba(109,40,217,0.18); background: transparent;
+  color: #9284b8; transition: all 0.15s; font-family: inherit; white-space: nowrap;
+}
+.cat-chip:hover { border-color: var(--green); color: var(--green); }
+.cat-chip.active { background: #6d28d9; border-color: #6d28d9; color: white; }
+
+/* ── LEADERBOARD TABLE ── */
+.table-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+  animation: fadeUp 0.4s 0.2s ease both;
+}
+
+.table-head {
+  display: grid;
+  grid-template-columns: 56px 1fr 110px 110px 110px 90px;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.07em; color: var(--text-dim);
+}
+
+.lb-row {
+  display: grid;
+  grid-template-columns: 56px 1fr 110px 110px 110px 90px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  align-items: center;
+  transition: background 0.2s;
+  cursor: pointer;
+  animation: fadeUp 0.3s ease both;
+}
+.lb-row:last-child { border-bottom: none; }
+.lb-row:hover { background: var(--surface2); }
+.lb-row.me { background: rgba(109,40,217,0.04); border-color: rgba(109,40,217,0.14); }
+.lb-row.me:hover { background: rgba(109,40,217,0.07); }
+
+/* Rank cell */
+.rank-cell { display: flex; align-items: center; gap: 6px; }
+.rank-num {
+  font-family: 'Outfit', sans-serif; font-size: 1rem;
+  font-weight: 800; width: 28px; text-align: center;
+}
+.rank-medal { font-size: 1rem; }
+.rank-change {
+  font-size: 0.62rem; font-family: 'Archivo', sans-serif;
+}
+.rank-up   { color: var(--green); }
+.rank-down { color: var(--red); }
+.rank-flat { color: var(--text-dim); }
+
+/* Trader cell */
+.trader-cell { display: flex; align-items: center; gap: 10px; }
+.trader-avatar {
+  width: 36px; height: 36px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem; background: var(--surface3);
+  flex-shrink: 0;
+}
+.trader-name { font-weight: 600; font-size: 0.875rem; }
+.trader-badges { display: flex; gap: 3px; margin-top: 2px; }
+.mini-badge { font-size: 0.65rem; }
+.you-tag {
+  font-size: 0.62rem; font-weight: 700; background: var(--green-glow);
+  color: var(--green); border: 1px solid rgba(109,40,217,0.18);
+  padding: 1px 6px; border-radius: 4px; margin-left: 4px;
+}
+
+/* Data cells */
+.data-cell {
+  font-family: 'Archivo', sans-serif; font-size: 0.82rem;
+  font-weight: 500;
+}
+.profit-cell { color: var(--green); }
+.wr-cell { color: var(--text); }
+
+.wr-bar-wrap { display: flex; align-items: center; gap: 6px; }
+.wr-bar { flex: 1; height: 4px; background: var(--surface3); border-radius: 100px; overflow: hidden; }
+.wr-fill { height: 100%; background: var(--green); border-radius: 100px; }
+
+/* ── MY RANK BANNER ── */
+.my-rank-banner {
+  background: var(--surface);
+  border: 1px solid var(--border-bright);
+  border-radius: 14px;
+  padding: 18px 20px;
+  margin-bottom: 20px;
+  display: flex; align-items: center; gap: 20px;
+  animation: fadeUp 0.4s 0.15s ease both;
+  position: relative; overflow: hidden;
+}
+.my-rank-banner::before {
+  content: '';
+  position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+  background: var(--green);
+}
+.my-rank-num {
+  font-family: 'Outfit', sans-serif; font-size: 2.5rem;
+  font-weight: 800; color: var(--green); letter-spacing: -0.04em;
+  line-height: 1; flex-shrink: 0;
+}
+.my-rank-label { font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.07em; }
+.my-rank-info { flex: 1; }
+.my-rank-name { font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 1rem; margin-bottom: 4px; }
+.my-rank-stats { display: flex; gap: 20px; }
+.my-stat { display: flex; flex-direction: column; gap: 1px; }
+.my-stat-val { font-family: 'Archivo', sans-serif; font-size: 0.82rem; color: var(--text); }
+.my-stat-label { font-size: 0.62rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; }
+.rank-progress { width: 140px; }
+.rank-progress-label { display: flex; justify-content: space-between; font-size: 0.68rem; color: var(--text-dim); margin-bottom: 5px; }
+.rank-progress-bar { height: 5px; background: var(--surface3); border-radius: 100px; overflow: hidden; }
+.rank-progress-fill { height: 100%; background: linear-gradient(90deg, var(--green), var(--gold)); border-radius: 100px; }
+
+/* ── BOTTOM NAV ── */
+/* bottom-nav styles defined below */
+
+/* ── RESPONSIVE ── */
+@media (max-width: 768px) {
+  header { padding: 0 16px; }
+  nav { display: none; }
+  .page { padding: 24px 16px 100px; }
+  .bottom-nav { display: grid; }
+  .table-head { grid-template-columns: 44px 1fr 90px 70px; }
+  .lb-row     { grid-template-columns: 44px 1fr 90px 70px; }
+  .table-head > :nth-child(4), .table-head > :nth-child(5),
+  .lb-row > :nth-child(4),    .lb-row > :nth-child(5) { display: none; }
+  .podium-block { min-width: 72px; }
+  .my-rank-banner { gap: 12px; flex-wrap: wrap; }
+  .rank-progress { width: 100%; }
+}
+
+/* ── Rada logo wordmark ─────────────────────────────────────────────────────── */
+.logo-wordmark {
+  font-size: 1.1rem; font-weight: 800; letter-spacing: -0.02em; color: var(--text);
+  font-family: 'Outfit', 'Outfit', sans-serif;
+}
+.logo-icon {
+  width: 30px; height: 30px;
+  background: linear-gradient(135deg, #7c3aed, #6d28d9) !important;
+  border-radius: 7px; display: flex; align-items: center; justify-content: center;
+  font-size: 0.85rem;
+}
+/* Override legacy green in logo + nav active states */
+.logo span { color: #8b5cf6 !important; }
+nav a.active { color: #8b5cf6 !important; background: rgba(109,40,217,0.12) !important; }
+.balance-chip { color: #8b5cf6 !important; }
+
+
+@media (max-width: 767px) {
+  header { padding: 0 16px; }
+  nav { display: none !important; }
+  body { padding-bottom: 72px; }
+}
+
+/* ── BOTTOM NAV (mobile) ─────────────────────────────────────────────────── */
+.bottom-nav {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: rgba(255,255,255,0.97); backdrop-filter: blur(12px);
+  border-top: 1px solid rgba(109,40,217,0.12); z-index: 200;
+  display: flex; justify-content: space-around;
+  padding: 10px 0 max(10px, env(safe-area-inset-bottom));
+}
+.bn-item {
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  cursor: pointer; padding: 4px 16px; border-radius: 8px;
+  color: #9284b8; text-decoration: none; transition: color 0.15s;
+}
+.bn-item.active { color: #6d28d9; }
+.bn-item:hover { color: #1a1035; }
+.bn-icon { font-size: 1.2rem; }
+.bn-label { font-size: 0.6rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
+@media (min-width: 768px) { .bottom-nav { display: none; } }
+
+/* ═══════════════════════════════════════════════════════
+   STANDARD HEADER — logo left · nav center · actions right
+   ═══════════════════════════════════════════════════════ */
+.site-header {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(255,255,255,0.97);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(109,40,217,0.12);
+  padding: 0 32px; height: 64px;
+  display: flex; align-items: center;
+}
+/* Logo — far left */
+.site-header .h-logo {
+  display: flex; align-items: center; gap: 10px;
+  text-decoration: none; color: inherit;
+  flex-shrink: 0;
+}
+.site-header .h-logo-badge {
+  background: #6d28d9; color: #fff;
+  font-family: 'Archivo', sans-serif;
+  font-size: 0.62rem; font-weight: 700;
+  padding: 4px 9px; border-radius: 6px;
+  letter-spacing: 0.04em;
+}
+.site-header .h-logo-text { font-size: 1.05rem; font-weight: 700; letter-spacing: -0.01em; }
+.site-header .h-logo-sub  { font-size: 0.55rem; font-weight: 600; letter-spacing: 0.1em; color: #9284b8; font-family: 'Archivo', sans-serif; }
+
+/* Nav — centered via auto margins */
+.site-header .h-nav {
+  display: flex; gap: 2px; align-items: center;
+  margin: 0 auto;
+}
+.site-header .h-nav a {
+  color: #9284b8; text-decoration: none;
+  font-size: 0.85rem; font-weight: 500;
+  padding: 7px 13px; border-radius: 8px;
+  transition: all 0.18s; white-space: nowrap;
+}
+.site-header .h-nav a:hover  { color: #1a1035; background: #f0edff; }
+.site-header .h-nav a.active { color: #6d28d9; background: rgba(109,40,217,0.10); font-weight: 600; }
+
+/* Actions — far right */
+.site-header .h-actions {
+  display: flex; align-items: center; gap: 8px;
+  flex-shrink: 0;
+}
+.site-header .h-balance {
+  display: flex; align-items: center; gap: 6px;
+  background: #f0edff; border: 1px solid rgba(109,40,217,0.18);
+  border-radius: 10px; padding: 6px 14px;
+  font-family: 'Archivo', sans-serif;
+  font-size: 0.82rem; color: #6d28d9; font-weight: 500;
+}
+.site-header .h-dot {
+  width: 6px; height: 6px; border-radius: 50%; background: #6d28d9;
+}
+.site-header .h-btn {
+  padding: 7px 16px; border-radius: 9px;
+  font-size: 0.82rem; font-weight: 600;
+  font-family: 'Outfit', 'Outfit', sans-serif;
+  cursor: pointer; transition: all 0.18s; border: none;
+}
+.site-header .h-btn-ghost {
+  background: transparent; color: #6d28d9;
+  border: 1px solid rgba(109,40,217,0.30);
+}
+.site-header .h-btn-ghost:hover { background: #f0edff; }
+.site-header .h-btn-primary {
+  background: #6d28d9; color: #fff;
+}
+.site-header .h-btn-primary:hover {
+  background: #7c3aed;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(109,40,217,0.25);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   MOBILE TOP NAV — 5-tab bar pinned to top, mobile only
+   ═══════════════════════════════════════════════════════════════ */
+.mobile-top-nav {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  background: rgba(255,255,255,0.98);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1.5px solid rgba(109,40,217,0.13);
+  z-index: 500;
+  justify-content: space-around;
+  align-items: center;
+  padding: 8px 0 6px;
+  box-shadow: 0 2px 14px rgba(109,40,217,0.06);
+}
+.mobile-top-nav .bn-item {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  cursor: pointer; padding: 2px 10px; border-radius: 8px;
+  color: #9284b8; text-decoration: none; transition: color 0.15s;
+  min-width: 48px; flex: 1;
+}
+.mobile-top-nav .bn-item.active { color: #6d28d9; }
+.mobile-top-nav .bn-item:hover  { color: #1a1035; }
+.mobile-top-nav .bn-icon  { font-size: 1.15rem; line-height: 1.1; }
+.mobile-top-nav .bn-label {
+  font-size: 0.58rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.07em;
+}
+@media (max-width: 767px) {
+  .mobile-top-nav { display: flex !important; }
+  .site-header    { display: none !important; }
+  body { padding-top: 58px !important; }
+  .page, .page-wrap { padding-top: 16px; }
+}
+
+
+
+  
+  .filter-row { flex-direction: column; align-items: flex-start; gap: 10px; }
+}
+
+</style>
+</head>
+<body>
+
+<div class="mobile-top-nav">
+  <a class="bn-item" href="rada-markets.html"><div class="bn-icon">◈</div><div class="bn-label">Markets</div></a>
+  <a class="bn-item" href="rada-portfolio.html"><div class="bn-icon">◎</div><div class="bn-label">Portfolio</div></a>
+  <a class="bn-item active" href="rada-leaderboard.html"><div class="bn-icon">⊞</div><div class="bn-label">Leaders</div></a>
+  <a class="bn-item" href="rada-creator.html"><div class="bn-icon">💡</div><div class="bn-label">Creator</div></a>
+  <a class="bn-item" href="rada-data.html"><div class="bn-icon">📊</div><div class="bn-label">Data</div></a>
+  <a class="bn-item" href="rada-friends.html"><div class="bn-icon">🤝</div><div class="bn-label">Social</div></a>
+</div>
+
+
+<header class="site-header">
+  <a class="h-logo" href="rada-markets.html">
+    <div class="h-logo-badge">RADA</div>
+    <div>
+      <div class="h-logo-text">Rada</div>
+      <div class="h-logo-sub">CROWD INTELLIGENCE</div>
+    </div>
+  </a>
+  <nav class="h-nav">
+    <a href="rada-markets.html">Forecast Markets</a>
+    <a href="rada-portfolio.html">Portfolio</a>
+    <a class="active" href="rada-leaderboard.html">Leaderboard</a>
+    <a href="rada-data.html">Data Platform</a>
+    <a href="rada-creator.html">Creator Hub</a>
+    <a href="rada-friends.html">Social Challenge</a>
+    <a href="rada-about.html">About</a>
+  </nav>
+  <div class="h-actions">
+    <div class="h-balance"><div class="h-dot"></div><span>KES <strong id="balDisplay">5,000</strong></span></div>
+    <button class="h-btn h-btn-ghost" onclick="openWithdraw ? openWithdraw() : null">Withdraw</button>
+    <button class="h-btn h-btn-primary" onclick="openDeposit ? openDeposit() : null">+ Deposit</button>
+  </div>
+</header>
+
+<div class="page">
+
+  <!-- PODIUM HERO -->
+  <div class="podium-section">
+    <div class="section-eyebrow">Season 1 · March 2026</div>
+    <h1 class="section-title">Kenya's Top <span class="gold-txt">Predictors</span></h1>
+    <p class="section-sub">Ranked by total profit this season</p>
+
+    <div class="podium-wrap" id="podiumWrap"></div>
+  </div>
+
+  <!-- MY RANK BANNER -->
+  <div class="my-rank-banner">
+    <div>
+      <div class="my-rank-label">Your Rank</div>
+      <div class="my-rank-num">#14</div>
+    </div>
+    <div class="my-rank-info">
+      <div class="my-rank-name">You · Test User</div>
+      <div class="my-rank-stats">
+        <div class="my-stat"><span class="my-stat-val" style="color:var(--green)">+KES 1,240</span><span class="my-stat-label">Profit</span></div>
+        <div class="my-stat"><span class="my-stat-val">68%</span><span class="my-stat-label">Win Rate</span></div>
+        <div class="my-stat"><span class="my-stat-val">25</span><span class="my-stat-label">Trades</span></div>
+        <div class="my-stat"><span class="my-stat-val" style="color:var(--gold)">🔥 5</span><span class="my-stat-label">Streak</span></div>
+      </div>
+    </div>
+    <div class="rank-progress">
+      <div class="rank-progress-label">
+        <span>To #13</span>
+        <span style="color:var(--green)">KES 340 away</span>
+      </div>
+      <div class="rank-progress-bar">
+        <div class="rank-progress-fill" style="width:72%"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FILTERS -->
+  <div class="filter-row">
+    <div class="period-tabs">
+      <button class="period-tab" onclick="setPeriod(this,'7d')">7 Days</button>
+      <button class="period-tab active" onclick="setPeriod(this,'30d')">This Month</button>
+      <button class="period-tab" onclick="setPeriod(this,'all')">All Time</button>
+    </div>
+    <div class="category-tabs">
+      <button class="cat-chip active" onclick="setCat(this,'all')">All</button>
+      <button class="cat-chip" onclick="setCat(this,'POLITICS')">🗳️ Politics</button>
+      <button class="cat-chip" onclick="setCat(this,'ECONOMY')">📈 Economy</button>
+      <button class="cat-chip" onclick="setCat(this,'ENTERTAINMENT')">🎭 Entertainment</button>
+      <button class="cat-chip" onclick="setCat(this,'WEATHER')">🌦️ Weather</button>
+      <button class="cat-chip" onclick="setCat(this,'TECH')">💡 Tech</button>
+      <button class="cat-chip" onclick="setCat(this,'GENERAL')">🇰🇪 General</button>
+    </div>
+  </div>
+
+  <!-- TABLE -->
+  <div class="table-card" style="box-shadow:0 2px 12px rgba(0,0,0,0.05);">
+    <div class="table-head">
+      <div>Rank</div>
+      <div>Trader</div>
+      <div style="text-align:right">Profit</div>
+      <div style="text-align:right">Trades</div>
+      <div>Win Rate</div>
+      <div style="text-align:right">Volume</div>
+    </div>
+    <div id="lbTableBody"></div>
+  </div>
+
+</div>
+
+<div class="bottom-nav">
+  <a class="bn-item" href="rada-markets.html"><div class="bn-icon">◈</div><div class="bn-label">Markets</div></a>
+  <a class="bn-item" href="rada-portfolio.html"><div class="bn-icon">◎</div><div class="bn-label">Portfolio</div></a>
+  <a class="bn-item active" href="rada-leaderboard.html"><div class="bn-icon">⊞</div><div class="bn-label">Leaders</div></a>
+  <a class="bn-item" href="rada-creator.html"><div class="bn-icon">💡</div><div class="bn-label">Creator</div></a>
+  <a class="bn-item" href="rada-data.html"><div class="bn-icon">📊</div><div class="bn-label">Data</div></a>
+  <a class="bn-item" href="rada-friends.html"><div class="bn-icon">🤝</div><div class="bn-label">Social</div></a>
+</div>
+</div>
+
+<script>
+const TRADERS = [
+  { rank:1, cat:'POLITICS',  prev:1,  name:'Wanjiru K.',   emoji:'👩🏾', profit:18400, trades:87,  wr:0.78, vol:94000,  badges:['🔥','⚡','🇰🇪'] },
+  { rank:2, cat:'ECONOMY',  prev:3,  name:'Otieno M.',    emoji:'👨🏾', profit:14200, trades:64,  wr:0.72, vol:71000,  badges:['🎯','🔥'] },
+  { rank:3, cat:'POLITICS',  prev:2,  name:'Kamau R.',     emoji:'🧑🏾', profit:12800, trades:55,  wr:0.69, vol:62000,  badges:['📊'] },
+  { rank:4, cat:'ENTERTAINMENT',  prev:4,  name:'Achieng P.',   emoji:'👩🏾', profit:9600,  trades:48,  wr:0.71, vol:49000,  badges:['🔥'] },
+  { rank:5, cat:'ECONOMY',  prev:7,  name:'Mwangi J.',    emoji:'👨🏾', profit:8200,  trades:42,  wr:0.67, vol:43000,  badges:['⚡'] },
+  { rank:6, cat:'TECH',  prev:5,  name:'Mutua S.',     emoji:'🧑🏾', profit:7100,  trades:39,  wr:0.64, vol:38000,  badges:[] },
+  { rank:7, cat:'GENERAL',  prev:6,  name:'Njeri A.',     emoji:'👩🏾', profit:6800,  trades:51,  wr:0.61, vol:52000,  badges:['📊'] },
+  { rank:8, cat:'WEATHER',  prev:9,  name:'Odhiambo T.',  emoji:'👨🏾', profit:5900,  trades:33,  wr:0.70, vol:31000,  badges:['🎯'] },
+  { rank:9, cat:'ECONOMY',  prev:8,  name:'Waweru L.',    emoji:'🧑🏾', profit:5100,  trades:29,  wr:0.66, vol:28000,  badges:[] },
+  { rank:10, cat:'POLITICS', prev:12, name:'Cherop B.',    emoji:'👩🏾', profit:4700,  trades:44,  wr:0.59, vol:45000,  badges:['🔥'] },
+  { rank:11, cat:'ENTERTAINMENT', prev:10, name:'Kibet F.',     emoji:'👨🏾', profit:3900,  trades:26,  wr:0.65, vol:27000,  badges:[] },
+  { rank:12, cat:'TECH', prev:11, name:'Nduta M.',     emoji:'👩🏾', profit:3400,  trades:31,  wr:0.61, vol:32000,  badges:[] },
+  { rank:13, cat:'GENERAL', prev:13, name:'Ouma V.',      emoji:'🧑🏾', profit:1580,  trades:19,  wr:0.63, vol:20000,  badges:[] },
+  { rank:14, cat:'POLITICS', prev:16, name:'You',          emoji:'😊',   profit:1240,  trades:25,  wr:0.68, vol:12400,  badges:['🔥','🇰🇪'], isMe:true },
+  { rank:15, cat:'WEATHER', prev:14, name:'Muthoni C.',   emoji:'👩🏾', profit:1100,  trades:17,  wr:0.59, vol:11000,  badges:[] },
+  { rank:16, cat:'ECONOMY', prev:15, name:'Njoroge H.',   emoji:'👨🏾', profit:920,   trades:22,  wr:0.55, vol:9800,   badges:[] },
+  { rank:17, cat:'TECH', prev:18, name:'Auma G.',      emoji:'👩🏾', profit:740,   trades:14,  wr:0.57, vol:7500,   badges:[] },
+  { rank:18, cat:'GENERAL', prev:17, name:'Kirui D.',     emoji:'👨🏾', profit:580,   trades:11,  wr:0.55, vol:6000,   badges:[] },
+];
+
+function renderPodium(data) {
+  data = (data && data.length) ? data : TRADERS;
+  const sorted = [...data].sort((a,b) => b.profit - a.profit);
+  const top3 = sorted.length >= 3 ? [sorted[1], sorted[0], sorted[2]] : sorted.slice(0,3);
+  const dummy = sorted[0] || TRADERS[0]; // fallback // 2nd, 1st, 3rd
+  const medals = ['🥈','🥇','🥉'];
+  const ranks = top3.length >= 3 ? [2, 1, 3] : [2, 1, 3];
+  const podium = document.getElementById('podiumWrap');
+  podium.innerHTML = top3.map((t, i) => `
+    <div class="podium-col rank-${ranks[i]}">
+      <div class="podium-avatar">
+        ${ranks[i] === 1 ? '<span class="crown">👑</span>' : ''}
+        ${t.emoji}
+      </div>
+      <div class="podium-name">${t.name}</div>
+      <div class="podium-profit">+KES ${t.profit.toLocaleString()}</div>
+      <div class="podium-block">${medals[i]}</div>
+    </div>
+  `).join('');
+}
+
+function renderTable(data) {
+  const body = document.getElementById('lbTableBody');
+  body.innerHTML = data.map((t, i) => {
+    const rankDiff = t.prev - t.rank;
+    const rankChange = rankDiff > 0
+      ? `<span class="rank-change rank-up">▲${rankDiff}</span>`
+      : rankDiff < 0
+      ? `<span class="rank-change rank-down">▼${Math.abs(rankDiff)}</span>`
+      : `<span class="rank-change rank-flat">—</span>`;
+
+    const medal = t.rank === 1 ? '🥇' : t.rank === 2 ? '🥈' : t.rank === 3 ? '🥉' : '';
+    const vol = t.vol >= 1000000 ? `${(t.vol/1000000).toFixed(1)}M` : `${(t.vol/1000).toFixed(0)}K`;
+
+    return `
+    <div class="lb-row${t.isMe ? ' me' : ''}" style="animation-delay:${i*0.03}s">
+      <div class="rank-cell">
+        ${medal
+          ? `<span class="rank-medal">${medal}</span>`
+          : `<span class="rank-num" style="color:${t.rank <= 5 ? 'var(--gold)' : 'var(--text-dim)'}">${t.rank}</span>`}
+        ${rankChange}
+      </div>
+      <div class="trader-cell">
+        <div class="trader-avatar">${t.emoji}</div>
+        <div>
+          <div class="trader-name">
+            ${t.name}
+            ${t.isMe ? '<span class="you-tag">YOU</span>' : ''}
+          </div>
+          <div class="trader-badges">${t.badges.map(b=>`<span class="mini-badge">${b}</span>`).join('')}</div>
+        </div>
+      </div>
+      <div class="data-cell profit-cell" style="text-align:right">+${t.profit.toLocaleString()}</div>
+      <div class="data-cell" style="text-align:right;color:var(--text-mid)">${t.trades}</div>
+      <div class="data-cell wr-cell">
+        <div class="wr-bar-wrap">
+          <div class="wr-bar"><div class="wr-fill" style="width:${t.wr*100}%"></div></div>
+          <span style="font-size:0.75rem;color:var(--text-mid);min-width:32px">${(t.wr*100).toFixed(0)}%</span>
+        </div>
+      </div>
+      <div class="data-cell" style="text-align:right;color:var(--text-mid)">KES ${vol}</div>
+    </div>`;
+  }).join('');
+}
+
+function setPeriod(btn, period) {
+  document.querySelectorAll('.period-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderTable(TRADERS); // In production, refetch
+}
+
+function setCat(btn, cat) {
+  document.querySelectorAll('.cat-chip').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const filtered = cat === 'all' ? TRADERS : TRADERS.filter(t => t.cat === cat);
+  // Re-rank filtered results 1..n for display
+  const reranked = filtered.map((t, i) => ({ ...t, displayRank: i + 1 }));
+  renderTable(reranked.length ? reranked : filtered);
+  renderPodium(filtered);
+}
+
+renderPodium();
+renderTable(TRADERS);
+</script>
+</body>
+</html>
