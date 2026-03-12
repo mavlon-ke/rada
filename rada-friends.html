@@ -73,7 +73,7 @@ nav{padding:14px 24px;display:flex;align-items:center;justify-content:space-betw
 .exp-body{font-size:0.74rem;color:var(--text-mid);line-height:1.55;}
 
 /* CARDS */
-.challenge-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;margin-bottom:32px;}
+.challenge-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(380px,1fr));gap:16px;margin-bottom:32px;}
 .challenge-card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:20px;box-shadow:0 2px 12px rgba(0,0,0,0.06);transition:border-color 0.2s;animation:cardIn 0.35s ease both;}
 .challenge-card:hover{border-color:rgba(167,139,250,0.35);}
 @keyframes cardIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
@@ -125,7 +125,7 @@ nav{padding:14px 24px;display:flex;align-items:center;justify-content:space-betw
 /* Fee note */
 .fee-note{font-size:0.68rem;color:var(--text-dim);margin-top:8px;display:flex;justify-content:space-between;}
 
-.cc-actions{display:flex;gap:8px;}
+.cc-actions{display:flex;flex-direction:column;gap:8px;}
 .btn-sm{padding:7px 14px;border-radius:8px;font-size:0.75rem;font-weight:700;cursor:pointer;border:none;font-family:var(--font);transition:all 0.15s;}
 .btn-sm-purple{background:var(--purple-dim);color:var(--purple);border:1px solid rgba(167,139,250,0.25);}
 .btn-sm-purple:hover{background:var(--purple);color:#000;}
@@ -461,6 +461,81 @@ nav{padding:14px 24px;display:flex;align-items:center;justify-content:space-betw
 .resolution-alert-sub { font-size: 0.78rem; color: var(--text-mid); line-height: 1.5; }
 .resolution-alert-cta { font-size: 0.75rem; font-weight: 700; color: var(--gold); margin-top: 4px; cursor: pointer; text-decoration: underline; }
 
+
+/* ── Request Admin Intervention button ── */
+.btn-admin-intervene {
+  width: 100%; padding: 10px; border-radius: 10px;
+  border: 1.5px solid rgba(206,17,38,0.35);
+  background: rgba(206,17,38,0.04);
+  color: var(--ke-red); font-weight: 700; font-size: 0.82rem;
+  cursor: pointer; font-family: var(--font);
+  display: flex; align-items: center; justify-content: center; gap: 7px;
+  margin-top: 8px; transition: all 0.18s;
+}
+.btn-admin-intervene:hover {
+  background: rgba(206,17,38,0.09);
+  border-color: var(--ke-red);
+  transform: translateY(-1px);
+}
+.btn-admin-intervene:disabled {
+  opacity: 0.4; cursor: not-allowed; transform: none;
+}
+.admin-intervene-note {
+  font-size: 0.7rem; color: var(--text-dim); text-align: center;
+  margin-top: 5px; line-height: 1.5;
+}
+
+
+/* ── Desktop Social Challenge layout fixes ── */
+@media(min-width:768px) {
+  .resolution-alert {
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .resolution-alert-sub {
+    font-size: 0.80rem;
+    white-space: normal;
+    line-height: 1.6;
+  }
+  .btn-mutual-resolve {
+    width: 100%;
+  }
+  .btn-admin-intervene {
+    width: 100%;
+  }
+  .admin-intervene-note {
+    width: 100%;
+    text-align: center;
+  }
+  /* Share/action row inside cc-actions — keep as row */
+  .cc-actions > div[style*="display:flex"] {
+    width: 100%;
+  }
+  .cc-actions .btn-sm {
+    width: 100%;
+  }
+}
+/* Prevent resolution alert text from collapsing into ultra-narrow column */
+.resolution-alert {
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+.resolution-alert-body {
+  min-width: 0;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+}
+/* Admin note full width always */
+.admin-intervene-note {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+
+.cc-share-row { display: flex; gap: 6px; width: 100%; }
+.cc-share-row button { flex: 1; }
+
 </style>
 </head>
 <body>
@@ -560,7 +635,7 @@ nav{padding:14px 24px;display:flex;align-items:center;justify-content:space-betw
     <div id="formView">
       <div class="modal-head">
         <div class="modal-title">Create a Social Challenge</div>
-        <div class="modal-sub">Private · Max stake KES 20,000 · Min KES 20 per person</div>
+        <div class="modal-sub">Private · 5% forecasting fee · Max KES 20,000 · Min KES 20</div>
       </div>
       <div class="modal-body">
 
@@ -622,7 +697,7 @@ nav{padding:14px 24px;display:flex;align-items:center;justify-content:space-betw
 
         <div class="fee-preview" id="feePreview">
           <div class="fp-row"><span class="fp-dimmed">Total pool</span><span id="fpPool">KES 1,000</span></div>
-          <div class="fp-row"><span class="fp-dimmed">Platform fee (5%)</span><span id="fpFee">KES 50</span></div>
+          <div class="fp-row"><span class="fp-dimmed">Forecasting fee (5%)</span><span id="fpFee">KES 50</span></div>
           <div class="fp-row"><span class="fp-dimmed fp-bold" style="color:var(--ke-green)">Winner receives</span><span id="fpWinner" style="color:var(--ke-green);font-family:var(--mono)">KES 950</span></div>
           <div class="fp-row fp-dimmed" style="font-size:0.65rem;color:var(--text-dim);border:none;padding-top:4px;margin-top:0;">
             <span>If tie: each refunded KES <span id="fpTie">490</span> (KES 10 processing fee each)</span>
@@ -743,7 +818,7 @@ const MY_CHALLENGES = [
   {
     id:3, q:'Will you finish reading "Atomic Habits" before end of month?',
     a:{name:'Me (John)', stake:200}, b:{name:'Wanjiku N.', stake:200},
-    referee:null, resType:'mutual', deadline:'Mar 14 2026',
+    referee:null, resType:'mutual', deadline:'Mar 13 2026',
     code:'HB2XL5', slug:'atomic-habits-challenge',
     pool:400, fee:20, winner:380
   },
@@ -834,7 +909,7 @@ function challengeCard(c, isMine, isRef = false) {
           <button class="btn-resolve btn-resolve-b" onclick="openResolveModal(${c.id})">${c.b.name.split(' ')[0]} Won</button>
           <button class="btn-resolve btn-resolve-tie" onclick="openResolveModal(${c.id})">🤝 Tie</button>
         </div>
-        <div class="fee-note"><span>5% fee on win · KES 10 each if tie</span><span>Deadline: ${c.deadline}</span></div>
+        <div class="fee-note"><span>5% Social Challenge fee · KES 10 each if tie</span><span>Deadline: ${c.deadline}</span></div>
       </div>`
     : '';
 
@@ -863,13 +938,28 @@ function challengeCard(c, isMine, isRef = false) {
     ? `<button class="btn-mutual-resolve" onclick="openMutualResolve(${c.id})">🤝 Mutual Resolution — Agree on Winner Now <span style="font-size:0.72rem;opacity:0.85">(Save 10% in fees)</span></button>`
     : '';
 
+  // Admin intervention — visible only after first 24h of the 48h window
+  // i.e. hoursLeft <= 24 (meaning 24h have already passed since the window opened)
+  const windowOpenedHoursAgo = hoursLeft !== null ? 48 - hoursLeft : null;
+  const showAdminBtn = isMine && hoursLeft !== null && hoursLeft > 0
+                       && windowOpenedHoursAgo !== null && windowOpenedHoursAgo >= 24;
+  const adminBtn = showAdminBtn
+    ? `<button class="btn-admin-intervene" onclick="requestAdminIntervention(${c.id}, this)">
+        🚨 Request Admin Intervention
+      </button>
+      <div class="admin-intervene-note">
+        Only available after 24h of no resolution. A 15% dispute fee will apply.
+        Admin will review within 12 hours.
+      </div>`
+    : '';
+
   // Resolution alert banner for 48h window
   const resAlert = (isMine || isRef) && hoursLeft !== null && hoursLeft <= 48 && hoursLeft > 0
     ? `<div class="resolution-alert">
         <div class="resolution-alert-icon">⚠️</div>
         <div class="resolution-alert-body">
           <div class="resolution-alert-title">48-Hour Resolution Window</div>
-          <div class="resolution-alert-sub">Time is running out! Agree on a winner now to save 10% in fees. If unresolved, the platform will step in and charge a 15% dispute fee.</div>
+          <div class="resolution-alert-sub">Time is running out! Agree now — mutual resolution has a 5% forecasting fee. If unresolved after 48h, a 15% dispute fee applies.</div>
           ${showMutual ? `<div class="resolution-alert-cta" onclick="openMutualResolve(${c.id})">Tap to resolve mutually →</div>` : ''}
         </div>
       </div>`
@@ -879,8 +969,9 @@ function challengeCard(c, isMine, isRef = false) {
     ? `<div class="cc-actions">
         ${resAlert}
         ${mutualBtn}
-        <div style="display:flex;gap:6px;flex:1">
-          <button class="csh-btn native" style="flex:1" onclick="nativeShareChallenge('${c.slug}','${c.code}','${c.q}')">⤴ Share</button>
+        ${adminBtn}
+        <div class="cc-share-row">
+          <button class="csh-btn native" onclick="nativeShareChallenge('${c.slug}','${c.code}','${c.q}')">⤴ Share</button>
         </div>
         ${c.status === 'pending' ? `<button class="btn-sm btn-sm-ghost">Wait for Friend</button>` : ''}
         ${c.status === 'open' ? `<button class="btn-sm btn-sm-ghost">View Details</button>` : ''}
@@ -1287,9 +1378,9 @@ function sendRefereeSMS(refPhone, challengerName, question, code) {
 
 function sendResolutionWindowSMS(phoneA, phoneB, question, hoursLeft) {
   [phoneA, phoneB].forEach(phone => {
-    console.log(`[SMS] → ${phone}: ⚠ Rada: Time is running out on your challenge! "${question}" — ${Math.ceil(hoursLeft)}h left in the resolution window. Agree now to save 10% in fees. rada.co.ke`);
+    console.log(`[SMS] → ${phone}: ⚠ Rada: Time is running out on your challenge! "${question}" — ${Math.ceil(hoursLeft)}h left in the resolution window. Agree now — 5% fee for mutual resolution vs 15% if disputed. rada.co.ke`);
   });
-  showNotifToast('⚠️ Resolution Reminder Sent', `Both participants have been sent an SMS: "Time is running out! Agree on a winner now to save 10% in fees."`);
+  showNotifToast('⚠️ Resolution Reminder Sent', `Both participants have been sent an SMS: "Time is running out! Agree now — 5% fee for mutual resolution, 15% if disputed."`);
 }
 
 // ── AUTO-CHECK CHALLENGES FOR 48h WINDOW ─────────────────────────────────────
@@ -1329,6 +1420,37 @@ function createChallengeWithNotifs() {
   if (isPublicChallenge) {
     showNotifToast('🌍 Challenge Made Public', 'Your challenge will appear on the Markets page under General once both participants have staked.', 5000);
   }
+}
+
+
+// ── REQUEST ADMIN INTERVENTION ───────────────────────────────────────────────
+// Only callable after 24h of the 48h resolution window have passed.
+// In production calls POST /api/challenges/{id}/request-admin
+function requestAdminIntervention(id, btn) {
+  if (!confirm(
+    'Request admin intervention for this challenge?\n\n' +
+    'A 15% dispute fee will apply to the total pool.\n' +
+    'Admin will review within 12 hours and contact both participants.'
+  )) return;
+
+  // Disable button to prevent double-submit
+  btn.disabled = true;
+  btn.textContent = '🕐 Request Submitted…';
+
+  // Simulate API call — in production: POST /api/challenges/${id}/request-admin
+  setTimeout(() => {
+    btn.textContent = '✅ Admin Notified';
+
+    showNotifToast(
+      '🚨 Admin Intervention Requested',
+      'Rada admin has been notified and will review your challenge within 12 hours. ' +
+      'Both participants will receive an SMS confirmation.',
+      6000
+    );
+
+    // In production the backend marks the challenge DISPUTED and SMSes both parties
+    console.log(`[ADMIN REQUEST] Challenge ${id} escalated to admin.`);
+  }, 1200);
 }
 
 </script>
