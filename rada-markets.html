@@ -60,20 +60,23 @@ body::before {
 
 /* ── TICKER ── */
 .ticker-wrap {
-  background: var(--ke-green);
+  background: rgba(109,40,217,0.06);
+  border-bottom: 1px solid rgba(109,40,217,0.10);
   overflow: hidden; white-space: nowrap;
-  padding: 7px 0; position: relative; z-index: 10;
+  padding: 5px 0; position: relative; z-index: 10;
 }
 .ticker-track {
   display: inline-block;
-  animation: ticker 30s linear infinite;
+  animation: ticker 35s linear infinite;
 }
 .ticker-item {
-  display: inline-block; padding: 0 28px;
-  font-family: var(--mono); font-size: 0.7rem; font-weight: 700; color: #000;
-  letter-spacing: 0.05em;
+  display: inline-block; padding: 0 24px;
+  font-family: var(--mono); font-size: 0.62rem; font-weight: 600;
+  color: var(--text-mid); letter-spacing: 0.04em;
 }
-.ticker-item span { opacity: 0.6; margin-right: 6px; }
+.ticker-item span { color: var(--primary); opacity: 0.7; margin-right: 5px; font-size: 0.58rem; }
+.ticker-item .yes  { color: #16a34a; }
+.ticker-item .no   { color: #ce1126; }
 @keyframes ticker { from{transform:translateX(0)} to{transform:translateX(-50%)} }
 
 /* ── NAV ── */
@@ -121,8 +124,21 @@ nav {
 
 /* ── CREATOR BANNER ── */
 /* ── FILTERS ── */
+.filter-intro {
+  font-size: 0.72rem; font-weight: 600; color: var(--text-dim);
+  letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 10px;
+}
+.filter-scroll-wrap {
+  overflow-x: auto; -webkit-overflow-scrolling: touch;
+  margin-bottom: 12px; padding-bottom: 4px;
+  /* hide scrollbar */
+  scrollbar-width: none;
+}
+.filter-scroll-wrap::-webkit-scrollbar { display: none; }
 .filter-bar {
-  display: flex; align-items: center; gap: 8px; margin-bottom: 20px; flex-wrap: wrap;
+  display: flex; align-items: center; gap: 8px;
+  flex-wrap: nowrap; white-space: nowrap;
+  margin-bottom: 0;
 }
 .filter-btn {
   padding: 7px 16px; border-radius: 20px; font-size: 0.78rem; font-weight: 600;
@@ -819,18 +835,21 @@ nav {
 </header>
 
 <!-- FILTERS -->
-<div style="padding: 0 24px; position: relative; z-index: 1; max-width: 1200px; margin: 16px auto 0;">
-  <div class="filter-bar">
-    <button class="filter-btn" onclick="filterCat(this,'TRENDING')">🔥 Trending</button>
-    <button class="filter-btn active" onclick="filterCat(this,'ALL')">All Markets</button>
-    <button class="filter-btn" onclick="filterCat(this,'POLITICS')">🗳️ Politics</button>
-    <button class="filter-btn" onclick="filterCat(this,'ECONOMY')">📈 Economy</button>
-    <button class="filter-btn" onclick="filterCat(this,'WEATHER')">🌦️ Weather</button>
-    <button class="filter-btn" onclick="filterCat(this,'ENTERTAINMENT')">🎭 Entertainment</button>
-    <button class="filter-btn" onclick="filterCat(this,'TECH')">💡 Tech</button>
-    <button class="filter-btn" onclick="filterCat(this,'GENERAL')">🇰🇪 General</button>
-    <input class="search-box" placeholder="🔍 Search markets..." oninput="searchMarkets(this.value)">
+<div style="padding: 0 24px; position: relative; z-index: 1; max-width: 1200px; margin: 20px auto 0;">
+  <div class="filter-intro">Pick your topic · Swipe to explore</div>
+  <div class="filter-scroll-wrap">
+    <div class="filter-bar">
+      <button class="filter-btn" onclick="filterCat(this,'TRENDING')">🔥 Trending</button>
+      <button class="filter-btn active" onclick="filterCat(this,'ALL')">All Markets</button>
+      <button class="filter-btn" onclick="filterCat(this,'POLITICS')">🗳️ Politics</button>
+      <button class="filter-btn" onclick="filterCat(this,'ECONOMY')">📈 Economy</button>
+      <button class="filter-btn" onclick="filterCat(this,'WEATHER')">🌦️ Weather</button>
+      <button class="filter-btn" onclick="filterCat(this,'ENTERTAINMENT')">🎭 Entertainment</button>
+      <button class="filter-btn" onclick="filterCat(this,'TECH')">💡 Tech</button>
+      <button class="filter-btn" onclick="filterCat(this,'GENERAL')">🇰🇪 General</button>
+    </div>
   </div>
+  <input class="search-box" style="margin-bottom:16px" placeholder="🔍 Search markets..." oninput="searchMarkets(this.value)">
 </div>
 
 <!-- MARKET GRID -->
