@@ -781,6 +781,14 @@ nav {
   .modal-handle { display: none; }
 }
 
+
+.filter-intro-desktop { display: none; }
+.filter-intro-mobile  { display: inline; }
+@media (min-width: 768px) {
+  .filter-intro-desktop { display: inline; }
+  .filter-intro-mobile  { display: none; }
+}
+
 </style>
 </head>
 <body>
@@ -836,7 +844,7 @@ nav {
 
 <!-- FILTERS -->
 <div style="padding: 0 24px; position: relative; z-index: 1; max-width: 1200px; margin: 20px auto 0;">
-  <div class="filter-intro">Pick your topic · Swipe to explore</div>
+  <div class="filter-intro"><span class="filter-intro-desktop">Predict &amp; Win</span><span class="filter-intro-mobile">Predict &amp; Win · Swipe to Explore</span></div>
   <div class="filter-scroll-wrap">
     <div class="filter-bar">
       <button class="filter-btn" onclick="filterCat(this,'TRENDING')">🔥 Trending</button>
