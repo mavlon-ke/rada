@@ -54,18 +54,6 @@ body { background: var(--bg); color: var(--text); font-family: var(--font); min-
 .site-header .h-btn-primary { background: var(--primary); color: #fff; }
 .site-header .h-btn-primary:hover { background: var(--primary-bright); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(109,40,217,0.25); }
 
-/* ── MOBILE TOP NAV ── */
-
-.mobile-top-nav 
-.mobile-top-nav 
-.mobile-top-nav .bn-icon  { font-size: 1.15rem; line-height: 1.1; }
-.mobile-top-nav .bn-label { font-size: 0.58rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; }
-@media (max-width: 767px) {
-  
-  .site-header    { display: none !important; }
-  body { padding-top: 58px !important; }
-}
-
 /* ── PAGE ── */
 .page { max-width: 720px; margin: 0 auto; padding: 48px 24px 100px; }
 
@@ -140,6 +128,66 @@ body { background: var(--bg); color: var(--text); font-family: var(--font); min-
 .btn-cta { background: #fff; color: var(--primary); border: none; padding: 13px 28px; border-radius: 11px; font-weight: 700; font-size: 0.95rem; cursor: pointer; font-family: var(--font); transition: all 0.18s; }
 .btn-cta:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.15); }
 
+
+
+@media(max-width:767px){  }
+
+
+
+.bn-icon { font-size: 1.15rem; line-height: 1; }
+.bn-label { font-size: 0.58rem; }
+
+/* ── More tray ── */
+
+
+
+
+
+
+
+
+
+
+
+
+/* Auth buttons in tray — shown only when logged out */
+
+
+
+
+
+
+/* ══════════════════════════════════════════════════════════════════════════════ */
+
+
+/* ══ MOBILE NAV — fixed bottom bar, 5 tabs + More ════════════════════════════ */
+
+@media(max-width:767px){}
+
+
+
+.bn-icon{font-size:1.15rem;line-height:1;}
+.bn-label{font-size:0.58rem;}
+/* More tray */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* body bottom padding so content doesn't hide behind fixed nav */
+@media(max-width:767px){body{padding-bottom:64px !important;}}
+/* ════════════════════════════════════════════════════════════════════════════ */
+
 /* ══ MOBILE NAV v2 — 5 tabs + More tray ══════════════════════════════════════ */
 .mobile-top-nav {
   display: none;
@@ -206,7 +254,6 @@ body { background: var(--bg); color: var(--text); font-family: var(--font); min-
   height: 1px; background: rgba(109,40,217,0.08);
   margin: 8px 16px;
 }
-/* Auth buttons in tray — shown only when logged out */
 .more-tray-auth { padding: 4px 16px 8px; display: flex; flex-direction: column; gap: 8px; }
 .more-tray-auth.hidden { display: none; }
 .btn-tray-login {
@@ -224,6 +271,8 @@ body { background: var(--bg); color: var(--text); font-family: var(--font); min-
   cursor: pointer; font-family: var(--font); transition: all 0.15s;
 }
 .btn-tray-signup:hover { background: var(--primary-bright,#7c3aed); }
+/* body padding for fixed bottom nav */
+@media(max-width:767px){ body { padding-bottom: 72px; } }
 /* ══════════════════════════════════════════════════════════════════════════════ */
 
 </style>
@@ -391,21 +440,19 @@ document.querySelectorAll('[data-share]').forEach(btn => {
 });
 </script>
 
-<!-- ── MORE TRAY ──────────────────────────────────────────────── -->
+
+
+<!-- MORE TRAY -->
+<!-- MORETRAY -->
 <div class="more-tray-overlay" id="moreTrayOverlay" onclick="closeMoreTray()">
   <div class="more-tray" onclick="event.stopPropagation()">
     <div class="more-tray-handle"></div>
     <div class="more-tray-title">More</div>
     <div class="more-tray-grid">
-      <a class="more-tray-item"  href="rada-data.html">
-        <span class="more-tray-item-icon">📊</span>Data Platform
-      </a>
-      <a class="more-tray-item active" href="rada-about.html">
-        <span class="more-tray-item-icon">ℹ️</span>About Rada
-      </a>
+      <a class="more-tray-item" href="rada-data.html"><span class="more-tray-item-icon">📊</span>Data Platform</a>
+      <a class="more-tray-item active" href="rada-about.html"><span class="more-tray-item-icon">ℹ️</span>About Rada</a>
     </div>
     <div class="more-tray-divider"></div>
-    <!-- Auth row — hidden when logged in -->
     <div class="more-tray-auth" id="trayAuthRow">
       <button class="btn-tray-signup" onclick="window.location='rada-auth.html'">Get Started — Sign Up</button>
       <button class="btn-tray-login"  onclick="window.location='rada-auth.html'">Log In</button>
@@ -414,14 +461,12 @@ document.querySelectorAll('[data-share]').forEach(btn => {
 </div>
 <script>
 (function(){
-  // Show/hide auth row based on login state
   var isLoggedIn = !!localStorage.getItem('rada_user');
-  var authRow = document.getElementById('trayAuthRow');
-  if (authRow) authRow.classList.toggle('hidden', isLoggedIn);
+  var ar = document.getElementById('trayAuthRow');
+  if (ar) ar.classList.toggle('hidden', isLoggedIn);
 })();
 function openMoreTray()  { document.getElementById('moreTrayOverlay').classList.add('open'); }
 function closeMoreTray() { document.getElementById('moreTrayOverlay').classList.remove('open'); }
 </script>
-
 </body>
 </html>
