@@ -270,7 +270,7 @@ td{padding:14px 16px;font-size:0.8rem;border-bottom:1px solid rgba(109,40,217,0.
 
 /* ══ MOBILE NAV — fixed bottom bar, 5 tabs + More ════════════════════════════ */
 
-@media(max-width:767px){}
+
 
 
 
@@ -293,7 +293,7 @@ td{padding:14px 16px;font-size:0.8rem;border-bottom:1px solid rgba(109,40,217,0.
 
 
 /* body bottom padding so content doesn't hide behind fixed nav */
-@media(max-width:767px){body{padding-bottom:64px !important;}}
+
 /* ════════════════════════════════════════════════════════════════════════════ */
 
 /* ══ MOBILE NAV v2 — 5 tabs + More tray ══════════════════════════════════════ */
@@ -380,8 +380,40 @@ td{padding:14px 16px;font-size:0.8rem;border-bottom:1px solid rgba(109,40,217,0.
 }
 .btn-tray-signup:hover { background: var(--primary-bright,#7c3aed); }
 /* body padding for fixed bottom nav */
-@media(max-width:767px){ body { padding-bottom: 72px; } }
+
 /* ══════════════════════════════════════════════════════════════════════════════ */
+
+
+/* ── Mobile overrides ── */
+@media (max-width: 767px) {
+  .site-header  { display: none !important; }
+  .nav-links    { display: none !important; }
+  .h-nav        { display: none !important; }
+  body          { padding-top: 0 !important; padding-bottom: 80px; }
+  .page, .page-wrap { padding-top: 16px; }
+}
+
+/* ── Desktop modal — centered dialog ── */
+@media (min-width: 768px) {
+  .modal-overlay {
+    align-items: center;
+    justify-content: center;
+  }
+  .modal {
+    border-radius: 16px;
+    max-width: 560px;
+    max-height: 88vh;
+    width: 90%;
+    transform: translateY(20px);
+    opacity: 0;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+  }
+  .modal-overlay.open .modal {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  .modal-handle { display: none; }
+}
 
 </style>
 </head>
@@ -394,12 +426,6 @@ td{padding:14px 16px;font-size:0.8rem;border-bottom:1px solid rgba(109,40,217,0.
   <a class="bn-item active" href="rada-creator.html"><div class="bn-icon">💡</div><div class="bn-label">Creator</div></a>
   <a class="bn-item" href="rada-leaderboard.html"><div class="bn-icon">⊞</div><div class="bn-label">Leaders</div></a>
   <button class="bn-item" onclick="openMoreTray()"><div class="bn-icon">···</div><div class="bn-label">More</div></button>
-</div><div class="bn-label">Markets</div></a>
-  <a class="bn-item" href="rada-portfolio.html"><div class="bn-icon">◎</div><div class="bn-label">Portfolio</div></a>
-  <a class="bn-item" href="rada-leaderboard.html"><div class="bn-icon">⊞</div><div class="bn-label">Leaders</div></a>
-  <a class="bn-item active" href="rada-creator.html"><div class="bn-icon">💡</div><div class="bn-label">Creator</div></a>
-  <a class="bn-item" href="rada-data.html"><div class="bn-icon">📊</div><div class="bn-label">Data</div></a>
-  <a class="bn-item" href="rada-friends.html"><div class="bn-icon">🤝</div><div class="bn-label">Social</div></a>
 </div>
 
 <header class="site-header">
