@@ -55,19 +55,13 @@ body { background: var(--bg); color: var(--text); font-family: var(--font); min-
 .site-header .h-btn-primary:hover { background: var(--primary-bright); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(109,40,217,0.25); }
 
 /* ── MOBILE TOP NAV ── */
-.mobile-top-nav {
-  display: none; position: fixed; top: 0; left: 0; right: 0;
-  background: rgba(255,255,255,0.98); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-  border-bottom: 1.5px solid var(--border); z-index: 500;
-  justify-content: space-around; align-items: center;
-  padding: 8px 0 6px; box-shadow: 0 2px 14px rgba(109,40,217,0.06);
-}
-.mobile-top-nav .bn-item { display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer; padding: 2px 10px; border-radius: 8px; color: var(--text-dim); text-decoration: none; transition: color 0.15s; min-width: 48px; flex: 1; }
-.mobile-top-nav .bn-item.active { color: var(--primary); }
+
+.mobile-top-nav 
+.mobile-top-nav 
 .mobile-top-nav .bn-icon  { font-size: 1.15rem; line-height: 1.1; }
 .mobile-top-nav .bn-label { font-size: 0.58rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; }
 @media (max-width: 767px) {
-  .mobile-top-nav { display: flex !important; }
+  
   .site-header    { display: none !important; }
   body { padding-top: 58px !important; }
 }
@@ -145,12 +139,105 @@ body { background: var(--bg); color: var(--text); font-family: var(--font); min-
 .cta-block p  { color: rgba(255,255,255,0.75); font-size: 0.92rem; margin-bottom: 24px; line-height: 1.6; }
 .btn-cta { background: #fff; color: var(--primary); border: none; padding: 13px 28px; border-radius: 11px; font-weight: 700; font-size: 0.95rem; cursor: pointer; font-family: var(--font); transition: all 0.18s; }
 .btn-cta:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.15); }
+
+/* ══ MOBILE NAV v2 — 5 tabs + More tray ══════════════════════════════════════ */
+.mobile-top-nav {
+  display: none;
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: rgba(255,255,255,0.97);
+  backdrop-filter: blur(14px);
+  border-top: 1px solid rgba(109,40,217,0.12);
+  z-index: 150;
+  padding: 0 4px env(safe-area-inset-bottom, 0px);
+}
+@media(max-width:767px){ .mobile-top-nav { display: flex; } }
+.bn-item {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 8px 2px 10px; text-decoration: none;
+  color: var(--text-dim); font-size: 0.6rem; font-weight: 600;
+  letter-spacing: 0.02em; text-transform: uppercase;
+  transition: color 0.15s; gap: 3px; cursor: pointer;
+  background: none; border: none; font-family: var(--font);
+}
+.bn-item.active { color: var(--primary); }
+.bn-item:not(.active):hover { color: var(--primary-light); }
+.bn-icon { font-size: 1.15rem; line-height: 1; }
+.bn-label { font-size: 0.58rem; }
+
+/* ── More tray ── */
+.more-tray-overlay {
+  display: none; position: fixed; inset: 0; z-index: 300;
+  background: rgba(0,0,0,0.45); backdrop-filter: blur(4px);
+}
+.more-tray-overlay.open { display: block; }
+.more-tray {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 301;
+  background: #fff; border-radius: 20px 20px 0 0;
+  border-top: 1px solid rgba(109,40,217,0.15);
+  padding: 0 0 env(safe-area-inset-bottom, 16px);
+  transform: translateY(100%);
+  transition: transform 0.3s cubic-bezier(0.34,1.2,0.64,1);
+}
+.more-tray-overlay.open .more-tray { transform: translateY(0); }
+.more-tray-handle {
+  width: 36px; height: 4px; background: rgba(109,40,217,0.2);
+  border-radius: 2px; margin: 12px auto 16px;
+}
+.more-tray-title {
+  font-size: 0.65rem; font-weight: 700; color: var(--text-dim);
+  text-transform: uppercase; letter-spacing: 0.08em;
+  padding: 0 20px 10px;
+}
+.more-tray-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 10px; padding: 0 16px 8px;
+}
+.more-tray-item {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--bg3,#f0edff); border-radius: 12px;
+  padding: 13px 14px; text-decoration: none; color: var(--text,#1a1035);
+  font-size: 0.82rem; font-weight: 600; transition: background 0.15s;
+}
+.more-tray-item:hover { background: var(--bg4,#e5e0ff); }
+.more-tray-item.active { background: rgba(109,40,217,0.12); color: var(--primary,#6d28d9); }
+.more-tray-item-icon { font-size: 1.2rem; flex-shrink: 0; }
+.more-tray-divider {
+  height: 1px; background: rgba(109,40,217,0.08);
+  margin: 8px 16px;
+}
+/* Auth buttons in tray — shown only when logged out */
+.more-tray-auth { padding: 4px 16px 8px; display: flex; flex-direction: column; gap: 8px; }
+.more-tray-auth.hidden { display: none; }
+.btn-tray-login {
+  width: 100%; padding: 13px; border-radius: 12px;
+  border: 1.5px solid rgba(109,40,217,0.3);
+  background: transparent; color: var(--primary,#6d28d9);
+  font-weight: 700; font-size: 0.88rem; cursor: pointer;
+  font-family: var(--font); transition: all 0.15s;
+}
+.btn-tray-login:hover { background: rgba(109,40,217,0.05); }
+.btn-tray-signup {
+  width: 100%; padding: 13px; border-radius: 12px;
+  border: none; background: var(--primary,#6d28d9);
+  color: #fff; font-weight: 700; font-size: 0.88rem;
+  cursor: pointer; font-family: var(--font); transition: all 0.15s;
+}
+.btn-tray-signup:hover { background: var(--primary-bright,#7c3aed); }
+/* ══════════════════════════════════════════════════════════════════════════════ */
+
 </style>
 </head>
 <body>
 
 <div class="mobile-top-nav">
   <a class="bn-item" href="rada-markets.html"><div class="bn-icon">◈</div><div class="bn-label">Markets</div></a>
+  <a class="bn-item" href="rada-portfolio.html"><div class="bn-icon">◎</div><div class="bn-label">Portfolio</div></a>
+  <a class="bn-item" href="rada-friends.html"><div class="bn-icon">🤝</div><div class="bn-label">Social</div></a>
+  <a class="bn-item" href="rada-creator.html"><div class="bn-icon">💡</div><div class="bn-label">Creator</div></a>
+  <a class="bn-item" href="rada-leaderboard.html"><div class="bn-icon">⊞</div><div class="bn-label">Leaders</div></a>
+  <button class="bn-item active" onclick="openMoreTray()"><div class="bn-icon">···</div><div class="bn-label">More</div></button>
+</div><div class="bn-label">Markets</div></a>
   <a class="bn-item" href="rada-portfolio.html"><div class="bn-icon">◎</div><div class="bn-label">Portfolio</div></a>
   <a class="bn-item" href="rada-leaderboard.html"><div class="bn-icon">⊞</div><div class="bn-label">Leaders</div></a>
   <a class="bn-item" href="rada-creator.html"><div class="bn-icon">💡</div><div class="bn-label">Creator</div></a>
@@ -303,5 +390,38 @@ document.querySelectorAll('[data-share]').forEach(btn => {
   });
 });
 </script>
+
+<!-- ── MORE TRAY ──────────────────────────────────────────────── -->
+<div class="more-tray-overlay" id="moreTrayOverlay" onclick="closeMoreTray()">
+  <div class="more-tray" onclick="event.stopPropagation()">
+    <div class="more-tray-handle"></div>
+    <div class="more-tray-title">More</div>
+    <div class="more-tray-grid">
+      <a class="more-tray-item"  href="rada-data.html">
+        <span class="more-tray-item-icon">📊</span>Data Platform
+      </a>
+      <a class="more-tray-item active" href="rada-about.html">
+        <span class="more-tray-item-icon">ℹ️</span>About Rada
+      </a>
+    </div>
+    <div class="more-tray-divider"></div>
+    <!-- Auth row — hidden when logged in -->
+    <div class="more-tray-auth" id="trayAuthRow">
+      <button class="btn-tray-signup" onclick="window.location='rada-auth.html'">Get Started — Sign Up</button>
+      <button class="btn-tray-login"  onclick="window.location='rada-auth.html'">Log In</button>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  // Show/hide auth row based on login state
+  var isLoggedIn = !!localStorage.getItem('rada_user');
+  var authRow = document.getElementById('trayAuthRow');
+  if (authRow) authRow.classList.toggle('hidden', isLoggedIn);
+})();
+function openMoreTray()  { document.getElementById('moreTrayOverlay').classList.add('open'); }
+function closeMoreTray() { document.getElementById('moreTrayOverlay').classList.remove('open'); }
+</script>
+
 </body>
 </html>
