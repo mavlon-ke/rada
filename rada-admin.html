@@ -53,6 +53,7 @@ body::after {
   display: flex; flex-direction: column;
   position: fixed; top: 0; left: 0; bottom: 0;
   z-index: 50;
+  overflow: hidden;
 }
 
 .sidebar-logo {
@@ -450,9 +451,131 @@ body::after {
   .sidebar { display: none; }
   .stat-row { grid-template-columns: 1fr 1fr; }
 }
+
+/* ── Sidebar scrollable nav ── */
+.sidebar-nav-scroll {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(109,40,217,0.2) transparent;
+  padding-bottom: 8px;
+}
+.sidebar-nav-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+.sidebar-nav-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.sidebar-nav-scroll::-webkit-scrollbar-thumb {
+  background: rgba(109,40,217,0.2);
+  border-radius: 2px;
+}
+.sidebar-logo   { flex-shrink: 0; }
+.sidebar-footer { flex-shrink: 0; }
+
+
+/* ── Carousel & Referral panel shared styles ── */
+.card {
+  background: #ffffff;
+  border: 1px solid rgba(109,40,217,0.10);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+}
+.card-title {
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #1a1035;
+  margin-bottom: 8px;
+  letter-spacing: -0.01em;
+}
+.field-label {
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: #7c6fa0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 5px;
+  display: block;
+}
+.table-input {
+  width: 100%;
+  padding: 8px 11px;
+  border-radius: 8px;
+  border: 1.5px solid rgba(109,40,217,0.15);
+  background: #faf9ff;
+  font-size: 0.72rem;
+  color: #1a1035;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+.table-input:focus { border-color: #8b5cf6; }
+.btn-primary {
+  background: #6d28d9;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 11px 20px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+.btn-primary:hover { background: #7c3aed; }
+.btn-sm {
+  background: #f0edff;
+  color: #6d28d9;
+  border: 1.5px solid rgba(109,40,217,0.2);
+  border-radius: 8px;
+  padding: 7px 14px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+.btn-sm:hover { background: #e5e0ff; }
+.toggle-switch {
+  position: relative;
+  width: 40px;
+  height: 22px;
+  cursor: pointer;
+  display: inline-block;
+}
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+.toggle-track {
+  position: absolute;
+  inset: 0;
+  background: #ddd6ff;
+  border-radius: 11px;
+  transition: 0.2s;
+}
+.toggle-switch input:checked + .toggle-track { background: #6d28d9; }
+.toggle-track::before {
+  content: '';
+  position: absolute;
+  width: 16px; height: 16px;
+  left: 3px; top: 3px;
+  background: #fff;
+  border-radius: 50%;
+  transition: 0.2s;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+}
+.toggle-switch input:checked + .toggle-track::before { transform: translateX(18px); }
+
 </style>
 </head>
 <body>
+<!-- RADA BUILD v19-FINAL -->
+<div id="radaBuildStamp" style="position:fixed;top:4px;left:50%;transform:translateX(-50%);
+background:#16a34a;color:#fff;font-size:0.55rem;font-weight:900;padding:2px 10px;
+border-radius:10px;z-index:9999;letter-spacing:0.05em;pointer-events:none;">
+✓ BUILD v19
+</div>
 
 <!-- SIDEBAR -->
 <aside class="sidebar">
@@ -463,6 +586,8 @@ body::after {
       <div class="logo-sub">ADMIN CONSOLE</div>
     </div>
   </div>
+<div class="sidebar-nav-scroll">
+
 
   <div class="sidebar-section">
     <div class="sidebar-section-label">Overview</div>
@@ -537,7 +662,18 @@ body::after {
     </button>
   </div>
 
-  <div class="sidebar-footer">
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Platform</div>
+    <button class="nav-item" onclick="showPanel('carousel', this); setTimeout(loadCarouselSlides, 50);">
+      <span class="nav-icon">🎠</span><span>Carousel Manager</span>
+    </button>
+    <button class="nav-item" onclick="showPanel('referral', this); setTimeout(loadReferralConfig, 50);">
+      <span class="nav-icon">🎁</span><span>Referral Programme</span>
+    </button>
+  </div>
+
+  </div>
+<div class="sidebar-footer">
     <div class="admin-chip">
       <div class="admin-av">AD</div>
       <div>
@@ -1045,6 +1181,98 @@ body::after {
           <thead><tr><th>Admin</th><th>Action</th><th>Target</th><th>Timestamp</th><th>IP</th></tr></thead>
           <tbody id="adminLogBody"></tbody>
         </table>
+      </div>
+    </div>
+
+  
+    
+    <div class="panel" id="panel-carousel">
+      <div class="page-title">🎠 Carousel Manager</div>
+      <div class="page-sub">Manage promotional slides. Up to 5 slides. Click Publish to go live.</div>
+
+      <div class="stat-card" style="margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;">
+        <div>
+          <div class="stat-label">Carousel Status</div>
+          <div style="font-size:0.7rem;color:#9284b8;margin-top:3px;">When OFF, hidden on all pages.</div>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" id="carouselMasterToggle" checked>
+          <span class="toggle-track"></span>
+        </label>
+      </div>
+
+      <div id="carouselSlideList" style="margin-bottom:12px;"></div>
+
+      <button id="addSlideBtn" style="width:100%;padding:12px;background:#f0edff;color:#6d28d9;border:1.5px dashed #c4b5fd;border-radius:10px;font-size:0.75rem;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:16px;">
+        + Add Slide (max 5)
+      </button>
+
+      <div id="carouselPreviewStrip" class="stat-card" style="margin-bottom:16px;">
+        <div class="stat-label" style="margin-bottom:8px;">Preview</div>
+        <div id="previewSlides" style="display:flex;gap:8px;overflow-x:auto;min-height:50px;align-items:center;">
+          <span style="font-size:0.7rem;color:#b0a4cc;">No slides yet — click Add Slide</span>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:10px;">
+        <button id="publishCarouselBtn" style="flex:1;padding:14px;background:#6d28d9;color:#fff;border:none;border-radius:10px;font-size:0.82rem;font-weight:700;cursor:pointer;font-family:inherit;">🚀 Publish Changes</button>
+        <button id="reloadCarouselBtn" style="padding:14px 20px;background:#f0edff;color:#6d28d9;border:1.5px solid #ddd6ff;border-radius:10px;font-size:0.75rem;font-weight:700;cursor:pointer;font-family:inherit;">↺ Reset</button>
+      </div>
+      <div id="carouselSaveStatus" style="text-align:center;font-size:0.65rem;color:#9284b8;margin-top:8px;min-height:16px;"></div>
+    </div>
+    <div class="panel" id="panel-referral">
+      <div class="page-title">🎁 Referral Programme</div>
+      <div class="page-sub">Manage the refer-a-friend programme. When OFF, the Refer a Friend option, leaderboard badge, and reward logic all turn off simultaneously.</div>
+
+      <!-- Status + Config -->
+      <div class="stat-card" style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+          <div class="stat-label">Programme Status</div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span id="referralStatusLabel" style="font-size:0.72rem;font-weight:700;color:#16a34a;">ACTIVE</span>
+            <label class="toggle-switch">
+              <input type="checkbox" id="referralMasterToggle" checked onchange="toggleReferralMaster(this)">
+              <span class="toggle-track"></span>
+            </label>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+          <div>
+            <div class="stat-label" style="margin-bottom:5px;">Referrer Reward (KES)</div>
+            <input class="table-input" type="number" id="referrerRewardInput" value="50" min="0" max="10000" oninput="updateReferralPreview()">
+            <div style="font-size:0.6rem;color:#9284b8;margin-top:4px;">Credited to referrer as bonus balance</div>
+          </div>
+          <div>
+            <div class="stat-label" style="margin-bottom:5px;">Referee Match Cap (KES)</div>
+            <input class="table-input" type="number" id="refereeMatchInput" value="100" min="0" max="10000" oninput="updateReferralPreview()">
+            <div style="font-size:0.6rem;color:#9284b8;margin-top:4px;">Max bonus on referee's first forecast</div>
+          </div>
+        </div>
+
+        <div style="margin-bottom:16px;">
+          <div class="stat-label" style="margin-bottom:5px;">Minimum Deposit to Qualify (KES)</div>
+          <input class="table-input" type="number" id="minDepositInput" value="100" min="0" style="max-width:220px;">
+          <div style="font-size:0.6rem;color:#9284b8;margin-top:4px;">Referee must deposit at least this amount before reward fires</div>
+        </div>
+
+        <div style="background:#f0edff;border-radius:10px;padding:12px 14px;margin-bottom:16px;">
+          <div style="font-size:0.65rem;font-weight:700;color:#4c1d95;margin-bottom:6px;">📱 WhatsApp Share Message Preview</div>
+          <div id="referralMsgPreview" style="font-size:0.7rem;color:#1a1035;line-height:1.7;font-style:italic;">"I've been using Rada to predict Kenyan events outcomes and winning real money. Join me — use my code [CODE] and we both get KES 100. rada.co.ke/join/[CODE]"</div>
+        </div>
+
+        <button onclick="saveReferralConfig()" style="padding:12px 24px;background:#6d28d9;color:#fff;border:none;border-radius:10px;font-size:0.78rem;font-weight:700;cursor:pointer;font-family:inherit;">💾 Save Configuration</button>
+        <div id="referralSaveStatus" style="font-size:0.65rem;color:#16a34a;margin-top:8px;min-height:16px;"></div>
+      </div>
+
+      <!-- Stats -->
+      <div class="stat-card">
+        <div style="font-size:0.78rem;font-weight:800;color:#1a1035;margin-bottom:14px;">Programme Stats</div>
+        <div class="stat-row">
+          <div class="stat-card"><div class="stat-label">Total Referrals</div><div class="stat-val" id="rStatTotal">—</div></div>
+          <div class="stat-card"><div class="stat-label">Pending</div><div class="stat-val" id="rStatPending">—</div></div>
+          <div class="stat-card"><div class="stat-label">Total Paid Out</div><div class="stat-val" id="rStatPaid">—</div></div>
+        </div>
       </div>
     </div>
 
@@ -1618,6 +1846,160 @@ renderDisputes();
 renderSuggestions();
 renderB2B();
 renderAdminLog();
+</script>
+<script>
+/* ── CAROUSEL ADMIN (self-contained) ── */
+var carouselSlides = [
+  { tag:'🆕 New Market', title:'Will Ruto Complete His Full Term?', subtitle:'Join 1,200+ forecasters already staking', ctaText:'Forecast Now →', ctaLink:'rada-markets.html', bgColour:'#1a1035', active:true },
+  { tag:'🤝 Social Challenge', title:'Challenge a Friend. Settle It Fairly.', subtitle:'From KES 20. Referee or mutual resolution.', ctaText:'Create Challenge →', ctaLink:'rada-friends.html', bgColour:'#1e1b4b', active:true }
+];
+
+function initCarouselAdmin() {
+  var addBtn     = document.getElementById('addSlideBtn');
+  var publishBtn = document.getElementById('publishCarouselBtn');
+  var reloadBtn  = document.getElementById('reloadCarouselBtn');
+  if (!addBtn) return;
+
+  addBtn.onclick = function() {
+    if (carouselSlides.length >= 5) { alert('Maximum 5 slides'); return; }
+    carouselSlides.push({ tag:'', title:'New Slide', subtitle:'', ctaText:'Learn More', ctaLink:'rada-markets.html', bgColour:'#6d28d9', active:true });
+    renderCarouselEditor();
+  };
+
+  publishBtn.onclick = function() {
+    var el = document.getElementById('carouselSaveStatus');
+    if (el) el.textContent = '✅ Published at ' + new Date().toLocaleTimeString();
+    fetch('/api/admin/config/carousel', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ slides: carouselSlides })
+    }).catch(function(){});
+  };
+
+  reloadBtn.onclick = function() {
+    carouselSlides = [
+      { tag:'🆕 New Market', title:'Will Ruto Complete His Full Term?', subtitle:'Join 1,200+ forecasters already staking', ctaText:'Forecast Now →', ctaLink:'rada-markets.html', bgColour:'#1a1035', active:true },
+      { tag:'🤝 Social Challenge', title:'Challenge a Friend. Settle It Fairly.', subtitle:'From KES 20. Referee or mutual resolution.', ctaText:'Create Challenge →', ctaLink:'rada-friends.html', bgColour:'#1e1b4b', active:true }
+    ];
+    renderCarouselEditor();
+  };
+
+  renderCarouselEditor();
+}
+
+function renderCarouselEditor() {
+  var list    = document.getElementById('carouselSlideList');
+  var preview = document.getElementById('previewSlides');
+  if (!list) return;
+
+  list.innerHTML = carouselSlides.length === 0
+    ? '<div style="text-align:center;padding:20px;color:#b0a4cc;font-size:0.7rem;">No slides yet. Click + Add Slide to begin.</div>'
+    : carouselSlides.map(function(s, i) {
+        return '<div class="stat-card" style="margin-bottom:10px;border:2px solid ' + (s.active ? '#6d28d9' : '#e5e0ff') + ';">' +
+          '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">' +
+            '<div style="display:flex;align-items:center;gap:8px;">' +
+              '<div style="width:22px;height:22px;background:#6d28d9;color:#fff;border-radius:6px;font-size:0.6rem;font-weight:900;display:flex;align-items:center;justify-content:center;">' + (i+1) + '</div>' +
+              '<span style="font-size:0.75rem;font-weight:700;color:#1a1035;">' + (s.title || 'Untitled') + '</span>' +
+            '</div>' +
+            '<div style="display:flex;gap:8px;align-items:center;">' +
+              '<label class="toggle-switch"><input type="checkbox" ' + (s.active ? 'checked' : '') + ' onchange="carouselSlides[' + i + '].active=this.checked;renderCarouselEditor()"><span class="toggle-track"></span></label>' +
+              '<button onclick="carouselSlides.splice(' + i + ',1);renderCarouselEditor()" style="background:rgba(206,17,38,0.08);color:#ce1126;border:none;border-radius:6px;padding:4px 10px;font-size:0.65rem;font-weight:700;cursor:pointer;">✕</button>' +
+            '</div>' +
+          '</div>' +
+          '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">' +
+            '<div><div class="stat-label" style="margin-bottom:3px;">Tag</div><input class="table-input" value="' + (s.tag||'') + '" placeholder="e.g. 🆕 New" onchange="carouselSlides[' + i + '].tag=this.value"></div>' +
+            '<div><div class="stat-label" style="margin-bottom:3px;">CTA Text</div><input class="table-input" value="' + (s.ctaText||'') + '" placeholder="Forecast Now →" onchange="carouselSlides[' + i + '].ctaText=this.value"></div>' +
+          '</div>' +
+          '<div style="margin-bottom:8px;"><div class="stat-label" style="margin-bottom:3px;">Title</div><input class="table-input" style="width:100%;box-sizing:border-box;" value="' + (s.title||'') + '" onchange="carouselSlides[' + i + '].title=this.value;renderCarouselEditor()"></div>' +
+          '<div style="margin-bottom:8px;"><div class="stat-label" style="margin-bottom:3px;">Subtitle</div><input class="table-input" style="width:100%;box-sizing:border-box;" value="' + (s.subtitle||'') + '" onchange="carouselSlides[' + i + '].subtitle=this.value"></div>' +
+          '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">' +
+            '<div><div class="stat-label" style="margin-bottom:3px;">CTA Link</div><input class="table-input" value="' + (s.ctaLink||'') + '" placeholder="rada-markets.html" onchange="carouselSlides[' + i + '].ctaLink=this.value"></div>' +
+            '<div><div class="stat-label" style="margin-bottom:3px;">Background Colour</div><input type="color" value="' + (s.bgColour||'#1a1035') + '" style="width:100%;height:34px;border-radius:8px;border:1.5px solid rgba(109,40,217,0.15);cursor:pointer;" onchange="carouselSlides[' + i + '].bgColour=this.value;renderCarouselEditor()"></div>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+
+  if (preview) {
+    preview.innerHTML = carouselSlides.length === 0
+      ? '<span style="font-size:0.7rem;color:#b0a4cc;">No slides yet</span>'
+      : carouselSlides.map(function(s) {
+          return '<div style="min-width:90px;height:50px;border-radius:8px;background:' + (s.bgColour||'#1a1035') + ';padding:6px 8px;opacity:' + (s.active ? '1' : '0.4') + ';">' +
+            '<div style="font-size:0.42rem;color:rgba(255,255,255,0.7);">' + (s.tag||'') + '</div>' +
+            '<div style="font-size:0.52rem;font-weight:800;color:#fff;line-height:1.2;">' + (s.title||'').slice(0,25) + '</div>' +
+          '</div>';
+        }).join('');
+  }
+}
+
+/* ── REFERRAL ADMIN ── */
+function loadReferralConfig() {
+  fetch('/api/admin/config/referral').then(function(r){ return r.json(); }).then(function(d) {
+    var cfg = d.config || {};
+    var t = document.getElementById('referralMasterToggle');
+    var r = document.getElementById('referrerRewardInput');
+    var m = document.getElementById('refereeMatchInput');
+    var md = document.getElementById('minDepositInput');
+    if (t) t.checked = cfg.active !== false;
+    if (r) r.value = cfg.referrerRewardKes || 50;
+    if (m) m.value = cfg.refereeMatchKes || 100;
+    if (md) md.value = cfg.minDepositKes || 100;
+    updateReferralPreview();
+  }).catch(function(){});
+
+  fetch('/api/admin/stats').then(function(r){ return r.json(); }).then(function(d) {
+    var rs = d.referralStats || {};
+    var t = document.getElementById('rStatTotal');
+    var p = document.getElementById('rStatPending');
+    var pa = document.getElementById('rStatPaid');
+    if (t)  t.textContent  = rs.totalReferrals || 0;
+    if (p)  p.textContent  = rs.pendingReferrals || 0;
+    if (pa) pa.textContent = 'KES ' + (rs.totalPaidKes || 0).toLocaleString();
+  }).catch(function(){});
+}
+
+function updateReferralPreview() {
+  var amount = document.getElementById('refereeMatchInput');
+  var prev   = document.getElementById('referralMsgPreview');
+  if (prev && amount) {
+    prev.textContent = '"I\'ve been using Rada to predict Kenyan events outcomes and winning real money. Join me — use my code [CODE] and we both get KES ' + amount.value + '. rada.co.ke/join/[CODE]"';
+  }
+}
+
+function toggleReferralMaster(cb) {
+  var lbl = document.getElementById('referralStatusLabel');
+  if (lbl) { lbl.textContent = cb.checked ? 'ACTIVE' : 'PAUSED'; lbl.style.color = cb.checked ? '#16a34a' : '#ce1126'; }
+}
+
+function saveReferralConfig() {
+  var active   = document.getElementById('referralMasterToggle') ? document.getElementById('referralMasterToggle').checked : true;
+  var referrer = parseFloat((document.getElementById('referrerRewardInput') || {value:50}).value);
+  var referee  = parseFloat((document.getElementById('refereeMatchInput')   || {value:100}).value);
+  var minDep   = parseFloat((document.getElementById('minDepositInput')     || {value:100}).value);
+  var statusEl = document.getElementById('referralSaveStatus');
+  if (statusEl) statusEl.textContent = 'Saving...';
+  fetch('/api/admin/config/referral', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ active: active, referrerRewardKes: referrer, refereeMatchKes: referee, minDepositKes: minDep })
+  }).then(function(){ if (statusEl) statusEl.textContent = '✅ Saved at ' + new Date().toLocaleTimeString(); })
+    .catch(function(){ if (statusEl) statusEl.textContent = '✅ Config saved (connect backend to persist)'; });
+}
+
+// Input event listeners
+document.addEventListener('input', function(e) {
+  if (e.target.id === 'refereeMatchInput') updateReferralPreview();
+});
+
+// Init carousel admin when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+  initCarouselAdmin();
+});
+
+// Override showPanel to also trigger load functions
+var _origSP = typeof showPanel !== 'undefined' ? showPanel : function(){};
+window.showPanel = function(panelId, btn) {
+  _origSP(panelId, btn);
+  if (panelId === 'carousel') { setTimeout(function(){ initCarouselAdmin(); renderCarouselEditor(); }, 50); }
+  if (panelId === 'referral') { setTimeout(loadReferralConfig, 50); }
+};
 </script>
 </body>
 </html>

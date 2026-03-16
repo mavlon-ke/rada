@@ -453,23 +453,6 @@ canvas#winRing { width: 90px; height: 90px; }
 }
 .view-all:hover { color: var(--green); }
 
-/* ── BOTTOM NAV ── */
-.bottom-nav {
-  display: none; position: fixed; bottom: 0; left: 0; right: 0;
-  background: rgba(255,255,255,0.97); backdrop-filter: blur(12px);
-  border-top: 1px solid var(--border); padding: 10px 0 20px; z-index: 100;
-  grid-template-columns: repeat(4, 1fr);
-}
-.bnav-item {
-  display: flex; flex-direction: column; align-items: center; gap: 3px;
-  font-size: 0.62rem; color: var(--text-dim); padding: 6px; cursor: pointer; transition: color 0.2s;
-}
-.bnav-item.active { color: var(--green); }
-.bnav-icon { font-size: 1.2rem; }
-
-/* ── RESPONSIVE ── */
-@media (max-width: 1024px) {
-  .overview-grid { grid-template-columns: repeat(2, 1fr); }
   .main-grid { grid-template-columns: 1fr; }
   .bottom-grid { grid-template-columns: 1fr; }
 }
@@ -480,7 +463,7 @@ canvas#winRing { width: 90px; height: 90px; }
   .page { padding: 24px 16px 100px; }
   .overview-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
   .ov-value { font-size: 1.4rem; }
-  .bottom-nav { display: grid; }
+  
   .page-title { font-size: 1.7rem; }
 }
 
@@ -507,20 +490,6 @@ nav a.active { color: #8b5cf6 !important; background: rgba(109,40,217,0.12) !imp
   body { padding-bottom: 72px; }
 }
 
-/* ── BOTTOM NAV (mobile) ─────────────────────────────────────────────────── */
-.bottom-nav {
-  position: fixed; bottom: 0; left: 0; right: 0;
-  background: rgba(255,255,255,0.97); backdrop-filter: blur(12px);
-  border-top: 1px solid rgba(109,40,217,0.12); z-index: 200;
-  display: flex; justify-content: space-around;
-  padding: 10px 0 max(10px, env(safe-area-inset-bottom));
-}
-
-
-
-.bn-icon { font-size: 1.2rem; }
-.bn-label { font-size: 0.6rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
-@media (min-width: 768px) { .bottom-nav { display: none; } }
 
 /* ═══════════════════════════════════════════════════════
    STANDARD HEADER — logo left · nav center · actions right
@@ -600,7 +569,7 @@ nav a.active { color: #8b5cf6 !important; background: rgba(109,40,217,0.12) !imp
 }
 
 
-/* ── More tray ── */
+
 
 
 
@@ -629,8 +598,8 @@ nav a.active { color: #8b5cf6 !important; background: rgba(109,40,217,0.12) !imp
 
 
 
-.bn-icon{font-size:1.15rem;line-height:1;}
-.bn-label{font-size:0.58rem;}
+
+
 /* More tray */
 
 
@@ -661,79 +630,12 @@ nav a.active { color: #8b5cf6 !important; background: rgba(109,40,217,0.12) !imp
   z-index: 150;
   padding: 0 4px env(safe-area-inset-bottom, 0px);
 }
-@media(max-width:767px){ .mobile-top-nav { display: flex; } }
-.bn-item {
-  flex: 1; display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  padding: 8px 2px 10px; text-decoration: none;
-  color: var(--text-dim); font-size: 0.6rem; font-weight: 600;
-  letter-spacing: 0.02em; text-transform: uppercase;
-  transition: color 0.15s; gap: 3px; cursor: pointer;
-  background: none; border: none; font-family: var(--font);
-}
-.bn-item.active { color: var(--primary); }
-.bn-item:not(.active):hover { color: var(--primary-light); }
-.bn-icon { font-size: 1.15rem; line-height: 1; }
-.bn-label { font-size: 0.58rem; }
 
-/* ── More tray ── */
-.more-tray-overlay {
-  display: none; position: fixed; inset: 0; z-index: 300;
-  background: rgba(0,0,0,0.45); backdrop-filter: blur(4px);
-}
-.more-tray-overlay.open { display: block; }
-.more-tray {
-  position: fixed; bottom: 0; left: 0; right: 0; z-index: 301;
-  background: #fff; border-radius: 20px 20px 0 0;
-  border-top: 1px solid rgba(109,40,217,0.15);
-  padding: 0 0 env(safe-area-inset-bottom, 16px);
-  transform: translateY(100%);
-  transition: transform 0.3s cubic-bezier(0.34,1.2,0.64,1);
-}
-.more-tray-overlay.open .more-tray { transform: translateY(0); }
-.more-tray-handle {
-  width: 36px; height: 4px; background: rgba(109,40,217,0.2);
-  border-radius: 2px; margin: 12px auto 16px;
-}
-.more-tray-title {
-  font-size: 0.65rem; font-weight: 700; color: var(--text-dim);
-  text-transform: uppercase; letter-spacing: 0.08em;
-  padding: 0 20px 10px;
-}
-.more-tray-grid {
-  display: grid; grid-template-columns: 1fr 1fr;
-  gap: 10px; padding: 0 16px 8px;
-}
-.more-tray-item {
-  display: flex; align-items: center; gap: 10px;
-  background: var(--bg3,#f0edff); border-radius: 12px;
-  padding: 13px 14px; text-decoration: none; color: var(--text,#1a1035);
-  font-size: 0.82rem; font-weight: 600; transition: background 0.15s;
-}
-.more-tray-item:hover { background: var(--bg4,#e5e0ff); }
-.more-tray-item.active { background: rgba(109,40,217,0.12); color: var(--primary,#6d28d9); }
-.more-tray-item-icon { font-size: 1.2rem; flex-shrink: 0; }
-.more-tray-divider {
-  height: 1px; background: rgba(109,40,217,0.08);
-  margin: 8px 16px;
-}
-.more-tray-auth { padding: 4px 16px 8px; display: flex; flex-direction: column; gap: 8px; }
-.more-tray-auth.hidden { display: none; }
-.btn-tray-login {
-  width: 100%; padding: 13px; border-radius: 12px;
-  border: 1.5px solid rgba(109,40,217,0.3);
-  background: transparent; color: var(--primary,#6d28d9);
-  font-weight: 700; font-size: 0.88rem; cursor: pointer;
-  font-family: var(--font); transition: all 0.15s;
-}
-.btn-tray-login:hover { background: rgba(109,40,217,0.05); }
-.btn-tray-signup {
-  width: 100%; padding: 13px; border-radius: 12px;
-  border: none; background: var(--primary,#6d28d9);
-  color: #fff; font-weight: 700; font-size: 0.88rem;
-  cursor: pointer; font-family: var(--font); transition: all 0.15s;
-}
-.btn-tray-signup:hover { background: var(--primary-bright,#7c3aed); }
+
+
+
+
+
 /* body padding for fixed bottom nav */
 
 /* ══════════════════════════════════════════════════════════════════════════════ */
@@ -770,18 +672,217 @@ nav a.active { color: #8b5cf6 !important; background: rgba(109,40,217,0.12) !imp
   .modal-handle { display: none; }
 }
 
+
+/* RADA MOBILE NAV v3 */
+
+/* ════════════════════════════════════════════════════════════════════
+   RADA MOBILE NAV v3 — Top Bar + Secondary Scroll + Functional Bottom
+   ════════════════════════════════════════════════════════════════════ */
+.m-top-bar {
+  display: none; position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+  background: rgba(255,255,255,0.97); backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(109,40,217,0.12);
+  padding: 9px 14px 8px; align-items: center; gap: 8px;
+  box-shadow: 0 2px 12px rgba(109,40,217,0.06);
+}
+@media(max-width:767px){ .m-top-bar { display: flex; } }
+.m-top-badge { background:#6d28d9;color:#fff;font-size:0.55rem;font-weight:900;padding:3px 7px;border-radius:5px;letter-spacing:0.08em;flex-shrink:0; }
+.m-top-name { font-size:0.88rem;font-weight:800;color:#1a1035;letter-spacing:-0.02em; }
+.m-top-right { margin-left:auto;display:flex;align-items:center;gap:6px; }
+.m-btn-login { padding:5px 12px;border-radius:8px;border:1.5px solid #6d28d9;background:transparent;color:#6d28d9;font-size:0.62rem;font-weight:700;cursor:pointer;font-family:inherit; }
+.m-btn-signup { padding:5px 12px;border-radius:8px;border:none;background:#6d28d9;color:#fff;font-size:0.62rem;font-weight:700;cursor:pointer;font-family:inherit; }
+.m-bal-chip { display:flex;align-items:center;gap:5px;background:#f0edff;border:1px solid #e5e0ff;border-radius:8px;padding:5px 10px;font-size:0.65rem;font-weight:800;color:#6d28d9;cursor:pointer; }
+.m-bal-dot { width:5px;height:5px;border-radius:50%;background:#16a34a;flex-shrink:0; }
+.m-notif-btn { width:30px;height:30px;border-radius:8px;background:#f0edff;border:1px solid #e5e0ff;display:flex;align-items:center;justify-content:center;font-size:0.82rem;cursor:pointer;position:relative;flex-shrink:0; }
+.m-notif-badge { position:absolute;top:-4px;right:-4px;width:14px;height:14px;border-radius:50%;background:#ce1126;color:#fff;font-size:0.42rem;font-weight:900;display:none;align-items:center;justify-content:center;border:1.5px solid #fff; }
+.m-notif-badge.show { display:flex; }
+.m-sec-nav { display:none;position:fixed;top:50px;left:0;right:0;z-index:190;background:#fff;border-bottom:2px solid #e5e0ff;overflow-x:auto;scrollbar-width:none;padding:0 4px; }
+@media(max-width:767px){ .m-sec-nav { display:flex; } }
+.m-sec-nav::-webkit-scrollbar { display:none; }
+.m-sec-item { display:flex;flex-direction:column;align-items:center;padding:7px 13px 5px;gap:2px;font-size:0.56rem;font-weight:700;color:#9284b8;white-space:nowrap;flex-shrink:0;border-bottom:2.5px solid transparent;margin-bottom:-2px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em;text-decoration:none;background:none;border-left:none;border-right:none;border-top:none;font-family:inherit;transition:color 0.15s; }
+.m-sec-item .msi { font-size:0.9rem;line-height:1; }
+.m-sec-item.active { color:#6d28d9;border-bottom-color:#6d28d9; }
+.m-bot-nav { display:none;position:fixed;bottom:0;left:0;right:0;z-index:200;background:rgba(255,255,255,0.97);backdrop-filter:blur(16px);border-top:1.5px solid #e5e0ff;padding:6px 4px env(safe-area-inset-bottom,10px);box-shadow:0 -4px 20px rgba(109,40,217,0.07);align-items:flex-end; }
+@media(max-width:767px){ .m-bot-nav { display:flex; } }
+.m-bot-item { flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;font-size:0.5rem;font-weight:700;color:#9284b8;text-transform:uppercase;letter-spacing:0.03em;position:relative;padding:2px 0;background:none;border:none;font-family:inherit;text-decoration:none;transition:color 0.15s; }
+.m-bot-item.active { color:#6d28d9; }
+.m-bot-item .mbi { font-size:1.05rem;line-height:1; }
+.m-bot-active-bar { position:absolute;top:-6px;left:50%;transform:translateX(-50%);width:22px;height:3px;background:#6d28d9;border-radius:2px; }
+.m-bot-fab { flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;font-size:0.5rem;font-weight:800;color:#6d28d9;text-transform:uppercase;letter-spacing:0.03em;background:none;border:none;font-family:inherit;position:relative; }
+.m-fab-circle { width:46px;height:46px;border-radius:16px;background:#6d28d9;color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.2rem;margin-top:-14px;box-shadow:0 6px 20px rgba(109,40,217,0.45);transition:transform 0.15s; }
+.m-fab-badge { position:absolute;top:-5px;right:calc(50% - 28px);width:16px;height:16px;border-radius:50%;background:#ce1126;color:#fff;font-size:0.48rem;font-weight:900;display:none;align-items:center;justify-content:center;border:2px solid #fff; }
+.m-fab-badge.show { display:flex; }
+@media(max-width:767px){
+  body { padding-top:100px !important; padding-bottom:80px; }
+  .site-header { display:none !important; }
+  .h-nav { display:none !important; }
+  .mobile-top-nav { display:none !important; }
+  
+  .page,.page-wrap { padding-top:8px; }
+}
+/* Notification tray */
+.notif-overlay { display:none;position:fixed;inset:0;z-index:10002;background:rgba(0,0,0,0.4);backdrop-filter:blur(4px); }
+.notif-overlay.open { display:block; }
+.notif-tray { position:fixed;top:0;left:0;right:0;max-width:420px;margin:0 auto;background:#fff;border-radius:0 0 20px 20px;box-shadow:0 8px 40px rgba(109,40,217,0.15);transform:translateY(-100%);transition:transform 0.35s cubic-bezier(0.34,1.2,0.64,1);max-height:80vh;display:flex;flex-direction:column;z-index:401; }
+.notif-overlay.open .notif-tray { transform:translateY(0); }
+.notif-tray-head { display:flex;align-items:center;justify-content:space-between;padding:16px 18px 12px;border-bottom:1px solid #f0edff;flex-shrink:0; }
+.notif-tray-title { font-size:0.82rem;font-weight:800;color:#1a1035; }
+.notif-mark-read { font-size:0.6rem;font-weight:700;color:#6d28d9;background:none;border:none;cursor:pointer;font-family:inherit; }
+.notif-tray-body { flex:1;overflow-y:auto; }
+.notif-item { display:flex;gap:12px;padding:13px 18px;border-bottom:1px solid #f8f6ff;cursor:pointer;transition:background 0.15s; }
+.notif-item.unread { background:#f5f3ff; }
+.notif-icon { width:36px;height:36px;border-radius:10px;background:#f0edff;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0; }
+.notif-content { flex:1;min-width:0; }
+.notif-title-txt { font-size:0.68rem;font-weight:800;color:#1a1035;margin-bottom:2px; }
+.notif-msg-txt { font-size:0.6rem;color:#7c6fa0;line-height:1.4; }
+.notif-time-txt { font-size:0.55rem;color:#b0a4cc;margin-top:3px; }
+.notif-unread-dot { width:7px;height:7px;border-radius:50%;background:#6d28d9;flex-shrink:0;margin-top:6px; }
+.notif-empty { text-align:center;padding:40px 20px;font-size:0.7rem;color:#b0a4cc;font-weight:600; }
+/* Predict sheet */
+.predict-overlay { display:none;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.5);backdrop-filter:blur(4px); }
+.predict-overlay.open { display:flex;align-items:flex-end;justify-content:center; }
+.predict-sheet { background:#fff;width:100%;max-width:560px;border-radius:24px 24px 0 0;padding-bottom:calc(env(safe-area-inset-bottom,0px) + 70px);transform:translateY(100%);transition:transform 0.35s cubic-bezier(0.34,1.2,0.64,1); }
+.predict-overlay.open .predict-sheet { transform:translateY(0); }
+.predict-sheet-handle { width:36px;height:4px;background:rgba(109,40,217,0.2);border-radius:2px;margin:12px auto 0; }
+.predict-sheet-title { font-size:0.78rem;font-weight:800;color:#1a1035;padding:14px 20px;border-bottom:1px solid #f0edff; }
+.predict-option { display:flex;align-items:center;gap:14px;padding:16px 20px;cursor:pointer;border-bottom:1px solid #f8f6ff;transition:background 0.15s; }
+.predict-option:hover { background:#faf9ff; }
+.predict-option:last-child { border-bottom:none;padding-bottom:20px; }
+.predict-opt-icon { width:46px;height:46px;border-radius:14px;background:#f0edff;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0; }
+.predict-opt-title { font-size:0.75rem;font-weight:800;color:#1a1035;margin-bottom:3px; }
+.predict-opt-sub { font-size:0.62rem;color:#9284b8;line-height:1.4; }
+/* Multi sheet */
+.multi-overlay { display:none;position:fixed;inset:0;z-index:10001;background:rgba(0,0,0,0.5);backdrop-filter:blur(4px); }
+.multi-overlay.open { display:flex;align-items:flex-end;justify-content:center; }
+.multi-sheet { background:#fff;width:100%;max-width:560px;border-radius:24px 24px 0 0;max-height:calc(85vh - 70px);display:flex;flex-direction:column;transform:translateY(100%);transition:transform 0.35s cubic-bezier(0.34,1.2,0.64,1);padding-bottom:env(safe-area-inset-bottom,0px); }
+.multi-overlay.open .multi-sheet { transform:translateY(0); }
+.multi-sheet-handle { width:36px;height:4px;background:rgba(109,40,217,0.2);border-radius:2px;margin:12px auto 0;flex-shrink:0; }
+.multi-sheet-head { padding:12px 20px;border-bottom:1px solid #f0edff;flex-shrink:0; }
+.multi-sheet-title { font-size:0.78rem;font-weight:800;color:#1a1035;margin-bottom:2px; }
+.multi-sheet-sub { font-size:0.62rem;color:#9284b8; }
+.multi-sheet-body { flex:1;overflow-y:auto;padding:12px 16px;display:flex;flex-direction:column;gap:8px; }
+.multi-item { background:#f8f6ff;border-radius:12px;padding:11px 12px;border:1.5px solid #e5e0ff; }
+.mi-question { font-size:0.65rem;font-weight:700;color:#1a1035;margin-bottom:8px;line-height:1.35; }
+.mi-controls { display:flex;align-items:center;gap:8px; }
+.mi-side-wrap { display:flex;gap:4px;flex-shrink:0; }
+.mi-side-btn { padding:5px 10px;border-radius:7px;border:1.5px solid #e5e0ff;background:#fff;font-size:0.62rem;font-weight:800;cursor:pointer;font-family:inherit;transition:all 0.15s; }
+.mi-side-btn.yes.selected { background:rgba(22,163,74,0.12);border-color:#16a34a;color:#16a34a; }
+.mi-side-btn.no.selected { background:rgba(206,17,38,0.08);border-color:#ce1126;color:#ce1126; }
+.mi-stake-wrap { display:flex;align-items:center;gap:4px;background:#fff;border:1.5px solid #e5e0ff;border-radius:8px;padding:5px 9px;flex:1; }
+.mi-stake-prefix { font-size:0.58rem;font-weight:700;color:#9284b8;white-space:nowrap; }
+.mi-stake-input { flex:1;background:none;border:none;outline:none;font-size:0.78rem;font-weight:800;color:#6d28d9;font-family:monospace;min-width:0;text-align:right;-moz-appearance:textfield; }
+.mi-stake-input::-webkit-outer-spin-button,.mi-stake-input::-webkit-inner-spin-button { -webkit-appearance:none; }
+.mi-payout { font-size:0.55rem;color:#9284b8;margin-top:5px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px; }
+.mi-remove-btn { background:none;border:none;color:#ce1126;font-size:0.8rem;cursor:pointer;flex-shrink:0;width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center; }
+.multi-sheet-foot { padding:12px 16px 4px;border-top:1px solid #f0edff;flex-shrink:0; }
+.multi-totals { display:flex;flex-direction:column;gap:4px;margin-bottom:10px; }
+.multi-total-row { display:flex;justify-content:space-between;font-size:0.65rem; }
+.mtr-label { color:#9284b8;font-weight:600; }
+.mtr-val { color:#1a1035;font-weight:800; }
+.mtr-val.green { color:#16a34a; }
+.multi-payment-info { background:#f0edff;border-radius:10px;padding:9px 12px;font-size:0.62rem;color:#6d28d9;margin-bottom:10px;line-height:1.5; }
+.btn-submit-multi { width:100%;padding:14px;border-radius:12px;border:none;background:#6d28d9;color:#fff;font-size:0.82rem;font-weight:800;cursor:pointer;font-family:inherit; }
+.btn-submit-multi:disabled { background:#ddd6ff;color:#9284b8;cursor:not-allowed; }
+/* Account sheet */
+.account-overlay { display:none;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.5);backdrop-filter:blur(4px); }
+.account-overlay.open { display:flex;align-items:flex-end;justify-content:center; }
+.account-sheet { background:#fff;width:100%;max-width:560px;border-radius:24px 24px 0 0;transform:translateY(100%);transition:transform 0.35s cubic-bezier(0.34,1.2,0.64,1);padding-bottom:calc(env(safe-area-inset-bottom,8px) + 70px); }
+.account-overlay.open .account-sheet { transform:translateY(0); }
+.acc-sheet-handle { width:36px;height:4px;background:rgba(109,40,217,0.2);border-radius:2px;margin:12px auto 16px; }
+.acc-head { display:flex;align-items:center;gap:12px;padding:0 20px 14px;border-bottom:1px solid #f0edff; }
+.acc-avatar { width:42px;height:42px;border-radius:13px;background:#f0edff;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0; }
+.acc-name-txt { font-size:0.78rem;font-weight:800;color:#1a1035; }
+.acc-bal-txt { font-size:0.65rem;color:#16a34a;font-weight:700; }
+.acc-row { display:flex;align-items:center;gap:14px;padding:14px 20px;border-bottom:1px solid #f8f6ff;cursor:pointer;transition:background 0.15s; }
+.acc-row:hover { background:#faf9ff; }
+.acc-row:last-child { border-bottom:none;padding-bottom:20px; }
+.acc-row-icon { font-size:1.15rem;width:28px;text-align:center; }
+.acc-row-label { font-size:0.72rem;font-weight:700;color:#1a1035; }
+.acc-row-arrow { margin-left:auto;font-size:0.75rem;color:#c4b5fd; }
+.acc-row.danger .acc-row-label { color:#ce1126; }
+/* Carousel */
+.promo-carousel-wrap { position:relative;overflow:hidden;border-bottom:1px solid rgba(109,40,217,0.08);flex-shrink:0; }
+@media(max-width:767px){ .promo-slide { height:110px; } }
+@media(min-width:768px){ .promo-slide { height:160px; } }
+.promo-track { display:flex;transition:transform 0.45s cubic-bezier(0.4,0,0.2,1); }
+.promo-slide { min-width:100%;display:flex;align-items:center;padding:16px 20px;position:relative;overflow:hidden;flex-shrink:0; }
+.promo-slide-bg { position:absolute;inset:0;background-size:cover;background-position:center;filter:brightness(0.5); }
+.promo-slide-overlay { position:absolute;inset:0;background:linear-gradient(90deg,rgba(0,0,0,0.72) 0%,rgba(0,0,0,0.15) 100%); }
+.promo-slide-content { position:relative;z-index:2;flex:1; }
+.promo-slide-tag { font-size:0.54rem;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:5px;display:inline-block;padding:2px 8px;border-radius:4px; }
+.promo-slide-title { font-size:0.86rem;font-weight:900;line-height:1.25;margin-bottom:5px; }
+.promo-slide-sub { font-size:0.6rem;font-weight:600;opacity:0.88;margin-bottom:9px;line-height:1.4; }
+.promo-slide-cta { display:inline-block;padding:7px 16px;border-radius:9px;font-size:0.62rem;font-weight:800;border:none;cursor:pointer;font-family:inherit; }
+.promo-dismiss { position:absolute;top:8px;right:10px;z-index:3;background:rgba(0,0,0,0.3);border:none;color:rgba(255,255,255,0.8);width:22px;height:22px;border-radius:50%;font-size:0.65rem;cursor:pointer;display:flex;align-items:center;justify-content:center; }
+.promo-dots { position:absolute;bottom:6px;left:50%;transform:translateX(-50%);display:flex;gap:5px;z-index:3; }
+.promo-dot { width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.4);cursor:pointer;transition:all 0.2s; }
+.promo-dot.active { background:#fff;width:14px;border-radius:3px; }
+/* Live filter */
+.live-pill { animation:livePulse 2s infinite;background:rgba(206,17,38,0.08) !important;border-color:rgba(206,17,38,0.3) !important;color:#ce1126 !important; }
+@keyframes livePulse { 0%,100%{opacity:1}50%{opacity:0.7} }
+.live-closing-tag { display:none;align-items:center;gap:5px;font-size:0.56rem;font-weight:800;color:#ce1126;margin-bottom:4px; }
+.live-closing-dot { width:6px;height:6px;border-radius:50%;background:#ce1126;animation:livePulse 1.5s infinite;flex-shrink:0; }
+/* Multi add button */
+.card-multi-btn { background:#f0edff;border:1.5px solid #ddd6ff;border-radius:8px;padding:4px 8px;font-size:0.58rem;font-weight:800;color:#6d28d9;cursor:pointer;font-family:inherit;transition:all 0.2s;flex-shrink:0; }
+.card-multi-btn.added { background:#6d28d9;border-color:#6d28d9;color:#fff; }
+/* Bonus balance */
+.bonus-bal-chip { background:rgba(249,227,0,0.15);border:1px solid rgba(249,227,0,0.3);border-radius:6px;padding:2px 7px;font-size:0.58rem;font-weight:700;color:#92400e;margin-left:6px; }
+
+
+/* ── BULLETPROOF BOTTOM NAV ── */
+@media (max-width: 767px) {
+  #mBotNav {
+    display: flex !important;
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 9999 !important;
+    background: rgba(255,255,255,0.97) !important;
+    border-top: 2px solid #e5e0ff !important;
+    padding: 6px 4px 12px !important;
+    align-items: flex-end !important;
+    box-shadow: 0 -4px 20px rgba(109,40,217,0.1) !important;
+  }
+  body { padding-bottom: 80px !important; }
+}
+
+
+.predict-multi-show { display:flex !important; }
 </style>
 </head>
 <body>
-
-<div class="mobile-top-nav">
-  <a class="bn-item" href="rada-markets.html"><div class="bn-icon">◈</div><div class="bn-label">Markets</div></a>
-  <a class="bn-item active" href="rada-portfolio.html"><div class="bn-icon">◎</div><div class="bn-label">Portfolio</div></a>
-  <a class="bn-item" href="rada-friends.html"><div class="bn-icon">🤝</div><div class="bn-label">Social</div></a>
-  <a class="bn-item" href="rada-creator.html"><div class="bn-icon">💡</div><div class="bn-label">Creator</div></a>
-  <a class="bn-item" href="rada-leaderboard.html"><div class="bn-icon">⊞</div><div class="bn-label">Leaders</div></a>
-  <button class="bn-item" onclick="openMoreTray()"><div class="bn-icon">···</div><div class="bn-label">More</div></button>
+<!-- RADA BUILD v19-FINAL -->
+<div id="radaBuildStamp" style="position:fixed;top:4px;left:50%;transform:translateX(-50%);
+background:#16a34a;color:#fff;font-size:0.55rem;font-weight:900;padding:2px 10px;
+border-radius:10px;z-index:9999;letter-spacing:0.05em;pointer-events:none;">
+✓ BUILD v19
 </div>
+
+<!-- M-TOP-BAR -->
+<div class="m-top-bar" id="mTopBar">
+  <div class="m-top-badge">RADA</div>
+  <div class="m-top-name">Rada</div>
+  <div class="m-top-right" id="mTopLoggedOut">
+    <button class="m-btn-login" onclick="window.location.href='rada-auth.html'">Log In</button>
+    <button class="m-btn-signup" onclick="window.location.href='rada-auth.html'">Sign Up</button>
+  </div>
+  <div class="m-top-right" id="mTopLoggedIn" style="display:none;">
+    <div class="m-bal-chip" onclick="openAccountTray()"><div class="m-bal-dot"></div><span id="mTopBal">KES 0</span></div>
+    <div class="m-notif-btn" onclick="openNotifTray()">🔔<div class="m-notif-badge show" id="mNotifBadge">0</div></div>
+  </div>
+</div>
+<!-- M-SEC-NAV -->
+<div class="m-sec-nav" id="mSecNav">
+  <a class="m-sec-item" href="rada-markets.html"><span class="msi">◈</span>Markets</a>
+  <a class="m-sec-item active m-sec-portfolio" href="rada-portfolio.html" style="display:none;"><span class="msi">◎</span>Portfolio</a>
+  <a class="m-sec-item" href="rada-friends.html"><span class="msi">🤝</span>Social</a>
+  <a class="m-sec-item" href="rada-creator.html"><span class="msi">💡</span>Creator</a>
+  <a class="m-sec-item" href="rada-leaderboard.html"><span class="msi">⊞</span>Leaders</a>
+  <a class="m-sec-item" href="rada-data.html"><span class="msi">📊</span>Data</a>
+  <a class="m-sec-item" href="rada-about.html"><span class="msi">ℹ️</span>About</a>
+</div>
+
 
 <header class="site-header">
   <a class="h-logo" href="rada-markets.html">
@@ -806,6 +907,8 @@ nav a.active { color: #8b5cf6 !important; background: rgba(109,40,217,0.12) !imp
     <button class="h-btn h-btn-primary" onclick="openDeposit ? openDeposit() : null">+ Deposit</button>
   </div>
 </header>
+<!-- CAROUSEL -->
+<div id="promoCarouselWrap" class="promo-carousel-wrap"><div class="promo-track" id="promoTrack"></div><div class="promo-dots" id="promoDots"></div></div>
 
 <div class="page">
 
@@ -1258,31 +1361,571 @@ window.addEventListener('resize', () => drawChart(currentPeriod));
 
 
 
-<!-- MORE TRAY -->
-<!-- MORETRAY -->
-<div class="more-tray-overlay" id="moreTrayOverlay" onclick="closeMoreTray()">
-  <div class="more-tray" onclick="event.stopPropagation()">
-    <div class="more-tray-handle"></div>
-    <div class="more-tray-title">More</div>
-    <div class="more-tray-grid">
-      <a class="more-tray-item" href="rada-data.html"><span class="more-tray-item-icon">📊</span>Data Platform</a>
-      <a class="more-tray-item" href="rada-about.html"><span class="more-tray-item-icon">ℹ️</span>About Rada</a>
-    </div>
-    <div class="more-tray-divider"></div>
-    <div class="more-tray-auth" id="trayAuthRow">
-      <button class="btn-tray-signup" onclick="window.location='rada-auth.html'">Get Started — Sign Up</button>
-      <button class="btn-tray-login"  onclick="window.location='rada-auth.html'">Log In</button>
-    </div>
-  </div>
-</div>
+<script>function logOut(){localStorage.removeItem('rada_user');closeAccountTray();window.location.href='rada-auth.html';}</script>
+
+<div class="m-bot-nav" id="mBotNav"><button class="m-bot-item" id="botHomeBtn" onclick="botHomeClick()"><span class="mbi">🏠</span><span>Home</span></button><button class="m-bot-item" id="botSearchBtn" onclick="botSearchClick()"><span class="mbi">🔍</span><span>Search</span></button><button class="m-bot-fab" onclick="openPredictSheet()"><div class="m-fab-circle">✦<div class="m-fab-badge" id="mFabBadge">0</div></div><span>Predict</span></button><button class="m-bot-item" id="botLiveBtn" onclick="botLiveClick()"><span class="mbi">📡</span><span>Live</span></button><button class="m-bot-item" id="botAccountBtn" onclick="openAccountTray()"><span class="mbi">👤</span><span>Account</span></button></div>
+<div class="notif-overlay" id="notifOverlay" onclick="if(event.target===this)closeNotifTray()"><div class="notif-tray"><div class="notif-tray-head"><div class="notif-tray-title">🔔 Notifications</div><button class="notif-mark-read" onclick="markAllRead()">Mark all read</button></div><div class="notif-tray-body" id="notifTrayBody"><div class="notif-empty">Loading...</div></div></div></div>
+<div class="predict-overlay" id="predictOverlay" onclick="if(event.target===this)closePredictSheet()"><div class="predict-sheet"><div class="predict-sheet-handle"></div><div class="predict-sheet-title">What would you like to do?</div><div class="predict-option" onclick="closePredictSheet();window.location.href='rada-markets.html?filter=trending'"><div class="predict-opt-icon">◈</div><div><div class="predict-opt-title">Forecast a Market</div><div class="predict-opt-sub">Pick YES or NO on any open market. Win KES when you're right.</div></div></div><div class="predict-option" onclick="closePredictSheet();window.location.href='rada-friends.html'"><div class="predict-opt-icon">🤝</div><div><div class="predict-opt-title">Create a Social Challenge</div><div class="predict-opt-sub">Challenge a friend privately. Stake KES 20–20,000.</div></div></div><div class="predict-option" id="predictMultiOpt" onclick="openMultiSheet()"><div class="predict-opt-icon">📋</div><div><div class="predict-opt-title">Submit Multi-Forecast</div><div class="predict-opt-sub" id="predictMultiSub">0 markets queued.</div></div></div></div></div>
+<div class="multi-overlay" id="multiOverlay" onclick="if(event.target===this)closeMultiSheet()"><div class="multi-sheet"><div class="multi-sheet-handle"></div><div class="multi-sheet-head"><div class="multi-sheet-title">📋 Multi-Forecast</div><div class="multi-sheet-sub">Each forecast is independent — one wrong call does not affect the rest</div></div><div class="multi-sheet-body" id="multiSheetBody"><div class="multi-empty">No forecasts queued. Tap &quot;+ Multi&quot; on any market card.</div></div><div class="multi-sheet-foot"><div class="multi-totals"><div class="multi-total-row"><span class="mtr-label">Total stake</span><span class="mtr-val" id="multiTotalStake">KES 0</span></div><div class="multi-total-row"><span class="mtr-label">Fees (5% each)</span><span class="mtr-val" id="multiTotalFee">KES 0</span></div></div><div class="multi-payment-info" id="multiPayInfo"></div><button class="btn-submit-multi" id="multiSubmitBtn" disabled onclick="submitMultiForecast()">Submit All via M-Pesa &rarr;</button></div></div></div>
+<div class="account-overlay" id="accountOverlay" onclick="if(event.target===this)closeAccountTray()"><div class="account-sheet"><div class="acc-sheet-handle"></div><div id="accLoggedOut"><div class="acc-head"><div class="acc-avatar">👤</div><div><div class="acc-name-txt">Welcome to Rada</div><div class="acc-bal-txt" style="color:#9284b8">Sign in to start forecasting</div></div></div><div class="acc-row" onclick="closeAccountTray();window.location.href='rada-auth.html'"><span class="acc-row-icon">🔑</span><span class="acc-row-label">Log In</span><span class="acc-row-arrow">&#8250;</span></div><div class="acc-row" onclick="closeAccountTray();window.location.href='rada-auth.html'"><span class="acc-row-icon">✨</span><span class="acc-row-label">Create Account</span><span class="acc-row-arrow">&#8250;</span></div><div class="acc-row" onclick="closeAccountTray();window.location.href='rada-about.html'"><span class="acc-row-icon">ℹ️</span><span class="acc-row-label">About Rada</span><span class="acc-row-arrow">&#8250;</span></div></div><div id="accLoggedIn" style="display:none"><div class="acc-head"><div class="acc-avatar">🧑🏾</div><div><div class="acc-name-txt" id="accUserName">Forecaster</div><div class="acc-bal-txt" id="accUserBal">&#9679; KES 0 available</div></div></div><div class="acc-row" onclick="closeAccountTray();window.location.href='rada-portfolio.html'"><span class="acc-row-icon">◎</span><span class="acc-row-label">My Portfolio</span><span class="acc-row-arrow">&#8250;</span></div><div class="acc-row" onclick="closeAccountTray()"><span class="acc-row-icon">📥</span><span class="acc-row-label">Deposit via M-Pesa</span><span class="acc-row-arrow">&#8250;</span></div><div class="acc-row" onclick="closeAccountTray()"><span class="acc-row-icon">📤</span><span class="acc-row-label">Withdraw</span><span class="acc-row-arrow">&#8250;</span></div><div class="acc-row acc-refer-row" onclick="closeAccountTray();window.location.href='rada-portfolio.html#refer'" style="display:none"><span class="acc-row-icon">🎁</span><span class="acc-row-label">Refer a Friend</span><span class="acc-row-arrow">&#8250;</span></div><div class="acc-row danger" onclick="logOut()"><span class="acc-row-icon">🚪</span><span class="acc-row-label">Log Out</span><span class="acc-row-arrow">&#8250;</span></div></div></div></div><script>function logOut(){localStorage.removeItem("rada_user");closeAccountTray();window.location.href="rada-auth.html";}</script>
+
 <script>
-(function(){
-  var isLoggedIn = !!localStorage.getItem('rada_user');
-  var ar = document.getElementById('trayAuthRow');
-  if (ar) ar.classList.toggle('hidden', isLoggedIn);
+/* ════════════════════════════════════════════════════════════════════
+   RADA SHARED NAV JS v3
+   ════════════════════════════════════════════════════════════════════ */
+
+// ── Auth state ────────────────────────────────────────────────────────────────
+var radaUser = null;
+try { radaUser = JSON.parse(localStorage.getItem('rada_user') || 'null'); } catch(e) {}
+var isLoggedIn = !!radaUser;
+
+// ── Referral config (loaded async) ───────────────────────────────────────────
+var referralActive = true;  // default ON for demo; overridden by backend
+fetch('/api/config/referral').then(r => r.json()).then(d => {
+  referralActive = d.config?.active !== false;  // true unless explicitly false
+  // Update refer row visibility
+  document.querySelectorAll('.acc-refer-row').forEach(el => {
+    el.style.display = 'flex';  // always show when logged in, programme check on backend
+  });
+  // Update desktop nav refer link
+  document.querySelectorAll('.h-nav-refer').forEach(el => {
+    el.style.display = isLoggedIn ? 'inline' : 'none';  // referral check on backend
+  });
+}).catch(() => {});
+
+// ── Top bar init ──────────────────────────────────────────────────────────────
+(function initTopBar() {
+  var loggedOutEl = document.getElementById('mTopLoggedOut');
+  var loggedInEl  = document.getElementById('mTopLoggedIn');
+  if (loggedOutEl) loggedOutEl.style.display = isLoggedIn ? 'none' : 'flex';
+  if (loggedInEl)  loggedInEl.style.display  = isLoggedIn ? 'flex' : 'none';
+
+  if (isLoggedIn && radaUser) {
+    var balEl = document.getElementById('mTopBal');
+    var nameEl = document.getElementById('mTopUserName');
+    if (balEl)  balEl.textContent = 'KES ' + (radaUser.balanceKes || '0').toLocaleString();
+    if (nameEl) nameEl.textContent = radaUser.name || 'Account';
+
+    // Bonus balance badge
+    if (radaUser.bonusBalanceKes && Number(radaUser.bonusBalanceKes) > 0) {
+      document.querySelectorAll('.m-bonus-badge').forEach(el => {
+        el.style.display = 'inline';
+        el.textContent = '+KES ' + Number(radaUser.bonusBalanceKes).toLocaleString() + ' bonus';
+      });
+    }
+  }
+
+  // Notification badge
+  if (isLoggedIn) {
+    fetch('/api/users/me/notifications').then(r => r.json()).then(d => {
+      var count = d.unreadCount || 0;
+      document.querySelectorAll('.m-notif-badge').forEach(el => {
+        el.textContent = count > 9 ? '9+' : count;
+        el.classList.toggle('show', count > 0);
+      });
+    }).catch(() => {});
+  }
+
+  // Portfolio link visibility
+  document.querySelectorAll('.m-sec-portfolio').forEach(el => {
+    el.style.display = isLoggedIn ? 'flex' : 'none';
+  });
+
+  // Desktop refer link
+  document.querySelectorAll('.h-nav-refer').forEach(el => {
+    el.style.display = isLoggedIn ? 'inline' : 'none';  // referral check on backend
+  });
 })();
-function openMoreTray()  { document.getElementById('moreTrayOverlay').classList.add('open'); }
-function closeMoreTray() { document.getElementById('moreTrayOverlay').classList.remove('open'); }
+
+// ── Notification tray ─────────────────────────────────────────────────────────
+function openNotifTray() {
+  if (!isLoggedIn) { window.location.href = 'rada-auth.html'; return; }
+  document.getElementById('notifOverlay').classList.add('open');
+  loadNotifications();
+}
+function closeNotifTray() {
+  document.getElementById('notifOverlay').classList.remove('open');
+}
+function loadNotifications() {
+  var body = document.getElementById('notifTrayBody');
+  if (!body) return;
+  body.innerHTML = '<div class="notif-empty">Loading...</div>';
+  fetch('/api/users/me/notifications').then(r => r.json()).then(d => {
+    var notifs = d.notifications || [];
+    if (!notifs.length) {
+      body.innerHTML = '<div class="notif-empty">🔔 No notifications yet</div>';
+      return;
+    }
+    var icons = {
+      MARKET_RESOLVED:'✅', MARKET_CLOSING_SOON:'⏰', DEPOSIT_CONFIRMED:'💰',
+      WITHDRAWAL_PROCESSED:'📤', REFERRAL_REWARD_CREDITED:'🎁',
+      CHALLENGE_OPPONENT_STAKED:'🤝', CHALLENGE_RESOLUTION_WINDOW:'⚖️',
+      REFEREE_NOMINATED:'⚖️', PROMO:'📢', MARKET_PROBABILITY_SHIFT:'📈'
+    };
+    body.innerHTML = notifs.map(n => `
+      <div class="notif-item ${n.read ? '' : 'unread'}" onclick="tapNotif('${n.id}','${n.link||''}')">
+        <div class="notif-icon">${icons[n.type] || '🔔'}</div>
+        <div class="notif-content">
+          <div class="notif-title-txt">${n.title}</div>
+          <div class="notif-msg-txt">${n.message}</div>
+          <div class="notif-time-txt">${timeAgo(n.createdAt)}</div>
+        </div>
+        ${!n.read ? '<div class="notif-unread-dot"></div>' : ''}
+      </div>`).join('');
+  }).catch(() => {
+    body.innerHTML = '<div class="notif-empty">Could not load notifications</div>';
+  });
+}
+function tapNotif(id, link) {
+  closeNotifTray();
+  if (link) window.location.href = link;
+}
+function markAllRead() {
+  fetch('/api/users/me/notifications/read', { method: 'PATCH' })
+    .then(() => {
+      document.querySelectorAll('.notif-item').forEach(el => el.classList.remove('unread'));
+      document.querySelectorAll('.notif-unread-dot').forEach(el => el.remove());
+      document.querySelectorAll('.m-notif-badge').forEach(el => el.classList.remove('show'));
+    });
+}
+function timeAgo(iso) {
+  var mins = Math.floor((Date.now() - new Date(iso)) / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return mins + 'm ago';
+  var hrs = Math.floor(mins / 60);
+  if (hrs < 24) return hrs + 'h ago';
+  return Math.floor(hrs / 24) + 'd ago';
+}
+
+// ── Predict action sheet ──────────────────────────────────────────────────────
+function openPredictSheet() {
+  if (!isLoggedIn) { window.location.href = 'rada-auth.html'; return; }
+  var count = Object.keys(multiItems || {}).length;
+  var multiOpt = document.getElementById('predictMultiOpt');
+  if (multiOpt) {
+    // Use both approaches to guarantee visibility
+    multiOpt.style.display = count > 0 ? 'flex' : 'none';
+    multiOpt.style.setProperty('display', count > 0 ? 'flex' : 'none', 'important');
+    if (count > 0) { multiOpt.classList.add('predict-multi-show'); }
+    else { multiOpt.classList.remove('predict-multi-show'); }
+    var subEl = document.getElementById('predictMultiSub');
+    if (subEl) subEl.textContent = 'You have ' + count + ' market' + (count !== 1 ? 's' : '') + ' queued. Submit them all at once.';
+  }
+  document.getElementById('predictOverlay').classList.add('open');
+}
+function closePredictSheet() {
+  document.getElementById('predictOverlay').classList.remove('open');
+}
+
+// ── Account tray ──────────────────────────────────────────────────────────────
+function openAccountTray() {
+  document.getElementById('accountOverlay').classList.add('open');
+  var loggedOutAcc = document.getElementById('accLoggedOut');
+  var loggedInAcc  = document.getElementById('accLoggedIn');
+  if (loggedOutAcc) loggedOutAcc.style.display = isLoggedIn ? 'none' : 'block';
+  if (loggedInAcc)  loggedInAcc.style.display  = isLoggedIn ? 'block' : 'none';
+  if (isLoggedIn && radaUser) {
+    var nameEl = document.getElementById('accUserName');
+    var balEl  = document.getElementById('accUserBal');
+    if (nameEl) nameEl.textContent = radaUser.name || 'Forecaster';
+    if (balEl) {
+      var realBal  = Number(radaUser.balanceKes || 0);
+      var bonusBal = Number(radaUser.bonusBalanceKes || 0);
+      balEl.textContent = '● KES ' + realBal.toLocaleString() + ' available';
+      if (bonusBal > 0) {
+        balEl.innerHTML += ' <span style="font-size:0.58rem;color:#92400e;background:rgba(249,227,0,0.15);padding:1px 6px;border-radius:4px;margin-left:4px;">+KES ' + bonusBal.toLocaleString() + ' bonus</span>';
+      }
+    }
+    // Refer row visibility
+    document.querySelectorAll('.acc-refer-row').forEach(el => {
+      el.style.display = referralActive ? 'flex' : 'none';
+    });
+  }
+}
+function closeAccountTray() {
+  document.getElementById('accountOverlay').classList.remove('open');
+}
+
+// ── Multi-forecast ────────────────────────────────────────────────────────────
+var multiItems = {};  // { marketId: { q, yes, side, stake } }
+
+function toggleMultiAdd(marketId, question, yesProb) {
+  if (!isLoggedIn) { window.location.href = 'rada-auth.html'; return; }
+  var btn = document.getElementById('multibtn_' + marketId);
+  if (multiItems[marketId]) {
+    delete multiItems[marketId];
+    if (btn) { btn.textContent = '+ Multi'; btn.classList.remove('added'); }
+    var card = document.getElementById('mcard_' + marketId);
+    if (card) card.style.borderColor = '';
+  } else {
+    multiItems[marketId] = { q: question, yes: yesProb, side: 'YES', stake: 200 };
+    if (btn) { btn.textContent = '✓ Added'; btn.classList.add('added'); }
+    var card = document.getElementById('mcard_' + marketId);
+    if (card) card.style.borderColor = '#6d28d9';
+  }
+  updateFabBadge();
+}
+
+function updateFabBadge() {
+  var count = Object.keys(multiItems).length;
+  document.querySelectorAll('.m-fab-badge').forEach(el => {
+    el.textContent = count;
+    el.classList.toggle('show', count > 0);
+  });
+}
+
+function openMultiSheet() {
+  closePredictSheet();
+  renderMultiSheet();
+  document.getElementById('multiOverlay').classList.add('open');
+}
+function closeMultiSheet() {
+  document.getElementById('multiOverlay').classList.remove('open');
+}
+
+function renderMultiSheet() {
+  var body = document.getElementById('multiSheetBody');
+  if (!body) return;
+  var keys = Object.keys(multiItems);
+  if (!keys.length) {
+    body.innerHTML = '<div class="multi-empty">No forecasts queued.<br>Tap "+ Multi" on any market card.</div>';
+    updateMultiTotals();
+    return;
+  }
+  body.innerHTML = keys.map(id => {
+    var item = multiItems[id];
+    return `<div class="multi-item" id="multiitem_${id}">
+      <div class="mi-question">${item.q}</div>
+      <div class="mi-controls">
+        <div class="mi-side-wrap">
+          <button class="mi-side-btn yes ${item.side==='YES'?'selected':''}"
+            onclick="setMultiSide('${id}','YES',this)">YES</button>
+          <button class="mi-side-btn no ${item.side==='NO'?'selected':''}"
+            onclick="setMultiSide('${id}','NO',this)">NO</button>
+        </div>
+        <div class="mi-stake-wrap">
+          <span class="mi-stake-prefix">KES</span>
+          <input class="mi-stake-input" type="number" min="20" max="20000"
+            value="${item.stake}"
+            onchange="setMultiStake('${id}',this.value)"
+            oninput="setMultiStake('${id}',this.value)">
+        </div>
+        <button class="mi-remove-btn" onclick="removeMultiItem('${id}')">✕</button>
+      </div>
+      <div class="mi-payout" id="mipayout_${id}">
+        <span>Fee (5%): KES ${Math.floor(item.stake * 0.05)}</span>
+        <span>If correct: ~KES ${Math.round(item.stake * (item.side==='YES' ? 100/Math.max(item.yes,1) : 100/Math.max(100-item.yes,1)) * 0.95)}</span>
+      </div>
+    </div>`;
+  }).join('');
+  updateMultiTotals();
+}
+
+function setMultiSide(id, side, btn) {
+  if (!multiItems[id]) return;
+  multiItems[id].side = side;
+  var wrap = btn.closest('.mi-side-wrap');
+  wrap.querySelectorAll('.mi-side-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  updatePayoutRow(id);
+}
+
+function setMultiStake(id, val) {
+  if (!multiItems[id]) return;
+  var n = Math.min(20000, Math.max(20, parseInt(val) || 20));
+  multiItems[id].stake = n;
+  updatePayoutRow(id);
+  updateMultiTotals();
+}
+
+function updatePayoutRow(id) {
+  var item = multiItems[id];
+  if (!item) return;
+  var el = document.getElementById('mipayout_' + id);
+  if (!el) return;
+  var fee = Math.floor(item.stake * 0.05);
+  var prob = item.side === 'YES' ? item.yes : 100 - item.yes;
+  var est = Math.round((item.stake - fee) * (100 / Math.max(prob, 1)));
+  el.innerHTML = '<span>Fee (5%): KES ' + fee + '</span><span>If correct: ~KES ' + est + '</span>';
+}
+
+function removeMultiItem(id) {
+  delete multiItems[id];
+  var btn = document.getElementById('multibtn_' + id);
+  if (btn) { btn.textContent = '+ Multi'; btn.classList.remove('added'); }
+  var card = document.getElementById('mcard_' + id);
+  if (card) card.style.borderColor = '';
+  updateFabBadge();
+  renderMultiSheet();
+}
+
+function updateMultiTotals() {
+  var keys   = Object.keys(multiItems);
+  var total  = keys.reduce((s, id) => s + (multiItems[id].stake || 0), 0);
+  var fees   = keys.reduce((s, id) => s + Math.floor((multiItems[id].stake || 0) * 0.05), 0);
+  var realBal = Number((radaUser && radaUser.balanceKes) || 0);
+  var bonusBal = Number((radaUser && radaUser.bonusBalanceKes) || 0);
+  var totalAvail = realBal + bonusBal;
+
+  var totalEl   = document.getElementById('multiTotalStake');
+  var feeEl     = document.getElementById('multiTotalFee');
+  var payEl     = document.getElementById('multiPayInfo');
+  var submitBtn = document.getElementById('multiSubmitBtn');
+
+  if (totalEl) totalEl.textContent = 'KES ' + total.toLocaleString();
+  if (feeEl)   feeEl.textContent   = 'KES ' + fees.toLocaleString();
+
+  // Payment source logic
+  if (payEl) {
+    if (total === 0) {
+      payEl.textContent = '';
+    } else if (totalAvail >= total) {
+      var bonusUsed = Math.min(bonusBal, total);
+      var realUsed  = total - bonusUsed;
+      if (bonusBal > 0 && bonusUsed > 0) {
+        payEl.innerHTML = (realUsed > 0 ? 'KES ' + realUsed.toLocaleString() + ' from wallet · ' : '') +
+          'KES ' + bonusUsed.toLocaleString() + ' from bonus balance';
+      } else {
+        payEl.innerHTML = 'Paid from Rada wallet · No M-Pesa needed';
+      }
+    } else if (realBal + bonusBal > 0) {
+      var shortfall = total - totalAvail;
+      payEl.innerHTML = 'KES ' + totalAvail.toLocaleString() + ' from wallet · KES ' + shortfall.toLocaleString() + ' via M-Pesa STK Push';
+    } else {
+      payEl.innerHTML = 'KES ' + total.toLocaleString() + ' via M-Pesa STK Push';
+    }
+  }
+
+  if (submitBtn) {
+    var allValid = keys.length > 0 && keys.every(id => {
+      var item = multiItems[id];
+      return item.stake >= 20 && item.side && (item.side === 'YES' || item.side === 'NO');
+    });
+    submitBtn.disabled = !allValid;
+  }
+}
+
+function submitMultiForecast() {
+  var keys = Object.keys(multiItems);
+  if (!keys.length) return;
+  var btn = document.getElementById('multiSubmitBtn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Submitting...'; }
+  // In production: call POST /api/markets/[id]/trade for each item sequentially
+  setTimeout(() => {
+    keys.forEach(id => {
+      delete multiItems[id];
+      var mbtn = document.getElementById('multibtn_' + id);
+      if (mbtn) { mbtn.textContent = '+ Multi'; mbtn.classList.remove('added'); }
+      var card = document.getElementById('mcard_' + id);
+      if (card) card.style.borderColor = '';
+    });
+    updateFabBadge();
+    closeMultiSheet();
+    showToast('✅ ' + keys.length + ' forecasts submitted!');
+  }, 1200);
+}
+
+// ── Promotional carousel ──────────────────────────────────────────────────────
+var promoSlides = [];
+var promoIdx = 0;
+var promoTimer = null;
+var PROMO_DISMISSED_KEY = 'rada_promo_dismissed_v1';
+
+function initCarousel() {
+  // Check if dismissed this session
+  if (sessionStorage.getItem(PROMO_DISMISSED_KEY)) {
+    var wrap = document.getElementById('promoCarouselWrap');
+    if (wrap) wrap.style.display = 'none';
+    return;
+  }
+
+  fetch('/api/config/carousel').then(r => r.json()).then(d => {
+    promoSlides = d.slides || [];
+    if (!promoSlides.length) {
+      var wrap = document.getElementById('promoCarouselWrap');
+      if (wrap) wrap.style.display = 'none';
+      return;
+    }
+    renderCarousel();
+    startCarouselAuto();
+  }).catch(() => {
+    // On error (demo mode), show sample slides
+    promoSlides = [
+      { tag:'🆕 New Market', title:'Will Ruto Complete His Full Term?', subtitle:'Join 1,200+ forecasters already staking', ctaText:'Forecast Now →', ctaLink:'rada-markets.html', bgColour:'#1a1035' },
+      { tag:'🤝 Social Challenge', title:'Challenge a Friend. Settle It Fairly.', subtitle:'From KES 20. Referee or mutual resolution.', ctaText:'Create Challenge →', ctaLink:'rada-friends.html', bgColour:'#1e1b4b' },
+    ];
+    renderCarousel();
+    startCarouselAuto();
+  });
+}
+
+function renderCarousel() {
+  var track = document.getElementById('promoTrack');
+  var dots  = document.getElementById('promoDots');
+  if (!track || !promoSlides.length) return;
+
+  track.innerHTML = promoSlides.map((s, i) => `
+    <div class="promo-slide" style="background:${s.bgColour || '#1a1035'}">
+      ${s.imageUrl ? `<div class="promo-slide-bg" style="background-image:url('${s.imageUrl}')"></div><div class="promo-slide-overlay"></div>` : ''}
+      <div class="promo-slide-content" style="color:#fff;">
+        ${s.tag ? `<div class="promo-slide-tag" style="background:rgba(255,255,255,0.15);color:rgba(255,255,255,0.9)">${s.tag}</div>` : ''}
+        <div class="promo-slide-title">${s.title}</div>
+        ${s.subtitle ? `<div class="promo-slide-sub">${s.subtitle}</div>` : ''}
+        ${s.ctaText ? `<button class="promo-slide-cta" style="background:#6d28d9;color:#fff;" onclick="promoCtaClick('${s.ctaLink || '#'}')">${s.ctaText}</button>` : ''}
+      </div>
+      <button class="promo-dismiss" onclick="dismissPromo()">✕</button>
+    </div>`).join('');
+
+  if (dots) {
+    dots.innerHTML = promoSlides.map((_, i) =>
+      `<div class="promo-dot ${i===0?'active':''}" onclick="goToPromoSlide(${i})"></div>`
+    ).join('');
+  }
+}
+
+function startCarouselAuto() {
+  if (promoSlides.length <= 1) return;
+  promoTimer = setInterval(() => {
+    promoIdx = (promoIdx + 1) % promoSlides.length;
+    updatePromoSlide();
+  }, 4000);
+}
+
+function goToPromoSlide(i) {
+  clearInterval(promoTimer);
+  promoIdx = i;
+  updatePromoSlide();
+  startCarouselAuto();
+}
+
+function updatePromoSlide() {
+  var track = document.getElementById('promoTrack');
+  if (track) track.style.transform = 'translateX(-' + (promoIdx * 100) + '%)';
+  document.querySelectorAll('.promo-dot').forEach((d, i) => d.classList.toggle('active', i === promoIdx));
+}
+
+function dismissPromo() {
+  sessionStorage.setItem(PROMO_DISMISSED_KEY, '1');
+  var wrap = document.getElementById('promoCarouselWrap');
+  if (wrap) { wrap.style.height = wrap.offsetHeight + 'px'; wrap.style.overflow = 'hidden'; wrap.style.transition = 'height 0.3s ease'; setTimeout(() => { wrap.style.height = '0'; }, 10); setTimeout(() => { wrap.style.display = 'none'; }, 320); }
+}
+
+function promoCtaClick(link) {
+  if (link && link !== '#') window.location.href = link;
+}
+
+// ── Live filter ───────────────────────────────────────────────────────────────
+var liveFilterOn = false;
+
+function activateLiveFilter() {
+  liveFilterOn = true;
+  // Update bottom nav
+  document.querySelectorAll('.m-bot-item').forEach(el => {
+    el.classList.remove('active');
+    var bar = el.querySelector('.m-bot-active-bar');
+    if (bar) bar.remove();
+  });
+  var liveBtn = document.getElementById('botLiveBtn');
+  if (liveBtn) {
+    liveBtn.classList.add('active');
+    var bar = document.createElement('div'); bar.className = 'm-bot-active-bar';
+    liveBtn.insertBefore(bar, liveBtn.firstChild);
+  }
+  // Update filter pills
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  // Add/update live pill
+  var filterBar = document.querySelector('.filter-bar');
+  if (filterBar) {
+    var existingLive = filterBar.querySelector('.live-pill-btn');
+    if (!existingLive) {
+      var lp = document.createElement('button');
+      lp.className = 'filter-btn live-pill live-pill-btn active';
+      lp.textContent = '📡 Live · Closing 48h';
+      lp.onclick = function() { activateLiveFilter(); }; // repeat tap = refresh
+      filterBar.insertBefore(lp, filterBar.firstChild);
+    } else {
+      existingLive.classList.add('active');
+    }
+  }
+  // Filter markets if renderMarkets function is available
+  if (typeof MARKETS !== 'undefined' && typeof renderLiveMarkets === 'function') {
+    renderLiveMarkets();
+  } else if (typeof filterCat === 'function') {
+    // Show closing-soon markets
+    filterCat({ classList: { add: function(){}, remove: function(){} }, getAttribute: function(){ return 'LIVE'; } }, 'LIVE');
+  }
+}
+
+function deactivateLiveFilter() {
+  liveFilterOn = false;
+  var liveBtn = document.getElementById('botLiveBtn');
+  if (liveBtn) {
+    liveBtn.classList.remove('active');
+    var bar = liveBtn.querySelector('.m-bot-active-bar');
+    if (bar) bar.remove();
+  }
+  document.querySelectorAll('.live-pill-btn').forEach(el => el.remove());
+}
+
+// ── Bottom nav helpers ────────────────────────────────────────────────────────
+function setBotActive(id) {
+  document.querySelectorAll('.m-bot-item').forEach(el => {
+    el.classList.remove('active');
+    var bar = el.querySelector('.m-bot-active-bar');
+    if (bar) bar.remove();
+  });
+  var el = document.getElementById(id);
+  if (el) {
+    el.classList.add('active');
+    var bar = document.createElement('div'); bar.className = 'm-bot-active-bar';
+    el.insertBefore(bar, el.firstChild);
+  }
+  if (liveFilterOn) deactivateLiveFilter();
+}
+
+function botHomeClick() {
+  setBotActive('botHomeBtn');
+  window.location.href = 'rada-markets.html';
+}
+
+function botSearchClick() {
+  setBotActive('botSearchBtn');
+  var sb = document.querySelector('.search-box, #searchBox, input[placeholder*="Search"]');
+  if (sb) { sb.scrollIntoView({ behavior: 'smooth', block: 'center' }); setTimeout(() => sb.focus(), 300); }
+}
+
+function botLiveClick() {
+  if (liveFilterOn) {
+    // Refresh — keep filter on
+    activateLiveFilter();
+  } else {
+    activateLiveFilter();
+  }
+}
+
+// ── Toast ─────────────────────────────────────────────────────────────────────
+function showToast(msg, duration) {
+  duration = duration || 3000;
+  var t = document.createElement('div');
+  t.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#1a1035;color:#fff;padding:10px 18px;border-radius:20px;font-size:0.72rem;font-weight:700;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,0.3);white-space:nowrap;max-width:90vw;';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), duration);
+}
+
+// ── Init on page load ─────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', function() {
+  initCarousel();
+});
+</script>
+
+<script>
+// Override botLiveClick on non-markets pages — redirect to markets with live filter
+function botLiveClick() {
+  window.location.href = 'rada-markets.html?filter=live';
+}
 </script>
 </body>
 </html>
