@@ -920,13 +920,46 @@ nav {
 
 .predict-multi-show { display:flex !important; }
 </style>
+<!-- Google Analytics GA4 -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-C7QXV6BHCN"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-C7QXV6BHCN');
+</script>
+<!-- Microsoft Clarity -->
+<script type="text/javascript">
+  (function(c,l,a,r,i,t,y){
+    c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+    t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+    y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+  })(window,document,"clarity","script","vws3naz68i");
+</script>
+
+
+<script>
+/* ── Rada GA4 Custom Events ── */
+function trackEvent(name, params) {
+  if (typeof gtag === 'function') {
+    gtag('event', name, params || {});
+  }
+  if (typeof clarity === 'function') {
+    clarity('set', name, JSON.stringify(params || {}));
+  }
+}
+// Track page-level market views on load
+document.addEventListener('DOMContentLoaded', function() {
+  trackEvent('page_view_markets', { page: 'forecast_markets' });
+});
+</script>
 </head>
 <body>
-<!-- RADA BUILD v19-FINAL -->
+<!-- RADA BUILD v20-FINAL -->
 <div id="radaBuildStamp" style="position:fixed;top:4px;left:50%;transform:translateX(-50%);
 background:#16a34a;color:#fff;font-size:0.55rem;font-weight:900;padding:2px 10px;
 border-radius:10px;z-index:9999;letter-spacing:0.05em;pointer-events:none;">
-✓ BUILD v19
+✓ BUILD v20
 </div>
 
 <!-- M-TOP-BAR -->
@@ -1447,14 +1480,14 @@ function submitForecast() {
       setTimeout(() => {
         closeModal();
         btn.disabled = false;
-        btn.textContent = 'Forecast via M-Pesa →';
+        btn.textContent = 'Forecast via M-Pesa →'; trackEvent('forecast_initiated', { side: activeSide, market: activeMarket ? activeMarket.q.slice(0,50) : 'unknown' });
         btn.style.background = '';
       }, 1500);
     }, 1800);
   }, 1200);
 }
 
-function openDeposit() { alert('M-Pesa STK Push deposit flow would open here.'); }
+function openDeposit() { trackEvent('deposit_initiated', {}); alert('M-Pesa STK Push deposit flow would open here.'); }
 
 // ── INIT ─────────────────────────────────────────────────────────────────────
 (function() {
