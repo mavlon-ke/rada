@@ -587,11 +587,11 @@ body::after {
 
 </head>
 <body>
-<!-- RADA BUILD v24-FINAL -->
+<!-- RADA BUILD v26-FINAL -->
 <div id="radaBuildStamp" style="position:fixed;top:4px;left:50%;transform:translateX(-50%);
 background:#16a34a;color:#fff;font-size:0.55rem;font-weight:900;padding:2px 10px;
 border-radius:10px;z-index:9999;letter-spacing:0.05em;pointer-events:none;">
-✓ BUILD v24
+✓ BUILD v26
 </div>
 
 <!-- SIDEBAR -->
@@ -1287,6 +1287,7 @@ border-radius:10px;z-index:9999;letter-spacing:0.05em;pointer-events:none;">
         <div style="display:flex;gap:10px;align-items:center;">
           <input class="table-input" type="tel" id="supportWaInput" placeholder="254712345678" style="flex:1;" value="">
           <button onclick="saveSupportWa()" style="padding:10px 18px;background:#16a34a;color:#fff;border:none;border-radius:8px;font-size:0.72rem;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;">Save Number</button>
+          <button onclick="clearSupportWa()" style="padding:10px 14px;background:rgba(206,17,38,0.08);color:#ce1126;border:1.5px solid rgba(206,17,38,0.2);border-radius:8px;font-size:0.72rem;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;">✕ Clear</button>
         </div>
         <div id="supportWaStatus" style="font-size:0.62rem;color:#16a34a;margin-top:6px;min-height:14px;"></div>
       </div>
@@ -2048,11 +2049,24 @@ function saveSupportWa() {
   }
   localStorage.setItem('rada_support_wa', number);
   if (status) status.textContent = '✅ Saved — wa.me/' + number;
-  // In production: also save to backend config
   fetch('/api/admin/config/support', {
     method: 'POST',
     headers: {'Content-Type':'application/json'},
     body: JSON.stringify({ whatsappNumber: number })
+  }).catch(function(){});
+}
+
+function clearSupportWa() {
+  if (!confirm('Remove the support WhatsApp number? The button will show an unavailable message until a new number is saved.')) return;
+  localStorage.removeItem('rada_support_wa');
+  var input = document.getElementById('supportWaInput');
+  var status = document.getElementById('supportWaStatus');
+  if (input) input.value = '';
+  if (status) status.textContent = '🗑️ Number cleared — WhatsApp button is now inactive';
+  fetch('/api/admin/config/support', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ whatsappNumber: '' })
   }).catch(function(){});
 }
 </script>
