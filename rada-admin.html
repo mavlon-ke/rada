@@ -567,6 +567,81 @@ body::after {
 }
 .toggle-switch input:checked + .toggle-track::before { transform: translateX(18px); }
 
+
+/* ── Mobile Admin Sidebar (slide-in drawer) ── */
+@media (max-width: 640px) {
+  :root { --sidebar-w: 0px; }
+
+  /* Sidebar hidden by default, slides in from left */
+  .sidebar {
+    display: flex !important;
+    transform: translateX(-100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 500;
+    width: 260px !important;
+    box-shadow: 4px 0 24px rgba(0,0,0,0.15);
+  }
+
+  /* Sidebar open state */
+  .sidebar.sidebar-open {
+    transform: translateX(0);
+  }
+
+  /* Dark overlay behind sidebar */
+  .sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 499;
+    backdrop-filter: blur(2px);
+  }
+  .sidebar-overlay.open { display: block; }
+
+  /* Hamburger button — visible on mobile only */
+  .mobile-menu-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px; height: 36px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1.1rem;
+    margin-right: 10px;
+    flex-shrink: 0;
+  }
+
+  /* Main takes full width */
+  .main { margin-left: 0 !important; }
+
+  /* Topbar padding adjustment */
+  .topbar { padding: 0 14px; }
+
+  /* Sidebar nav scrollable */
+  .sidebar-nav-scroll { overflow-y: auto; }
+
+  /* stat-row single column on very small screens */
+  .stat-row { grid-template-columns: 1fr !important; }
+
+  /* Sidebar logo always full on mobile drawer */
+  .logo-text { display: flex !important; }
+  .nav-item span { display: inline !important; }
+  .sidebar-section-label { display: block !important; }
+  .admin-name, .admin-role { display: block !important; }
+  .nav-badge { display: flex !important; }
+  .logo-mark { margin: 0 !important; }
+  .nav-item { justify-content: flex-start !important; }
+  .admin-chip { justify-content: flex-start !important; }
+}
+
+/* Hide hamburger on desktop */
+@media (min-width: 641px) {
+  .mobile-menu-btn { display: none; }
+  .sidebar-overlay { display: none !important; }
+}
+
 </style>
 <!-- Google Analytics GA4 -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-C7QXV6BHCN"></script>
@@ -587,15 +662,17 @@ body::after {
 
 </head>
 <body>
-<!-- RADA BUILD v27-FINAL -->
+<!-- RADA BUILD v28-FINAL -->
 <div id="radaBuildStamp" style="position:fixed;top:4px;left:50%;transform:translateX(-50%);
 background:#16a34a;color:#fff;font-size:0.55rem;font-weight:900;padding:2px 10px;
 border-radius:10px;z-index:9999;letter-spacing:0.05em;pointer-events:none;">
-✓ BUILD v27
+✓ BUILD v28
 </div>
 
 <!-- SIDEBAR -->
-<aside class="sidebar">
+
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+<aside class="sidebar" id="adminSidebar">
   <div class="sidebar-logo">
     <div class="logo-mark">RADA</div>
     <div class="logo-text">
@@ -706,6 +783,7 @@ border-radius:10px;z-index:9999;letter-spacing:0.05em;pointer-events:none;">
   <!-- TOPBAR -->
   <div class="topbar">
     <div class="topbar-left">
+      <button class="mobile-menu-btn" onclick="toggleSidebar()">☰</button>
       <div class="breadcrumb">rada.co.ke / <span id="breadcrumbLabel">dashboard</span></div>
     </div>
     <div class="topbar-right">
@@ -2069,6 +2147,41 @@ function clearSupportWa() {
     body: JSON.stringify({ whatsappNumber: '' })
   }).catch(function(){});
 }
+</script>
+
+<script>
+/* ── Mobile Admin Sidebar Drawer ── */
+function toggleSidebar() {
+  var sidebar  = document.getElementById('adminSidebar');
+  var overlay  = document.getElementById('sidebarOverlay');
+  var isOpen   = sidebar.classList.contains('sidebar-open');
+  if (isOpen) {
+    closeSidebar();
+  } else {
+    sidebar.classList.add('sidebar-open');
+    overlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+}
+
+function closeSidebar() {
+  var sidebar = document.getElementById('adminSidebar');
+  var overlay = document.getElementById('sidebarOverlay');
+  sidebar.classList.remove('sidebar-open');
+  overlay.classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+// Close sidebar when a nav item is tapped on mobile
+document.addEventListener('DOMContentLoaded', function() {
+  if (window.innerWidth <= 640) {
+    document.querySelectorAll('.nav-item').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        setTimeout(closeSidebar, 150);
+      });
+    });
+  }
+});
 </script>
 </body>
 </html>
