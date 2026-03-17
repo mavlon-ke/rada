@@ -587,11 +587,11 @@ body::after {
 
 </head>
 <body>
-<!-- RADA BUILD v21-FINAL -->
+<!-- RADA BUILD v24-FINAL -->
 <div id="radaBuildStamp" style="position:fixed;top:4px;left:50%;transform:translateX(-50%);
 background:#16a34a;color:#fff;font-size:0.55rem;font-weight:900;padding:2px 10px;
 border-radius:10px;z-index:9999;letter-spacing:0.05em;pointer-events:none;">
-✓ BUILD v21
+✓ BUILD v24
 </div>
 
 <!-- SIDEBAR -->
@@ -1279,7 +1279,18 @@ border-radius:10px;z-index:9999;letter-spacing:0.05em;pointer-events:none;">
         </div>
 
         <button onclick="saveReferralConfig()" style="padding:12px 24px;background:#6d28d9;color:#fff;border:none;border-radius:10px;font-size:0.78rem;font-weight:700;cursor:pointer;font-family:inherit;">💾 Save Configuration</button>
-        <div id="referralSaveStatus" style="font-size:0.65rem;color:#16a34a;margin-top:8px;min-height:16px;"></div>
+        
+      <!-- WhatsApp Support Number Config -->
+      <div class="stat-card" style="margin-top:16px;">
+        <div style="font-size:0.78rem;font-weight:800;color:#1a1035;margin-bottom:12px;">📞 Support WhatsApp Number</div>
+        <div style="font-size:0.7rem;color:#9284b8;margin-bottom:10px;">This number appears on the About page as the WhatsApp support button. Include country code, no spaces (e.g. 254712345678).</div>
+        <div style="display:flex;gap:10px;align-items:center;">
+          <input class="table-input" type="tel" id="supportWaInput" placeholder="254712345678" style="flex:1;" value="">
+          <button onclick="saveSupportWa()" style="padding:10px 18px;background:#16a34a;color:#fff;border:none;border-radius:8px;font-size:0.72rem;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;">Save Number</button>
+        </div>
+        <div id="supportWaStatus" style="font-size:0.62rem;color:#16a34a;margin-top:6px;min-height:14px;"></div>
+      </div>
+      <div id="referralSaveStatus" style="font-size:0.65rem;color:#16a34a;margin-top:8px;min-height:16px;"></div>
       </div>
 
       <!-- Stats -->
@@ -2017,6 +2028,33 @@ window.showPanel = function(panelId, btn) {
   if (panelId === 'carousel') { setTimeout(function(){ initCarouselAdmin(); renderCarouselEditor(); }, 50); }
   if (panelId === 'referral') { setTimeout(loadReferralConfig, 50); }
 };
+</script>
+
+<script>
+// Load saved support WA number
+(function() {
+  var input = document.getElementById('supportWaInput');
+  if (input) input.value = localStorage.getItem('rada_support_wa') || '';
+})();
+
+function saveSupportWa() {
+  var input = document.getElementById('supportWaInput');
+  var status = document.getElementById('supportWaStatus');
+  if (!input) return;
+  var number = input.value.replace(/[^0-9]/g,'');
+  if (number.length < 9) {
+    if (status) status.textContent = '❌ Enter a valid number with country code';
+    return;
+  }
+  localStorage.setItem('rada_support_wa', number);
+  if (status) status.textContent = '✅ Saved — wa.me/' + number;
+  // In production: also save to backend config
+  fetch('/api/admin/config/support', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ whatsappNumber: number })
+  }).catch(function(){});
+}
 </script>
 </body>
 </html>

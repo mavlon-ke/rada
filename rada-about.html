@@ -417,6 +417,42 @@ body { background: var(--bg); color: var(--text); font-family: var(--font); min-
 
 
 .predict-multi-show { display:flex !important; }
+
+/* ── WhatsApp Support Button ── */
+.wa-support-wrap {
+  margin-top: 28px;
+  padding: 20px;
+  background: #f0fdf4;
+  border: 1.5px solid #bbf7d0;
+  border-radius: 14px;
+  text-align: center;
+}
+.wa-support-label {
+  font-size: 0.78rem;
+  color: #166534;
+  font-weight: 600;
+  margin-bottom: 12px;
+  line-height: 1.5;
+}
+.btn-wa-support {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #16a34a;
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  padding: 13px 24px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  text-decoration: none;
+  transition: background 0.2s;
+}
+.btn-wa-support:hover { background: #15803d; }
+.btn-wa-support svg { flex-shrink: 0; }
+
 </style>
 <!-- Google Analytics GA4 -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-C7QXV6BHCN"></script>
@@ -437,11 +473,11 @@ body { background: var(--bg); color: var(--text); font-family: var(--font); min-
 
 </head>
 <body>
-<!-- RADA BUILD v21-FINAL -->
+<!-- RADA BUILD v24-FINAL -->
 <div id="radaBuildStamp" style="position:fixed;top:4px;left:50%;transform:translateX(-50%);
 background:#16a34a;color:#fff;font-size:0.55rem;font-weight:900;padding:2px 10px;
 border-radius:10px;z-index:9999;letter-spacing:0.05em;pointer-events:none;">
-✓ BUILD v21
+✓ BUILD v24
 </div>
 
 <!-- M-TOP-BAR -->
@@ -571,7 +607,7 @@ border-radius:10px;z-index:9999;letter-spacing:0.05em;pointer-events:none;">
   <hr class="section-divider">
 
   <!-- FAQ -->
-  <h2 class="section-title">Common questions</h2>
+  <h2 class="section-title" id="common-questions">Common questions</h2>
   <div class="faq-item">
     <div class="faq-q">Is this gambling?</div>
     <div class="faq-a">No. Rada is a forecasting platform, not a gambling site. Our markets are based on real-world events — not sports or games of chance. We are pursuing registration under the Capital Markets Authority's regulatory sandbox as an incentivised data platform.</div>
@@ -593,6 +629,14 @@ border-radius:10px;z-index:9999;letter-spacing:0.05em;pointer-events:none;">
     <div class="faq-a">The Rada admin team resolves markets based on publicly verifiable outcomes from credible Kenyan news sources. For friend challenges, a nominated Referee approves the outcome — with a 48-hour dispute window.</div>
   </div>
 
+  <!-- WhatsApp Support -->
+  <div class="wa-support-wrap" id="wa-support-block">
+    <div class="wa-support-label">Still have a question? Our support team is available via WhatsApp — typically responds within 2 hours.</div>
+    <a href="#" class="btn-wa-support" onclick="openWaSupport(event)">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.553 4.113 1.524 5.842L.057 23.571a.5.5 0 0 0 .608.625l5.939-1.554A11.945 11.945 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.891 0-3.659-.52-5.174-1.427l-.371-.22-3.527.924.939-3.432-.242-.381A9.944 9.944 0 0 1 2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+      WhatsApp Support
+    </a>
+  </div>
   <!-- CTA BOTTOM -->
   <div class="cta-block">
     <h2>Ready to start forecasting?</h2>
@@ -625,7 +669,10 @@ document.querySelectorAll('[data-share]').forEach(btn => {
 <div class="notif-overlay" id="notifOverlay" onclick="if(event.target===this)closeNotifTray()"><div class="notif-tray"><div class="notif-tray-head"><div class="notif-tray-title">🔔 Notifications</div><button class="notif-mark-read" onclick="markAllRead()">Mark all read</button></div><div class="notif-tray-body" id="notifTrayBody"><div class="notif-empty">Loading...</div></div></div></div>
 <div class="predict-overlay" id="predictOverlay" onclick="if(event.target===this)closePredictSheet()"><div class="predict-sheet"><div class="predict-sheet-handle"></div><div class="predict-sheet-title">What would you like to do?</div><div class="predict-option" onclick="closePredictSheet();window.location.href='rada-markets.html?filter=trending'"><div class="predict-opt-icon">◈</div><div><div class="predict-opt-title">Forecast a Market</div><div class="predict-opt-sub">Pick YES or NO on any open market. Win KES when you're right.</div></div></div><div class="predict-option" onclick="closePredictSheet();window.location.href='rada-friends.html'"><div class="predict-opt-icon">🤝</div><div><div class="predict-opt-title">Create a Social Challenge</div><div class="predict-opt-sub">Challenge a friend privately. Stake KES 20–20,000.</div></div></div><div class="predict-option" id="predictMultiOpt" onclick="openMultiSheet()"><div class="predict-opt-icon">📋</div><div><div class="predict-opt-title">Submit Multi-Forecast</div><div class="predict-opt-sub" id="predictMultiSub">0 markets queued.</div></div></div></div></div>
 <div class="multi-overlay" id="multiOverlay" onclick="if(event.target===this)closeMultiSheet()"><div class="multi-sheet"><div class="multi-sheet-handle"></div><div class="multi-sheet-head"><div class="multi-sheet-title">📋 Multi-Forecast</div><div class="multi-sheet-sub">Each forecast is independent — one wrong call does not affect the rest</div></div><div class="multi-sheet-body" id="multiSheetBody"><div class="multi-empty">No forecasts queued. Tap &quot;+ Multi&quot; on any market card.</div></div><div class="multi-sheet-foot"><div class="multi-totals"><div class="multi-total-row"><span class="mtr-label">Total stake</span><span class="mtr-val" id="multiTotalStake">KES 0</span></div><div class="multi-total-row"><span class="mtr-label">Fees (5% each)</span><span class="mtr-val" id="multiTotalFee">KES 0</span></div></div><div class="multi-payment-info" id="multiPayInfo"></div><button class="btn-submit-multi" id="multiSubmitBtn" disabled onclick="submitMultiForecast()">Submit All via M-Pesa &rarr;</button></div></div></div>
-<div class="account-overlay" id="accountOverlay" onclick="if(event.target===this)closeAccountTray()"><div class="account-sheet"><div class="acc-sheet-handle"></div><div id="accLoggedOut"><div class="acc-head"><div class="acc-avatar">👤</div><div><div class="acc-name-txt">Welcome to Rada</div><div class="acc-bal-txt" style="color:#9284b8">Sign in to start forecasting</div></div></div><div class="acc-row" onclick="closeAccountTray();window.location.href='rada-auth.html'"><span class="acc-row-icon">🔑</span><span class="acc-row-label">Log In</span><span class="acc-row-arrow">&#8250;</span></div><div class="acc-row" onclick="closeAccountTray();window.location.href='rada-auth.html'"><span class="acc-row-icon">✨</span><span class="acc-row-label">Create Account</span><span class="acc-row-arrow">&#8250;</span></div><div class="acc-row" onclick="closeAccountTray();window.location.href='rada-about.html'"><span class="acc-row-icon">ℹ️</span><span class="acc-row-label">About Rada</span><span class="acc-row-arrow">&#8250;</span></div></div><div id="accLoggedIn" style="display:none"><div class="acc-head"><div class="acc-avatar">🧑🏾</div><div><div class="acc-name-txt" id="accUserName">Forecaster</div><div class="acc-bal-txt" id="accUserBal">&#9679; KES 0 available</div></div></div><div class="acc-row" onclick="closeAccountTray();window.location.href='rada-portfolio.html'"><span class="acc-row-icon">◎</span><span class="acc-row-label">My Portfolio</span><span class="acc-row-arrow">&#8250;</span></div><div class="acc-row" onclick="closeAccountTray()"><span class="acc-row-icon">📥</span><span class="acc-row-label">Deposit via M-Pesa</span><span class="acc-row-arrow">&#8250;</span></div><div class="acc-row" onclick="closeAccountTray()"><span class="acc-row-icon">📤</span><span class="acc-row-label">Withdraw</span><span class="acc-row-arrow">&#8250;</span></div><div class="acc-row acc-refer-row" onclick="closeAccountTray();window.location.href='rada-portfolio.html#refer'" style="display:none"><span class="acc-row-icon">🎁</span><span class="acc-row-label">Refer a Friend</span><span class="acc-row-arrow">&#8250;</span></div><div class="acc-row danger" onclick="logOut()"><span class="acc-row-icon">🚪</span><span class="acc-row-label">Log Out</span><span class="acc-row-arrow">&#8250;</span></div></div></div></div><script>function logOut(){localStorage.removeItem("rada_user");closeAccountTray();window.location.href="rada-auth.html";}</script>
+<div class="account-overlay" id="accountOverlay" onclick="if(event.target===this)closeAccountTray()"><div class="account-sheet"><div class="acc-sheet-handle"></div><div id="accLoggedOut"><div class="acc-head"><div class="acc-avatar">👤</div><div><div class="acc-name-txt">Welcome to Rada</div><div class="acc-bal-txt" style="color:#9284b8">Sign in to start forecasting</div></div></div><div class="acc-row" onclick="closeAccountTray();window.location.href='rada-auth.html'"><span class="acc-row-icon">🔑</span><span class="acc-row-label">Log In</span><span class="acc-row-arrow">&#8250;</span></div><div class="acc-row" onclick="closeAccountTray();window.location.href='rada-auth.html'"><span class="acc-row-icon">✨</span><span class="acc-row-label">Create Account</span><span class="acc-row-arrow">&#8250;</span></div><div class="acc-row" onclick="closeAccountTray();window.location.href='rada-about.html'"><span class="acc-row-icon">ℹ️</span><span class="acc-row-label">About Rada</span><span class="acc-row-arrow">&#8250;</span></div>
+<div class="acc-row" onclick="closeAccountTray();window.location.href='rada-about.html#common-questions'"><span class="acc-row-icon">🆘</span><span class="acc-row-label">Get Help</span><span class="acc-row-arrow">&#8250;</span></div>
+</div><div id="accLoggedIn" style="display:none"><div class="acc-head"><div class="acc-avatar">🧑🏾</div><div><div class="acc-name-txt" id="accUserName">Forecaster</div><div class="acc-bal-txt" id="accUserBal">&#9679; KES 0 available</div></div></div><div class="acc-row" onclick="closeAccountTray();window.location.href='rada-portfolio.html'"><span class="acc-row-icon">◎</span><span class="acc-row-label">My Portfolio</span><span class="acc-row-arrow">&#8250;</span></div><div class="acc-row" onclick="closeAccountTray()"><span class="acc-row-icon">📥</span><span class="acc-row-label">Deposit via M-Pesa</span><span class="acc-row-arrow">&#8250;</span></div><div class="acc-row" onclick="closeAccountTray()"><span class="acc-row-icon">📤</span><span class="acc-row-label">Withdraw</span><span class="acc-row-arrow">&#8250;</span></div><div class="acc-row acc-refer-row" onclick="closeAccountTray();window.location.href='rada-portfolio.html#refer'" style="display:none"><span class="acc-row-icon">🎁</span><span class="acc-row-label">Refer a Friend</span><span class="acc-row-arrow">&#8250;</span></div><div class="acc-row" onclick="closeAccountTray();window.location.href='rada-about.html#common-questions'"><span class="acc-row-icon">🆘</span><span class="acc-row-label">Get Help</span><span class="acc-row-arrow">&#8250;</span></div>
+<div class="acc-row danger" onclick="logOut()"><span class="acc-row-icon">🚪</span><span class="acc-row-label">Log Out</span><span class="acc-row-arrow">&#8250;</span></div></div></div></div><script>function logOut(){localStorage.removeItem("rada_user");closeAccountTray();window.location.href="rada-auth.html";}</script>
 
 <script>
 /* ════════════════════════════════════════════════════════════════════
@@ -1036,7 +1083,16 @@ function renderCarousel() {
 
   if (dots) {
     dots.innerHTML = promoSlides.map((_, i) =>
-      `<div class="promo-dot ${i===0?'active':''}" onclick="goToPromoSlide(${i})"></div>`
+      `<div class="promo-dot ${i===0?'active':''}" onclick="goToPromoSlide(${i})"></div>
+<a id="waSupportBtn" href="#" class="btn-wa-support" onclick="openWaSupport(event)">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+        <path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.553 4.113 1.524 5.842L.057 23.571a.5.5 0 0 0 .608.625l5.939-1.554A11.945 11.945 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.891 0-3.659-.52-5.174-1.427l-.371-.22-3.527.924.939-3.432-.242-.381A9.944 9.944 0 0 1 2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/>
+      </svg>
+      WhatsApp Support
+    </a>
+  </div>
+`
     ).join('');
   }
 }
@@ -1183,5 +1239,37 @@ function botLiveClick() {
   window.location.href = 'rada-markets.html?filter=live';
 }
 </script>
+
+<script>
+function openWaSupport(e) {
+  e.preventDefault();
+  // Get support number from admin config stored in localStorage
+  var supportNumber = localStorage.getItem('rada_support_wa') || '';
+  if (!supportNumber) {
+    alert('Unfortunately, support contact is currently not available. Please try again later.');
+    return;
+  }
+  // Pre-fill message with user info if logged in
+  var user = null;
+  try { user = JSON.parse(localStorage.getItem('rada_user') || 'null'); } catch(ex) {}
+  var msg = 'Hi Rada Support, I need help with my account.';
+  if (user) {
+    msg += ' Name: ' + (user.name || 'Unknown') + '. Phone: ' + (user.phone || 'Unknown') + '.';
+  }
+  var url = 'https://wa.me/' + supportNumber.replace(/[^0-9]/g,'') + '?text=' + encodeURIComponent(msg);
+  window.open(url, '_blank');
+}
+
+// Scroll to common-questions if anchor in URL
+document.addEventListener('DOMContentLoaded', function() {
+  if (window.location.hash === '#common-questions') {
+    setTimeout(function() {
+      var el = document.getElementById('common-questions');
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 300);
+  }
+});
+</script>
+
 </body>
 </html>
