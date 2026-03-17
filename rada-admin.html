@@ -587,11 +587,11 @@ body::after {
 
 </head>
 <body>
-<!-- RADA BUILD v26-FINAL -->
+<!-- RADA BUILD v27-FINAL -->
 <div id="radaBuildStamp" style="position:fixed;top:4px;left:50%;transform:translateX(-50%);
 background:#16a34a;color:#fff;font-size:0.55rem;font-weight:900;padding:2px 10px;
 border-radius:10px;z-index:9999;letter-spacing:0.05em;pointer-events:none;">
-✓ BUILD v26
+✓ BUILD v27
 </div>
 
 <!-- SIDEBAR -->
@@ -1283,7 +1283,7 @@ border-radius:10px;z-index:9999;letter-spacing:0.05em;pointer-events:none;">
       <!-- WhatsApp Support Number Config -->
       <div class="stat-card" style="margin-top:16px;">
         <div style="font-size:0.78rem;font-weight:800;color:#1a1035;margin-bottom:12px;">📞 Support WhatsApp Number</div>
-        <div style="font-size:0.7rem;color:#9284b8;margin-bottom:10px;">This number appears on the About page as the WhatsApp support button. Include country code, no spaces (e.g. 254712345678).</div>
+        <div style="font-size:0.7rem;color:#9284b8;margin-bottom:10px;">This number powers the WhatsApp support button on the About page. Enter it below and also update <strong>rada-config.json</strong> in your GitHub repo with the same number — this ensures it works on all devices without login.</div>
         <div style="display:flex;gap:10px;align-items:center;">
           <input class="table-input" type="tel" id="supportWaInput" placeholder="254712345678" style="flex:1;" value="">
           <button onclick="saveSupportWa()" style="padding:10px 18px;background:#16a34a;color:#fff;border:none;border-radius:8px;font-size:0.72rem;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;">Save Number</button>
@@ -2048,7 +2048,7 @@ function saveSupportWa() {
     return;
   }
   localStorage.setItem('rada_support_wa', number);
-  if (status) status.textContent = '✅ Saved — wa.me/' + number;
+  if (status) status.innerHTML = '✅ Saved locally. <strong>Also update rada-config.json in GitHub</strong>: set "supportWhatsApp": "' + number + '" for all-device support.';
   fetch('/api/admin/config/support', {
     method: 'POST',
     headers: {'Content-Type':'application/json'},

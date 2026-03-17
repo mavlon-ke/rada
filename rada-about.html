@@ -473,11 +473,11 @@ body { background: var(--bg); color: var(--text); font-family: var(--font); min-
 
 </head>
 <body>
-<!-- RADA BUILD v26-FINAL -->
+<!-- RADA BUILD v27-FINAL -->
 <div id="radaBuildStamp" style="position:fixed;top:4px;left:50%;transform:translateX(-50%);
 background:#16a34a;color:#fff;font-size:0.55rem;font-weight:900;padding:2px 10px;
 border-radius:10px;z-index:9999;letter-spacing:0.05em;pointer-events:none;">
-✓ BUILD v26
+✓ BUILD v27
 </div>
 
 <!-- M-TOP-BAR -->
@@ -1233,18 +1233,32 @@ function botLiveClick() {
 </script>
 
 <script>
-// ── Set default support number here before go-live ──────────────────────────
-window.RADA_SUPPORT_WA = ''; // e.g. '254712345678' — set by admin
+// ── Support number loaded from rada-config.json (works on all devices) ──────
+window.RADA_SUPPORT_WA = '';
+
+// Fetch config on page load — runs once, cached by browser
+(function loadSupportConfig() {
+  fetch('./rada-config.json?_=' + Date.now())
+    .then(function(r) { return r.json(); })
+    .then(function(cfg) {
+      if (cfg && cfg.supportWhatsApp) {
+        window.RADA_SUPPORT_WA = cfg.supportWhatsApp;
+      }
+    })
+    .catch(function() {});
+})();
 
 function openWaSupport(e) {
   e.preventDefault();
-  // Try localStorage first (set by admin panel), then fall back to default
-  var supportNumber = localStorage.getItem('rada_support_wa') || window.RADA_SUPPORT_WA || '';
+  // Priority: 1) config file (works everywhere) 2) admin localStorage fallback
+  var supportNumber = window.RADA_SUPPORT_WA
+    || localStorage.getItem('rada_support_wa')
+    || '';
+
   if (!supportNumber) {
     alert('Unfortunately, support contact is currently not available. Please try again later.');
     return;
   }
-  // Pre-fill message with user info if logged in
   var user = null;
   try { user = JSON.parse(localStorage.getItem('rada_user') || 'null'); } catch(ex) {}
   var msg = 'Hi Rada Support, I need help with my account.';
