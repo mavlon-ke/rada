@@ -1,6 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script>
+/* ── Admin Session Guard — runs immediately ── */
+(function() {
+  var session = null;
+  try { session = JSON.parse(sessionStorage.getItem('rada_admin_session') || 'null'); } catch(e) {}
+  if (!session || !session.isAdmin || session.expires <= Date.now()) {
+    window.location.replace('rada-admin-login.html');
+  }
+})();
+</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Rada Admin · Mission Control</title>
@@ -662,11 +672,11 @@ body::after {
 
 </head>
 <body>
-<!-- RADA BUILD v28-FINAL -->
+<!-- RADA BUILD v40-FINAL -->
 <div id="radaBuildStamp" style="position:fixed;top:4px;left:50%;transform:translateX(-50%);
 background:#16a34a;color:#fff;font-size:0.55rem;font-weight:900;padding:2px 10px;
 border-radius:10px;z-index:9999;letter-spacing:0.05em;pointer-events:none;">
-✓ BUILD v28
+✓ BUILD v40
 </div>
 
 <!-- SIDEBAR -->
@@ -770,11 +780,14 @@ border-radius:10px;z-index:9999;letter-spacing:0.05em;pointer-events:none;">
 <div class="sidebar-footer">
     <div class="admin-chip">
       <div class="admin-av">AD</div>
-      <div>
-        <div class="admin-name">Admin</div>
-        <div class="admin-role">SUPER_ADMIN</div>
+      <div style="flex:1;min-width:0;">
+        <div class="admin-name" id="adminNameDisplay">Admin</div>
+        <div class="admin-role" id="adminRoleDisplay">SUPER_ADMIN</div>
       </div>
     </div>
+    <button onclick="adminLogOut()" style="width:100%;margin-top:8px;padding:8px;background:rgba(206,17,38,0.08);color:#ce1126;border:1px solid rgba(206,17,38,0.2);border-radius:8px;font-size:0.65rem;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:5px;">
+      🚪 Sign Out
+    </button>
   </div>
 </aside>
 
@@ -2182,6 +2195,26 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 });
+</script>
+
+<script>
+/* ── Populate admin identity from session ── */
+document.addEventListener('DOMContentLoaded', function() {
+  var session = null;
+  try { session = JSON.parse(sessionStorage.getItem('rada_admin_session') || 'null'); } catch(e) {}
+  if (!session) return;
+
+  var nameEl = document.getElementById('adminNameDisplay');
+  var roleEl = document.getElementById('adminRoleDisplay');
+  if (nameEl) nameEl.textContent = session.name || 'Admin';
+  if (roleEl) roleEl.textContent = session.role || 'ADMIN';
+});
+
+function adminLogOut() {
+  if (!confirm('Sign out of the admin console?')) return;
+  sessionStorage.removeItem('rada_admin_session');
+  window.location.href = 'rada-admin-login.html';
+}
 </script>
 </body>
 </html>

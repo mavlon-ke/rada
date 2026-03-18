@@ -709,9 +709,9 @@ nav{padding:14px 24px;display:flex;align-items:center;justify-content:space-betw
 .m-top-bar {
   display: none; position: fixed; top: 0; left: 0; right: 0; z-index: 200;
   background: rgba(255,255,255,0.97); backdrop-filter: blur(16px);
-  border-bottom: 1px solid rgba(109,40,217,0.12);
+  border-bottom: none;
   padding: 9px 14px 8px; align-items: center; gap: 8px;
-  box-shadow: 0 2px 12px rgba(109,40,217,0.06);
+  box-shadow: none;
 }
 @media(max-width:767px){ .m-top-bar { display: flex; } }
 .m-top-badge { background:#6d28d9;color:#fff;font-size:0.55rem;font-weight:900;padding:3px 7px;border-radius:5px;letter-spacing:0.08em;flex-shrink:0; }
@@ -724,10 +724,10 @@ nav{padding:14px 24px;display:flex;align-items:center;justify-content:space-betw
 .m-notif-btn { width:30px;height:30px;border-radius:8px;background:#f0edff;border:1px solid #e5e0ff;display:flex;align-items:center;justify-content:center;font-size:0.82rem;cursor:pointer;position:relative;flex-shrink:0; }
 .m-notif-badge { position:absolute;top:-4px;right:-4px;width:14px;height:14px;border-radius:50%;background:#ce1126;color:#fff;font-size:0.42rem;font-weight:900;display:none;align-items:center;justify-content:center;border:1.5px solid #fff; }
 .m-notif-badge.show { display:flex; }
-.m-sec-nav { display:none;position:fixed;top:50px;left:0;right:0;z-index:190;background:#fff;border-bottom:2px solid #e5e0ff;overflow-x:auto;scrollbar-width:none;padding:0 4px; }
+.m-sec-nav { display:none;position:fixed;top:50px;left:0;right:0;z-index:190;background:#fff;border-bottom:2px solid #e5e0ff;overflow-x:auto;scrollbar-width:none;padding:0; justify-content:center; }
 @media(max-width:767px){ .m-sec-nav { display:flex; } }
 .m-sec-nav::-webkit-scrollbar { display:none; }
-.m-sec-item { display:flex;flex-direction:column;align-items:center;padding:7px 13px 5px;gap:2px;font-size:0.56rem;font-weight:700;color:#9284b8;white-space:nowrap;flex-shrink:0;border-bottom:2.5px solid transparent;margin-bottom:-2px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em;text-decoration:none;background:none;border-left:none;border-right:none;border-top:none;font-family:inherit;transition:color 0.15s; }
+.m-sec-item { display:flex;flex-direction:column;align-items:center;padding:7px 8px 5px;gap:2px;font-size:0.56rem;font-weight:700;color:#9284b8;white-space:nowrap;flex:1;min-width:0;border-bottom:2.5px solid transparent;margin-bottom:-2px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em;text-decoration:none;background:none;border-left:none;border-right:none;border-top:none;font-family:inherit;transition:color 0.15s;justify-content:center; }
 .m-sec-item .msi { font-size:0.9rem;line-height:1; }
 .m-sec-item.active { color:#6d28d9;border-bottom-color:#6d28d9; }
 .m-bot-nav { display:none;position:fixed;bottom:0;left:0;right:0;z-index:200;background:rgba(255,255,255,0.97);backdrop-filter:blur(16px);border-top:1.5px solid #e5e0ff;padding:6px 4px env(safe-area-inset-bottom,10px);box-shadow:0 -4px 20px rgba(109,40,217,0.07);align-items:flex-end; }
@@ -879,6 +879,94 @@ nav{padding:14px 24px;display:flex;align-items:center;justify-content:space-betw
 
 
 .predict-multi-show { display:flex !important; }
+
+/* ── Refer a Friend Overlay ── */
+.refer-overlay {
+  display:none; position:fixed; inset:0; z-index:10000;
+  background:rgba(0,0,0,0.5); backdrop-filter:blur(4px);
+}
+.refer-overlay.open { display:flex; align-items:flex-end; justify-content:center; }
+.refer-sheet {
+  background:#fff; width:100%; max-width:560px;
+  border-radius:24px 24px 0 0;
+  padding-bottom:calc(env(safe-area-inset-bottom,0px) + 70px);
+  transform:translateY(100%);
+  transition:transform 0.35s cubic-bezier(0.34,1.2,0.64,1);
+  max-height:90vh; overflow-y:auto;
+}
+.refer-overlay.open .refer-sheet { transform:translateY(0); }
+.refer-sheet-handle { width:36px;height:4px;background:rgba(109,40,217,0.2);border-radius:2px;margin:12px auto 0; }
+.refer-sheet-head {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:14px 20px 12px; border-bottom:1px solid #f0edff;
+}
+.refer-sheet-title { font-size:0.88rem; font-weight:800; color:#1a1035; }
+.refer-close-btn {
+  width:28px;height:28px;border-radius:50%;background:#f0edff;
+  border:none;cursor:pointer;font-size:0.8rem;color:#6d28d9;
+  display:flex;align-items:center;justify-content:center;
+}
+.refer-body { padding:18px 20px; }
+
+/* Code section */
+.refer-code-wrap {
+  background:linear-gradient(135deg,#6d28d9 0%,#7c3aed 100%);
+  border-radius:16px; padding:20px; margin-bottom:16px; text-align:center;
+}
+.refer-code-label { font-size:0.6rem;font-weight:700;color:rgba(255,255,255,0.7);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:8px; }
+.refer-code-value {
+  font-size:1.8rem; font-weight:900; color:#fff;
+  letter-spacing:0.15em; font-family:monospace; margin-bottom:12px;
+}
+.refer-code-btns { display:flex; gap:8px; justify-content:center; }
+.btn-copy-code {
+  display:flex;align-items:center;gap:6px;
+  background:rgba(255,255,255,0.2);color:#fff;
+  border:1.5px solid rgba(255,255,255,0.35);
+  border-radius:10px;padding:9px 18px;
+  font-size:0.72rem;font-weight:700;cursor:pointer;font-family:inherit;
+  transition:background 0.15s;
+}
+.btn-copy-code:hover { background:rgba(255,255,255,0.3); }
+.btn-wa-refer {
+  display:flex;align-items:center;gap:6px;
+  background:#16a34a;color:#fff;border:none;
+  border-radius:10px;padding:9px 18px;
+  font-size:0.72rem;font-weight:700;cursor:pointer;font-family:inherit;
+  transition:background 0.15s;
+}
+.btn-wa-refer:hover { background:#15803d; }
+
+/* How it works */
+.refer-how { margin-bottom:16px; }
+.refer-how-title { font-size:0.65rem;font-weight:700;color:#9284b8;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px; }
+.refer-steps { display:flex; gap:8px; }
+.refer-step {
+  flex:1;background:#f8f6ff;border-radius:12px;padding:12px 8px;
+  text-align:center;
+}
+.refer-step-icon { font-size:1.2rem;margin-bottom:5px; }
+.refer-step-text { font-size:0.58rem;font-weight:700;color:#1a1035;line-height:1.4; }
+
+/* Stats */
+.refer-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:14px; }
+.refer-stat {
+  background:#f0edff;border-radius:12px;padding:12px 8px;text-align:center;
+}
+.refer-stat-val { font-size:1.1rem;font-weight:900;color:#6d28d9;margin-bottom:2px; }
+.refer-stat-lbl { font-size:0.55rem;font-weight:700;color:#9284b8;text-transform:uppercase;letter-spacing:0.05em; }
+
+/* Footer note */
+.refer-note { font-size:0.58rem;color:#b0a4cc;text-align:center;line-height:1.6; }
+
+
+/* ── Mobile: hide ticker, keep nav stack clean ── */
+@media (max-width: 767px) {
+  .ticker-wrap { display: none !important; }
+  .m-sec-nav { top: 50px !important; }
+  body { padding-top: 100px !important; }
+}
+
 </style>
 <!-- Google Analytics GA4 -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-C7QXV6BHCN"></script>
@@ -899,11 +987,11 @@ nav{padding:14px 24px;display:flex;align-items:center;justify-content:space-betw
 
 </head>
 <body>
-<!-- RADA BUILD v27-FINAL -->
+<!-- RADA BUILD v40-FINAL -->
 <div id="radaBuildStamp" style="position:fixed;top:4px;left:50%;transform:translateX(-50%);
 background:#16a34a;color:#fff;font-size:0.55rem;font-weight:900;padding:2px 10px;
 border-radius:10px;z-index:9999;letter-spacing:0.05em;pointer-events:none;">
-✓ BUILD v27
+✓ BUILD v40
 </div>
 
 <!-- M-TOP-BAR -->
@@ -927,7 +1015,6 @@ border-radius:10px;z-index:9999;letter-spacing:0.05em;pointer-events:none;">
   <a class="m-sec-item" href="rada-creator.html"><span class="msi">💡</span>Creator</a>
   <a class="m-sec-item" href="rada-leaderboard.html"><span class="msi">⊞</span>Leaders</a>
   <a class="m-sec-item" href="rada-data.html"><span class="msi">📊</span>Data</a>
-  <a class="m-sec-item" href="rada-about.html"><span class="msi">ℹ️</span>About</a>
 </div>
 
 
@@ -1852,7 +1939,7 @@ function requestAdminIntervention(id, btn) {
 <div class="multi-overlay" id="multiOverlay" onclick="if(event.target===this)closeMultiSheet()"><div class="multi-sheet"><div class="multi-sheet-handle"></div><div class="multi-sheet-head"><div class="multi-sheet-title">📋 Multi-Forecast</div><div class="multi-sheet-sub">Each forecast is independent — one wrong call does not affect the rest</div></div><div class="multi-sheet-body" id="multiSheetBody"><div class="multi-empty">No forecasts queued. Tap &quot;+ Multi&quot; on any market card.</div></div><div class="multi-sheet-foot"><div class="multi-totals"><div class="multi-total-row"><span class="mtr-label">Total stake</span><span class="mtr-val" id="multiTotalStake">KES 0</span></div><div class="multi-total-row"><span class="mtr-label">Fees (5% each)</span><span class="mtr-val" id="multiTotalFee">KES 0</span></div></div><div class="multi-payment-info" id="multiPayInfo"></div><button class="btn-submit-multi" id="multiSubmitBtn" disabled onclick="submitMultiForecast()">Submit All via M-Pesa &rarr;</button></div></div></div>
 <div class="account-overlay" id="accountOverlay" onclick="if(event.target===this)closeAccountTray()"><div class="account-sheet"><div class="acc-sheet-handle"></div><div id="accLoggedOut"><div class="acc-head"><div class="acc-avatar">👤</div><div><div class="acc-name-txt">Welcome to Rada</div><div class="acc-bal-txt" style="color:#9284b8">Sign in to start forecasting</div></div></div><div class="acc-row" onclick="closeAccountTray();window.location.href='rada-auth.html'"><span class="acc-row-icon">🔑</span><span class="acc-row-label">Log In</span><span class="acc-row-arrow">&#8250;</span></div><div class="acc-row" onclick="closeAccountTray();window.location.href='rada-auth.html'"><span class="acc-row-icon">✨</span><span class="acc-row-label">Create Account</span><span class="acc-row-arrow">&#8250;</span></div><div class="acc-row" onclick="closeAccountTray();window.location.href='rada-about.html'"><span class="acc-row-icon">ℹ️</span><span class="acc-row-label">About Rada</span><span class="acc-row-arrow">&#8250;</span></div>
 <div class="acc-row" onclick="closeAccountTray();window.location.href='rada-about.html#common-questions'"><span class="acc-row-icon">🆘</span><span class="acc-row-label">Get Help</span><span class="acc-row-arrow">&#8250;</span></div>
-</div><div id="accLoggedIn" style="display:none"><div class="acc-head"><div class="acc-avatar">🧑🏾</div><div><div class="acc-name-txt" id="accUserName">Forecaster</div><div class="acc-bal-txt" id="accUserBal">&#9679; KES 0 available</div></div></div><div class="acc-row" onclick="closeAccountTray();window.location.href='rada-portfolio.html'"><span class="acc-row-icon">◎</span><span class="acc-row-label">My Portfolio</span><span class="acc-row-arrow">&#8250;</span></div><div class="acc-row" onclick="closeAccountTray()"><span class="acc-row-icon">📥</span><span class="acc-row-label">Deposit via M-Pesa</span><span class="acc-row-arrow">&#8250;</span></div><div class="acc-row" onclick="closeAccountTray()"><span class="acc-row-icon">📤</span><span class="acc-row-label">Withdraw</span><span class="acc-row-arrow">&#8250;</span></div><div class="acc-row acc-refer-row" onclick="closeAccountTray();window.location.href='rada-portfolio.html#refer'" style="display:none"><span class="acc-row-icon">🎁</span><span class="acc-row-label">Refer a Friend</span><span class="acc-row-arrow">&#8250;</span></div><div class="acc-row" onclick="closeAccountTray();window.location.href='rada-about.html#common-questions'"><span class="acc-row-icon">🆘</span><span class="acc-row-label">Get Help</span><span class="acc-row-arrow">&#8250;</span></div>
+</div><div id="accLoggedIn" style="display:none"><div class="acc-head"><div class="acc-avatar">🧑🏾</div><div><div class="acc-name-txt" id="accUserName">Forecaster</div><div class="acc-bal-txt" id="accUserBal">&#9679; KES 0 available</div></div></div><div class="acc-row" onclick="closeAccountTray();window.location.href='rada-portfolio.html'"><span class="acc-row-icon">◎</span><span class="acc-row-label">My Portfolio</span><span class="acc-row-arrow">&#8250;</span></div><div class="acc-row" onclick="closeAccountTray()"><span class="acc-row-icon">📥</span><span class="acc-row-label">Deposit via M-Pesa</span><span class="acc-row-arrow">&#8250;</span></div><div class="acc-row" onclick="closeAccountTray()"><span class="acc-row-icon">📤</span><span class="acc-row-label">Withdraw</span><span class="acc-row-arrow">&#8250;</span></div><div class="acc-row acc-refer-row" onclick="openReferSheet()" style="display:none"><span class="acc-row-icon">🎁</span><span class="acc-row-label">Refer a Friend</span><span class="acc-row-arrow">&#8250;</span></div><div class="acc-row" onclick="closeAccountTray();window.location.href='rada-about.html#common-questions'"><span class="acc-row-icon">🆘</span><span class="acc-row-label">Get Help</span><span class="acc-row-arrow">&#8250;</span></div>
 <div class="acc-row danger" onclick="logOut()"><span class="acc-row-icon">🚪</span><span class="acc-row-label">Log Out</span><span class="acc-row-arrow">&#8250;</span></div></div></div></div><script>function logOut(){localStorage.removeItem("rada_user");closeAccountTray();window.location.href="rada-auth.html";}</script>
 
 <script>
@@ -2409,6 +2496,171 @@ document.addEventListener('DOMContentLoaded', function() {
 // Override botLiveClick on non-markets pages — redirect to markets with live filter
 function botLiveClick() {
   window.location.href = 'rada-markets.html?filter=live';
+}
+</script>
+<!-- REFER A FRIEND OVERLAY -->
+<div class="refer-overlay" id="referOverlay" onclick="if(event.target===this)closeReferSheet()">
+  <div class="refer-sheet">
+    <div class="refer-sheet-handle"></div>
+    <div class="refer-sheet-head">
+      <div class="refer-sheet-title">🎁 Refer a Friend</div>
+      <button class="refer-close-btn" onclick="closeReferSheet()">✕</button>
+    </div>
+    <div class="refer-body">
+
+      <!-- Referral Code -->
+      <div class="refer-code-wrap">
+        <div class="refer-code-label">Your Referral Code</div>
+        <div class="refer-code-value" id="referCodeDisplay">------</div>
+        <div class="refer-code-btns">
+          <button class="btn-copy-code" onclick="copyReferCode()">
+            📋 Copy Code
+          </button>
+          <button class="btn-wa-refer" onclick="shareReferWhatsApp()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.553 4.113 1.524 5.842L.057 23.571a.5.5 0 0 0 .608.625l5.939-1.554A11.945 11.945 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.891 0-3.659-.52-5.174-1.427l-.371-.22-3.527.924.939-3.432-.242-.381A9.944 9.944 0 0 1 2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+            Share
+          </button>
+        </div>
+      </div>
+
+      <!-- How it works -->
+      <div class="refer-how">
+        <div class="refer-how-title">How it works</div>
+        <div class="refer-steps">
+          <div class="refer-step">
+            <div class="refer-step-icon">📤</div>
+            <div class="refer-step-text">Share your code</div>
+          </div>
+          <div class="refer-step">
+            <div class="refer-step-icon">🧑🏾</div>
+            <div class="refer-step-text">Friend signs up &amp; deposits</div>
+          </div>
+          <div class="refer-step">
+            <div class="refer-step-icon">🎁</div>
+            <div class="refer-step-text">You both get bonus KES</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="refer-stats" id="referStatsWrap">
+        <div class="refer-stat">
+          <div class="refer-stat-val" id="referStatFriends">0</div>
+          <div class="refer-stat-lbl">Referred</div>
+        </div>
+        <div class="refer-stat">
+          <div class="refer-stat-val" id="referStatEarned">KES 0</div>
+          <div class="refer-stat-lbl">Earned</div>
+        </div>
+        <div class="refer-stat">
+          <div class="refer-stat-val" id="referStatPending">0</div>
+          <div class="refer-stat-lbl">Pending</div>
+        </div>
+      </div>
+      <div id="referNoStats" style="display:none;text-align:center;padding:8px 0 12px;font-size:0.68rem;color:#b0a4cc;">
+        No referrals yet. Share your code to start earning.
+      </div>
+
+      <!-- Note -->
+      <div class="refer-note">
+        Bonus balance must be staked before withdrawal.<br>
+        Programme subject to availability.
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+/* ── Refer a Friend ── */
+function openReferSheet() {
+  if (!isLoggedIn) { window.location.href = 'rada-auth.html'; return; }
+  var user = null;
+  try { user = JSON.parse(localStorage.getItem('rada_user') || 'null'); } catch(e) {}
+  
+  // Display referral code
+  var code = (user && user.referralCode) ? user.referralCode : '------';
+  var codeEl = document.getElementById('referCodeDisplay');
+  if (codeEl) codeEl.textContent = code;
+
+  // Load stats from API
+  fetch('/api/users/me/referrals')
+    .then(function(r){ return r.json(); })
+    .then(function(d) {
+      var total    = d.totalReferred || 0;
+      var earned   = d.totalEarned   || 0;
+      var pending  = (d.referrals || []).filter(function(r){ return r.status === 'PENDING'; }).length;
+      var statsEl  = document.getElementById('referStatsWrap');
+      var noStats  = document.getElementById('referNoStats');
+      if (total === 0) {
+        if (statsEl) statsEl.style.display = 'none';
+        if (noStats) noStats.style.display = 'block';
+      } else {
+        if (statsEl) statsEl.style.display = 'grid';
+        if (noStats) noStats.style.display = 'none';
+        var f = document.getElementById('referStatFriends');
+        var e = document.getElementById('referStatEarned');
+        var p = document.getElementById('referStatPending');
+        if (f) f.textContent = total;
+        if (e) e.textContent = 'KES ' + Number(earned).toLocaleString();
+        if (p) p.textContent = pending;
+      }
+    })
+    .catch(function() {
+      // Demo mode — show empty state
+      var statsEl = document.getElementById('referStatsWrap');
+      var noStats = document.getElementById('referNoStats');
+      if (statsEl) statsEl.style.display = 'none';
+      if (noStats) noStats.style.display = 'block';
+    });
+
+  document.getElementById('referOverlay').classList.add('open');
+  if (typeof closeAccountTray === 'function') closeAccountTray();
+}
+
+function closeReferSheet() {
+  document.getElementById('referOverlay').classList.remove('open');
+}
+
+function copyReferCode() {
+  var code = document.getElementById('referCodeDisplay').textContent;
+  if (code === '------') return;
+  navigator.clipboard.writeText(code).then(function() {
+    var btn = document.querySelector('.btn-copy-code');
+    if (btn) {
+      btn.textContent = '✅ Copied!';
+      setTimeout(function(){ btn.innerHTML = '📋 Copy Code'; }, 2000);
+    }
+  }).catch(function() {
+    // Fallback for browsers without clipboard API
+    var tmp = document.createElement('input');
+    tmp.value = code;
+    document.body.appendChild(tmp);
+    tmp.select();
+    document.execCommand('copy');
+    document.body.removeChild(tmp);
+    var btn = document.querySelector('.btn-copy-code');
+    if (btn) {
+      btn.textContent = '✅ Copied!';
+      setTimeout(function(){ btn.innerHTML = '📋 Copy Code'; }, 2000);
+    }
+  });
+}
+
+function shareReferWhatsApp() {
+  var user = null;
+  try { user = JSON.parse(localStorage.getItem('rada_user') || 'null'); } catch(e) {}
+  var code = (user && user.referralCode) ? user.referralCode : '';
+  if (!code) return;
+
+  // Get referee reward from config
+  var reward = 100; // default
+  fetch('./rada-config.json').then(function(r){ return r.json(); })
+    .then(function(cfg){ if (cfg.refereeReward) reward = cfg.refereeReward; })
+    .catch(function(){});
+
+  var msg = "I've been using Rada to predict Kenyan events outcomes and winning real money. Join me — use my code " + code + " and we both get KES " + reward + ". mavlon-ke.github.io/rada/rada-auth.html?ref=" + code;
+  window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank');
 }
 </script>
 </body>

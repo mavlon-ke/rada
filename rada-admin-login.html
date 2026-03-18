@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rada — Admin Login</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --primary: #6d28d9;
+  --primary-bright: #7c3aed;
+  --bg: #0f0a1e;
+  --bg2: #1a1035;
+  --surface: #231848;
+  --border: rgba(109,40,217,0.25);
+  --text: #f0ecff;
+  --text-mid: #b0a4cc;
+  --font: 'Outfit', sans-serif;
+}
+html, body {
+  min-height: 100vh;
+  background: var(--bg);
+  font-family: var(--font);
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Background glow */
+body::before {
+  content: '';
+  position: fixed;
+  top: -20%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(109,40,217,0.15) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.login-wrap {
+  width: 100%;
+  max-width: 400px;
+  padding: 24px 20px;
+  position: relative;
+  z-index: 1;
+}
+
+/* Logo */
+.login-logo {
+  text-align: center;
+  margin-bottom: 32px;
+}
+.login-logo-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 10px 20px;
+  margin-bottom: 10px;
+}
+.login-logo-mark {
+  width: 32px; height: 32px;
+  background: var(--primary);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 900; font-size: 0.85rem; color: #fff;
+}
+.login-logo-name {
+  font-size: 1.1rem; font-weight: 800; color: var(--text);
+}
+.login-logo-sub {
+  font-size: 0.7rem;
+  color: var(--text-mid);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+/* Card */
+.login-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 28px 24px;
+}
+.login-title {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+.login-sub {
+  font-size: 0.72rem;
+  color: var(--text-mid);
+  margin-bottom: 24px;
+  line-height: 1.5;
+}
+
+/* Form */
+.f-group { margin-bottom: 16px; }
+.f-label {
+  display: block;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--text-mid);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 6px;
+}
+.f-input {
+  width: 100%;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 0.82rem;
+  color: var(--text);
+  font-family: var(--font);
+  outline: none;
+  transition: border-color 0.2s;
+}
+.f-input:focus { border-color: var(--primary); }
+.f-input::placeholder { color: rgba(176,164,204,0.5); }
+
+/* Error */
+.login-error {
+  display: none;
+  background: rgba(206,17,38,0.12);
+  border: 1px solid rgba(206,17,38,0.3);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 0.72rem;
+  color: #f87171;
+  margin-bottom: 16px;
+}
+.login-error.show { display: block; }
+
+/* Button */
+.btn-login {
+  width: 100%;
+  padding: 14px;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: var(--font);
+  transition: background 0.2s;
+  margin-top: 4px;
+}
+.btn-login:hover { background: var(--primary-bright); }
+.btn-login:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* Footer */
+.login-footer {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 0.62rem;
+  color: var(--text-mid);
+  line-height: 1.6;
+}
+.login-footer a {
+  color: var(--primary-bright);
+  text-decoration: none;
+}
+</style>
+</head>
+<body>
+
+<div class="login-wrap">
+
+  <!-- Logo -->
+  <div class="login-logo">
+    <div class="login-logo-badge">
+      <div class="login-logo-mark">R</div>
+      <div class="login-logo-name">Rada</div>
+    </div>
+    <div class="login-logo-sub">Admin Console</div>
+  </div>
+
+  <!-- Card -->
+  <div class="login-card">
+    <div class="login-title">Administrator Sign In</div>
+    <div class="login-sub">This area is restricted to authorised Rada administrators only.</div>
+
+    <div class="login-error" id="loginError">Incorrect credentials. Please try again.</div>
+
+    <div class="f-group">
+      <label class="f-label">Email Address</label>
+      <input class="f-input" type="email" id="adminEmail" placeholder="admin@rada.co.ke" autocomplete="email">
+    </div>
+
+    <div class="f-group">
+      <label class="f-label">Password</label>
+      <input class="f-input" type="password" id="adminPassword" placeholder="••••••••" autocomplete="current-password"
+             onkeydown="if(event.key==='Enter')attemptAdminLogin()">
+    </div>
+
+    <button class="btn-login" id="loginBtn" onclick="attemptAdminLogin()">
+      Sign In to Admin Console
+    </button>
+  </div>
+
+  <div class="login-footer">
+    <a href="rada-markets.html">← Back to Rada platform</a><br>
+    If you have forgotten your credentials, contact the platform owner.
+  </div>
+
+</div>
+
+<script>
+/* ── Admin Login ── */
+
+// If already logged in as admin, redirect straight to panel
+(function() {
+  var session = null;
+  try { session = JSON.parse(sessionStorage.getItem('rada_admin_session') || 'null'); } catch(e) {}
+  if (session && session.isAdmin && session.expires > Date.now()) {
+    window.location.href = 'rada-admin.html';
+  }
+})();
+
+function attemptAdminLogin() {
+  var email    = document.getElementById('adminEmail').value.trim();
+  var password = document.getElementById('adminPassword').value;
+  var errorEl  = document.getElementById('loginError');
+  var btn      = document.getElementById('loginBtn');
+
+  if (!email || !password) {
+    errorEl.textContent = 'Please enter your email and password.';
+    errorEl.classList.add('show');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Signing in...';
+  errorEl.classList.remove('show');
+
+  // Try backend authentication first
+  fetch('/api/admin/auth/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: email, password: password })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    if (d.success) {
+      setAdminSession(d.admin || { email: email, name: d.name || 'Admin', role: d.role || 'ADMIN' });
+    } else {
+      throw new Error(d.message || 'Invalid credentials');
+    }
+  })
+  .catch(function(err) {
+    // Demo fallback — hardcoded credentials for testing
+    // REMOVE before production
+    if (email === 'admin@rada.co.ke' && password === 'rada-admin-2025') {
+      setAdminSession({ email: email, name: 'Admin', role: 'SUPER_ADMIN' });
+    } else {
+      btn.disabled = false;
+      btn.textContent = 'Sign In to Admin Console';
+      errorEl.textContent = 'Incorrect credentials. Please try again.';
+      errorEl.classList.add('show');
+    }
+  });
+}
+
+function setAdminSession(admin) {
+  var session = {
+    isAdmin: true,
+    email: admin.email,
+    name: admin.name,
+    role: admin.role,
+    expires: Date.now() + (8 * 60 * 60 * 1000) // 8 hour session
+  };
+  sessionStorage.setItem('rada_admin_session', JSON.stringify(session));
+  window.location.href = 'rada-admin.html';
+}
+</script>
+</body>
+</html>
