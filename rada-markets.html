@@ -1007,6 +1007,12 @@ nav {
   body { padding-top: 100px !important; }
 }
 
+
+/* ── Total Payout value — green to signal winning potential ── */
+#payTotal {
+  color: #16a34a !important;
+}
+
 </style>
 <!-- Google Analytics GA4 -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-C7QXV6BHCN"></script>
@@ -1043,11 +1049,11 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 </head>
 <body>
-<!-- RADA BUILD v40-FINAL -->
+<!-- RADA BUILD v45-FINAL -->
 <div id="radaBuildStamp" style="position:fixed;top:4px;left:50%;transform:translateX(-50%);
 background:#16a34a;color:#fff;font-size:0.55rem;font-weight:900;padding:2px 10px;
 border-radius:10px;z-index:9999;letter-spacing:0.05em;pointer-events:none;">
-✓ BUILD v40
+✓ BUILD v45
 </div>
 
 <!-- M-TOP-BAR -->
@@ -1246,6 +1252,8 @@ border-radius:10px;z-index:9999;letter-spacing:0.05em;pointer-events:none;">
       <button class="btn-forecast" id="forecastBtn" onclick="submitForecast()">
         Forecast YES via M-Pesa →
       </button>
+      <!-- Wallet breakdown -->
+      <div id="walletBreakdown" style="text-align:center;font-size:0.65rem;color:#9284b8;margin-top:6px;min-height:16px;line-height:1.5;"></div>
       <!-- Share Panel -->
       <div class="modal-share-panel">
         <span id="mspLinkText" data-url="" style="display:none"></span>
@@ -1539,6 +1547,7 @@ function openForecast(id, side = 'YES') {
 
   selectSide(side);
   setStake(500);
+  updateWalletButton();
   document.getElementById('forecastModal').classList.add('open');
   setModalShareUrl(activeMarket.slug || activeMarket.id);
   document.getElementById('forecastBtn').classList.toggle('yes-active', activeSide === 'YES');
@@ -1566,6 +1575,7 @@ function selectSide(side) {
   document.getElementById('forecastBtn').textContent = `Forecast ${side} via M-Pesa →`;
   document.getElementById('forecastBtn').classList.toggle('yes-active', side === 'YES');
   computePayout();
+  updateWalletButton();
 }
 
 function setStake(val) {
@@ -1581,6 +1591,75 @@ function setStake(val) {
 
 function updateStake(val) { setStake(parseInt(val) || 20); }
 function updateSlider(val) { setStake(parseInt(val)); }
+
+
+// ── WALLET-AWARE FORECAST BUTTON ─────────────────────────────────────────────
+function getWalletBalances() {
+  var user = null;
+  try { user = JSON.parse(localStorage.getItem('rada_user') || 'null'); } catch(e) {}
+  var real  = (user && user.balanceKes)      ? parseInt(user.balanceKes)      : 0;
+  var bonus = (user && user.bonusBalanceKes) ? parseInt(user.bonusBalanceKes) : 0;
+  return { real: real, bonus: bonus };
+}
+
+function updateWalletButton() {
+  var btn       = document.getElementById('forecastBtn');
+  var breakdown = document.getElementById('walletBreakdown');
+  if (!btn) return;
+
+  var wallets   = getWalletBalances();
+  var real      = wallets.real;
+  var bonus     = wallets.bonus;
+  var total     = real + bonus;
+  var stake     = stakeAmount;
+  var label     = activeSide === 'YES' ? 'YES' : 'NO';
+
+  var walletPays = 0;
+  var mpesaPays  = 0;
+  var breakdownText = '';
+
+  if (total >= stake) {
+    // ── Wallet covers full stake ─────────────────────────────────────────────
+    walletPays = stake;
+    mpesaPays  = 0;
+    btn.textContent = 'Forecast ' + label + ' →';
+    // Show which wallet(s) contribute
+    if (real >= stake) {
+      breakdownText = 'KES ' + stake.toLocaleString() + ' from your Rada wallet';
+    } else if (real > 0) {
+      var bonusUsed = stake - real;
+      breakdownText = 'KES ' + real.toLocaleString() + ' wallet + KES ' + bonusUsed.toLocaleString() + ' bonus balance';
+    } else {
+      breakdownText = 'KES ' + stake.toLocaleString() + ' from bonus balance';
+    }
+  } else if (total > 0) {
+    // ── Wallet partially covers — M-Pesa for shortfall ───────────────────────
+    walletPays = total;
+    mpesaPays  = stake - total;
+    btn.textContent = 'Pay KES ' + mpesaPays.toLocaleString() + ' via M-Pesa →';
+    var walletDesc = '';
+    if (real > 0 && bonus > 0) {
+      walletDesc = 'KES ' + real.toLocaleString() + ' wallet + KES ' + bonus.toLocaleString() + ' bonus';
+    } else if (real > 0) {
+      walletDesc = 'KES ' + real.toLocaleString() + ' from wallet';
+    } else {
+      walletDesc = 'KES ' + bonus.toLocaleString() + ' from bonus';
+    }
+    breakdownText = walletDesc + ' + KES ' + mpesaPays.toLocaleString() + ' via M-Pesa';
+  } else {
+    // ── No wallet balance — full M-Pesa ──────────────────────────────────────
+    walletPays = 0;
+    mpesaPays  = stake;
+    btn.textContent = 'Forecast ' + label + ' via M-Pesa →';
+    breakdownText = 'KES ' + stake.toLocaleString() + ' via M-Pesa';
+  }
+
+  // Store for submitForecast to use
+  btn.dataset.walletPays = walletPays;
+  btn.dataset.mpesaPays  = mpesaPays;
+
+  if (breakdown) breakdown.textContent = breakdownText;
+}
 
 // ── UNIFIED PAYOUT FORMULA ───────────────────────────────────────────────────
 function computePayout() {
@@ -1601,6 +1680,7 @@ function computePayout() {
     document.getElementById('payTotal').textContent = 'KES ' + stakeAmount.toLocaleString() + ' (refund)';
     document.getElementById('payProfit').textContent = 'KES 0';
     document.getElementById('payFee').textContent = 'KES 0';
+    updateWalletButton();
     return;
   }
 
@@ -1617,29 +1697,72 @@ function computePayout() {
   document.getElementById('payProfit').textContent = (profit >= 0 ? '+' : '') + 'KES ' + Math.floor(profit).toLocaleString();
   document.getElementById('payProfit').style.color = profit >= 0 ? 'var(--gold)' : 'var(--ke-red)';
   document.getElementById('payFee').textContent = 'KES ' + platformFee.toLocaleString();
+  updateWalletButton();
 }
 
 function submitForecast() {
   if (stakeAmount < 20) { alert('Minimum stake is KES 20'); return; }
-  const btn = document.getElementById('forecastBtn');
-  btn.disabled = true;
-  btn.textContent = 'Sending STK Push...';
+  var btn       = document.getElementById('forecastBtn');
+  var breakdown = document.getElementById('walletBreakdown');
+  var walletPays = parseInt(btn.dataset.walletPays || 0);
+  var mpesaPays  = parseInt(btn.dataset.mpesaPays  || stakeAmount);
 
-  setTimeout(() => {
-    btn.textContent = '⏳ Enter M-Pesa PIN on your phone...';
-    setTimeout(() => {
-      btn.style.background = 'var(--ke-green)';
-      btn.textContent = '✓ Forecast Confirmed!';
-      const bal = parseInt(document.getElementById('balDisplay').textContent.replace(/,/g,'')) - stakeAmount;
-      document.getElementById('balDisplay').textContent = bal.toLocaleString();
-      setTimeout(() => {
-        closeModal();
-        btn.disabled = false;
-        btn.textContent = 'Forecast via M-Pesa →'; trackEvent('forecast_initiated', { side: activeSide, market: activeMarket ? activeMarket.q.slice(0,50) : 'unknown' });
-        btn.style.background = '';
-      }, 1500);
-    }, 1800);
-  }, 1200);
+  btn.disabled = true;
+
+  trackEvent('forecast_initiated', {
+    side: activeSide,
+    market: activeMarket ? activeMarket.q.slice(0,50) : 'unknown',
+    walletPays: walletPays,
+    mpesaPays: mpesaPays
+  });
+
+  function confirmForecast() {
+    btn.style.background = '#16a34a';
+    btn.textContent = '✓ Forecast Confirmed!';
+    if (breakdown) breakdown.textContent = '';
+
+    // Update displayed balance
+    var balEl = document.getElementById('balDisplay');
+    if (balEl) {
+      var newBal = Math.max(0, parseInt(balEl.textContent.replace(/[^0-9]/g,'') || 0) - walletPays);
+      balEl.textContent = newBal.toLocaleString();
+    }
+    // Update localStorage balance
+    try {
+      var user = JSON.parse(localStorage.getItem('rada_user') || 'null');
+      if (user) {
+        var realUsed  = Math.min(walletPays, parseInt(user.balanceKes || 0));
+        var bonusUsed = walletPays - realUsed;
+        user.balanceKes      = Math.max(0, parseInt(user.balanceKes || 0) - realUsed);
+        user.bonusBalanceKes = Math.max(0, parseInt(user.bonusBalanceKes || 0) - bonusUsed);
+        localStorage.setItem('rada_user', JSON.stringify(user));
+      }
+    } catch(e) {}
+
+    setTimeout(function() {
+      closeModal();
+      btn.disabled = false;
+      btn.style.background = '';
+      updateWalletButton();
+    }, 1500);
+  }
+
+  if (mpesaPays > 0) {
+    // Needs M-Pesa — show STK push simulation
+    btn.textContent = 'Sending STK Push...';
+    if (breakdown) breakdown.textContent = walletPays > 0
+      ? 'Wallet deducted · Awaiting M-Pesa PIN for KES ' + mpesaPays.toLocaleString()
+      : 'Awaiting M-Pesa PIN...';
+
+    setTimeout(function() {
+      btn.textContent = '⏳ Enter M-Pesa PIN on your phone...';
+      setTimeout(confirmForecast, 1800);
+    }, 1200);
+  } else {
+    // Pure wallet — instant confirmation
+    btn.textContent = 'Processing...';
+    setTimeout(confirmForecast, 600);
+  }
 }
 
 function openDeposit() { trackEvent('deposit_initiated', {}); alert('M-Pesa STK Push deposit flow would open here.'); }
@@ -2212,33 +2335,58 @@ function updateMultiTotals() {
   if (totalEl) totalEl.textContent = 'KES ' + total.toLocaleString();
   if (feeEl)   feeEl.textContent   = 'KES ' + fees.toLocaleString();
 
-  // Payment source logic
+  // ── Payment source logic — real wallet first, then bonus, then M-Pesa ─────
+  var mpesaNeeded   = Math.max(0, total - totalAvail);
+  var walletCovers  = total - mpesaNeeded;
+  var realUsed      = Math.min(realBal, total);
+  var bonusUsed     = Math.min(bonusBal, Math.max(0, total - realUsed));
+
   if (payEl) {
     if (total === 0) {
       payEl.textContent = '';
-    } else if (totalAvail >= total) {
-      var bonusUsed = Math.min(bonusBal, total);
-      var realUsed  = total - bonusUsed;
-      if (bonusBal > 0 && bonusUsed > 0) {
-        payEl.innerHTML = (realUsed > 0 ? 'KES ' + realUsed.toLocaleString() + ' from wallet · ' : '') +
-          'KES ' + bonusUsed.toLocaleString() + ' from bonus balance';
+    } else if (mpesaNeeded === 0) {
+      // Wallet covers everything
+      if (bonusUsed > 0 && realUsed > 0) {
+        payEl.innerHTML = 'KES ' + realUsed.toLocaleString() + ' wallet · KES ' + bonusUsed.toLocaleString() + ' bonus · No M-Pesa needed';
+      } else if (bonusUsed > 0) {
+        payEl.innerHTML = 'KES ' + bonusUsed.toLocaleString() + ' from bonus balance · No M-Pesa needed';
       } else {
-        payEl.innerHTML = 'Paid from Rada wallet · No M-Pesa needed';
+        payEl.innerHTML = 'KES ' + realUsed.toLocaleString() + ' from Rada wallet · No M-Pesa needed';
       }
-    } else if (realBal + bonusBal > 0) {
-      var shortfall = total - totalAvail;
-      payEl.innerHTML = 'KES ' + totalAvail.toLocaleString() + ' from wallet · KES ' + shortfall.toLocaleString() + ' via M-Pesa STK Push';
+    } else if (walletCovers > 0) {
+      // Partial wallet + M-Pesa shortfall
+      var walletDesc = '';
+      if (bonusUsed > 0 && realUsed > 0) {
+        walletDesc = 'KES ' + realUsed.toLocaleString() + ' wallet + KES ' + bonusUsed.toLocaleString() + ' bonus';
+      } else if (realUsed > 0) {
+        walletDesc = 'KES ' + realUsed.toLocaleString() + ' from wallet';
+      } else {
+        walletDesc = 'KES ' + bonusUsed.toLocaleString() + ' from bonus';
+      }
+      payEl.innerHTML = walletDesc + ' · KES ' + mpesaNeeded.toLocaleString() + ' via M-Pesa';
     } else {
-      payEl.innerHTML = 'KES ' + total.toLocaleString() + ' via M-Pesa STK Push';
+      payEl.innerHTML = 'KES ' + total.toLocaleString() + ' via M-Pesa';
     }
   }
 
+  // ── Update submit button text based on wallet state ──────────────────────
   if (submitBtn) {
     var allValid = keys.length > 0 && keys.every(id => {
       var item = multiItems[id];
       return item.stake >= 20 && item.side && (item.side === 'YES' || item.side === 'NO');
     });
     submitBtn.disabled = !allValid;
+    if (allValid) {
+      if (mpesaNeeded === 0) {
+        submitBtn.textContent = 'Submit All →';
+      } else if (walletCovers > 0) {
+        submitBtn.textContent = 'Submit All — Pay KES ' + mpesaNeeded.toLocaleString() + ' via M-Pesa →';
+      } else {
+        submitBtn.textContent = 'Submit All via M-Pesa →';
+      }
+    } else {
+      submitBtn.innerHTML = 'Submit All via M-Pesa &rarr;';
+    }
   }
 }
 
@@ -2246,7 +2394,15 @@ function submitMultiForecast() {
   var keys = Object.keys(multiItems);
   if (!keys.length) return;
   var btn = document.getElementById('multiSubmitBtn');
-  if (btn) { btn.disabled = true; btn.textContent = 'Submitting...'; }
+  if (btn) { btn.disabled = true; }
+
+  var total     = keys.reduce(function(s,id){ return s + (multiItems[id].stake||0); }, 0);
+  var realBal   = Number((radaUser && radaUser.balanceKes)      || 0);
+  var bonusBal  = Number((radaUser && radaUser.bonusBalanceKes) || 0);
+  var mpesaAmt  = Math.max(0, total - realBal - bonusBal);
+
+  if (btn) btn.textContent = mpesaAmt > 0 ? 'Sending STK Push...' : 'Processing...';
+
   // In production: call POST /api/markets/[id]/trade for each item sequentially
   setTimeout(() => {
     keys.forEach(id => {
@@ -2258,8 +2414,28 @@ function submitMultiForecast() {
     });
     updateFabBadge();
     closeMultiSheet();
-    showToast('✅ ' + keys.length + ' forecasts submitted!');
-  }, 1200);
+    showToast('✅ ' + keys.length + ' forecast' + (keys.length > 1 ? 's' : '') + ' submitted!');
+    // Update localStorage balance + all balance displays
+    try {
+      var user = JSON.parse(localStorage.getItem('rada_user') || 'null');
+      if (user) {
+        var rUsed = Math.min(Number(user.balanceKes||0), total);
+        var bUsed = Math.min(Number(user.bonusBalanceKes||0), Math.max(0, total - rUsed));
+        user.balanceKes      = Math.max(0, Number(user.balanceKes||0) - rUsed);
+        user.bonusBalanceKes = Math.max(0, Number(user.bonusBalanceKes||0) - bUsed);
+        localStorage.setItem('rada_user', JSON.stringify(user));
+        radaUser = user;  // keep global in sync
+        // Update all balance displays
+        var newBal = Number(user.balanceKes);
+        var balEl  = document.getElementById('balDisplay');
+        var mBalEl = document.getElementById('mTopBal');
+        var accBal = document.getElementById('accUserBal');
+        if (balEl)  balEl.textContent  = newBal.toLocaleString();
+        if (mBalEl) mBalEl.textContent = 'KES ' + newBal.toLocaleString();
+        if (accBal) accBal.textContent = '● KES ' + newBal.toLocaleString() + ' available';
+      }
+    } catch(e) {}
+  }, mpesaAmt > 0 ? 2800 : 600);
 }
 
 // ── Promotional carousel ──────────────────────────────────────────────────────

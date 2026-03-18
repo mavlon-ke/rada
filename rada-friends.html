@@ -987,11 +987,11 @@ nav{padding:14px 24px;display:flex;align-items:center;justify-content:space-betw
 
 </head>
 <body>
-<!-- RADA BUILD v40-FINAL -->
+<!-- RADA BUILD v45-FINAL -->
 <div id="radaBuildStamp" style="position:fixed;top:4px;left:50%;transform:translateX(-50%);
 background:#16a34a;color:#fff;font-size:0.55rem;font-weight:900;padding:2px 10px;
 border-radius:10px;z-index:9999;letter-spacing:0.05em;pointer-events:none;">
-✓ BUILD v40
+✓ BUILD v45
 </div>
 
 <!-- M-TOP-BAR -->
@@ -1216,6 +1216,7 @@ border-radius:10px;z-index:9999;letter-spacing:0.05em;pointer-events:none;">
     <!-- STICKY SUBMIT FOOTER -->
     <div class="modal-foot" id="createFooter">
       <button class="btn-create" id="createBtn" onclick="createChallenge()">Create Challenge &amp; Pay via M-Pesa →</button>
+      <div id="challengeWalletBreakdown" style="text-align:center;font-size:0.65rem;color:#9284b8;margin:6px 0 4px;min-height:16px;line-height:1.5;"></div>
       <div class="modal-foot-note">
         Peer-to-Peer Escrow · Funds held securely until resolution · By creating you agree to Rada Social Escrow Terms
       </div>
@@ -1531,7 +1532,7 @@ function switchTab(btn, tab) {
 let friendStake = 500;
 let resolutionType = 'referee';
 
-function openCreate() { document.getElementById('createModal').classList.add('open'); }
+function openCreate() { document.getElementById('createModal').classList.add('open'); setTimeout(updateChallengeWalletBtn, 100); }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 
 document.getElementById('createModal').addEventListener('click', e => {
@@ -1554,6 +1555,7 @@ function updateFriendStake(val) {
   document.getElementById('fpFee').textContent    = 'KES ' + fee5.toLocaleString();
   document.getElementById('fpWinner').textContent = 'KES ' + winner.toLocaleString();
   document.getElementById('fpTie').textContent    = tie.toLocaleString();
+  updateChallengeWalletBtn();
 }
 
 function syncStakeFromInput(val) {
@@ -1580,6 +1582,60 @@ function generateCode() {
   return Math.random().toString(36).substring(2, 8).toUpperCase();
 }
 
+
+// ── WALLET-AWARE CHALLENGE BUTTON ─────────────────────────────────────────────
+function updateChallengeWalletBtn() {
+  var btn       = document.getElementById('createBtn');
+  var breakdown = document.getElementById('challengeWalletBreakdown');
+  if (!btn) return;
+
+  var user = null;
+  try { user = JSON.parse(localStorage.getItem('rada_user') || 'null'); } catch(e) {}
+  var real  = Number((user && user.balanceKes)      || 0);
+  var bonus = Number((user && user.bonusBalanceKes) || 0);
+  var total = real + bonus;
+  var stake = friendStake || 500;
+
+  var mpesaPays  = Math.max(0, stake - total);
+  var walletPays = stake - mpesaPays;
+  var realUsed   = Math.min(real, stake);
+  var bonusUsed  = Math.min(bonus, Math.max(0, stake - realUsed));
+  var breakdownText = '';
+
+  btn.dataset.walletPays = walletPays;
+  btn.dataset.mpesaPays  = mpesaPays;
+
+  if (mpesaPays === 0) {
+    // Wallet covers full stake
+    btn.textContent = 'Create Challenge →';
+    if (bonusUsed > 0 && realUsed > 0) {
+      breakdownText = 'KES ' + realUsed.toLocaleString() + ' wallet + KES ' + bonusUsed.toLocaleString() + ' bonus · No M-Pesa needed';
+    } else if (bonusUsed > 0) {
+      breakdownText = 'KES ' + bonusUsed.toLocaleString() + ' from bonus balance · No M-Pesa needed';
+    } else {
+      breakdownText = 'KES ' + realUsed.toLocaleString() + ' from Rada wallet · No M-Pesa needed';
+    }
+  } else if (walletPays > 0) {
+    // Partial — wallet + M-Pesa
+    btn.textContent = 'Create Challenge — Pay KES ' + mpesaPays.toLocaleString() + ' via M-Pesa →';
+    var walletDesc = '';
+    if (bonusUsed > 0 && realUsed > 0) {
+      walletDesc = 'KES ' + realUsed.toLocaleString() + ' wallet + KES ' + bonusUsed.toLocaleString() + ' bonus';
+    } else if (realUsed > 0) {
+      walletDesc = 'KES ' + realUsed.toLocaleString() + ' from wallet';
+    } else {
+      walletDesc = 'KES ' + bonusUsed.toLocaleString() + ' from bonus';
+    }
+    breakdownText = walletDesc + ' + KES ' + mpesaPays.toLocaleString() + ' via M-Pesa';
+  } else {
+    // No wallet balance — full M-Pesa
+    btn.textContent = 'Create Challenge & Pay via M-Pesa →';
+    breakdownText = 'KES ' + stake.toLocaleString() + ' via M-Pesa';
+  }
+
+  if (breakdown) breakdown.textContent = breakdownText;
+}
+
 function createChallenge() {
   const q = document.getElementById('cfQuestion').value.trim();
   const a = document.getElementById('cfNameA').value.trim();
@@ -1590,21 +1646,58 @@ function createChallenge() {
     return alert('Please enter the Referee\'s phone number.');
   }
 
-  const btn = document.getElementById('createBtn');
+  var btn       = document.getElementById('createBtn');
+  var breakdown = document.getElementById('challengeWalletBreakdown');
+  var walletPays = parseInt(btn.dataset.walletPays || 0);
+  var mpesaPays  = parseInt(btn.dataset.mpesaPays  || friendStake || 500);
+
   btn.disabled = true;
-  btn.textContent = 'Sending STK Push to your phone...';
-  setTimeout(() => {
-    btn.textContent = '⏳ Enter M-Pesa PIN...';
-    setTimeout(() => {
-      const code = generateCode();
-      const slug = q.toLowerCase().replace(/[^a-z0-9\s]/g,'').replace(/\s+/g,'-').slice(0,30);
-      document.getElementById('generatedCode').textContent = code;
-      document.getElementById('challengeSlug').textContent = slug;
-      document.getElementById('challengeCode2').textContent = code;
-      document.getElementById('formView').style.display = 'none';
-      document.getElementById('successView').style.display = '';
-    }, 1800);
-  }, 1200);
+
+  function confirmChallenge() {
+    const code = generateCode();
+    const slug = q.toLowerCase().replace(/[^a-z0-9\s]/g,'').replace(/\s+/g,'-').slice(0,30);
+    document.getElementById('generatedCode').textContent = code;
+    document.getElementById('challengeSlug').textContent = slug;
+    document.getElementById('challengeCode2').textContent = code;
+    // Update localStorage balance + all DOM balance displays
+    try {
+      var user = JSON.parse(localStorage.getItem('rada_user') || 'null');
+      if (user && walletPays > 0) {
+        var rUsed = Math.min(Number(user.balanceKes||0), walletPays);
+        var bUsed = Math.min(Number(user.bonusBalanceKes||0), Math.max(0, walletPays - rUsed));
+        user.balanceKes      = Math.max(0, Number(user.balanceKes||0) - rUsed);
+        user.bonusBalanceKes = Math.max(0, Number(user.bonusBalanceKes||0) - bUsed);
+        localStorage.setItem('rada_user', JSON.stringify(user));
+        radaUser = user;  // keep global in sync
+        // Update all balance display elements
+        var newBal = Number(user.balanceKes);
+        var balEl  = document.getElementById('balDisplay');
+        var mBalEl = document.getElementById('mTopBal');
+        var accBal = document.getElementById('accUserBal');
+        if (balEl)  balEl.textContent  = newBal.toLocaleString();
+        if (mBalEl) mBalEl.textContent = 'KES ' + newBal.toLocaleString();
+        if (accBal) accBal.textContent = '● KES ' + newBal.toLocaleString() + ' available';
+      }
+    } catch(e) {}
+    document.getElementById('formView').style.display = 'none';
+    document.getElementById('successView').style.display = '';
+    if (breakdown) breakdown.textContent = '';
+  }
+
+  if (mpesaPays > 0) {
+    btn.textContent = 'Sending STK Push to your phone...';
+    if (breakdown) breakdown.textContent = walletPays > 0
+      ? 'Wallet deducted · Awaiting M-Pesa PIN for KES ' + mpesaPays.toLocaleString()
+      : 'Awaiting M-Pesa PIN...';
+    setTimeout(function() {
+      btn.textContent = '⏳ Enter M-Pesa PIN...';
+      setTimeout(confirmChallenge, 1800);
+    }, 1200);
+  } else {
+    // Pure wallet — instant
+    btn.textContent = 'Processing...';
+    setTimeout(confirmChallenge, 600);
+  }
 }
 
 
@@ -2662,6 +2755,15 @@ function shareReferWhatsApp() {
   var msg = "I've been using Rada to predict Kenyan events outcomes and winning real money. Join me — use my code " + code + " and we both get KES " + reward + ". mavlon-ke.github.io/rada/rada-auth.html?ref=" + code;
   window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank');
 }
+</script>
+
+<script>
+// Init challenge wallet button once page and user session are loaded
+document.addEventListener('DOMContentLoaded', function() {
+  if (typeof updateChallengeWalletBtn === 'function') {
+    updateChallengeWalletBtn();
+  }
+});
 </script>
 </body>
 </html>
