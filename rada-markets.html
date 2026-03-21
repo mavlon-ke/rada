@@ -1014,47 +1014,35 @@ nav {
 }
 
 
-/* ── Tablet modal fix (768px–1024px) ── */
-@media (min-width: 768px) {
+
+/* ── Modal scroll fix — all viewports ── */
+.modal {
+  display: flex !important;
+  flex-direction: column !important;
+  max-height: 90vh !important;
+}
+.modal-handle-row {
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  background: var(--bg2);
+  z-index: 10;
+  border-bottom: 1px solid var(--border);
+}
+.modal-head {
+  flex-shrink: 0;
+  overflow: visible;
+}
+.modal-body {
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch;
+  flex: 1;
+}
+/* Mobile — bottom sheet needs special height */
+@media (max-width: 767px) {
   .modal {
-    overflow-y: auto;
-    max-height: 85vh;
-    display: flex;
-    flex-direction: column;
-  }
-  .modal-head {
-    flex-shrink: 0;
-  }
-  .modal-body {
-    overflow-y: auto;
-    flex: 1;
-    -webkit-overflow-scrolling: touch;
-  }
-  /* Make close button always visible and prominent on tablet */
-  .modal-close-btn {
-    width: 36px;
-    height: 36px;
-    font-size: 1rem;
-    background: var(--bg2);
-    border: 1.5px solid var(--border-bright);
-    color: var(--text-mid);
-    font-weight: 800;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-  }
-  .modal-close-btn:hover {
-    background: var(--primary-dim);
-    color: var(--primary);
-    border-color: var(--primary);
-  }
-  /* Ensure handle row with close btn is always visible */
-  .modal-handle-row {
-    position: sticky;
-    top: 0;
-    background: var(--bg2);
-    z-index: 10;
-    padding: 10px 16px;
-    border-bottom: 1px solid var(--border);
-    flex-shrink: 0;
+    max-height: 92vh !important;
+    border-radius: 20px 20px 0 0 !important;
   }
 }
 
@@ -1094,11 +1082,11 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 </head>
 <body>
-<!-- RADA BUILD v54-FINAL -->
+<!-- RADA BUILD v55-FINAL -->
 <div id="radaBuildStamp" style="position:fixed;top:4px;left:50%;transform:translateX(-50%);
 background:#16a34a;color:#fff;font-size:0.55rem;font-weight:900;padding:2px 10px;
 border-radius:10px;z-index:9999;letter-spacing:0.05em;pointer-events:none;">
-✓ BUILD v54
+✓ BUILD v55
 </div>
 
 <!-- M-TOP-BAR -->
