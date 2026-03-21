@@ -619,6 +619,16 @@ nav{padding:14px 24px;display:flex;align-items:center;justify-content:space-betw
   body { padding-top: 100px !important; }
 }
 
+
+/* ── API Inquiry badge ── */
+.api-inquiry-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: rgba(109,40,217,0.08); border: 1px solid rgba(109,40,217,0.18);
+  border-radius: 20px; padding: 4px 12px;
+  font-size: 0.62rem; font-weight: 700; color: #6d28d9;
+  margin: 8px 0 14px;
+}
+
 </style>
 <!-- Google Analytics GA4 -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-C7QXV6BHCN"></script>
@@ -639,11 +649,11 @@ nav{padding:14px 24px;display:flex;align-items:center;justify-content:space-betw
 
 </head>
 <body>
-<!-- RADA BUILD v49-FINAL -->
+<!-- RADA BUILD v53-FINAL -->
 <div id="radaBuildStamp" style="position:fixed;top:4px;left:50%;transform:translateX(-50%);
 background:#16a34a;color:#fff;font-size:0.55rem;font-weight:900;padding:2px 10px;
 border-radius:10px;z-index:9999;letter-spacing:0.05em;pointer-events:none;">
-✓ BUILD v49
+✓ BUILD v53
 </div>
 
 <!-- M-TOP-BAR -->
@@ -699,9 +709,9 @@ border-radius:10px;z-index:9999;letter-spacing:0.05em;pointer-events:none;">
 <div class="page-wrap">
 
   <!-- HERO -->
-  <div class="data-hero-tag">◎ B2B Intelligence Feed · Real-Time</div>
-  <h1 class="page-title">Kenya's Sentiment <em>Signal.</em><br>Before the Headlines.</h1>
-  <p class="page-sub">Rada aggregates real-money crowd intelligence from thousands of Kenyan forecasters. When our crowd shifts to 85% on a policy outcome — hours before the official announcement — that signal is worth money to banks, NGOs, and research institutions.</p>
+  <div class="data-hero-tag" style="margin:0 auto;">◎ B2B Intelligence Feed · Real-Time</div>
+  <h1 class="page-title" style="text-align:center;">Kenya's Predictive Sentiment <em>Signal.</em><br>Actionable Intelligence. Ahead of the Curve.</h1>
+  <p class="page-sub" style="text-align:center;max-width:640px;margin-left:auto;margin-right:auto;">CheckRada delivers real-time crowd intelligence by aggregating high-stakes forecasts from thousands of Kenyan market participants. When our sentiment data shifts toward an 85% probability on a policy or economic outcome, it provides a <strong>"Lead Signal"</strong> — offering banks, financial institutions, NGOs and interested individuals critical insights hours before the official headlines. Mitigate risk and anticipate market volatility with the only Skin-in-the-Game data feed in Africa.</p>
 
   <!-- INTRO CARDS -->
   <div class="intro-grid">
@@ -717,10 +727,6 @@ border-radius:10px;z-index:9999;letter-spacing:0.05em;pointer-events:none;">
     </div>
   </div>
 
-  <!-- LIVE SENTIMENT MARKETS -->
-  <div class="section-label">Live Sentiment Index · Top Markets</div>
-  <div class="sentiment-grid" id="sentimentGrid"></div>
-
   <!-- ACCURACY / BRIER REPORT -->
   <div class="section-label">Accuracy Report · Resolved Markets</div>
   <div class="accuracy-panel">
@@ -730,8 +736,8 @@ border-radius:10px;z-index:9999;letter-spacing:0.05em;pointer-events:none;">
         <div class="panel-sub">Calibration, lead time, and Brier scores for all resolved markets</div>
       </div>
       <div class="panel-actions">
-        <button class="btn-outline" onclick="exportCSV()">↓ Export CSV</button>
-        <button class="btn-outline btn-blue" onclick="viewFull()">Full Report →</button>
+        <button class="btn-outline" onclick="window.location='rada-data-signup.html?ref=export&plan=pro'">↓ Export CSV</button>
+        <button class="btn-outline btn-blue" onclick="window.location='rada-data-signup.html?ref=report&plan=pro'">Full Report →</button>
       </div>
     </div>
     <table class="accuracy-table">
@@ -754,41 +760,41 @@ border-radius:10px;z-index:9999;letter-spacing:0.05em;pointer-events:none;">
   <div class="section-label">Data API — Institutional Access</div>
   <div class="api-grid">
     <div class="api-card">
-      <span class="api-tier-badge badge-free">Free</span>
-      <div class="api-price">KES 0<span style="font-size:0.9rem;font-weight:400;color:var(--text-dim)">/mo</span></div>
+      <span class="api-tier-badge badge-free">Lite</span>
       <div class="api-price-sub">Public sentiment snapshot</div>
+      <div class="api-inquiry-badge">💬 Pricing on inquiry</div>
       <ul class="api-features">
         <li class="api-feature"><span class="api-check">✓</span> Current YES/NO probabilities for all public markets</li>
         <li class="api-feature"><span class="api-check">✓</span> Daily snapshot (24h delay)</li>
-        <li class="api-feature"><span class="api-check">✓</span> 100 API calls/month</li>
+        <li class="api-feature"><span class="api-check">✓</span> Limited API calls/month</li>
         <li class="api-feature"><span class="api-cross">✗</span> Real-time feed</li>
         <li class="api-feature"><span class="api-cross">✗</span> Brier scores & calibration data</li>
         <li class="api-feature"><span class="api-cross">✗</span> Historical data export</li>
         <li class="api-feature"><span class="api-cross">✗</span> Demographic breakdowns</li>
       </ul>
-      <button class="btn-api btn-api-free" onclick="getApiKey('free')">Get Free API Key</button>
+      <button class="btn-api btn-api-free" onclick="window.location='rada-data-signup.html?plan=lite'">Apply for Lite Access →</button>
     </div>
 
     <div class="api-card featured">
       <span class="api-tier-badge badge-pro">Pro</span>
-      <div class="api-price">KES 15,000<span style="font-size:0.9rem;font-weight:400;color:var(--text-dim)">/mo</span></div>
       <div class="api-price-sub">Real-time institutional feed</div>
+      <div class="api-inquiry-badge">💬 Pricing on inquiry</div>
       <ul class="api-features">
         <li class="api-feature"><span class="api-check">✓</span> Real-time probability updates (sub-60s latency)</li>
         <li class="api-feature"><span class="api-check">✓</span> Brier scores + calibration metrics</li>
         <li class="api-feature"><span class="api-check">✓</span> Full historical data (24 months)</li>
-        <li class="api-feature"><span class="api-check">✓</span> 10,000 API calls/month</li>
+        <li class="api-feature"><span class="api-check">✓</span> High-volume API calls/month</li>
         <li class="api-feature"><span class="api-check">✓</span> Probability trend charts (webhook push)</li>
         <li class="api-feature"><span class="api-check">✓</span> Volume & trader depth data</li>
         <li class="api-feature"><span class="api-cross">✗</span> Demographic breakdowns</li>
       </ul>
-      <button class="btn-api btn-api-pro" onclick="getApiKey('pro')">Start Pro Trial →</button>
+      <button class="btn-api btn-api-pro" onclick="window.location='rada-data-signup.html?plan=pro'">Apply for Pro Access →</button>
     </div>
 
     <div class="api-card">
       <span class="api-tier-badge badge-enterprise">Enterprise</span>
-      <div class="api-price">Custom</div>
       <div class="api-price-sub">Fund managers & research institutions</div>
+      <div class="api-inquiry-badge">💬 Pricing on inquiry</div>
       <ul class="api-features">
         <li class="api-feature"><span class="api-check">✓</span> Everything in Pro, plus:</li>
         <li class="api-feature"><span class="api-check">✓</span> Regional demographic breakdowns (county-level)</li>
@@ -798,11 +804,13 @@ border-radius:10px;z-index:9999;letter-spacing:0.05em;pointer-events:none;">
         <li class="api-feature"><span class="api-check">✓</span> Unlimited API calls</li>
         <li class="api-feature"><span class="api-check">✓</span> SLA with 99.9% uptime guarantee</li>
       </ul>
-      <button class="btn-api btn-api-ent" onclick="contactEnterprise()">Contact Enterprise Sales</button>
+      <button class="btn-api btn-api-ent" onclick="window.location='rada-data-signup.html?plan=enterprise'">Apply for Enterprise Access →</button>
     </div>
   </div>
 
   <!-- CODE SNIPPET -->
+  <!-- API Quick Start — hidden, preserved for future use -->
+  <div style="display:none" id="apiQuickStartSection"><div id="apiQuickStartSection" style="display:none">
   <div class="section-label">API Quick Start</div>
   <div class="code-panel">
     <div class="code-tabs">
@@ -839,44 +847,8 @@ border-radius:10px;z-index:9999;letter-spacing:0.05em;pointer-events:none;">
 );
 ws.onmessage = (e) => {
   <span class="kw">const</span> { market_id, yes_prob, timestamp } = JSON.parse(e.data);
-  <span class="cmt">// Handle real-time probability shift</span>
-};
-    </div>
-  </div>
-
-  <!-- CLIENTS -->
-  <div class="clients-strip">
-    <div class="client-label">Trusted By</div>
-    <div class="client-logos">
-      <div class="client-logo">NCBA Research</div>
-      <div class="client-logo">Strathmore Uni</div>
-      <div class="client-logo">Africa Practice</div>
-      <div class="client-logo">Daily Nation</div>
-      <div class="client-logo">Kenya Institute</div>
-    </div>
-  </div>
-
-  <!-- CTA -->
-  <div class="cta-box">
-    <div class="cta-title">Turn Crowd Intelligence Into <em>Alpha.</em></div>
-    <div class="cta-sub">Join 12 institutional clients already using Rada data to get ahead of Kenyan economic and policy shifts.</div>
-    <div class="cta-btns">
-      <button class="btn-cta-primary" onclick="getApiKey('pro')">Start Free Trial</button>
-      <button class="btn-cta-secondary" onclick="downloadSample()">↓ Download Sample Report</button>
-    </div>
-  </div>
-
-</div>
-
-<script>
-// ── SENTIMENT DATA ────────────────────────────────────────────────────────────
-const SENTIMENT = [
-  { cat:'SIASA', q:'Will Kenya pass the Finance Bill 2025?', yes:29, vol:'KES 510K', forecasters:389, brier:0.19 },
-  { cat:'UCHUMI', q:'Will KES/USD stay below 130 by Friday?', yes:54, vol:'KES 612K', forecasters:441, brier:0.11 },
-  { cat:'MICHEZO', q:'Will Harambee Stars qualify for WC 2026?', yes:18, vol:'KES 234K', forecasters:198, brier:0.22 },
-  { cat:'UCHUMI', q:'Will CBK cut rates again in Q2 2025?', yes:71, vol:'KES 445K', forecasters:312, brier:0.09 },
-  { cat:'HALI YA HEWA', q:'Will Nairobi receive above-average long rains?', yes:67, vol:'KES 89K', forecasters:76, brier:0.16 },
-  { cat:'SIASA', q:'Will the opposition coalition reunite before 2027?', yes:34, vol:'KES 291K', forecasters:226, brier:0.21 },
+  <span class="cmt">// Handle re
+  </div>er:0.21 },
 ];
 
 const RESOLVED = [
@@ -992,8 +964,8 @@ function switchTab(btn, lang) {
 
 function getApiKey(tier)     { alert(`${tier.toUpperCase()} API key request — connect to your backend to handle signups.`); }
 function contactEnterprise() { alert('Enterprise sales form would open here.'); }
-function exportCSV()         { alert('CSV export would download here.'); }
-function viewFull()          { alert('Full accuracy report page would open here.'); }
+function exportCSV() { window.location='rada-data-signup.html?ref=export&plan=pro'; }
+function viewFull() { window.location='rada-data-signup.html?ref=report&plan=pro'; }
 function downloadSample()    { alert('Sample PDF report would download here.'); }
 
 renderSentiment();

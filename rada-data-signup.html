@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rada Data — Apply for Access</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Archivo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --primary: #6d28d9;
+  --primary-bright: #7c3aed;
+  --primary-light: #8b5cf6;
+  --primary-glow: rgba(109,40,217,0.08);
+  --primary-dim: rgba(109,40,217,0.05);
+  --ke-green: #16a34a;
+  --ke-red: #CE1126;
+  --gold: #c97d0a;
+  --text: #1a1035;
+  --text-mid: #4a3f6b;
+  --text-dim: #9284b8;
+  --bg: #faf9ff;
+  --bg2: #ffffff;
+  --bg3: #f5f3ff;
+  --bg4: #ede9fe;
+  --border: rgba(109,40,217,0.10);
+  --border-bright: rgba(109,40,217,0.20);
+  --font: 'Outfit', sans-serif;
+  --mono: 'Archivo', sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  padding: 0 0 60px;
+}
+
+/* ── Header ── */
+.ds-header {
+  background: rgba(255,255,255,0.97);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.ds-back {
+  display: flex; align-items: center; gap: 5px;
+  color: var(--text-dim); font-size: 0.72rem; font-weight: 700;
+  text-decoration: none; padding: 6px 0;
+  transition: color 0.15s;
+}
+.ds-back:hover { color: var(--primary); }
+.ds-header-title {
+  font-size: 0.88rem; font-weight: 800; color: var(--text);
+  margin-left: 4px;
+}
+.ds-header-badge {
+  background: var(--primary); color: #fff;
+  font-size: 0.52rem; font-weight: 900;
+  padding: 2px 7px; border-radius: 5px;
+  letter-spacing: 0.08em; margin-left: auto;
+}
+
+/* ── Hero ── */
+.ds-hero {
+  background: linear-gradient(135deg, #1a1035 0%, #2d1b69 50%, #1a1035 100%);
+  padding: 36px 20px 32px;
+  text-align: center;
+}
+.ds-hero-tag {
+  display: inline-block;
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 20px; padding: 4px 14px;
+  font-size: 0.62rem; font-weight: 700; color: rgba(255,255,255,0.8);
+  letter-spacing: 0.08em; text-transform: uppercase;
+  margin-bottom: 12px;
+}
+.ds-hero-title {
+  font-size: 1.5rem; font-weight: 900; color: #fff;
+  line-height: 1.2; margin-bottom: 10px; letter-spacing: -0.02em;
+}
+.ds-hero-sub {
+  font-size: 0.78rem; color: rgba(255,255,255,0.7);
+  line-height: 1.6; max-width: 320px; margin: 0 auto;
+}
+
+/* ── Plan pill ── */
+.ds-plan-pill {
+  background: var(--bg2);
+  border: 1.5px solid var(--border-bright);
+  border-radius: 12px; padding: 12px 16px;
+  margin: 20px 20px 0;
+  display: flex; align-items: center; gap: 10px;
+}
+.ds-plan-label { font-size: 0.62rem; color: var(--text-dim); font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; }
+.ds-plan-val { font-size: 0.82rem; font-weight: 800; color: var(--primary); }
+.ds-plan-change { margin-left: auto; font-size: 0.62rem; color: var(--primary); font-weight: 700; cursor: pointer; text-decoration: underline; }
+
+/* ── Form ── */
+.ds-form-wrap {
+  padding: 20px;
+  max-width: 600px;
+  margin: 0 auto;
+}
+.ds-section-title {
+  font-size: 0.62rem; font-weight: 800; color: var(--text-dim);
+  text-transform: uppercase; letter-spacing: 0.1em;
+  margin: 24px 0 12px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+.ds-section-title:first-child { margin-top: 4px; }
+
+.ds-field {
+  margin-bottom: 14px;
+}
+.ds-label {
+  display: block; font-size: 0.68rem; font-weight: 700;
+  color: var(--text-mid); margin-bottom: 5px;
+}
+.ds-label span.req { color: var(--ke-red); margin-left: 2px; }
+.ds-input, .ds-select, .ds-textarea {
+  width: 100%;
+  background: var(--bg2);
+  border: 1.5px solid var(--border-bright);
+  border-radius: 10px;
+  padding: 11px 14px;
+  font-family: var(--font);
+  font-size: 0.78rem;
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.ds-input:focus, .ds-select:focus, .ds-textarea:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(109,40,217,0.08);
+}
+.ds-input::placeholder, .ds-textarea::placeholder { color: var(--text-dim); }
+.ds-select { appearance: none; cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239284b8' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 36px; }
+.ds-textarea { resize: vertical; min-height: 80px; }
+.ds-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 480px) { .ds-row { grid-template-columns: 1fr; } }
+
+/* ── Checkbox ── */
+.ds-check-wrap {
+  display: flex; align-items: flex-start; gap: 10px;
+  margin-bottom: 20px; cursor: pointer;
+}
+.ds-check-wrap input[type="checkbox"] {
+  width: 18px; height: 18px; flex-shrink: 0;
+  accent-color: var(--primary); margin-top: 2px; cursor: pointer;
+}
+.ds-check-label { font-size: 0.7rem; color: var(--text-mid); line-height: 1.5; }
+.ds-check-label a { color: var(--primary); }
+
+/* ── Submit button ── */
+.ds-submit-btn {
+  width: 100%; padding: 15px;
+  background: var(--primary); color: #fff;
+  border: none; border-radius: 12px;
+  font-family: var(--font); font-size: 0.88rem; font-weight: 800;
+  cursor: pointer; transition: all 0.2s;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.ds-submit-btn:hover { background: var(--primary-bright); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(109,40,217,0.25); }
+.ds-submit-btn:disabled { background: var(--bg4); color: var(--text-dim); cursor: not-allowed; transform: none; box-shadow: none; }
+
+.ds-submit-note {
+  font-size: 0.6rem; color: var(--text-dim); text-align: center;
+  margin-top: 10px; line-height: 1.6;
+}
+
+/* ── Success screen ── */
+.ds-success {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 60px 24px;
+  max-width: 400px;
+  margin: 0 auto;
+}
+.ds-success.show { display: flex; }
+.ds-success-icon {
+  width: 80px; height: 80px;
+  background: linear-gradient(135deg, rgba(22,163,74,0.12) 0%, rgba(22,163,74,0.06) 100%);
+  border: 2px solid rgba(22,163,74,0.25);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2rem; margin-bottom: 20px;
+}
+.ds-success-title {
+  font-size: 1.2rem; font-weight: 900; color: var(--text);
+  margin-bottom: 10px; letter-spacing: -0.02em;
+}
+.ds-success-msg {
+  font-size: 0.82rem; color: var(--text-dim); line-height: 1.7;
+  margin-bottom: 28px;
+}
+.ds-success-ref {
+  background: var(--bg3); border: 1px solid var(--border-bright);
+  border-radius: 10px; padding: 12px 20px;
+  font-size: 0.68rem; color: var(--text-mid);
+  margin-bottom: 28px; width: 100%;
+}
+.ds-success-ref strong { color: var(--primary); font-size: 0.82rem; display: block; margin-top: 4px; }
+.ds-back-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--bg3); border: 1.5px solid var(--border-bright);
+  border-radius: 10px; padding: 11px 22px;
+  font-size: 0.72rem; font-weight: 700; color: var(--primary);
+  cursor: pointer; text-decoration: none; transition: all 0.15s;
+}
+.ds-back-btn:hover { background: var(--primary-dim); }
+
+/* ── Loading spinner ── */
+.ds-spinner {
+  width: 18px; height: 18px;
+  border: 2.5px solid rgba(255,255,255,0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  display: none;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Field hint ── */
+.ds-hint { font-size: 0.6rem; color: var(--text-dim); margin-top: 4px; }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="ds-header">
+  <a class="ds-back" href="rada-data.html">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+    Back to Data
+  </a>
+  <div class="ds-header-title">Data Access Application</div>
+  <div class="ds-header-badge">RADA DATA</div>
+</div>
+
+<!-- Hero -->
+<div class="ds-hero">
+  <div class="ds-hero-tag">Institutional & Individual Access</div>
+  <div class="ds-hero-title">Apply for Rada Data API Access</div>
+  <div class="ds-hero-sub">Complete the form below. Our team will review your application and get back to you within 2–3 business days.</div>
+</div>
+
+<!-- Plan pill -->
+<div class="ds-plan-pill" id="planPill">
+  <div>
+    <div class="ds-plan-label">Selected Plan</div>
+    <div class="ds-plan-val" id="planDisplay">Lite</div>
+  </div>
+  <div class="ds-plan-change" onclick="document.getElementById('planSelect').focus()">Change plan</div>
+</div>
+
+<!-- Form -->
+<div class="ds-form-wrap">
+  <form id="dataSignupForm" onsubmit="submitDataSignup(event)" novalidate>
+
+    <!-- SECTION 1: Personal Details -->
+    <div class="ds-section-title">Personal Details</div>
+
+    <div class="ds-row">
+      <div class="ds-field">
+        <label class="ds-label" for="firstName">First Name <span class="req">*</span></label>
+        <input class="ds-input" type="text" id="firstName" placeholder="John" required>
+      </div>
+      <div class="ds-field">
+        <label class="ds-label" for="lastName">Last Name <span class="req">*</span></label>
+        <input class="ds-input" type="text" id="lastName" placeholder="Kamau" required>
+      </div>
+    </div>
+
+    <div class="ds-field">
+      <label class="ds-label" for="email">Email Address <span class="req">*</span></label>
+      <input class="ds-input" type="email" id="email" placeholder="john@organisation.com" required>
+    </div>
+
+    <div class="ds-field">
+      <label class="ds-label" for="phone">Mobile Number <span class="req">*</span></label>
+      <input class="ds-input" type="tel" id="phone" placeholder="07XX XXX XXX" required>
+      <div class="ds-hint">Include country code for international numbers e.g. +254712345678</div>
+    </div>
+
+    <div class="ds-row">
+      <div class="ds-field">
+        <label class="ds-label" for="city">City / Town <span class="req">*</span></label>
+        <input class="ds-input" type="text" id="city" placeholder="Nairobi" required>
+      </div>
+      <div class="ds-field">
+        <label class="ds-label" for="country">Country <span class="req">*</span></label>
+        <select class="ds-select" id="country" required>
+          <option value="">Select country</option>
+          <option value="Kenya" selected>Kenya</option>
+          <option value="Uganda">Uganda</option>
+          <option value="Tanzania">Tanzania</option>
+          <option value="Rwanda">Rwanda</option>
+          <option value="Ethiopia">Ethiopia</option>
+          <option value="Ghana">Ghana</option>
+          <option value="Nigeria">Nigeria</option>
+          <option value="South Africa">South Africa</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="ds-field">
+      <label class="ds-label" for="address">Physical Address</label>
+      <input class="ds-input" type="text" id="address" placeholder="Street, area or P.O. Box">
+    </div>
+
+    <!-- SECTION 2: Organisation Details -->
+    <div class="ds-section-title">Organisation Details</div>
+
+    <div class="ds-field">
+      <label class="ds-label" for="orgName">Organisation Name</label>
+      <input class="ds-input" type="text" id="orgName" placeholder="Leave blank if applying as an individual">
+    </div>
+
+    <div class="ds-row">
+      <div class="ds-field">
+        <label class="ds-label" for="orgType">Organisation Type <span class="req">*</span></label>
+        <select class="ds-select" id="orgType" required>
+          <option value="">Select type</option>
+          <option value="Corporate">Corporate / Business</option>
+          <option value="NGO">NGO / Non-profit</option>
+          <option value="Government">Government Agency</option>
+          <option value="Academic">Academic / University</option>
+          <option value="Media">Media / Journalism</option>
+          <option value="Research">Research Institution</option>
+          <option value="Individual">Individual / Freelance</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="ds-field">
+        <label class="ds-label" for="jobTitle">Job Title / Role</label>
+        <input class="ds-input" type="text" id="jobTitle" placeholder="e.g. Data Analyst, Researcher">
+      </div>
+    </div>
+
+    <div class="ds-field">
+      <label class="ds-label" for="website">Website or LinkedIn Profile</label>
+      <input class="ds-input" type="url" id="website" placeholder="https://yourwebsite.com">
+    </div>
+
+    <!-- SECTION 3: Data Usage -->
+    <div class="ds-section-title">Data Usage & Plan</div>
+
+    <div class="ds-field">
+      <label class="ds-label" for="planSelect">Plan Interest <span class="req">*</span></label>
+      <select class="ds-select" id="planSelect" required onchange="updatePlanDisplay(this.value)">
+        <option value="lite">Lite — Public sentiment snapshot</option>
+        <option value="pro">Pro — Real-time institutional feed</option>
+        <option value="enterprise">Enterprise — Fund managers & research institutions</option>
+      </select>
+    </div>
+
+    <div class="ds-field">
+      <label class="ds-label" for="useCase">Intended Use of Data <span class="req">*</span></label>
+      <select class="ds-select" id="useCase" required>
+        <option value="">Select primary use</option>
+        <option value="Research">Academic / Policy Research</option>
+        <option value="Journalism">Journalism / Media Reporting</option>
+        <option value="Business Intelligence">Business Intelligence / Strategy</option>
+        <option value="Government Policy">Government Policy & Planning</option>
+        <option value="Investment">Investment Analysis</option>
+        <option value="Product Integration">Product / App Integration</option>
+        <option value="Other">Other</option>
+      </select>
+    </div>
+
+    <div class="ds-field">
+      <label class="ds-label" for="useDescription">Tell us more about your intended use <span class="req">*</span></label>
+      <textarea class="ds-textarea" id="useDescription" placeholder="Briefly describe how you plan to use the Rada sentiment data. What questions are you trying to answer?" required></textarea>
+    </div>
+
+    <div class="ds-field">
+      <label class="ds-label" for="dataVolume">Estimated API Call Volume</label>
+      <select class="ds-select" id="dataVolume">
+        <option value="">Select volume</option>
+        <option value="Low">Low — Under 1,000 calls/month</option>
+        <option value="Medium">Medium — 1,000–10,000 calls/month</option>
+        <option value="High">High — 10,000–100,000 calls/month</option>
+        <option value="Very High">Very High — 100,000+ calls/month</option>
+        <option value="Unsure">Not sure yet</option>
+      </select>
+    </div>
+
+    <!-- Agreement -->
+    <div class="ds-section-title">Agreement</div>
+
+    <label class="ds-check-wrap" id="agreeWrap">
+      <input type="checkbox" id="agreeCheck" required>
+      <div class="ds-check-label">
+        I confirm that the information provided is accurate and I agree to the
+        <a href="rada-about.html">Rada Data Terms of Use</a>.
+        I understand that access is subject to review and approval by the Rada team.
+      </div>
+    </label>
+
+    <button class="ds-submit-btn" type="submit" id="submitBtn">
+      <span id="submitText">Submit Application</span>
+      <div class="ds-spinner" id="submitSpinner"></div>
+    </button>
+    <div class="ds-submit-note">
+      By submitting you agree to be contacted by the Rada Data team regarding your application.
+      Applications are reviewed within 2–3 business days.
+    </div>
+
+  </form>
+
+  <!-- Success screen -->
+  <div class="ds-success" id="successScreen">
+    <div class="ds-success-icon">✓</div>
+    <div class="ds-success-title">Application Received</div>
+    <div class="ds-success-msg">
+      Thank you for your interest in Rada Data. Your application has been received
+      and our team will review it carefully. We will be in touch within
+      <strong>2–3 business days</strong>.
+    </div>
+    <div class="ds-success-ref">
+      Application Reference
+      <strong id="refNumber">RDA-000000</strong>
+    </div>
+    <a class="ds-back-btn" href="rada-data.html">
+      ← Back to Rada Data
+    </a>
+  </div>
+
+</div><!-- /ds-form-wrap -->
+
+<script>
+// ── Detect plan from URL param ────────────────────────────────────────────────
+(function() {
+  var params = new URLSearchParams(window.location.search);
+  var plan   = (params.get('plan') || 'lite').toLowerCase();
+  var ref    = params.get('ref') || '';
+  var sel    = document.getElementById('planSelect');
+  if (sel) {
+    for (var i = 0; i < sel.options.length; i++) {
+      if (sel.options[i].value === plan) {
+        sel.selectedIndex = i;
+        break;
+      }
+    }
+  }
+  updatePlanDisplay(plan);
+
+  // Show context message based on referral source
+  var contextMessages = {
+    'export':  '📊 To access data exports, please complete your access application below.',
+    'report':  '📋 To access full accuracy reports, please complete your access application below.',
+  };
+  if (ref && contextMessages[ref]) {
+    var pill = document.getElementById('planPill');
+    if (pill) {
+      var msg = document.createElement('div');
+      msg.style.cssText = 'font-size:0.72rem;color:#6d28d9;background:rgba(109,40,217,0.07);border:1px solid rgba(109,40,217,0.18);border-radius:8px;padding:9px 14px;margin:0 20px;text-align:center;font-weight:600;';
+      msg.textContent = contextMessages[ref];
+      pill.insertAdjacentElement('afterend', msg);
+    }
+  }
+})();
+
+function updatePlanDisplay(val) {
+  var labels = { lite: 'Lite', pro: 'Pro', enterprise: 'Enterprise' };
+  var el = document.getElementById('planDisplay');
+  if (el) el.textContent = labels[val] || 'Lite';
+}
+
+// ── Generate reference number ─────────────────────────────────────────────────
+function genRef() {
+  return 'RDA-' + Math.random().toString(36).substr(2, 6).toUpperCase();
+}
+
+// ── Submit handler ────────────────────────────────────────────────────────────
+function submitDataSignup(e) {
+  e.preventDefault();
+
+  // Basic validation
+  var required = ['firstName','lastName','email','phone','city','country','orgType','planSelect','useCase','useDescription'];
+  var missing = false;
+  required.forEach(function(id) {
+    var el = document.getElementById(id);
+    if (!el || !el.value.trim()) {
+      el && (el.style.borderColor = '#CE1126');
+      missing = true;
+    } else {
+      el.style.borderColor = '';
+    }
+  });
+  if (!document.getElementById('agreeCheck').checked) {
+    document.getElementById('agreeWrap').style.outline = '2px solid #CE1126';
+    missing = true;
+  } else {
+    document.getElementById('agreeWrap').style.outline = '';
+  }
+  if (missing) return;
+
+  // Collect data
+  var payload = {
+    firstName:   document.getElementById('firstName').value.trim(),
+    lastName:    document.getElementById('lastName').value.trim(),
+    email:       document.getElementById('email').value.trim(),
+    phone:       document.getElementById('phone').value.trim(),
+    city:        document.getElementById('city').value.trim(),
+    country:     document.getElementById('country').value,
+    address:     document.getElementById('address').value.trim(),
+    orgName:     document.getElementById('orgName').value.trim(),
+    orgType:     document.getElementById('orgType').value,
+    jobTitle:    document.getElementById('jobTitle').value.trim(),
+    website:     document.getElementById('website').value.trim(),
+    plan:        document.getElementById('planSelect').value,
+    useCase:     document.getElementById('useCase').value,
+    useDesc:     document.getElementById('useDescription').value.trim(),
+    dataVolume:  document.getElementById('dataVolume').value,
+    submittedAt: new Date().toISOString(),
+    ref:         genRef(),
+  };
+
+  // Show loading
+  var btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  document.getElementById('submitText').textContent = 'Submitting...';
+  document.getElementById('submitSpinner').style.display = 'block';
+
+  // Read config and fire notifications (simulated in demo)
+  fetch('rada-config.json')
+    .then(function(r) { return r.json(); })
+    .catch(function() { return {}; })
+    .then(function(config) {
+      var inquiryEmail = config.dataInquiryEmail || '';
+      // Store application in localStorage for admin panel demo
+      try {
+        var apps = JSON.parse(localStorage.getItem('rada_data_apps') || '[]');
+        apps.push(payload);
+        localStorage.setItem('rada_data_apps', JSON.stringify(apps));
+      } catch(e) {}
+      var inquiryWA    = config.dataInquiryWhatsApp || '';
+
+      // In production: POST to /api/data/applications
+      // which emails inquiryEmail and sends WA to inquiryWA
+      // For now: simulate a 1.5s submission
+
+      setTimeout(function() {
+        // Show success
+        document.getElementById('dataSignupForm').style.display = 'none';
+        document.getElementById('planPill').style.display = 'none';
+        var success = document.getElementById('successScreen');
+        success.classList.add('show');
+        document.getElementById('refNumber').textContent = payload.ref;
+        // Scroll to top
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }, 1500);
+    });
+}
+</script>
+</body>
+</html>

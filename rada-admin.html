@@ -672,11 +672,11 @@ body::after {
 
 </head>
 <body>
-<!-- RADA BUILD v49-FINAL -->
+<!-- RADA BUILD v53-FINAL -->
 <div id="radaBuildStamp" style="position:fixed;top:4px;left:50%;transform:translateX(-50%);
 background:#16a34a;color:#fff;font-size:0.55rem;font-weight:900;padding:2px 10px;
 border-radius:10px;z-index:9999;letter-spacing:0.05em;pointer-events:none;">
-✓ BUILD v49
+✓ BUILD v53
 </div>
 
 <!-- SIDEBAR -->
@@ -773,6 +773,9 @@ border-radius:10px;z-index:9999;letter-spacing:0.05em;pointer-events:none;">
     </button>
     <button class="nav-item" onclick="showPanel('referral', this); setTimeout(loadReferralConfig, 50);">
       <span class="nav-icon">🎁</span><span>Referral Programme</span>
+    </button>
+        <button class="nav-item" onclick="showPanel('dataapps', this); setTimeout(loadDataApplications, 50);">
+      <span class="nav-icon">📊</span><span>Data Applications</span>
     </button>
   </div>
 
@@ -1484,6 +1487,38 @@ border-radius:10px;z-index:9999;letter-spacing:0.05em;pointer-events:none;">
       <button class="act-btn act-green" style="padding:7px 16px" onclick="approveKYC()">✓ Approve</button>
     </div>
   </div>
+
+
+  <!-- DATA APPLICATIONS PANEL -->
+  <div class="panel" id="panel-dataapps">
+    <div class="page-title">📊 Data Applications</div>
+    <div class="page-sub">Review and manage incoming Rada Data API access applications.</div>
+
+    <div class="config-card" style="margin-bottom:16px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+        <div class="config-label">Total Applications</div>
+        <div style="font-size:1.2rem;font-weight:900;color:var(--primary);" id="dataAppCount">0</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="save-btn" style="flex:1;min-width:120px;" onclick="loadDataApplications()">🔄 Refresh</button>
+        <button class="save-btn" style="flex:1;min-width:120px;background:#16a34a;" onclick="exportDataApps()">⬇ Export CSV</button>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
+      <button class="filter-tab active" id="dtab-all" onclick="filterDataApps('all', this)">All</button>
+      <button class="filter-tab" id="dtab-lite" onclick="filterDataApps('lite', this)">Lite</button>
+      <button class="filter-tab" id="dtab-pro" onclick="filterDataApps('pro', this)">Pro</button>
+      <button class="filter-tab" id="dtab-enterprise" onclick="filterDataApps('enterprise', this)">Enterprise</button>
+    </div>
+
+    <div id="dataAppsList">
+      <div style="text-align:center;padding:40px 20px;color:var(--text-dim);font-size:0.78rem;">
+        No applications yet. Applications submitted via the Data sign-up page will appear here.
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <script>
@@ -1658,6 +1693,79 @@ function renderActivity(containerId) {
 }
 
 // ── NAVIGATION ────────────────────────────────────────────────────────────────
+
+
+// ── DATA APPLICATIONS ────────────────────────────────────────────────────────
+var allDataApps = [];
+var currentDataFilter = 'all';
+
+function loadDataApplications() {
+  // In production: fetch from POST /api/admin/data/applications
+  // For now load from localStorage (submissions stored by signup page)
+  try {
+    allDataApps = JSON.parse(localStorage.getItem('rada_data_apps') || '[]');
+  } catch(e) { allDataApps = []; }
+  renderDataApps();
+}
+
+function filterDataApps(plan, btn) {
+  currentDataFilter = plan;
+  document.querySelectorAll('.filter-tab').forEach(function(b) { b.classList.remove('active'); });
+  if (btn) btn.classList.add('active');
+  renderDataApps();
+}
+
+function renderDataApps() {
+  var list = document.getElementById('dataAppsList');
+  var count = document.getElementById('dataAppCount');
+  if (!list) return;
+
+  var filtered = currentDataFilter === 'all'
+    ? allDataApps
+    : allDataApps.filter(function(a) { return a.plan === currentDataFilter; });
+
+  if (count) count.textContent = allDataApps.length;
+
+  if (!filtered.length) {
+    list.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--text-dim);font-size:0.78rem;">No applications' + (currentDataFilter !== 'all' ? ' for ' + currentDataFilter + ' plan' : ' yet') + '.</div>';
+    return;
+  }
+
+  list.innerHTML = filtered.slice().reverse().map(function(app) {
+    var planColors = { lite: '#6d28d9', pro: '#2563eb', enterprise: '#c97d0a' };
+    var color = planColors[app.plan] || '#6d28d9';
+    var date = app.submittedAt ? new Date(app.submittedAt).toLocaleDateString('en-KE', { day:'numeric', month:'short', year:'numeric' }) : 'Unknown date';
+    return '<div class="config-card" style="margin-bottom:10px;">' +
+      '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">' +
+        '<span style="background:' + color + '22;color:' + color + ';border:1px solid ' + color + '44;border-radius:6px;padding:2px 9px;font-size:0.58rem;font-weight:800;text-transform:uppercase;">' + (app.plan || 'lite') + '</span>' +
+        '<span style="font-size:0.62rem;color:var(--text-dim);margin-left:auto;">' + date + '</span>' +
+      '</div>' +
+      '<div style="font-size:0.82rem;font-weight:800;color:var(--text);margin-bottom:2px;">' + (app.firstName || '') + ' ' + (app.lastName || '') + '</div>' +
+      '<div style="font-size:0.68rem;color:var(--text-mid);margin-bottom:6px;">' + (app.orgName || app.orgType || '') + (app.jobTitle ? ' · ' + app.jobTitle : '') + '</div>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:0.62rem;color:var(--text-dim);margin-bottom:8px;">' +
+        '<div>📧 ' + (app.email || '—') + '</div>' +
+        '<div>📱 ' + (app.phone || '—') + '</div>' +
+        '<div>🌍 ' + (app.city || '') + (app.country ? ', ' + app.country : '') + '</div>' +
+        '<div>📊 ' + (app.useCase || '—') + '</div>' +
+      '</div>' +
+      '<div style="font-size:0.62rem;color:var(--text-dim);background:var(--bg3);border-radius:7px;padding:8px 10px;margin-bottom:8px;line-height:1.5;">' + (app.useDesc ? app.useDesc.slice(0, 200) + (app.useDesc.length > 200 ? '...' : '') : '—') + '</div>' +
+      '<div style="font-size:0.55rem;color:var(--text-dim);text-align:right;">Ref: ' + (app.ref || '—') + '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function exportDataApps() {
+  if (!allDataApps.length) { alert('No applications to export.'); return; }
+  var headers = ['Ref','Date','Plan','FirstName','LastName','Email','Phone','City','Country','Address','OrgName','OrgType','JobTitle','Website','UseCase','DataVolume','UseDescription'];
+  var rows = allDataApps.map(function(a) {
+    return [a.ref,a.submittedAt,a.plan,a.firstName,a.lastName,a.email,a.phone,a.city,a.country,a.address,a.orgName,a.orgType,a.jobTitle,a.website,a.useCase,a.dataVolume,'"' + (a.useDesc||'').replace(/"/g,'""') + '"'].join(',');
+  });
+  var csv = [headers.join(',')].concat(rows).join('\n');
+  var blob = new Blob([csv], { type: 'text/csv' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a'); a.href = url; a.download = 'rada-data-applications.csv'; a.click();
+  URL.revokeObjectURL(url);
+}
 
 function showPanel(id, btn) {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
