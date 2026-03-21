@@ -1013,6 +1013,51 @@ nav {
   color: #16a34a !important;
 }
 
+
+/* ── Tablet modal fix (768px–1024px) ── */
+@media (min-width: 768px) {
+  .modal {
+    overflow-y: auto;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+  }
+  .modal-head {
+    flex-shrink: 0;
+  }
+  .modal-body {
+    overflow-y: auto;
+    flex: 1;
+    -webkit-overflow-scrolling: touch;
+  }
+  /* Make close button always visible and prominent on tablet */
+  .modal-close-btn {
+    width: 36px;
+    height: 36px;
+    font-size: 1rem;
+    background: var(--bg2);
+    border: 1.5px solid var(--border-bright);
+    color: var(--text-mid);
+    font-weight: 800;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  }
+  .modal-close-btn:hover {
+    background: var(--primary-dim);
+    color: var(--primary);
+    border-color: var(--primary);
+  }
+  /* Ensure handle row with close btn is always visible */
+  .modal-handle-row {
+    position: sticky;
+    top: 0;
+    background: var(--bg2);
+    z-index: 10;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+}
+
 </style>
 <!-- Google Analytics GA4 -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-C7QXV6BHCN"></script>
@@ -1049,11 +1094,11 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 </head>
 <body>
-<!-- RADA BUILD v53-FINAL -->
+<!-- RADA BUILD v54-FINAL -->
 <div id="radaBuildStamp" style="position:fixed;top:4px;left:50%;transform:translateX(-50%);
 background:#16a34a;color:#fff;font-size:0.55rem;font-weight:900;padding:2px 10px;
 border-radius:10px;z-index:9999;letter-spacing:0.05em;pointer-events:none;">
-✓ BUILD v53
+✓ BUILD v54
 </div>
 
 <!-- M-TOP-BAR -->
