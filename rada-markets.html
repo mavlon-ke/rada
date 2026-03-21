@@ -298,7 +298,7 @@ nav {
   background: var(--bg3); border: 1px solid var(--border); border-radius: 12px;
   padding: 16px; margin-bottom: 16px;
 }
-.payout-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.payout-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; } .payout-grid > div[style*="display:none"] { display: none !important; }
 .payout-item-label { font-size: 0.65rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 4px; }
 .payout-item-val { font-family: var(--mono); font-size: 1.1rem; font-weight: 700; }
 .payout-item-val.green { color: var(--ke-green); }
@@ -1049,11 +1049,11 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 </head>
 <body>
-<!-- RADA BUILD v45-FINAL -->
+<!-- RADA BUILD v49-FINAL -->
 <div id="radaBuildStamp" style="position:fixed;top:4px;left:50%;transform:translateX(-50%);
 background:#16a34a;color:#fff;font-size:0.55rem;font-weight:900;padding:2px 10px;
 border-radius:10px;z-index:9999;letter-spacing:0.05em;pointer-events:none;">
-✓ BUILD v45
+✓ BUILD v49
 </div>
 
 <!-- M-TOP-BAR -->
@@ -1153,7 +1153,7 @@ border-radius:10px;z-index:9999;letter-spacing:0.05em;pointer-events:none;">
 
 <!-- FILTERS -->
 <div style="padding: 0 24px; position: relative; z-index: 1; max-width: 1200px; margin: 20px auto 0;">
-  <div class="filter-intro"><span class="filter-intro-desktop">Predict &amp; Win</span><span class="filter-intro-mobile">Predict &amp; Win · Swipe to Explore</span></div>
+  <div class="filter-intro"><span class="filter-intro-desktop">Predict &amp; Win Cash</span><span class="filter-intro-mobile">Predict &amp; Win Cash · Swipe to Explore</span></div>
   <div class="filter-scroll-wrap">
     <div class="filter-bar">
       <button class="filter-btn" onclick="filterCat(this,'TRENDING')">🔥 Trending</button>
@@ -1222,20 +1222,20 @@ border-radius:10px;z-index:9999;letter-spacing:0.05em;pointer-events:none;">
       <!-- Payout Box -->
       <div class="payout-box">
         <div class="payout-grid">
-          <div>
+          <div style="display:none">
             <div class="payout-item-label">Forecast Contracts</div>
             <div class="payout-item-val green" id="payContracts">769</div>
           </div>
-          <div>
+          <div style="display:none">
             <div class="payout-item-label">Price Per Contract</div>
             <div class="payout-item-val" id="payPrice">KES 0.65</div>
           </div>
           <div>
-            <div class="payout-item-label">Total Payout (If Correct)</div>
+            <div class="payout-item-label">Possible Total Payout (If Correct)</div>
             <div class="payout-item-val green" id="payTotal">KES 731</div>
           </div>
           <div>
-            <div class="payout-item-label">Net Profit</div>
+            <div class="payout-item-label">Possible Net Profit</div>
             <div class="payout-item-val gold" id="payProfit">+KES 231</div>
           </div>
         </div>
@@ -1250,7 +1250,7 @@ border-radius:10px;z-index:9999;letter-spacing:0.05em;pointer-events:none;">
       </div>
 
       <button class="btn-forecast" id="forecastBtn" onclick="submitForecast()">
-        Forecast YES via M-Pesa →
+        YES via M-Pesa →
       </button>
       <!-- Wallet breakdown -->
       <div id="walletBreakdown" style="text-align:center;font-size:0.65rem;color:#9284b8;margin-top:6px;min-height:16px;line-height:1.5;"></div>
@@ -1354,8 +1354,8 @@ function renderMarkets(data) {
         <div class="card-meta-item">⏰ ${m.closes}</div>
       </div>
       <div class="card-actions">
-        <button class="btn-yes" onclick="event.stopPropagation();openForecast(${m.id},'YES')">Forecast YES</button>
-        <button class="btn-no"  onclick="event.stopPropagation();openForecast(${m.id},'NO')">Forecast NO</button>
+        <button class="btn-yes" onclick="event.stopPropagation();openForecast(${m.id},'YES')">YES</button>
+        <button class="btn-no"  onclick="event.stopPropagation();openForecast(${m.id},'NO')">NO</button>
         <button class="card-multi-btn" id="multibtn_${m.id}" data-q="${m.q.slice(0,80)}" onclick="event.stopPropagation();toggleMultiAdd(${m.id},this.dataset.q,${m.yes})">+ Multi</button>
       </div>
       <button class="card-share-btn" onclick="event.stopPropagation();smartShare(${m.id},'${m.slug}',this)">⤴ Share</button>
@@ -1418,8 +1418,8 @@ function renderTrending() {
         <div class="card-meta-item">⏰ ${m.closes}</div>
       </div>
       <div class="card-actions">
-        <button class="btn-yes" onclick="event.stopPropagation();openForecast(${m.id},'YES')">Forecast YES</button>
-        <button class="btn-no"  onclick="event.stopPropagation();openForecast(${m.id},'NO')">Forecast NO</button>
+        <button class="btn-yes" onclick="event.stopPropagation();openForecast(${m.id},'YES')">YES</button>
+        <button class="btn-no"  onclick="event.stopPropagation();openForecast(${m.id},'NO')">NO</button>
         <button class="card-multi-btn" id="multibtn_${m.id}" data-q="${m.q.slice(0,80)}" onclick="event.stopPropagation();toggleMultiAdd(${m.id},this.dataset.q,${m.yes})">+ Multi</button>
       </div>
       <button class="card-share-btn" onclick="event.stopPropagation();smartShare(${m.id},'${m.slug}',this)">⤴ Share</button>
@@ -2464,7 +2464,7 @@ function initCarousel() {
   }).catch(() => {
     // On error (demo mode), show sample slides
     promoSlides = [
-      { tag:'🆕 New Market', title:'Will Ruto Complete His Full Term?', subtitle:'Join 1,200+ forecasters already staking', ctaText:'Forecast Now →', ctaLink:'rada-markets.html', bgColour:'#1a1035' },
+      { tag:'🆕 New Market', title:'Will Ruto Complete His Full Term?', subtitle:'Join 1,200+ forecasters already staking', ctaText:'NOw →', ctaLink:'rada-markets.html', bgColour:'#1a1035' },
       { tag:'🤝 Social Challenge', title:'Challenge a Friend. Settle It Fairly.', subtitle:'From KES 20. Referee or mutual resolution.', ctaText:'Create Challenge →', ctaLink:'rada-friends.html', bgColour:'#1e1b4b' },
     ];
     renderCarousel();
