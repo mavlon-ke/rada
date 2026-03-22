@@ -3,5 +3,6 @@
   "referralActive": true,
   "carouselActive": true,
   "dataInquiryEmail": "data@checkrada.co.ke",
-  "dataInquiryWhatsApp": ""
+  "dataInquiryWhatsApp": "",
+  "supportEmail": "support@checkrada.co.ke"
 }
