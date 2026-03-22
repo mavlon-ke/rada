@@ -3,6 +3,31 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- ═══ SEO META TAGS ═══ -->
+  <meta name="description" content="Join Africa's first forecasting platform. Phone number only — no email, no password. Stake via M-Pesa, earn when you're right. CheckRada, Kenya's 1st.">
+  <meta name="keywords" content="prediction markets Kenya, forecasting platform Kenya, Kenya crowd intelligence, National Sentiment Index Kenya, Africa first prediction market, M-Pesa forecasting, crowd forecasting Kenya, Kenya political risk data">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://checkrada.co.ke/rada-auth.html">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="CheckRada">
+  <meta property="og:title" content="CheckRada — Sign In">
+  <meta property="og:description" content="Join Africa's first forecasting platform. Phone number only — no email, no password. Stake via M-Pesa, earn when you're right. CheckRada, Kenya's 1st.">
+  <meta property="og:url" content="https://checkrada.co.ke/rada-auth.html">
+  <meta property="og:image" content="https://checkrada.co.ke/assets/og/og-brand.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="CheckRada — Africa's First Prediction Market">
+  <meta property="og:locale" content="en_KE">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="CheckRada — Sign In">
+  <meta name="twitter:description" content="Join Africa's first forecasting platform. Phone number only — no email, no password. Stake via M-Pesa, earn when you're right. CheckRada, Kenya's 1st.">
+  <meta name="twitter:image" content="https://checkrada.co.ke/assets/og/og-brand.png">
+  <meta name="twitter:site" content="@checkrada">
+  <!-- ═══════════════════════ -->
 <title>CheckRada — Sign In</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -185,11 +210,11 @@ body::after{content:'';position:fixed;top:-200px;left:50%;transform:translateX(-
 
 </head>
 <body>
-<!-- RADA BUILD v64-FINAL -->
+<!-- RADA BUILD v74-FINAL -->
 <div id="radaBuildStamp" style="position:fixed;top:4px;left:50%;transform:translateX(-50%);
 background:#16a34a;color:#fff;font-size:0.55rem;font-weight:900;padding:2px 10px;
 border-radius:10px;z-index:9999;letter-spacing:0.05em;pointer-events:none;">
-✓ BUILD v64
+✓ BUILD v74
 </div>
 <div style="height:4px;background:linear-gradient(90deg,#6d28d9,#7c3aed,#6d28d9);position:fixed;top:0;left:0;right:0;z-index:100;"></div><div class="page" style="padding-top:28px;">
   <div class="auth-card">
@@ -317,6 +342,16 @@ border-radius:10px;z-index:9999;letter-spacing:0.05em;pointer-events:none;">
               <div class="step-dot active"></div>
             </div>
 
+            <!-- Name field -->
+            <div class="form-group" style="margin-bottom:16px;">
+              <label class="field-label" for="nameInput" style="font-size:0.72rem;font-weight:700;color:#7c6fa0;margin-bottom:6px;display:block;">Your Name <span style="color:#CE1126;">*</span></label>
+              <input class="phone-input" type="text" id="nameInput"
+                placeholder="e.g. Baraka Mwangi"
+                style="font-size:0.88rem;"
+                maxlength="50">
+              <div id="nameErr" class="err-msg" style="display:none;">Please enter your name to continue.</div>
+            </div>
+
             <div class="compliance-section">
               <div class="comp-label">Legal Agreement Required</div>
 
@@ -330,7 +365,7 @@ border-radius:10px;z-index:9999;letter-spacing:0.05em;pointer-events:none;">
               <div class="check-row">
                 <input class="check-box" type="checkbox" id="chkTerms">
                 <label class="check-text" for="chkTerms">
-                  I have read and agree to the <a href="#">Terms of Service</a>, <a href="#">Privacy Policy</a>, and the <a href="#">Forecasting Analyst Agreement.</a> I understand this platform is an information-based forecasting tool, not a gambling service.
+                  I have read and agree to the <a href="rada-terms.html">Terms of Service</a>, <a href="rada-privacy.html">Privacy Policy</a>, and the <a href="rada-terms.html">Forecasting Analyst Agreement.</a> I understand this platform is an information-based forecasting tool, not a gambling service.
                 </label>
               </div>
             </div>
@@ -349,10 +384,10 @@ border-radius:10px;z-index:9999;letter-spacing:0.05em;pointer-events:none;">
           <div class="fp-body">
             <div class="success-view">
               <div class="sv-icon">🎉</div>
-              <div class="sv-title">Welcome to CheckRada!</div>
-              <div class="sv-sub">Your account is live. Start by depositing via M-Pesa and making your first forecast.<br><br>Your phone number is your identity. Keep it safe.</div>
-              <button class="btn-primary" onclick="window.location='rada-dashboard.html'">Go to My Dashboard →</button>
-              <button class="btn-outline" onclick="window.location='rada-markets.html'" style="margin-top:8px;">Browse Markets</button>
+              <div class="sv-title" id="sv-title">Welcome to CheckRada!</div>
+              <div class="sv-sub" id="sv-sub">Your account is live. Start by depositing via M-Pesa and making your first forecast.<br><br>Your phone number is your CheckRada identity.</div>
+              <button class="btn-primary" id="sv-cta-primary" onclick="window.location='rada-markets.html'">Browse Markets →</button>
+              <button class="btn-outline" id="sv-cta-secondary" onclick="window.location='rada-dashboard.html'" style="margin-top:8px;">Go to My Dashboard</button>
             </div>
           </div>
         </div>
@@ -361,9 +396,9 @@ border-radius:10px;z-index:9999;letter-spacing:0.05em;pointer-events:none;">
 
     <!-- FOOTER -->
     <div class="auth-footer">
-      <span>CheckRada · Kenya's Forecasting Platform</span><br>
-      <span>Operating under <a href="#">CMA Regulatory Sandbox</a> · <a href="#">Privacy Policy</a> · <a href="#">Terms of Service</a></span><br>
-      <span style="margin-top:4px;display:inline-block;">Min. 18+ · No sports markets · M-Pesa KES only (MVP)</span>
+      <span>CheckRada · Kenya's 1st Forecasting Platform</span><br>
+      <span><a href="rada-privacy.html">Privacy Policy</a> · <a href="rada-terms.html">Terms of Service</a></span><br>
+      <span style="margin-top:4px;display:inline-block;">Min. 18+ · No sports markets · M-Pesa KES only</span>
     </div>
 
   </div>
@@ -387,24 +422,46 @@ function formatPhone(input) {
 }
 
 // ── OTP FLOW ──────────────────────────────────────────────────────────────────
+// Track returning user state and their name
+var returningUser = false;
+var returningUserName = '';
+
 function sendOTP() {
   const phone = document.getElementById('phoneInput').value.trim();
-  const err = document.getElementById('phoneErr');
+  const err   = document.getElementById('phoneErr');
   if (phone.length < 9) { err.style.display = 'block'; return; }
   err.style.display = 'none';
-  const btn = document.getElementById('sendOtpBtn');
+  const btn  = document.getElementById('sendOtpBtn');
   const code = document.getElementById('countryCode').value;
-  btn.textContent = 'Sending…';
+  btn.textContent = 'Checking…';
   btn.disabled = true;
+
+  // Smart detection — check if phone is registered
+  // In production: fetch('/api/auth/check?phone=' + code.replace('+','') + phone)
+  // For demo: check localStorage
+  var storedUser = null;
+  try { storedUser = JSON.parse(localStorage.getItem('rada_user') || 'null'); } catch(e) {}
+  var fullPhone = code.replace('+','') + phone;
+  var isKnownUser = storedUser && (storedUser.phone === fullPhone || storedUser.phone === phone);
+
+  returningUser     = isKnownUser;
+  returningUserName = isKnownUser ? (storedUser.name || '') : '';
+
   setTimeout(() => {
     document.getElementById('step1').style.display = 'none';
     document.getElementById('step2').style.display = '';
-    document.getElementById('otpSentTo').textContent = `OTP sent to ${code} ${phone} via SMS`;
+    // Update OTP sub-text based on user type
+    var otpSubEl = document.getElementById('otpSentTo');
+    if (returningUser && returningUserName) {
+      otpSubEl.textContent = 'Welcome back, ' + returningUserName + '. OTP sent to ' + code + ' ' + phone + ' via SMS.';
+    } else {
+      otpSubEl.textContent = 'OTP sent to ' + code + ' ' + phone + ' via SMS';
+    }
     document.getElementById('otpInfo').style.display = 'block';
     document.getElementById('otp1').focus();
     btn.textContent = 'Send OTP →';
     btn.disabled = false;
-  }, 1200);
+  }, 800);
 }
 
 function otpStep(el, prevId, nextId) {
@@ -418,16 +475,39 @@ function otpBack(el, e, prevId) {
 }
 
 function verifyOTP() {
-  const code = ['otp1','otp2','otp3','otp4','otp5','otp6'].map(id => document.getElementById(id).value).join('');
+  const otp = ['otp1','otp2','otp3','otp4','otp5','otp6'].map(id => document.getElementById(id).value).join('');
   const err = document.getElementById('otpErr');
-  if (code !== '123456') { err.style.display = 'block'; return; }
+  if (otp !== '123456') { err.style.display = 'block'; return; }
   err.style.display = 'none';
-  isNewUser = true; // Simulate new user for demo
   document.getElementById('step2').style.display = 'none';
-  if (isNewUser) {
-    document.getElementById('step3').style.display = '';
-  } else {
+
+  if (returningUser) {
+    // ── Returning user: update localStorage session, show welcome back, go to dashboard ──
+    try {
+      var user = JSON.parse(localStorage.getItem('rada_user') || 'null');
+      if (user) {
+        user.lastLogin = new Date().toISOString();
+        localStorage.setItem('rada_user', JSON.stringify(user));
+      }
+    } catch(e) {}
+    // Show personalised welcome back screen
+    document.getElementById('sv-title').textContent = 'Welcome back' + (returningUserName ? ', ' + returningUserName + '!' : '!');
+    document.getElementById('sv-sub').innerHTML = 'Great to see you again. Your portfolio and open forecasts are waiting.<br><br>Your phone number is your CheckRada identity.';
+    document.getElementById('sv-cta-primary').textContent = 'Go to My Dashboard →';
+    document.getElementById('sv-cta-primary').onclick = function() { window.location = 'rada-dashboard.html'; };
+    document.getElementById('sv-cta-secondary').textContent = 'Browse Markets';
+    document.getElementById('sv-cta-secondary').onclick = function() { window.location = 'rada-markets.html'; };
+    document.getElementById('sv-cta-secondary').style.display = '';
     document.getElementById('step4').style.display = '';
+  } else {
+    // ── New user: show name + compliance step ──────────────────────────────────
+    isNewUser = true;
+    document.getElementById('step3').style.display = '';
+    // Pre-focus name field
+    setTimeout(function() {
+      var nameEl = document.getElementById('nameInput');
+      if (nameEl) nameEl.focus();
+    }, 200);
   }
 }
 
@@ -445,12 +525,46 @@ function goBack(showId, hideId) {
 
 // ── COMPLIANCE ────────────────────────────────────────────────────────────────
 function completeRegistration() {
-  const age = document.getElementById('chkAge').checked;
-  const terms = document.getElementById('chkTerms').checked;
-  const err = document.getElementById('complianceErr');
-  if (!age || !terms) { err.style.display = 'block'; return; }
-  err.style.display = 'none';
+  const nameVal = (document.getElementById('nameInput').value || '').trim();
+  const age     = document.getElementById('chkAge').checked;
+  const terms   = document.getElementById('chkTerms').checked;
+  const nameErr = document.getElementById('nameErr');
+  const compErr = document.getElementById('complianceErr');
+
+  // Validate name
+  if (!nameVal) {
+    nameErr.style.display = 'block';
+    document.getElementById('nameInput').focus();
+    return;
+  }
+  nameErr.style.display = 'none';
+
+  // Validate compliance
+  if (!age || !terms) { compErr.style.display = 'block'; return; }
+  compErr.style.display = 'none';
+
+  // Save user to localStorage
+  const phone = document.getElementById('phoneInput').value.trim();
+  const code  = document.getElementById('countryCode').value;
+  const user  = {
+    id: 'u_' + Date.now(),
+    name: nameVal,
+    phone: code.replace('+','') + phone,
+    balanceKes: 0,
+    bonusBalanceKes: 0,
+    kycStatus: 'PENDING',
+    referralCode: 'R' + Math.random().toString(36).substr(2,6).toUpperCase(),
+    isNew: true,
+  };
+  localStorage.setItem('rada_user', JSON.stringify(user));
+
+  // Show new user success screen
   document.getElementById('step3').style.display = 'none';
+  document.getElementById('sv-title').textContent = 'Welcome, ' + nameVal + '! 🎉';
+  document.getElementById('sv-sub').innerHTML = 'Your account is live. Start by exploring markets and making your first forecast.<br><br>Your phone number is your CheckRada identity.';
+  document.getElementById('sv-cta-primary').textContent = 'Browse Markets →';
+  document.getElementById('sv-cta-primary').onclick = function() { window.location = 'rada-markets.html'; };
+  document.getElementById('sv-cta-secondary').style.display = 'none';
   document.getElementById('step4').style.display = '';
 }
 
@@ -511,6 +625,27 @@ var _origVerifyOTP = typeof verifyOTP !== 'undefined' ? verifyOTP : null;
   // Clean URL without reload
   history.replaceState(null, '', 'rada-auth.html');
 })();
+
+// ── Get Help → WhatsApp direct ───────────────────────────────────────────────
+function openGetHelp() {
+  // Load support number from config
+  fetch('./rada-config.json?_=' + Date.now())
+    .then(function(r) { return r.json(); })
+    .then(function(cfg) {
+      var num = (cfg && cfg.supportWhatsApp) ? cfg.supportWhatsApp : '';
+      if (num) {
+        var msg = 'Hi CheckRada Support, I need some help with my account.';
+        var url = 'https://wa.me/' + num.replace(/[^0-9]/g,'') + '?text=' + encodeURIComponent(msg);
+        window.open(url, '_blank');
+      } else {
+        // Fallback to FAQ page if no WhatsApp number configured
+        window.location.href = 'rada-faq.html';
+      }
+    })
+    .catch(function() {
+      window.location.href = 'rada-faq.html';
+    });
+}
 </script>
 </body>
 </html>

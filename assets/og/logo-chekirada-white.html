@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  width: 600px;
+  height: 180px;
+  background: linear-gradient(135deg, #3b0764 0%, #4c1d95 45%, #5b21b6 75%, #4c1d95 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-family: 'Arial Black', Arial, sans-serif;
+  overflow: hidden;
+  position: relative;
+}
+.grid {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(255,255,255,0.09) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+.wordmark {
+  font-size: 78px;
+  font-weight: 900;
+  letter-spacing: -2px;
+  line-height: 1;
+  position: relative;
+  z-index: 1;
+}
+.tagline {
+  font-size: 12px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  position: relative;
+  z-index: 1;
+}
+.bottom-bar {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, rgba(255,255,255,0.1), rgba(255,255,255,0.5), rgba(255,255,255,0.1));
+}
+</style>
+</head>
+<body>
+<div class="grid"></div>
+<div class="wordmark" style="color:#ffffff">ChekiRada</div>
+<div class="tagline">Africa's 1st Prediction Market</div>
+<div class="bottom-bar"></div>
+</body>
+</html>

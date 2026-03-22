@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+
+# Block admin pages from indexing
+Disallow: /rada-admin.html
+Disallow: /rada-admin-login.html
+Disallow: /rada-dashboard.html
+Disallow: /rada-portfolio.html
+
+# Sitemap
+Sitemap: https://checkrada.co.ke/sitemap.xml

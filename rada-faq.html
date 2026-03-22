@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- ═══ SEO META TAGS ═══ -->
+  <meta name="description" content="Everything you need to know about CheckRada — Africa's first prediction market. How payouts work, M-Pesa withdrawals, market resolution and more.">
+  <meta name="keywords" content="prediction markets Kenya, forecasting platform Kenya, Kenya crowd intelligence, National Sentiment Index Kenya, Africa first prediction market, M-Pesa forecasting, crowd forecasting Kenya, Kenya political risk data">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://checkrada.co.ke/rada-faq.html">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="CheckRada">
+  <meta property="og:title" content="CheckRada — Frequently Asked Questions">
+  <meta property="og:description" content="Everything you need to know about CheckRada — Africa's first prediction market. How payouts work, M-Pesa withdrawals, market resolution and more.">
+  <meta property="og:url" content="https://checkrada.co.ke/rada-faq.html">
+  <meta property="og:image" content="https://checkrada.co.ke/assets/og/og-brand.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="CheckRada — Africa's First Prediction Market">
+  <meta property="og:locale" content="en_KE">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="CheckRada — Frequently Asked Questions">
+  <meta name="twitter:description" content="Everything you need to know about CheckRada — Africa's first prediction market. How payouts work, M-Pesa withdrawals, market resolution and more.">
+  <meta name="twitter:image" content="https://checkrada.co.ke/assets/og/og-brand.png">
+  <meta name="twitter:site" content="@checkrada">
+  <!-- ═══════════════════════ -->
+<title>CheckRada — Frequently Asked Questions</title>
+<meta name="description" content="Everything you need to know about CheckRada — Africa's first prediction market. How it works, how payouts are calculated, M-Pesa withdrawals and more.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;900&family=Archivo:wght@700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --primary: #6d28d9;
+    --primary-dim: #ede9fe;
+    --text: #1a1035;
+    --text-mid: #4a4060;
+    --text-dim: #9284b8;
+    --border: #e5e0ff;
+    --bg: #faf9ff;
+    --bg2: #ffffff;
+    --green: #16a34a;
+    --green-dim: #f0fdf4;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: 'Outfit', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 0.92rem;
+    line-height: 1.75;
+  }
+
+  /* ── Header ── */
+  .doc-header {
+    background: linear-gradient(135deg, #1a1035 0%, #2d1069 100%);
+    padding: 40px 24px 36px;
+    text-align: center;
+  }
+  .doc-header .badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: rgba(255,255,255,0.8);
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 4px 14px;
+    border-radius: 20px;
+    margin-bottom: 14px;
+  }
+  .doc-header h1 {
+    font-family: 'Archivo', sans-serif;
+    font-size: 1.8rem;
+    font-weight: 900;
+    color: #fff;
+    margin-bottom: 8px;
+  }
+  .doc-header .sub {
+    font-size: 0.85rem;
+    color: rgba(255,255,255,0.55);
+    max-width: 480px;
+    margin: 0 auto;
+    line-height: 1.5;
+  }
+
+  /* ── Nav ── */
+  .back-nav {
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 10px 24px;
+  }
+  .back-nav a {
+    color: var(--primary);
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-decoration: none;
+  }
+
+  /* ── Content ── */
+  .doc-content {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 40px 24px 100px;
+  }
+
+  /* ── Category label ── */
+  .cat-label {
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--primary);
+    margin: 36px 0 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .cat-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* ── FAQ Item ── */
+  .faq-item {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    margin-bottom: 10px;
+    overflow: hidden;
+    transition: box-shadow 0.2s;
+  }
+  .faq-item:hover { box-shadow: 0 4px 20px rgba(109,40,217,0.08); }
+
+  .faq-q {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    cursor: pointer;
+    gap: 12px;
+    user-select: none;
+  }
+  .faq-q-text {
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: var(--text);
+    line-height: 1.4;
+    flex: 1;
+  }
+  .faq-chevron {
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: var(--primary-dim);
+    color: var(--primary);
+    font-size: 0.7rem;
+    font-weight: 900;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s;
+    flex-shrink: 0;
+  }
+  .faq-item.open .faq-chevron { transform: rotate(180deg); }
+  .faq-item.open .faq-q { border-bottom: 1px solid var(--border); }
+
+  .faq-a {
+    display: none;
+    padding: 16px 20px;
+    color: var(--text-mid);
+    font-size: 0.88rem;
+    line-height: 1.75;
+  }
+  .faq-item.open .faq-a { display: block; }
+  .faq-a strong { color: var(--text); }
+  .faq-a .highlight {
+    background: var(--primary-dim);
+    border-left: 3px solid var(--primary);
+    border-radius: 0 8px 8px 0;
+    padding: 10px 14px;
+    margin: 10px 0;
+    font-size: 0.85rem;
+  }
+  .faq-a .green-box {
+    background: var(--green-dim);
+    border-left: 3px solid var(--green);
+    border-radius: 0 8px 8px 0;
+    padding: 10px 14px;
+    margin: 10px 0;
+    font-size: 0.85rem;
+    color: #14532d;
+  }
+
+  /* ── CTA ── */
+  .cta-block {
+    background: linear-gradient(135deg, #1a1035, #2d1069);
+    border-radius: 18px;
+    padding: 32px 28px;
+    text-align: center;
+    margin-top: 48px;
+  }
+  .cta-block h3 {
+    font-family: 'Archivo', sans-serif;
+    font-size: 1.2rem;
+    color: #fff;
+    margin-bottom: 8px;
+  }
+  .cta-block p {
+    font-size: 0.82rem;
+    color: rgba(255,255,255,0.55);
+    margin-bottom: 20px;
+  }
+  .cta-block .btn {
+    display: inline-block;
+    background: #6d28d9;
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.88rem;
+    padding: 12px 28px;
+    border-radius: 10px;
+    text-decoration: none;
+    margin: 4px;
+  }
+  .cta-block .btn-outline {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.2);
+    color: rgba(255,255,255,0.7);
+  }
+
+  /* ── Footer ── */
+  .doc-footer {
+    background: var(--bg2);
+    border-top: 1px solid var(--border);
+    padding: 24px;
+    text-align: center;
+    font-size: 0.72rem;
+    color: var(--text-dim);
+  }
+  .doc-footer a { color: var(--primary); text-decoration: none; }
+
+  /* ── Floating WhatsApp Button ── */
+  .wa-fab {
+    position: fixed;
+    bottom: 28px;
+    right: 22px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: #25d366;
+    box-shadow: 0 4px 20px rgba(37,211,102,0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 8000;
+    text-decoration: none;
+    transition: transform 0.2s, box-shadow 0.2s;
+    animation: wa-pulse 2.5s ease-in-out infinite;
+  }
+  .wa-fab:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 28px rgba(37,211,102,0.6);
+    animation: none;
+  }
+  .wa-fab svg {
+    width: 30px;
+    height: 30px;
+    fill: #fff;
+    flex-shrink: 0;
+  }
+  /* Tooltip */
+  .wa-fab::before {
+    content: 'Chat with us';
+    position: absolute;
+    right: 66px;
+    background: #1a1035;
+    color: #fff;
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 6px 12px;
+    border-radius: 8px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+  }
+  .wa-fab:hover::before {
+    opacity: 1;
+  }
+  @keyframes wa-pulse {
+    0%, 100% { box-shadow: 0 4px 20px rgba(37,211,102,0.45); }
+    50%       { box-shadow: 0 4px 32px rgba(37,211,102,0.75); }
+  }
+  /* Hide on mobile bottom nav overlap — raise above it */
+  @media (max-width: 767px) {
+    .wa-fab { bottom: 82px; right: 16px; width: 50px; height: 50px; }
+    .wa-fab svg { width: 26px; height: 26px; }
+    .wa-fab::before { display: none; }
+  }
+
+</style>
+
+  <!-- FAQ JSON-LD Schema -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "What is CheckRada?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "CheckRada is Africa's first prediction market and crowd intelligence platform, built in Kenya. Users forecast real-world events and earn KES via M-Pesa when correct. Every forecast contributes to Kenya's National Sentiment Index."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Is CheckRada gambling?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "No. CheckRada is an incentivised forecasting and data platform, not a gambling or sports betting service. Markets are based on verifiable real-world outcomes requiring research and logic. We do not offer sports markets or games of chance."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Is CheckRada the first prediction market in Africa?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. CheckRada launched in 2026 as Africa's first incentivised forecasting platform using real-money stakes via M-Pesa. It is also Kenya's first crowd intelligence platform."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How does M-Pesa forecasting work?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Deposit KES via M-Pesa STK Push into your CheckRada wallet. Use your balance to stake on YES/NO market outcomes. Withdrawals are processed instantly to your registered M-Pesa number. Minimum deposit and stake is KES 20."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What is the National Sentiment Index?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "The National Sentiment Index is CheckRada's proprietary real-time data feed aggregating collective conviction of thousands of Kenyan forecasters to generate probability signals on economic, political and social events. Every signal is backed by real-money stakes."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What is the minimum stake on CheckRada?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "The minimum stake is KES 20 for public questions and Social Challenges. The maximum stake is KES 20,000 per Social Challenge."
+        }
+      }
+    ]
+  }
+  </script>
+</head>
+<body>
+
+<div class="doc-header">
+  <div class="badge">Help Centre</div>
+  <h1>Frequently Asked Questions</h1>
+  <div class="sub">Everything you need to know about CheckRada — Africa's first prediction market platform.</div>
+</div>
+
+<div class="back-nav">
+  <a href="rada-markets.html">← Back to CheckRada</a>
+</div>
+
+<div class="doc-content">
+
+  <!-- ABOUT THE PLATFORM -->
+  <div class="cat-label">About the Platform</div>
+
+  <div class="faq-item open">
+    <div class="faq-q" onclick="toggleFAQ(this)">
+      <div class="faq-q-text">What is CheckRada?</div>
+      <div class="faq-chevron">▾</div>
+    </div>
+    <div class="faq-a">
+      CheckRada is Africa's first prediction market and crowd intelligence platform, built in Kenya. It allows users to forecast the outcomes of real-world events — political, economic, social and environmental — and earn Kenyan Shillings via M-Pesa when their forecasts are correct.
+      <br><br>
+      Every forecast contributes to Kenya's <strong>National Sentiment Index</strong>, a real-time data feed that tracks collective public conviction on events that matter. Unlike polls or surveys, every signal is backed by real money — making it a high-fidelity measure of what Kenyans actually believe will happen.
+    </div>
+  </div>
+
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggleFAQ(this)">
+      <div class="faq-q-text">Is CheckRada the first prediction market in Africa?</div>
+      <div class="faq-chevron">▾</div>
+    </div>
+    <div class="faq-a">
+      Yes. CheckRada launched in 2026 as Africa's first incentivised forecasting platform using real-money stakes via M-Pesa. It is also Kenya's first crowd intelligence platform and the first skin-in-the-game sentiment data feed on the continent.
+    </div>
+  </div>
+
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggleFAQ(this)">
+      <div class="faq-q-text">Is CheckRada gambling?</div>
+      <div class="faq-chevron">▾</div>
+    </div>
+    <div class="faq-a">
+      No. CheckRada is an incentivised forecasting and data platform, not a gambling or sports betting service. Our markets are built on verifiable real-world outcomes — like economic indicators and policy shifts — that require research and logic. We do not offer sports markets or games of chance.
+    </div>
+  </div>
+
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggleFAQ(this)">
+      <div class="faq-q-text">What is the National Sentiment Index?</div>
+      <div class="faq-chevron">▾</div>
+    </div>
+    <div class="faq-a">
+      The National Sentiment Index is CheckRada's proprietary real-time data feed. It aggregates the collective conviction of thousands of Kenyan participants to generate high-fidelity probability signals on economic, political and social events.
+      <div class="highlight">
+        Unlike traditional polls, every signal is backed by "skin-in-the-game" — making it Africa's most accurate measure of public expectation. Banks, NGOs and research institutions can access this data via the CheckRada Data API.
+      </div>
+    </div>
+  </div>
+
+  <!-- HOW IT WORKS -->
+  <div class="cat-label">How It Works</div>
+
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggleFAQ(this)">
+      <div class="faq-q-text">How does CheckRada work?</div>
+      <div class="faq-chevron">▾</div>
+    </div>
+    <div class="faq-a">
+      A market is a YES/NO question about a verifiable real-world event. You stake KES via M-Pesa on YES or NO. The live probability shifts based on how much the crowd stakes on each side — the more money staked on YES, the higher the YES probability.
+      <br><br>
+      When the event resolves, correct forecasters share the pool <strong>based on their stake size and the probability at the time they placed their forecast</strong>. Forecasting early — when uncertainty is high — yields a higher return than forecasting late when the outcome is already likely. This rewards genuine insight over crowd-following.
+      <br><br>
+      A 5% platform fee applies to every position regardless of outcome.
+    </div>
+  </div>
+
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggleFAQ(this)">
+      <div class="faq-q-text">Can I lose my money?</div>
+      <div class="faq-chevron">▾</div>
+    </div>
+    <div class="faq-a">
+      If your forecast is incorrect, your stake is distributed to those who forecasted correctly. CheckRada is a market of skill and insight — we encourage all users to research the question thoroughly before staking.
+      <div class="highlight">
+        The 5% platform fee also applies regardless of outcome, so this is deducted from your stake before any payout calculation.
+      </div>
+    </div>
+  </div>
+
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggleFAQ(this)">
+      <div class="faq-q-text">What happens if a question is cancelled?</div>
+      <div class="faq-chevron">▾</div>
+    </div>
+    <div class="faq-a">
+      If a question is cancelled due to indefinite postponement or an unverifiable outcome, <strong>100% of all stakes are refunded directly to your CheckRada wallet</strong>. No fees are deducted from cancelled questions.
+    </div>
+  </div>
+
+  <!-- MONEY & MPESA -->
+  <div class="cat-label">Money &amp; M-Pesa</div>
+
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggleFAQ(this)">
+      <div class="faq-q-text">How does M-Pesa forecasting work?</div>
+      <div class="faq-chevron">▾</div>
+    </div>
+    <div class="faq-a">
+      You deposit KES into your CheckRada wallet via M-Pesa STK Push — your phone receives a prompt to confirm payment. Your wallet balance is used to stake on markets. When you win, payouts are credited to your wallet automatically.
+      <div class="green-box">
+        <strong>Withdrawals are processed instantly</strong> to your registered M-Pesa number, subject to Safaricom M-Pesa service availability. No delays, no paperwork.
+      </div>
+      Minimum deposit: <strong>KES 20</strong> &nbsp;·&nbsp; Minimum withdrawal: <strong>KES 50</strong>
+    </div>
+  </div>
+
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggleFAQ(this)">
+      <div class="faq-q-text">How do I know CheckRada is safe with my money?</div>
+      <div class="faq-chevron">▾</div>
+    </div>
+    <div class="faq-a">
+      Your CheckRada wallet balance is yours at all times. You can withdraw to your registered M-Pesa number at any time — no lock-in periods, no hidden conditions. All transactions are processed through Safaricom's M-Pesa infrastructure.
+      <br><br>
+      CheckRada does not have access to your M-Pesa PIN or M-Pesa account directly. Payments are initiated via STK Push which you must confirm on your own device.
+    </div>
+  </div>
+
+  <!-- RESOLUTION & FAIRNESS -->
+  <div class="cat-label">Resolution &amp; Fairness</div>
+
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggleFAQ(this)">
+      <div class="faq-q-text">Who resolves the markets?</div>
+      <div class="faq-chevron">▾</div>
+    </div>
+    <div class="faq-a">
+      The CheckRada Integrity Team resolves public markets using official, verifiable data from sources such as CBK bulletins, EPRA announcements, KNBS reports and official government portals. Official government and regulatory sources always take precedence over media reports in the event of conflicting information.
+      <br><br>
+      For peer-to-peer Social Challenges, a nominated Referee approves the outcome, backed by a 48-hour dispute window to ensure total fairness.
+      <div class="highlight">
+        <strong>Tie outcomes:</strong> In the rare event of a split outcome requiring Platform intervention, the pool is distributed equally among all participants after a 15% administrative fee. Mutual agreements between challengers reached before Platform intervention carry the standard 5% fee — so agreeing early is always in both parties' interest.
+      </div>
+    </div>
+  </div>
+
+  <!-- CREATORS -->
+  <div class="cat-label">Market Creators</div>
+
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggleFAQ(this)">
+      <div class="faq-q-text">How do I earn as a Market Creator?</div>
+      <div class="faq-chevron">▾</div>
+    </div>
+    <div class="faq-a">
+      Propose a YES/NO question on the Creator Hub, get it approved by the CheckRada team, and share your unique market link. You earn <strong>0.5% of every trade</strong> placed on your market, credited automatically to your CheckRada wallet while the market is active.
+      <br><br>
+      The more your market gets shared and traded, the more you earn — with no additional effort after approval.
+    </div>
+  </div>
+
+  <!-- STAKES -->
+  <div class="cat-label">Stakes &amp; Limits</div>
+
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggleFAQ(this)">
+      <div class="faq-q-text">What is the minimum stake?</div>
+      <div class="faq-chevron">▾</div>
+    </div>
+    <div class="faq-a">
+      To keep the platform accessible to everyone, the minimum stake is <strong>KES 20</strong> for public questions and Social Challenges. The maximum stake is capped at <strong>KES 20,000</strong> per Social Challenge.
+    </div>
+  </div>
+
+  <!-- CTA -->
+  <div class="cta-block">
+    <h3>Still have a question?</h3>
+    <p>Our support team is available via WhatsApp — typically responds within 2 hours.</p>
+    <a href="rada-markets.html" class="btn">Browse Markets →</a>
+    <a href="rada-auth.html" class="btn btn-outline">Sign Up Free</a>
+  </div>
+
+</div>
+
+<div class="doc-footer">
+  <strong>CheckRada</strong> · Kenya's 1st Forecasting Platform &nbsp;·&nbsp;
+  <a href="rada-terms.html">Terms &amp; Conditions</a> &nbsp;·&nbsp;
+  <a href="rada-privacy.html">Privacy Policy</a> &nbsp;·&nbsp;
+  <a href="rada-markets.html">Back to Markets</a>
+</div>
+
+<script>
+function toggleFAQ(el) {
+  var item = el.closest('.faq-item');
+  var isOpen = item.classList.contains('open');
+  // Close all
+  document.querySelectorAll('.faq-item.open').forEach(function(i) {
+    i.classList.remove('open');
+  });
+  // Open clicked if it was closed
+  if (!isOpen) item.classList.add('open');
+}
+</script>
+
+
+<!-- Floating WhatsApp Support Button -->
+<a class="wa-fab" id="waFab" href="#" onclick="openWaFAB(event)" title="Chat with us on WhatsApp" aria-label="WhatsApp Support">
+  <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+    <path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.553 4.113 1.524 5.842L.057 23.571a.5.5 0 0 0 .608.625l5.939-1.554A11.945 11.945 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.891 0-3.659-.52-5.174-1.427l-.371-.22-3.527.924.939-3.432-.242-.381A9.944 9.944 0 0 1 2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/>
+  </svg>
+</a>
+
+<script>
+// Load support number from rada-config.json
+window.RADA_SUPPORT_WA = '';
+(function() {
+  fetch('./rada-config.json?_=' + Date.now())
+    .then(function(r) { return r.json(); })
+    .then(function(cfg) {
+      if (cfg && cfg.supportWhatsApp) {
+        window.RADA_SUPPORT_WA = cfg.supportWhatsApp;
+      }
+      // Always show button — opens FAQ if no number set
+      var fab = document.getElementById('waFab');
+      if (fab) fab.style.display = 'flex';
+    })
+    .catch(function() {
+      var fab = document.getElementById('waFab');
+      if (fab) fab.style.display = 'flex';
+    });
+})();
+
+function openWaFAB(e) {
+  e.preventDefault();
+  var num = window.RADA_SUPPORT_WA;
+  if (!num) {
+    // Scroll to CTA block if no number set
+    var cta = document.querySelector('.cta-block');
+    if (cta) cta.scrollIntoView({ behavior: 'smooth' });
+    return;
+  }
+  var msg = 'Hi CheckRada Support, I have a question and need some help.';
+  var url = 'https://wa.me/' + num.replace(/[^0-9]/g,'') + '?text=' + encodeURIComponent(msg);
+  window.open(url, '_blank');
+}
+</script>
+
+</body>
+</html>

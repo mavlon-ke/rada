@@ -672,11 +672,11 @@ body::after {
 
 </head>
 <body>
-<!-- RADA BUILD v64-FINAL -->
+<!-- RADA BUILD v74-FINAL -->
 <div id="radaBuildStamp" style="position:fixed;top:4px;left:50%;transform:translateX(-50%);
 background:#16a34a;color:#fff;font-size:0.55rem;font-weight:900;padding:2px 10px;
 border-radius:10px;z-index:9999;letter-spacing:0.05em;pointer-events:none;">
-✓ BUILD v64
+✓ BUILD v74
 </div>
 
 <!-- SIDEBAR -->
@@ -800,7 +800,7 @@ border-radius:10px;z-index:9999;letter-spacing:0.05em;pointer-events:none;">
   <div class="topbar">
     <div class="topbar-left">
       <button class="mobile-menu-btn" onclick="toggleSidebar()">☰</button>
-      <div class="breadcrumb">rada.co.ke / <span id="breadcrumbLabel">dashboard</span></div>
+      <div class="breadcrumb">checkrada.co.ke / <span id="breadcrumbLabel">dashboard</span></div>
     </div>
     <div class="topbar-right">
       <div class="status-pill"><div class="status-dot"></div>Systems Operational</div>
@@ -1369,7 +1369,7 @@ border-radius:10px;z-index:9999;letter-spacing:0.05em;pointer-events:none;">
 
         <div style="background:#f0edff;border-radius:10px;padding:12px 14px;margin-bottom:16px;">
           <div style="font-size:0.65rem;font-weight:700;color:#4c1d95;margin-bottom:6px;">📱 WhatsApp Share Message Preview</div>
-          <div id="referralMsgPreview" style="font-size:0.7rem;color:#1a1035;line-height:1.7;font-style:italic;">"I've been using Rada to predict Kenyan events outcomes and winning real money. Join me — use my code [CODE] and we both get KES 100. rada.co.ke/join/[CODE]"</div>
+          <div id="referralMsgPreview" style="font-size:0.7rem;color:#1a1035;line-height:1.7;font-style:italic;">"I've been using Rada to predict Kenyan events outcomes and winning real money. Join me — use my code [CODE] and we both get KES 100. checkrada.co.ke/join/[CODE]"</div>
         </div>
 
         <button onclick="saveReferralConfig()" style="padding:12px 24px;background:#6d28d9;color:#fff;border:none;border-radius:10px;font-size:0.78rem;font-weight:700;cursor:pointer;font-family:inherit;">💾 Save Configuration</button>
@@ -2045,13 +2045,13 @@ function renderB2B() {
 
 // ── ADMIN LOG ─────────────────────────────────────────────────────────────────
 const ADMIN_LOG_DATA = [
-  { admin:'admin@rada.co.ke', action:'Dispute Resolved (A wins)', target:'Challenge #47', ts:'Mar 7 14:32', ip:'102.68.xx.xx' },
-  { admin:'admin@rada.co.ke', action:'Market Created', target:'"Will CBK hold rates?"', ts:'Mar 7 11:15', ip:'102.68.xx.xx' },
-  { admin:'admin@rada.co.ke', action:'Suggestion Approved + KES 50 Reward', target:'Suggestion #23', ts:'Mar 6 16:44', ip:'102.68.xx.xx' },
-  { admin:'admin@rada.co.ke', action:'KYC Approved', target:'User +254712***456', ts:'Mar 6 10:22', ip:'102.68.xx.xx' },
-  { admin:'ops@rada.co.ke', action:'Admin Role Assigned', target:'ops@rada.co.ke', ts:'Mar 5 09:00', ip:'41.90.xx.xx' },
-  { admin:'admin@rada.co.ke', action:'Market Paused (Kill Switch)', target:'"Nairobi Elections 2026"', ts:'Mar 4 18:33', ip:'102.68.xx.xx' },
-  { admin:'admin@rada.co.ke', action:'Dispute Resolved (Tie — 15% fee)', target:'Challenge #41', ts:'Mar 3 12:11', ip:'102.68.xx.xx' },
+  { admin:'admin@checkrada.co.ke', action:'Dispute Resolved (A wins)', target:'Challenge #47', ts:'Mar 7 14:32', ip:'102.68.xx.xx' },
+  { admin:'admin@checkrada.co.ke', action:'Market Created', target:'"Will CBK hold rates?"', ts:'Mar 7 11:15', ip:'102.68.xx.xx' },
+  { admin:'admin@checkrada.co.ke', action:'Suggestion Approved + KES 50 Reward', target:'Suggestion #23', ts:'Mar 6 16:44', ip:'102.68.xx.xx' },
+  { admin:'admin@checkrada.co.ke', action:'KYC Approved', target:'User +254712***456', ts:'Mar 6 10:22', ip:'102.68.xx.xx' },
+  { admin:'ops@checkrada.co.ke', action:'Admin Role Assigned', target:'ops@checkrada.co.ke', ts:'Mar 5 09:00', ip:'41.90.xx.xx' },
+  { admin:'admin@checkrada.co.ke', action:'Market Paused (Kill Switch)', target:'"Nairobi Elections 2026"', ts:'Mar 4 18:33', ip:'102.68.xx.xx' },
+  { admin:'admin@checkrada.co.ke', action:'Dispute Resolved (Tie — 15% fee)', target:'Challenge #41', ts:'Mar 3 12:11', ip:'102.68.xx.xx' },
 ];
 
 function renderAdminLog() {
@@ -2188,7 +2188,7 @@ function updateReferralPreview() {
   var amount = document.getElementById('refereeMatchInput');
   var prev   = document.getElementById('referralMsgPreview');
   if (prev && amount) {
-    prev.textContent = '"I\'ve been using Rada to predict Kenyan events outcomes and winning real money. Join me — use my code [CODE] and we both get KES ' + amount.value + '. rada.co.ke/join/[CODE]"';
+    prev.textContent = '"I\'ve been using Rada to predict Kenyan events outcomes and winning real money. Join me — use my code [CODE] and we both get KES ' + amount.value + '. checkrada.co.ke/join/[CODE]"';
   }
 }
 

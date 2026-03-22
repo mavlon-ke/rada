@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;900&family=Archivo+Black&display=swap');
+
+  body {
+    width: 1200px;
+    height: 630px;
+    overflow: hidden;
+    font-family: 'Outfit', sans-serif;
+    background: #faf9ff;
+  }
+
+  .canvas {
+    width: 1200px;
+    height: 630px;
+    position: relative;
+    background: #faf9ff;
+    overflow: hidden;
+  }
+
+  /* Purple accent panel - left side */
+  .left-panel {
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 520px;
+    background: linear-gradient(160deg, #1a1035 0%, #2d1069 50%, #1a1035 100%);
+  }
+
+  /* Grid on left panel */
+  .left-grid {
+    position: absolute;
+    left: 0; top: 0;
+    width: 520px; height: 630px;
+    background-image: radial-gradient(rgba(255,255,255,0.08) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+
+  /* Glow on left panel */
+  .left-glow {
+    position: absolute;
+    left: 0; top: 0;
+    width: 520px; height: 630px;
+    background: radial-gradient(ellipse at 40% 50%, rgba(109,40,217,0.4) 0%, transparent 65%);
+  }
+
+  /* Diagonal divider */
+  .divider-diagonal {
+    position: absolute;
+    left: 480px; top: 0; bottom: 0;
+    width: 80px;
+    background: linear-gradient(to right, #1a1035, transparent);
+    z-index: 2;
+  }
+
+  /* Left content */
+  .left-content {
+    position: absolute;
+    left: 0; top: 0;
+    width: 500px; height: 630px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 56px 50px;
+    z-index: 3;
+  }
+
+  .brand-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 20px;
+    padding: 5px 14px;
+    font-size: 12px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.7);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    width: fit-content;
+  }
+  .brand-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: #22c55e;
+  }
+
+  .left-title {
+    font-family: 'Archivo Black', sans-serif;
+    font-size: 52px;
+    font-weight: 900;
+    color: #fff;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    margin-bottom: 16px;
+  }
+  .left-title .accent {
+    color: #a78bfa;
+  }
+
+  .left-sub {
+    font-size: 16px;
+    color: rgba(255,255,255,0.55);
+    line-height: 1.6;
+    margin-bottom: 28px;
+    max-width: 340px;
+  }
+
+  .left-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #6d28d9;
+    color: #fff;
+    font-size: 15px;
+    font-weight: 700;
+    padding: 12px 24px;
+    border-radius: 10px;
+    width: fit-content;
+  }
+
+  /* Right content */
+  .right-content {
+    position: absolute;
+    left: 540px; top: 0;
+    width: 660px; height: 630px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 50px 50px 50px 30px;
+    z-index: 3;
+  }
+
+  /* Market card mock */
+  .market-card {
+    background: #fff;
+    border: 1.5px solid #e5e0ff;
+    border-radius: 16px;
+    padding: 22px 24px;
+    box-shadow: 0 8px 40px rgba(109,40,217,0.1);
+    margin-bottom: 16px;
+  }
+
+  .market-cat {
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    color: #9284b8;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .cat-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: #6d28d9;
+  }
+
+  .market-q {
+    font-size: 17px;
+    font-weight: 700;
+    color: #1a1035;
+    line-height: 1.35;
+    margin-bottom: 14px;
+  }
+
+  /* YES/NO bar */
+  .yes-no-bar {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+    gap: 0;
+    border-radius: 6px;
+    overflow: hidden;
+    height: 8px;
+  }
+  .yes-bar {
+    height: 8px;
+    background: #16a34a;
+    border-radius: 6px 0 0 6px;
+  }
+  .no-bar {
+    height: 8px;
+    background: #CE1126;
+    border-radius: 0 6px 6px 0;
+  }
+
+  .yes-no-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .yes-label {
+    font-size: 13px;
+    font-weight: 800;
+    color: #16a34a;
+  }
+  .no-label {
+    font-size: 13px;
+    font-weight: 800;
+    color: #CE1126;
+  }
+
+  .market-btns {
+    display: flex;
+    gap: 8px;
+  }
+  .btn-yes {
+    flex: 1;
+    background: rgba(22,163,74,0.08);
+    border: 1.5px solid rgba(22,163,74,0.3);
+    color: #16a34a;
+    font-size: 13px;
+    font-weight: 800;
+    padding: 8px;
+    border-radius: 8px;
+    text-align: center;
+  }
+  .btn-no {
+    flex: 1;
+    background: rgba(206,17,38,0.07);
+    border: 1.5px solid rgba(206,17,38,0.25);
+    color: #CE1126;
+    font-size: 13px;
+    font-weight: 800;
+    padding: 8px;
+    border-radius: 8px;
+    text-align: center;
+  }
+
+  /* Stats row */
+  .stats-row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .stat {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    color: #9284b8;
+    font-weight: 600;
+  }
+
+  /* Second smaller card */
+  .market-card-sm {
+    background: #fff;
+    border: 1.5px solid #e5e0ff;
+    border-radius: 12px;
+    padding: 16px 20px;
+    box-shadow: 0 4px 20px rgba(109,40,217,0.06);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    opacity: 0.6;
+  }
+  .sm-q {
+    font-size: 14px;
+    font-weight: 700;
+    color: #1a1035;
+    flex: 1;
+    line-height: 1.3;
+  }
+  .sm-pct {
+    font-size: 20px;
+    font-weight: 900;
+    color: #6d28d9;
+    white-space: nowrap;
+  }
+
+  /* Bottom domain */
+  .bottom-domain {
+    position: absolute;
+    bottom: 24px; right: 40px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #c4b5fd;
+    letter-spacing: 0.04em;
+  }
+
+  /* Bottom bar */
+  .bottom-bar {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #6d28d9, #a78bfa, #22c55e, #6d28d9);
+  }
+</style>
+</head>
+<body>
+<div class="canvas">
+
+  <!-- Left dark panel -->
+  <div class="left-panel">
+    <div class="left-grid"></div>
+    <div class="left-glow"></div>
+  </div>
+  <div class="divider-diagonal"></div>
+
+  <!-- Left text content -->
+  <div class="left-content">
+    <div class="brand-badge">
+      <div class="brand-dot"></div>
+      CheckRada
+    </div>
+    <div class="left-title">
+      Forecast.<br>
+      Stake.<br>
+      <span class="accent">Earn.</span>
+    </div>
+    <div class="left-sub">
+      Africa's first prediction market.<br>
+      Real events. Real money. M-Pesa.
+    </div>
+    <div class="left-cta">
+      Start Forecasting →
+    </div>
+  </div>
+
+  <!-- Right market cards -->
+  <div class="right-content">
+    <div class="market-card">
+      <div class="market-cat"><div class="cat-dot"></div>Politics</div>
+      <div class="market-q">Will Kenya reduce fuel prices by July 2026?</div>
+      <div class="yes-no-bar">
+        <div class="yes-bar" style="width:29%"></div>
+        <div class="no-bar" style="width:71%"></div>
+      </div>
+      <div class="yes-no-labels">
+        <span class="yes-label">YES 29%</span>
+        <span class="no-label">NO 71%</span>
+      </div>
+      <div class="stats-row">
+        <div class="stat">📊 KES 510K</div>
+        <div class="stat">👥 512 forecasters</div>
+        <div class="stat">📅 Jul 01</div>
+      </div>
+      <div class="market-btns">
+        <div class="btn-yes">YES</div>
+        <div class="btn-no">NO</div>
+      </div>
+    </div>
+
+    <div class="market-card-sm">
+      <div class="sm-q">Will the KES/USD exchange rate hold below 130 by Q2 2026?</div>
+      <div class="sm-pct">54%</div>
+    </div>
+  </div>
+
+  <div class="bottom-domain">checkrada.co.ke</div>
+  <div class="bottom-bar"></div>
+</div>
+</body>
+</html>

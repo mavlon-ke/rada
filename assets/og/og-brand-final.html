@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    width: 1200px;
+    height: 630px;
+    overflow: hidden;
+    background: #4c1d95;
+  }
+  .canvas {
+    width: 1200px;
+    height: 630px;
+    position: relative;
+    background: linear-gradient(135deg, #3b0764 0%, #4c1d95 40%, #5b21b6 70%, #4c1d95 100%);
+    overflow: hidden;
+  }
+  .grid {
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(rgba(255,255,255,0.1) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+  .geo-circle-1 {
+    position: absolute;
+    width: 600px; height: 600px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.08);
+    top: -150px; right: -100px;
+  }
+  .geo-circle-2 {
+    position: absolute;
+    width: 400px; height: 400px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.06);
+    top: -50px; right: 50px;
+  }
+  .geo-circle-3 {
+    position: absolute;
+    width: 300px; height: 300px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,255,255,0.06) 0%, transparent 70%);
+    bottom: -80px; left: -80px;
+  }
+  .glow {
+    position: absolute;
+    width: 500px; height: 300px;
+    background: radial-gradient(ellipse, rgba(255,255,255,0.1) 0%, transparent 70%);
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+  }
+  .content {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px;
+  }
+  .badge {
+    background: rgba(255,255,255,0.18);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 900;
+    letter-spacing: 0.15em;
+    padding: 6px 18px;
+    border-radius: 6px;
+    margin-bottom: 28px;
+    text-transform: uppercase;
+    border: 1px solid rgba(255,255,255,0.25);
+    font-family: Arial, sans-serif;
+  }
+  .divider {
+    width: 80px;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent);
+    margin: 22px 0;
+    border-radius: 2px;
+  }
+  .tagline {
+    font-size: 22px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.85);
+    letter-spacing: 0.02em;
+    text-align: center;
+    margin-bottom: 10px;
+    font-family: Arial, sans-serif;
+  }
+  .tagline strong { color: #e9d5ff; }
+  .sub {
+    font-size: 15px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.45);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    text-align: center;
+    font-family: Arial, sans-serif;
+  }
+  .pills {
+    display: flex;
+    gap: 10px;
+    margin-top: 28px;
+  }
+  .pill {
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.25);
+    color: rgba(255,255,255,0.85);
+    font-size: 13px;
+    font-weight: 600;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-family: Arial, sans-serif;
+  }
+  .corner-flag {
+    position: absolute;
+    top: 36px; right: 40px;
+    font-size: 13px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.35);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: Arial, sans-serif;
+  }
+  .flag-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: #22c55e;
+  }
+  .bottom-bar {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, rgba(255,255,255,0.2), rgba(255,255,255,0.6), rgba(255,255,255,0.2));
+  }
+</style>
+</head>
+<body>
+<div class="canvas">
+  <div class="grid"></div>
+  <div class="geo-circle-1"></div>
+  <div class="geo-circle-2"></div>
+  <div class="geo-circle-3"></div>
+  <div class="glow"></div>
+
+  <div class="corner-flag">
+    <div class="flag-dot"></div>
+    checkrada.co.ke
+  </div>
+
+  <div class="content">
+    <div class="badge">CHECKRADA</div>
+
+    <!-- Logo: single SVG, font measured precisely -->
+    <svg width="820" height="120" viewBox="0 0 820 120" xmlns="http://www.w3.org/2000/svg">
+
+      <!-- Step 1: Render full "CheckRada" in white -->
+      <text x="0" y="100"
+        font-family="'DejaVu Sans Bold', 'Arial Black', Arial, sans-serif"
+        font-size="118"
+        font-weight="900"
+        fill="white">CheckRada</text>
+
+      <!-- Step 2: Overlay "Rada" portion in light purple
+           "Check" width measured = 402px, so "Rada" starts at x=402 -->
+      <text x="402" y="100"
+        font-family="'DejaVu Sans Bold', 'Arial Black', Arial, sans-serif"
+        font-size="118"
+        font-weight="900"
+        fill="#c4b5fd">Rada</text>
+
+      <!-- Step 3: Green tick over K's diagonal arms
+           K spans x=321 to x=402
+           K vertical bar left edge: x=321, right edge: ~x=342
+           K midpoint (where arms meet bar): (342, 55)
+           Upper arm tip: (402, 5)
+           Lower arm tip: (402, 100) -->
+      <polyline
+        points="402,5 342,55 402,100"
+        stroke="#22c55e"
+        stroke-width="18"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        fill="none"/>
+
+    </svg>
+
+    <div class="divider"></div>
+    <div class="tagline"><strong>Africa's 1st</strong> Prediction Market Platform</div>
+    <div class="sub">Kenya's Crowd Intelligence Engine</div>
+    <div class="pills">
+      <div class="pill">🇰🇪 M-Pesa Native</div>
+      <div class="pill">📊 Real Stakes</div>
+      <div class="pill">💡 Crowd Intelligence</div>
+    </div>
+  </div>
+
+  <div class="bottom-bar"></div>
+</div>
+</body>
+</html>

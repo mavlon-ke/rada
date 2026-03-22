@@ -3,6 +3,31 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- ═══ SEO META TAGS ═══ -->
+  <meta name="description" content="Propose a YES/NO market, get approved, earn 0.5% of every trade. Africa's first creator-driven prediction market. Monetise your insights on CheckRada.">
+  <meta name="keywords" content="prediction markets Kenya, forecasting platform Kenya, Kenya crowd intelligence, National Sentiment Index Kenya, Africa first prediction market, M-Pesa forecasting, crowd forecasting Kenya, Kenya political risk data">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://checkrada.co.ke/rada-creator.html">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="CheckRada">
+  <meta property="og:title" content="CheckRada — Creator Hub">
+  <meta property="og:description" content="Propose a YES/NO market, get approved, earn 0.5% of every trade. Africa's first creator-driven prediction market. Monetise your insights on CheckRada.">
+  <meta property="og:url" content="https://checkrada.co.ke/rada-creator.html">
+  <meta property="og:image" content="https://checkrada.co.ke/assets/og/og-markets.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="CheckRada — Africa's First Prediction Market">
+  <meta property="og:locale" content="en_KE">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="CheckRada — Creator Hub">
+  <meta name="twitter:description" content="Propose a YES/NO market, get approved, earn 0.5% of every trade. Africa's first creator-driven prediction market. Monetise your insights on CheckRada.">
+  <meta name="twitter:image" content="https://checkrada.co.ke/assets/og/og-markets.png">
+  <meta name="twitter:site" content="@checkrada">
+  <!-- ═══════════════════════ -->
 <title>CheckRada — Creator Hub</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -633,11 +658,11 @@ td{padding:14px 16px;font-size:0.8rem;border-bottom:1px solid rgba(109,40,217,0.
 
 </head>
 <body>
-<!-- RADA BUILD v64-FINAL -->
+<!-- RADA BUILD v74-FINAL -->
 <div id="radaBuildStamp" style="position:fixed;top:4px;left:50%;transform:translateX(-50%);
 background:#16a34a;color:#fff;font-size:0.55rem;font-weight:900;padding:2px 10px;
 border-radius:10px;z-index:9999;letter-spacing:0.05em;pointer-events:none;">
-✓ BUILD v64
+✓ BUILD v74
 </div>
 
 <!-- M-TOP-BAR -->
@@ -834,7 +859,7 @@ border-radius:10px;z-index:9999;letter-spacing:0.05em;pointer-events:none;">
         <div class="form-field">
           <label class="field-label">Your Creator Link (Auto-generated on Approval)</label>
           <div class="url-preview" id="urlPreview">
-            rada.co.ke/m/<span id="urlSlug">your-market-slug</span>?c=<span id="urlPhone">07XXXXXXXX</span>
+            checkrada.co.ke/m/<span id="urlSlug">your-market-slug</span>?c=<span id="urlPhone">07XXXXXXXX</span>
           </div>
           <span class="field-hint">Share this link. Every trade from it credits your CheckCheckRada wallet for as long as the market is open.</span>
         </div>
@@ -863,7 +888,7 @@ border-radius:10px;z-index:9999;letter-spacing:0.05em;pointer-events:none;">
     </div>
     <div class="share-link-label">Your Provisional Creator Link</div>
     <div class="share-link-box" id="shareLink" onclick="copyLink()">
-      rada.co.ke/m/pending-review?c=<span id="shareLinkPhone"></span>
+      checkrada.co.ke/m/pending-review?c=<span id="shareLinkPhone"></span>
       <div style="font-size:0.62rem;color:var(--text-dim);margin-top:4px;">Click to copy</div>
     </div>
     <button class="btn-smart-share" onclick="smartCreatorShare()">⤴ Share</button>
@@ -994,7 +1019,7 @@ function shake(id) {
 
 
 function copySlug(slug) {
-  const link = `https://rada.co.ke/m/${slug}?c=MY_PHONE`;
+  const link = `https://checkrada.co.ke/m/${slug}?c=MY_PHONE`;
   navigator.clipboard.writeText(link).catch(()=>{});
   alert('Creator link copied! Share it to earn on every trade.');
 }
@@ -1038,7 +1063,7 @@ function legacyCopyC(text, onSuccess) {
 function getCreatorLink() {
   const phone = document.getElementById('phoneInput')?.value || '07XXXXXXXX';
   const slug  = document.getElementById('urlSlug')?.textContent || 'pending-review';
-  return `https://rada.co.ke/m/${slug}?c=${encodeURIComponent(phone)}`;
+  return `https://checkrada.co.ke/m/${slug}?c=${encodeURIComponent(phone)}`;
 }
 
 function showCreatorToast() {
@@ -1062,7 +1087,7 @@ function radaShare(title, text, url, onFallback) {
 
 function smartCreatorShare() {
   const phone = document.getElementById('shareLinkPhone').textContent || '0000000000';
-  const link  = 'https://rada.co.ke/m/pending-review?c=' + phone;
+  const link  = 'https://checkrada.co.ke/m/pending-review?c=' + phone;
   radaShare(
     'CheckRada — Forecast Market',
     '🇰🇪 I just proposed a market on CheckRada — Kenya's forecasting platform. Join and forecast: ' + link,
@@ -1106,7 +1131,7 @@ function creatorShareSMS()   { copyLink(); }
 function creatorNativeShare(){ copyLink(); }
 
 function copySlug(slug) {
-  const link = `https://rada.co.ke/m/${slug}`;
+  const link = `https://checkrada.co.ke/m/${slug}`;
   radaShare('Rada Market', 'Check out this forecast market on Rada 🇰🇪', link);
 }
 
@@ -1122,8 +1147,8 @@ function copySlug(slug) {
 <div class="predict-overlay" id="predictOverlay" onclick="if(event.target===this)closePredictSheet()"><div class="predict-sheet"><div class="predict-sheet-handle"></div><div class="predict-sheet-title">What would you like to do?</div><div class="predict-option" onclick="closePredictSheet();window.location.href='rada-markets.html?filter=trending'"><div class="predict-opt-icon">◈</div><div><div class="predict-opt-title">Forecast a Market</div><div class="predict-opt-sub">Pick YES or NO on any open market. Win KES when you're right.</div></div></div><div class="predict-option" onclick="closePredictSheet();window.location.href='rada-friends.html'"><div class="predict-opt-icon">🤝</div><div><div class="predict-opt-title">Create a Social Challenge</div><div class="predict-opt-sub">Challenge a friend privately. Stake KES 20–20,000.</div></div></div><div class="predict-option" id="predictMultiOpt" onclick="openMultiSheet()"><div class="predict-opt-icon">📋</div><div><div class="predict-opt-title">Submit Multi-Forecast</div><div class="predict-opt-sub" id="predictMultiSub">0 markets queued.</div></div></div></div></div>
 <div class="multi-overlay" id="multiOverlay" onclick="if(event.target===this)closeMultiSheet()"><div class="multi-sheet"><div class="multi-sheet-handle"></div><div class="multi-sheet-head"><div class="multi-sheet-title">📋 Multi-Forecast</div><div class="multi-sheet-sub">Each forecast is independent — one wrong call does not affect the rest</div></div><div class="multi-sheet-body" id="multiSheetBody"><div class="multi-empty">No forecasts queued. Tap &quot;+ Multi&quot; on any market card.</div></div><div class="multi-sheet-foot"><div class="multi-totals"><div class="multi-total-row"><span class="mtr-label">Total stake</span><span class="mtr-val" id="multiTotalStake">KES 0</span></div><div class="multi-total-row"><span class="mtr-label">Fees (5% each)</span><span class="mtr-val" id="multiTotalFee">KES 0</span></div></div><div class="multi-payment-info" id="multiPayInfo"></div><button class="btn-submit-multi" id="multiSubmitBtn" disabled onclick="submitMultiForecast()">Submit All via M-Pesa &rarr;</button></div></div></div>
 <div class="account-overlay" id="accountOverlay" onclick="if(event.target===this)closeAccountTray()"><div class="account-sheet"><div class="acc-sheet-handle"></div><div id="accLoggedOut"><div class="acc-head"><div class="acc-avatar">👤</div><div><div class="acc-name-txt">Welcome to CheckRada</div><div class="acc-bal-txt" style="color:#9284b8">Sign in to start forecasting</div></div></div><div class="acc-row" onclick="closeAccountTray();window.location.href='rada-auth.html'"><span class="acc-row-icon">🔑</span><span class="acc-row-label">Log In</span><span class="acc-row-arrow">&#8250;</span></div><div class="acc-row" onclick="closeAccountTray();window.location.href='rada-auth.html'"><span class="acc-row-icon">✨</span><span class="acc-row-label">Create Account</span><span class="acc-row-arrow">&#8250;</span></div><div class="acc-row" onclick="closeAccountTray();window.location.href='rada-about.html'"><span class="acc-row-icon">ℹ️</span><span class="acc-row-label">About CheckRada</span><span class="acc-row-arrow">&#8250;</span></div>
-<div class="acc-row" onclick="closeAccountTray();window.location.href='rada-about.html#common-questions'"><span class="acc-row-icon">🆘</span><span class="acc-row-label">Get Help</span><span class="acc-row-arrow">&#8250;</span></div>
-</div><div id="accLoggedIn" style="display:none"><div class="acc-head"><div class="acc-avatar">🧑🏾</div><div><div class="acc-name-txt" id="accUserName">Forecaster</div><div class="acc-bal-txt" id="accUserBal">&#9679; KES 0 available</div></div></div><div class="acc-row" onclick="closeAccountTray();window.location.href='rada-portfolio.html'"><span class="acc-row-icon">◎</span><span class="acc-row-label">My Portfolio</span><span class="acc-row-arrow">&#8250;</span></div><div class="acc-row" onclick="closeAccountTray()"><span class="acc-row-icon">📥</span><span class="acc-row-label">Deposit via M-Pesa</span><span class="acc-row-arrow">&#8250;</span></div><div class="acc-row" onclick="closeAccountTray()"><span class="acc-row-icon">📤</span><span class="acc-row-label">Withdraw</span><span class="acc-row-arrow">&#8250;</span></div><div class="acc-row acc-refer-row" onclick="openReferSheet()" style="display:none"><span class="acc-row-icon">🎁</span><span class="acc-row-label">Refer a Friend</span><span class="acc-row-arrow">&#8250;</span></div><div class="acc-row" onclick="closeAccountTray();window.location.href='rada-about.html#common-questions'"><span class="acc-row-icon">🆘</span><span class="acc-row-label">Get Help</span><span class="acc-row-arrow">&#8250;</span></div>
+<div class="acc-row" onclick="closeAccountTray();openGetHelp()"><span class="acc-row-icon">🆘</span><span class="acc-row-label">Get Help</span><span class="acc-row-arrow">&#8250;</span></div>
+</div><div id="accLoggedIn" style="display:none"><div class="acc-head"><div class="acc-avatar">🧑🏾</div><div><div class="acc-name-txt" id="accUserName">Forecaster</div><div class="acc-bal-txt" id="accUserBal">&#9679; KES 0 available</div></div></div><div class="acc-row" onclick="closeAccountTray();window.location.href='rada-portfolio.html'"><span class="acc-row-icon">◎</span><span class="acc-row-label">My Portfolio</span><span class="acc-row-arrow">&#8250;</span></div><div class="acc-row" onclick="closeAccountTray()"><span class="acc-row-icon">📥</span><span class="acc-row-label">Deposit via M-Pesa</span><span class="acc-row-arrow">&#8250;</span></div><div class="acc-row" onclick="closeAccountTray()"><span class="acc-row-icon">📤</span><span class="acc-row-label">Withdraw</span><span class="acc-row-arrow">&#8250;</span></div><div class="acc-row acc-refer-row" onclick="openReferSheet()" style="display:none"><span class="acc-row-icon">🎁</span><span class="acc-row-label">Refer a Friend</span><span class="acc-row-arrow">&#8250;</span></div><div class="acc-row" onclick="closeAccountTray();openGetHelp()"><span class="acc-row-icon">🆘</span><span class="acc-row-label">Get Help</span><span class="acc-row-arrow">&#8250;</span></div>
 <div class="acc-row danger" onclick="logOut()"><span class="acc-row-icon">🚪</span><span class="acc-row-label">Log Out</span><span class="acc-row-arrow">&#8250;</span></div></div></div></div><script>function logOut(){localStorage.removeItem("rada_user");closeAccountTray();window.location.href="rada-auth.html";}</script>
 
 <script>
@@ -1843,8 +1868,29 @@ function shareReferWhatsApp() {
     .then(function(cfg){ if (cfg.refereeReward) reward = cfg.refereeReward; })
     .catch(function(){});
 
-  var msg = "I've been using CheckRada to predict Kenyan events outcomes and winning real money. Join me — use my code " + code + " and we both get KES " + reward + ". mavlon-ke.github.io/rada/rada-auth.html?ref=" + code;
+  var msg = "I've been using CheckRada to predict Kenyan events outcomes and winning real money. Join me — use my code " + code + " and we both get KES " + reward + ". checkrada.co.ke/rada-auth.html?ref=" + code;
   window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank');
+}
+
+// ── Get Help → WhatsApp direct ───────────────────────────────────────────────
+function openGetHelp() {
+  // Load support number from config
+  fetch('./rada-config.json?_=' + Date.now())
+    .then(function(r) { return r.json(); })
+    .then(function(cfg) {
+      var num = (cfg && cfg.supportWhatsApp) ? cfg.supportWhatsApp : '';
+      if (num) {
+        var msg = 'Hi CheckRada Support, I need some help with my account.';
+        var url = 'https://wa.me/' + num.replace(/[^0-9]/g,'') + '?text=' + encodeURIComponent(msg);
+        window.open(url, '_blank');
+      } else {
+        // Fallback to FAQ page if no WhatsApp number configured
+        window.location.href = 'rada-faq.html';
+      }
+    })
+    .catch(function() {
+      window.location.href = 'rada-faq.html';
+    });
 }
 </script>
 </body>
