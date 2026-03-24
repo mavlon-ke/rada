@@ -245,7 +245,7 @@ border-radius:10px;z-index:9999;letter-spacing:0.05em;pointer-events:none;">
         <div class="form-panel">
           <div class="fp-head">
             <div class="fp-title">Enter Your Phone Number</div>
-            <div class="fp-sub">We'll send a 6-digit OTP via SMS. No email needed — this is your CheckRada identity.</div>
+            <div class="fp-sub">We'll send a 6-digit code via WhatsApp. No password needed — your phone is your CheckRada identity.</div>
           </div>
           <div class="fp-body">
             <div class="steps">
@@ -301,7 +301,7 @@ border-radius:10px;z-index:9999;letter-spacing:0.05em;pointer-events:none;">
         <div class="form-panel">
           <div class="fp-head">
             <div class="fp-title">Verify Your Number</div>
-            <div class="fp-sub" id="otpSentTo">OTP sent to +254 712 345 678 via SMS (Africa's Talking)</div>
+            <div class="fp-sub" id="otpSentTo">We sent a WhatsApp message to your number</div>
           </div>
           <div class="fp-body">
             <div class="steps">
@@ -311,7 +311,7 @@ border-radius:10px;z-index:9999;letter-spacing:0.05em;pointer-events:none;">
             </div>
 
             <div id="otpErr" class="err-msg">Incorrect OTP. Please try again.</div>
-            <div id="otpInfo" class="info-msg">For demo: use code <strong>123456</strong></div>
+            <div id="otpInfo" class="info-msg"></div>
 
             <div class="otp-row">
               <input class="otp-box" id="otp1" maxlength="1" oninput="otpStep(this,null,'otp2')" onkeydown="otpBack(this,event,null)">
@@ -422,51 +422,72 @@ function formatPhone(input) {
 }
 
 // ── OTP FLOW ──────────────────────────────────────────────────────────────────
-// Track returning user state and their name
+// v8: Full live API integration — no more demo/localStorage mock
+
+const API_BASE = 'https://api.checkrada.co.ke';
 var returningUser = false;
 var returningUserName = '';
+var currentFullPhone = '';
 
 function sendOTP() {
   const phone = document.getElementById('phoneInput').value.trim();
   const err   = document.getElementById('phoneErr');
   if (phone.length < 9) { err.style.display = 'block'; return; }
   err.style.display = 'none';
-  const btn  = document.getElementById('sendOtpBtn');
-  const code = document.getElementById('countryCode').value;
+
+  const btn        = document.getElementById('sendOtpBtn');
+  const countryCode = document.getElementById('countryCode').value;
+  currentFullPhone  = countryCode.replace('+','') + phone;
+
   btn.textContent = 'Checking…';
   btn.disabled = true;
 
-  // Smart detection — check if phone is registered
-  // In production: fetch('/api/auth/check?phone=' + code.replace('+','') + phone)
-  // For demo: check localStorage
-  var storedUser = null;
-  try { storedUser = JSON.parse(localStorage.getItem('rada_user') || 'null'); } catch(e) {}
-  var fullPhone = code.replace('+','') + phone;
-  var isKnownUser = storedUser && (storedUser.phone === fullPhone || storedUser.phone === phone);
+  // Smart detection — hit real /api/auth/check to detect returning user
+  fetch(API_BASE + '/api/auth/check?phone=' + encodeURIComponent(currentFullPhone))
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      returningUser     = !!d.exists;
+      returningUserName = d.firstName || '';
 
-  returningUser     = isKnownUser;
-  returningUserName = isKnownUser ? (storedUser.name || '') : '';
+      // Now request the OTP
+      return fetch(API_BASE + '/api/auth/otp/request', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ phone: currentFullPhone }),
+      });
+    })
+    .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
+    .then(function(res) {
+      btn.textContent = 'Send OTP →';
+      btn.disabled = false;
 
-  setTimeout(() => {
-    document.getElementById('step1').style.display = 'none';
-    document.getElementById('step2').style.display = '';
-    // Update OTP sub-text based on user type
-    var otpSubEl = document.getElementById('otpSentTo');
-    if (returningUser && returningUserName) {
-      otpSubEl.textContent = 'Welcome back, ' + returningUserName + '. OTP sent to ' + code + ' ' + phone + ' via SMS.';
-    } else {
-      otpSubEl.textContent = 'OTP sent to ' + code + ' ' + phone + ' via SMS';
-    }
-    document.getElementById('otpInfo').style.display = 'block';
-    document.getElementById('otp1').focus();
-    btn.textContent = 'Send OTP →';
-    btn.disabled = false;
-  }, 800);
+      if (!res.ok) {
+        err.textContent = res.data.error || 'Could not send OTP. Please try again.';
+        err.style.display = 'block';
+        return;
+      }
+
+      document.getElementById('step1').style.display = 'none';
+      document.getElementById('step2').style.display = '';
+
+      var otpSubEl = document.getElementById('otpSentTo');
+      if (returningUser && returningUserName) {
+        otpSubEl.textContent = 'Welcome back, ' + returningUserName + '. WhatsApp code sent to +' + currentFullPhone + '.';
+      } else {
+        otpSubEl.textContent = 'WhatsApp code sent to +' + currentFullPhone + '.';
+      }
+      document.getElementById('otp1').focus();
+    })
+    .catch(function(e) {
+      btn.textContent = 'Send OTP →';
+      btn.disabled = false;
+      err.textContent = 'Network error. Please check your connection and try again.';
+      err.style.display = 'block';
+    });
 }
 
 function otpStep(el, prevId, nextId) {
   if (el.value && nextId) document.getElementById(nextId).focus();
-  // Auto-verify if all filled
   const code = ['otp1','otp2','otp3','otp4','otp5','otp6'].map(id => document.getElementById(id).value).join('');
   if (code.length === 6) verifyOTP();
 }
@@ -475,47 +496,83 @@ function otpBack(el, e, prevId) {
 }
 
 function verifyOTP() {
-  const otp = ['otp1','otp2','otp3','otp4','otp5','otp6'].map(id => document.getElementById(id).value).join('');
-  const err = document.getElementById('otpErr');
-  if (otp !== '123456') { err.style.display = 'block'; return; }
-  err.style.display = 'none';
-  document.getElementById('step2').style.display = 'none';
+  const otp     = ['otp1','otp2','otp3','otp4','otp5','otp6'].map(id => document.getElementById(id).value).join('');
+  const err     = document.getElementById('otpErr');
+  const verifyBtn = document.querySelector('#step2 .btn-primary');
 
-  if (returningUser) {
-    // ── Returning user: update localStorage session, show welcome back, go to dashboard ──
-    try {
-      var user = JSON.parse(localStorage.getItem('rada_user') || 'null');
-      if (user) {
-        user.lastLogin = new Date().toISOString();
-        localStorage.setItem('rada_user', JSON.stringify(user));
+  if (otp.length < 6) return;
+  err.style.display = 'none';
+  if (verifyBtn) { verifyBtn.textContent = 'Verifying…'; verifyBtn.disabled = true; }
+
+  const payload = { phone: currentFullPhone, code: otp };
+  if (validatedReferralCode) payload.referralCode = validatedReferralCode;
+
+  fetch(API_BASE + '/api/auth/otp/verify', {
+    method:      'POST',
+    headers:     { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body:        JSON.stringify(payload),
+  })
+    .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
+    .then(function(res) {
+      if (verifyBtn) { verifyBtn.textContent = 'Verify →'; verifyBtn.disabled = false; }
+
+      if (!res.ok) {
+        err.textContent = res.data.error || 'Incorrect code. Please try again.';
+        err.style.display = 'block';
+        return;
       }
-    } catch(e) {}
-    // Show personalised welcome back screen
-    document.getElementById('sv-title').textContent = 'Welcome back' + (returningUserName ? ', ' + returningUserName + '!' : '!');
-    document.getElementById('sv-sub').innerHTML = 'Great to see you again. Your portfolio and open forecasts are waiting.<br><br>Your phone number is your CheckRada identity.';
-    document.getElementById('sv-cta-primary').textContent = 'Go to My Dashboard →';
-    document.getElementById('sv-cta-primary').onclick = function() { window.location = 'rada-dashboard.html'; };
-    document.getElementById('sv-cta-secondary').textContent = 'Browse Markets';
-    document.getElementById('sv-cta-secondary').onclick = function() { window.location = 'rada-markets.html'; };
-    document.getElementById('sv-cta-secondary').style.display = '';
-    document.getElementById('step4').style.display = '';
-  } else {
-    // ── New user: show name + compliance step ──────────────────────────────────
-    isNewUser = true;
-    document.getElementById('step3').style.display = '';
-    // Pre-focus name field
-    setTimeout(function() {
-      var nameEl = document.getElementById('nameInput');
-      if (nameEl) nameEl.focus();
-    }, 200);
-  }
+
+      // Store JWT token and user data
+      const { token, user } = res.data;
+      if (token) localStorage.setItem('rada_token', token);
+      if (user)  localStorage.setItem('rada_user', JSON.stringify(user));
+
+      document.getElementById('step2').style.display = 'none';
+
+      // Detect new vs returning from API response (no name = new user)
+      const isExistingUser = returningUser && user && user.name;
+
+      if (isExistingUser) {
+        document.getElementById('sv-title').textContent = 'Welcome back' + (user.name ? ', ' + user.name.split(' ')[0] + '!' : '!');
+        document.getElementById('sv-sub').innerHTML = 'Great to see you again. Your portfolio and open forecasts are waiting.<br><br>Your phone number is your CheckRada identity.';
+        document.getElementById('sv-cta-primary').textContent = 'Go to My Dashboard →';
+        document.getElementById('sv-cta-primary').onclick = function() { window.location = 'rada-dashboard.html'; };
+        document.getElementById('sv-cta-secondary').textContent = 'Browse Markets';
+        document.getElementById('sv-cta-secondary').onclick = function() { window.location = 'rada-markets.html'; };
+        document.getElementById('sv-cta-secondary').style.display = '';
+        document.getElementById('step4').style.display = '';
+      } else {
+        isNewUser = true;
+        document.getElementById('step3').style.display = '';
+        setTimeout(function() {
+          var nameEl = document.getElementById('nameInput');
+          if (nameEl) nameEl.focus();
+        }, 200);
+      }
+    })
+    .catch(function() {
+      if (verifyBtn) { verifyBtn.textContent = 'Verify →'; verifyBtn.disabled = false; }
+      err.textContent = 'Network error. Please check your connection and try again.';
+      err.style.display = 'block';
+    });
 }
 
 function resendOTP() {
   ['otp1','otp2','otp3','otp4','otp5','otp6'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('otp1').focus();
   document.getElementById('otpErr').style.display = 'none';
-  alert('New OTP sent! Demo code is still: 123456');
+
+  fetch(API_BASE + '/api/auth/otp/request', {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify({ phone: currentFullPhone }),
+  }).then(function(r) { return r.json(); }).then(function(d) {
+    if (!d.error) {
+      var hint = document.querySelector('.otp-hint');
+      if (hint) { hint.style.color = '#16a34a'; hint.textContent = 'New code sent to your WhatsApp.'; setTimeout(function() { hint.style.color = ''; hint.innerHTML = 'Didn\'t receive it? <a onclick="resendOTP()">Resend</a> · <a onclick="goBack(\'step1\',\'step2\')">Change number</a>'; }, 4000); }
+    }
+  }).catch(function() {});
 }
 
 function goBack(showId, hideId) {
@@ -543,20 +600,28 @@ function completeRegistration() {
   if (!age || !terms) { compErr.style.display = 'block'; return; }
   compErr.style.display = 'none';
 
-  // Save user to localStorage
-  const phone = document.getElementById('phoneInput').value.trim();
-  const code  = document.getElementById('countryCode').value;
-  const user  = {
-    id: 'u_' + Date.now(),
-    name: nameVal,
-    phone: code.replace('+','') + phone,
-    balanceKes: 0,
-    bonusBalanceKes: 0,
-    kycStatus: 'PENDING',
-    referralCode: 'R' + Math.random().toString(36).substr(2,6).toUpperCase(),
-    isNew: true,
-  };
-  localStorage.setItem('rada_user', JSON.stringify(user));
+  // Save name + compliance to backend, update local cache
+  var storedUser = null;
+  try { storedUser = JSON.parse(localStorage.getItem('rada_user') || 'null'); } catch(e) {}
+  const token = localStorage.getItem('rada_token') || '';
+
+  // Update name on backend (fire and forget — don't block UI)
+  if (token) {
+    fetch(API_BASE + '/api/users/me/profile', {
+      method:      'PATCH',
+      headers:     { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      credentials: 'include',
+      body:        JSON.stringify({ name: nameVal, agreedToTerms: true, confirmedAge: true }),
+    }).catch(function() {});
+  }
+
+  // Update local cache
+  if (storedUser) {
+    storedUser.name          = nameVal;
+    storedUser.agreedToTerms = true;
+    storedUser.confirmedAge  = true;
+    localStorage.setItem('rada_user', JSON.stringify(storedUser));
+  }
 
   // Show new user success screen
   document.getElementById('step3').style.display = 'none';

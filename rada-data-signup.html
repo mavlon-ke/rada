@@ -561,34 +561,53 @@ function submitDataSignup(e) {
   document.getElementById('submitText').textContent = 'Submitting...';
   document.getElementById('submitSpinner').style.display = 'block';
 
-  // Read config and fire notifications (simulated in demo)
-  fetch('rada-config.json')
-    .then(function(r) { return r.json(); })
-    .catch(function() { return {}; })
-    .then(function(config) {
-      var inquiryEmail = config.dataInquiryEmail || '';
-      // Store application in localStorage for admin panel demo
-      try {
-        var apps = JSON.parse(localStorage.getItem('rada_data_apps') || '[]');
-        apps.push(payload);
-        localStorage.setItem('rada_data_apps', JSON.stringify(apps));
-      } catch(e) {}
-      var inquiryWA    = config.dataInquiryWhatsApp || '';
+  // POST to real backend API
+  var apiPayload = {
+    firstName:      payload.firstName,
+    lastName:       payload.lastName,
+    email:          payload.email,
+    mobile:         payload.phone,
+    city:           payload.city,
+    country:        payload.country,
+    orgName:        payload.orgName || '',
+    orgType:        payload.orgType,
+    jobTitle:       payload.jobTitle || '',
+    website:        payload.website || '',
+    planInterest:   payload.plan,
+    useCase:        payload.useCase,
+    useDescription: payload.useDesc,
+    dataVolume:     payload.dataVolume || '',
+  };
 
-      // In production: POST to /api/data/applications
-      // which emails inquiryEmail and sends WA to inquiryWA
-      // For now: simulate a 1.5s submission
+  fetch('https://api.checkrada.co.ke/api/data/applications', {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify(apiPayload),
+  })
+    .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
+    .then(function(res) {
+      btn.disabled = false;
+      document.getElementById('submitText').textContent = 'Submit Application';
+      document.getElementById('submitSpinner').style.display = 'none';
 
-      setTimeout(function() {
-        // Show success
-        document.getElementById('dataSignupForm').style.display = 'none';
-        document.getElementById('planPill').style.display = 'none';
-        var success = document.getElementById('successScreen');
-        success.classList.add('show');
-        document.getElementById('refNumber').textContent = payload.ref;
-        // Scroll to top
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }, 1500);
+      if (!res.ok) {
+        alert(res.data.error || 'Submission failed. Please try again.');
+        return;
+      }
+
+      // Show success screen
+      document.getElementById('dataSignupForm').style.display = 'none';
+      document.getElementById('planPill').style.display = 'none';
+      var success = document.getElementById('successScreen');
+      success.classList.add('show');
+      document.getElementById('refNumber').textContent = res.data.refNumber || payload.ref;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    })
+    .catch(function() {
+      btn.disabled = false;
+      document.getElementById('submitText').textContent = 'Submit Application';
+      document.getElementById('submitSpinner').style.display = 'none';
+      alert('Network error. Please check your connection and try again.');
     });
 }
 </script>
