@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
   );
 
   // Dynamically generate the share message using current config amounts
-  const refereeReward = Number(config?.refereeRewardKes ?? 50);
+  const refereeReward = Number(config?.refereeMatchKes ?? 50);
   const referralCode  = (await prisma.user.findUnique({
     where:  { id: user.id },
     select: { referralCode: true },
