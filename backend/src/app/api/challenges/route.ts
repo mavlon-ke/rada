@@ -198,7 +198,7 @@ export async function POST(req: NextRequest) {
   }
 
   // ── SMS notifications ─────────────────────────────────────────────────────
-  await sendSMS(challengerB.phone,
+  await console.log(challengerB.phone,
     `CheckRada: ${user.name ?? 'Someone'} has challenged you! "${question.slice(0, 70)}..." ` +
     `Stake: KES ${stakePerPerson.toLocaleString()} each. ` +
     `Accept at rada.co.ke/join/${accessCode} or use code ${accessCode}`
@@ -207,7 +207,7 @@ export async function POST(req: NextRequest) {
   if (refereeId) {
     const referee = await prisma.user.findUnique({ where: { id: refereeId } });
     if (referee) {
-      await sendSMS(referee.phone,
+      await console.log(referee.phone,
         `CheckRada: ${user.name ?? 'Someone'} nominated you as referee for a Social Challenge: ` +
         `"${question.slice(0, 60)}..." Challenge code: ${accessCode}`
       );

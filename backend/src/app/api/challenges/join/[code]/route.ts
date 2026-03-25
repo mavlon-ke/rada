@@ -92,7 +92,7 @@ export async function POST(
   });
 
   // Notify creator
-  await sendSMS(challenge.userA.phone,
+  await console.log(challenge.userA.phone,
     `Rada: ${user.name ?? 'Someone'} accepted your challenge! ` +
     `"${challenge.question.slice(0, 50)}..." is now ACTIVE. Pool: KES ${Number(updated.totalPool)}.`
   );

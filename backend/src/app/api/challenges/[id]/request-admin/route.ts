@@ -83,10 +83,10 @@ export async function POST(
     `rada.co.ke`;
 
   await Promise.allSettled([
-    challenge.userA?.phone  ? sendSMS(challenge.userA.phone,  smsParticipants) : Promise.resolve(),
-    challenge.userB?.phone  ? sendSMS(challenge.userB.phone,  smsParticipants) : Promise.resolve(),
+    challenge.userA?.phone  ? console.log(challenge.userA.phone,  smsParticipants) : Promise.resolve(),
+    challenge.userB?.phone  ? console.log(challenge.userB.phone,  smsParticipants) : Promise.resolve(),
     // Alert admin on-call phone
-    ADMIN_PHONE ? sendSMS(ADMIN_PHONE,
+    ADMIN_PHONE ? console.log(ADMIN_PHONE,
       `🚨 Rada Admin Alert: ${requesterName} requested intervention on challenge ` +
       `"${challenge.question.slice(0, 80)}" (ID: ${challenge.id}). ` +
       `Pool: KES ${Number(challenge.totalPool).toLocaleString()}. ` +

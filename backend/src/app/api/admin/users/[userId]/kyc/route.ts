@@ -33,16 +33,6 @@ export async function POST(
     data: { kycStatus: newStatus },
   });
 
-  // Notify user via SMS
-  const smsMsg = action === 'APPROVE'
-    ? `Rada: Your identity has been verified! You can now trade and withdraw. Visit rada.co.ke`
-    : `Rada: Your KYC verification was unsuccessful. Reason: ${reason ?? 'Documents unclear'}. Please resubmit at rada.co.ke`;
-
-  if (process.env.NODE_ENV === 'production') {
-    await sendSMS(user.phone, smsMsg).catch(console.error);
-  } else {
-    console.log(`[DEV] KYC SMS to ${user.phone}: ${smsMsg}`);
-  }
-
+ 
   return NextResponse.json({ success: true, userId: params.userId, kycStatus: newStatus });
 }

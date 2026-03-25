@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
       where: { id: challengeId },
       data:  { refereeAccepted: true, validatorType: 'REFEREE' },
     });
-    await sendSMS(challenge.userA.phone,
+    await console.log(challenge.userA.phone,
       `CheckRada: Your referee accepted the nomination for "${challenge.question.slice(0, 50)}...". They will resolve the outcome after the event.`
     );
     return NextResponse.json({ success: true, action: 'ACCEPTED' });
@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
     where: { id: challengeId },
     data:  { refereeId: null, refereeAccepted: false, validatorType: 'MUTUAL' },
   });
-  await sendSMS(challenge.userA.phone,
+  await console.log(challenge.userA.phone,
     `CheckRada: Your referee declined the nomination for "${challenge.question.slice(0, 50)}...". The challenge will use mutual consent instead.`
   );
   return NextResponse.json({ success: true, action: 'DECLINED' });

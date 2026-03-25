@@ -89,7 +89,7 @@ export async function POST(
   // Notify the other party
   const otherUser = isUserA ? challenge.userB : challenge.userA;
   if (otherUser) {
-    await sendSMS(otherUser.phone,
+    await console.log(otherUser.phone,
       `Rada: Your opponent submitted their result for "${challenge.question.slice(0, 50)}...". ` +
       `Open CheckRada to confirm or dispute. Agree within 48h to keep the 5% Social Challenge fee.`
     );
