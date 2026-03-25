@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
           OR: [
             { phone: { contains: q } },
             { name:  { contains: q, mode: 'insensitive' } },
-            { email: { contains: q, mode: 'insensitive' } },
+            
           ]
         } : {},
         kyc ? { kycStatus: kyc as any } : {},
