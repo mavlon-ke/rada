@@ -149,8 +149,15 @@ model MarketChallenge {
 }
 
 enum ValidatorType    { MUTUAL REFEREE TIMER }
-enum ChallengeStatus  { PENDING_PAYMENT  // Challenger A placed stake, awaiting M-Pesa payment
-  PENDING_JOIN ACTIVE PENDING_RESOLUTION DISPUTED RESOLVED CANCELLED }
+enum ChallengeStatus  {
+  PENDING_PAYMENT
+  PENDING_JOIN
+  ACTIVE
+  PENDING_RESOLUTION
+  DISPUTED
+  RESOLVED
+  CANCELLED
+}
 enum ChallengeOutcome { USER_A USER_B TIE }
 
 // ─── MARKET PROPOSALS ─────────────────────────────────────────────────────────
