@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { parseSTKCallback, STKCallbackBody } from '@/lib/mpesa/mpesa.service';
-import { createNotification } from '@/app/api/notifications/route';
+import { createNotification } from '@/lib/notifications';
 
 export async function POST(req: NextRequest) {
   const body: STKCallbackBody = await req.json();

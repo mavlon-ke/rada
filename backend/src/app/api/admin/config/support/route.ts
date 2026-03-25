@@ -4,7 +4,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { requireAdminAuth } from '@/lib/auth/admin';
+import { requireAdmin } from '@/lib/auth/admin';
 import { prisma } from '@/lib/db/prisma';
 
 const UpdateSchema = z.object({
@@ -15,7 +15,7 @@ const UpdateSchema = z.object({
 // Using a singleton record with key = 'support'
 
 export async function GET(req: NextRequest) {
-  const admin = await requireAdminAuth(req);
+  const admin = await requireAdmin(req);
   if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   try {
@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const admin = await requireAdminAuth(req);
+  const admin = await requireAdmin(req);
   if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const body   = await req.json();
