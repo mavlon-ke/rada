@@ -306,14 +306,57 @@ model DataApplication {
   updatedAt      DateTime @updatedAt
 }
 
-enum KycStatus       { PENDING VERIFIED REJECTED }
-enum UserRole        { USER ADMIN }
-enum Category        { GENERAL POLITICS ECONOMY ENTERTAINMENT WEATHER TECH FRIENDS }
-enum MarketStatus    { OPEN PAUSED CLOSED RESOLVED CANCELLED }
-enum Outcome         { YES NO }
-enum Side            { YES NO }
-enum OrderStatus     { PENDING FILLED CANCELLED }
-enum ValidatorType   { MUTUAL REFEREE TIMER }
+enum KycStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum Category {
+  GENERAL
+  POLITICS
+  ECONOMY
+  ENTERTAINMENT
+  WEATHER
+  TECH
+  FRIENDS
+}
+
+enum MarketStatus {
+  OPEN
+  PAUSED
+  CLOSED
+  RESOLVED
+  CANCELLED
+}
+
+enum Outcome {
+  YES
+  NO
+}
+
+enum Side {
+  YES
+  NO
+}
+
+enum OrderStatus {
+  PENDING
+  FILLED
+  CANCELLED
+}
+
+enum ValidatorType {
+  MUTUAL
+  REFEREE
+  TIMER
+}
+
 enum ChallengeStatus {
   PENDING_PAYMENT
   PENDING_JOIN
@@ -323,10 +366,32 @@ enum ChallengeStatus {
   RESOLVED
   CANCELLED
 }
-enum ChallengeOutcome { USER_A USER_B TIE }
-enum ProposalStatus   { PENDING APPROVED REJECTED }
-enum ReferralStatus   { PENDING QUALIFIED REWARDED FLAGGED }
-enum TxStatus         { PENDING SUCCESS FAILED }
+
+enum ChallengeOutcome {
+  USER_A
+  USER_B
+  TIE
+}
+
+enum ProposalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum ReferralStatus {
+  PENDING
+  QUALIFIED
+  REWARDED
+  FLAGGED
+}
+
+enum TxStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
 enum NotificationType {
   MARKET_RESOLVED
   MARKET_CLOSING_SOON
@@ -341,6 +406,7 @@ enum NotificationType {
   NEW_MARKET_IN_CATEGORY
   PROMO
 }
+
 enum TransactionType {
   DEPOSIT
   WITHDRAWAL
@@ -348,6 +414,14 @@ enum TransactionType {
   TRADE_SELL
   PAYOUT
   REFUND
+  CHALLENGE_STAKE
+  CHALLENGE_PAYOUT
+  SUGGESTION_REWARD
+  CREATOR_BOUNTY
+  REFERRAL_REWARD
+  BONUS_USED
+}
+
   CHALLENGE_STAKE
   CHALLENGE_PAYOUT
   SUGGESTION_REWARD
