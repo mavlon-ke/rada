@@ -39,8 +39,8 @@ export async function GET(req: NextRequest) {
   const entries = payoutRows.map((row, i) => {
     const u      = userMap.get(row.userId);
     const trades = tradeMap.get(row.userId);
-    const profit = Number(row._sum.amountKes ?? 0);
-    const volume = Number(trades?._sum?.amountKes ?? 0);
+    const profit = Number((row as any)._sum.amountKes ?? 0);
+    const volume = Number((trades as any)?._sum?.amountKes ?? 0);
     const tradeCount = trades?._count?.id ?? 0;
     const winRate = tradeCount > 0 ? (row._count.id / tradeCount) : 0;
 
