@@ -4,7 +4,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
-
+import { createNotification } from '@/lib/notifications';
 
 
 // POST endpoint for internal/admin use
