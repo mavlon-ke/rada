@@ -8,7 +8,7 @@ import { z } from 'zod';
 import { prisma } from '@/lib/db/prisma';
 import { requireAuth } from '@/lib/auth/session';
 import { sharesToReceive, newPools } from '@/lib/market/amm';
-import { createNotification } from '@/app/api/notifications/route';
+import { createNotification } from '@/lib/notifications';
 
 const FORECASTING_FEE_RATE        = 0.05;
 const CREATOR_ROYALTY_RATE        = 0.005;
