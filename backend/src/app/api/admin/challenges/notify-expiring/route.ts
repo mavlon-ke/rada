@@ -45,18 +45,7 @@ export async function POST(req: NextRequest) {
         data:  { disputeDeadline: deadline, status: 'PENDING_RESOLUTION' },
       });
 
-      const smsMsg =
-        `CheckRada ⚠: The resolution window is open for your challenge: ` +
-        `"${ch.question.slice(0, 60)}..." ` +
-        `You have 48 hours to agree on the outcome. ` +
-        `Agree now to keep the 5% fee — disputes cost 15%. ` +
-        `Open Rada to resolve: rada.co.ke`;
-
-      // SMS both participants
-      const recipients = [ch.userA, ch.userB].filter(Boolean);
-      await Promise.allSettled(
-        recipients.map(u => sendSMS(u!.phone, smsMsg))
-      );
+      
 
       notified.push(ch.id);
     } catch (err) {
