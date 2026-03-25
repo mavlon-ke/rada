@@ -1,0 +1,374 @@
+// prisma/schema.prisma  (v4 — Rada)
+// Changes from v3:
+//   - Added: referralCode, referredBy, bonusBalanceKes to User
+//   - Added: Notification, CarouselSlide, ReferralConfig, Referral models
+//   - Added: REFERRAL_REWARD, BONUS_USED to TransactionType enum
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── USERS ────────────────────────────────────────────────────────────────────
+
+model User {
+  id              String    @id @default(cuid())
+  phone           String    @unique
+  name            String?
+  kycStatus       KycStatus @default(PENDING)
+  role            UserRole  @default(USER)
+  balanceKes      Decimal   @default(0) @db.Decimal(15,2)
+  bonusBalanceKes Decimal   @default(0) @db.Decimal(15,2)  // forecast-locked referral bonus
+  rewardBalance   Decimal   @default(0) @db.Decimal(15,2)
+  suspended       Boolean   @default(false)
+  agreedToTerms   Boolean   @default(false)
+  confirmedAge    Boolean   @default(false)
+  integrityScore  Int       @default(100)
+  referralCode    String?   @unique  // auto-generated unique code e.g. "BARAKA50"
+  referredBy      String?            // userId of referrer
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  orders              Order[]
+  positions           Position[]
+  transactions        Transaction[]
+  markets             Market[]           @relation("MarketCreator")
+  challengesAsA       MarketChallenge[]  @relation("ChallengeUserA")
+  challengesAsB       MarketChallenge[]  @relation("ChallengeUserB")
+  challengesAsReferee MarketChallenge[]  @relation("ChallengeReferee")
+  proposals           MarketProposal[]
+  bounties            CreatorBounty[]
+  notifications       Notification[]
+  referralsGiven      Referral[]         @relation("ReferralReferrer")
+  referralsReceived   Referral[]         @relation("ReferralReferee")
+
+  @@map("users")
+}
+
+model AdminAccount {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  createdBy    String?
+  lastLoginAt  DateTime?
+  createdAt    DateTime @default(now())
+
+  activityLogs AdminActivityLog[]
+
+  @@map("admin_accounts")
+}
+
+model AdminActivityLog {
+  id        String       @id @default(cuid())
+  adminId   String
+  admin     AdminAccount @relation(fields:[adminId], references:[id])
+  action    String
+  target    String?
+  detail    String?
+  ipAddress String?
+  createdAt DateTime     @default(now())
+
+  @@map("admin_activity_logs")
+}
+
+model OtpCode {
+  phone     String   @id
+  code      String
+  attempts  Int      @default(0)
+  expiresAt DateTime
+
+  @@map("otp_codes")
+}
+
+// ─── PUBLIC MARKETS ───────────────────────────────────────────────────────────
+
+model Market {
+  id          String       @id @default(cuid())
+  slug        String       @unique
+  title       String
+  description String
+  category    Category
+  imageUrl    String?
+  sourceNote  String?
+  creatorId   String
+  creator     User         @relation("MarketCreator", fields:[creatorId], references:[id])
+  status      MarketStatus @default(OPEN)
+  outcome     Outcome?
+  yesPool     Decimal      @default(1000) @db.Decimal(15,2)
+  noPool      Decimal      @default(1000) @db.Decimal(15,2)
+  closesAt    DateTime
+  resolvedAt  DateTime?
+  totalVolume Decimal      @default(0) @db.Decimal(15,2)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  orders    Order[]
+  positions Position[]
+  bounty    CreatorBounty?
+
+  @@map("markets")
+}
+
+// ─── FRIENDS / SOCIAL ESCROW ──────────────────────────────────────────────────
+
+model MarketChallenge {
+  id              String           @id @default(cuid())
+  question        String
+  accessCode      String           @unique
+  userAId         String
+  userA           User             @relation("ChallengeUserA", fields:[userAId], references:[id])
+  userBId         String?
+  userB           User?            @relation("ChallengeUserB", fields:[userBId], references:[id])
+  refereeId       String?
+  referee         User?            @relation("ChallengeReferee", fields:[refereeId], references:[id])
+  refereeAccepted Boolean          @default(false)
+  stakePerPerson  Decimal          @db.Decimal(15,2)
+  totalPool       Decimal          @default(0) @db.Decimal(15,2)
+  validatorType   ValidatorType    @default(MUTUAL)
+  status          ChallengeStatus  @default(PENDING_JOIN)
+  resolution      ChallengeOutcome?
+  eventExpiresAt  DateTime
+  disputeDeadline DateTime?
+  resolvedAt      DateTime?
+  userAConfirm    ChallengeOutcome?
+  userBConfirm    ChallengeOutcome?
+  isPublic        Boolean          @default(false)
+  feePercent      Decimal          @default(5) @db.Decimal(5,2)
+  platformFeeKes  Decimal          @default(0) @db.Decimal(15,2)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  transactions Transaction[]
+
+  @@map("market_challenges")
+}
+
+enum ValidatorType    { MUTUAL REFEREE TIMER }
+enum ChallengeStatus  { PENDING_PAYMENT  // Challenger A placed stake, awaiting M-Pesa payment
+  PENDING_JOIN ACTIVE PENDING_RESOLUTION DISPUTED RESOLVED CANCELLED }
+enum ChallengeOutcome { USER_A USER_B TIE }
+
+// ─── MARKET PROPOSALS ─────────────────────────────────────────────────────────
+
+model MarketProposal {
+  id               String         @id @default(cuid())
+  proposerId       String
+  proposer         User           @relation(fields:[proposerId], references:[id])
+  question         String
+  category         Category
+  resolutionSource String
+  whyCareNote      String?
+  status           ProposalStatus @default(PENDING)
+  slug             String?        @unique
+  rewardPaidAt     DateTime?
+  rejectionReason  String?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  @@map("market_proposals")
+}
+
+enum ProposalStatus { PENDING APPROVED REJECTED }
+
+// ─── CREATOR BOUNTIES ─────────────────────────────────────────────────────────
+
+model CreatorBounty {
+  id           String    @id @default(cuid())
+  marketId     String    @unique
+  market       Market    @relation(fields:[marketId], references:[id])
+  creatorId    String
+  creator      User      @relation(fields:[creatorId], references:[id])
+  tradeVolume  Decimal   @default(0) @db.Decimal(15,2)
+  bountyEarned Decimal   @default(0) @db.Decimal(15,2)
+  paidOut      Decimal   @default(0) @db.Decimal(15,2)
+  lastPaidAt   DateTime?
+  active       Boolean   @default(false)
+  deactivatedAt DateTime?
+
+  @@map("creator_bounties")
+}
+
+// ─── ORDERS / POSITIONS / TRANSACTIONS ───────────────────────────────────────
+
+model Order {
+  id                  String      @id @default(cuid())
+  userId              String
+  user                User        @relation(fields:[userId], references:[id])
+  marketId            String
+  market              Market      @relation(fields:[marketId], references:[id])
+  side                Side
+  amountKes           Decimal     @db.Decimal(15,2)
+  netAmountKes        Decimal     @db.Decimal(15,2)
+  forecastingFeeKes   Decimal     @default(0) @db.Decimal(15,2)
+  bonusUsedKes        Decimal     @default(0) @db.Decimal(15,2)  // bonus balance used in this trade
+  shares              Decimal     @db.Decimal(15,6)
+  pricePerShare       Decimal     @db.Decimal(10,6)
+  status              OrderStatus @default(FILLED)
+  creatorAttribution  String?
+  createdAt           DateTime    @default(now())
+
+  @@map("orders")
+}
+
+model Position {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields:[userId], references:[id])
+  marketId    String
+  market      Market   @relation(fields:[marketId], references:[id])
+  side        Side
+  shares      Decimal  @db.Decimal(15,6)
+  avgPrice    Decimal  @db.Decimal(10,6)
+  realizedPnl Decimal  @default(0) @db.Decimal(15,2)
+  updatedAt   DateTime @updatedAt
+
+  @@unique([userId, marketId, side])
+  @@map("positions")
+}
+
+model Transaction {
+  id          String           @id @default(cuid())
+  userId      String
+  user        User             @relation(fields:[userId], references:[id])
+  challengeId String?
+  challenge   MarketChallenge? @relation(fields:[challengeId], references:[id])
+  type        TransactionType
+  amountKes   Decimal          @db.Decimal(15,2)
+  balAfter    Decimal          @db.Decimal(15,2)
+  mpesaRef    String?          @unique
+  phone       String?
+  status      TxStatus         @default(PENDING)
+  description String?
+  createdAt   DateTime         @default(now())
+
+  @@map("transactions")
+}
+
+// ─── NOTIFICATIONS ────────────────────────────────────────────────────────────
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  user      User             @relation(fields:[userId], references:[id])
+  type      NotificationType
+  title     String
+  message   String
+  link      String?          // relative URL to navigate to on tap
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  @@index([userId, read])
+  @@map("notifications")
+}
+
+enum NotificationType {
+  MARKET_RESOLVED
+  MARKET_CLOSING_SOON
+  MARKET_PROBABILITY_SHIFT
+  CHALLENGE_OPPONENT_STAKED
+  CHALLENGE_RESOLUTION_WINDOW
+  CHALLENGE_RESOLUTION_WARNING
+  REFEREE_NOMINATED
+  DEPOSIT_CONFIRMED
+  WITHDRAWAL_PROCESSED
+  REFERRAL_REWARD_CREDITED
+  NEW_MARKET_IN_CATEGORY
+  PROMO
+}
+
+// ─── CAROUSEL ─────────────────────────────────────────────────────────────────
+
+model CarouselSlide {
+  id         String    @id @default(cuid())
+  tag        String?              // e.g. "🆕 New Market"
+  title      String
+  subtitle   String?
+  imageUrl   String?              // background image URL
+  bgColour   String    @default("#1a1035")  // fallback solid colour
+  ctaText    String?              // button label
+  ctaLink    String?              // button destination URL
+  active     Boolean   @default(true)
+  expiresAt  DateTime?            // auto-hides after this date/time
+  sortOrder  Int       @default(0)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@map("carousel_slides")
+}
+
+// ─── REFERRAL PROGRAMME ───────────────────────────────────────────────────────
+
+model ReferralConfig {
+  id                  String   @id @default("singleton")  // only one row ever
+  active              Boolean  @default(true)
+  referrerRewardKes   Decimal  @default(50)  @db.Decimal(10,2)
+  refereeMatchKes     Decimal  @default(100) @db.Decimal(10,2)  // max match on first forecast
+  minDepositKes       Decimal  @default(100) @db.Decimal(10,2)  // min deposit to qualify
+  updatedAt           DateTime @updatedAt
+
+  @@map("referral_config")
+}
+
+model Referral {
+  id           String         @id @default(cuid())
+  referrerId   String
+  referrer     User           @relation("ReferralReferrer", fields:[referrerId], references:[id])
+  refereeId    String
+  referee      User           @relation("ReferralReferee",  fields:[refereeId],  references:[id])
+  status       ReferralStatus @default(PENDING)
+  referrerRewardKes Decimal   @default(0) @db.Decimal(10,2)
+  refereeRewardKes  Decimal   @default(0) @db.Decimal(10,2)
+  rewardPaidAt DateTime?
+  createdAt    DateTime       @default(now())
+
+  @@unique([refereeId])  // one referral per user ever
+  @@map("referrals")
+}
+
+enum ReferralStatus { PENDING QUALIFIED REWARDED FLAGGED }
+
+// ─── ENUMS ────────────────────────────────────────────────────────────────────
+
+enum KycStatus       { PENDING VERIFIED REJECTED }
+enum UserRole        { USER ADMIN }
+enum Category        { GENERAL POLITICS ECONOMY ENTERTAINMENT WEATHER TECH FRIENDS }
+enum MarketStatus    { OPEN PAUSED CLOSED RESOLVED CANCELLED }
+enum Outcome         { YES NO }
+enum Side            { YES NO }
+enum OrderStatus     { PENDING FILLED CANCELLED }
+enum TransactionType {
+  DEPOSIT WITHDRAWAL
+  TRADE_BUY TRADE_SELL PAYOUT REFUND
+  CHALLENGE_STAKE CHALLENGE_PAYOUT
+  SUGGESTION_REWARD CREATOR_BOUNTY
+  REFERRAL_REWARD BONUS_USED
+}
+enum TxStatus { PENDING SUCCESS FAILED }
+
+model DataApplication {
+  id              String   @id @default(cuid())
+  firstName       String
+  lastName        String
+  email           String
+  mobile          String
+  city            String
+  country         String
+  orgName         String
+  orgType         String
+  jobTitle        String
+  website         String?
+  planInterest    String   // lite | pro | enterprise
+  useCase         String
+  useDescription  String
+  dataVolume      String?
+  refNumber       String   @unique
+  status          String   @default("PENDING") // PENDING | APPROVED | REJECTED
+  notes           String?  // Admin notes
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
