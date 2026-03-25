@@ -7,7 +7,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
-import { sendSMS } from '@/lib/sms/africas-talking';
+
 
 export async function POST(req: NextRequest) {
   // ── Cron auth ────────────────────────────────────────────────────────────

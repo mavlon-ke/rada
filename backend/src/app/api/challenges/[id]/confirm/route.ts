@@ -8,7 +8,7 @@ import { z } from 'zod';
 import { prisma } from '@/lib/db/prisma';
 import { requireAuth } from '@/lib/auth/session';
 import { initiateB2C, formatPhone } from '@/lib/mpesa/mpesa.service';
-import { sendSMS } from '@/lib/sms/africas-talking';
+
 
 const FEE_STANDARD = 0.05;  // 5%  — mutual/referee resolution
 const FEE_DISPUTE  = 0.15;  // 15% — admin intervention

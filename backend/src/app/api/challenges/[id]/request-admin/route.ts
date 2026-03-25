@@ -6,7 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { requireAuth } from '@/lib/auth/session';
-import { sendSMS } from '@/lib/sms/africas-talking';
+
 
 const MIN_HOURS_BEFORE_INTERVENTION = 24; // must wait 24h into the 48h window
 const ADMIN_PHONE = process.env.ADMIN_ALERT_PHONE ?? ''; // set in Railway env vars

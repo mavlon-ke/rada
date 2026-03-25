@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/db/prisma';
 import { requireAdmin, adminUnauthorized } from '@/lib/auth/admin';
-import { sendSMS } from '@/lib/sms/africas-talking';
+
 
 const Schema = z.object({
   action: z.enum(['APPROVE', 'REJECT']),

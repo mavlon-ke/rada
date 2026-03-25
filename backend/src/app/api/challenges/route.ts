@@ -9,7 +9,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/db/prisma';
 import { requireAuth } from '@/lib/auth/session';
-import { sendSMS } from '@/lib/sms/africas-talking';
+
 import { randomInt } from 'crypto';
 
 const MAX_STAKE = 20000;  // KES 20,000 per person (Social Challenge cap)

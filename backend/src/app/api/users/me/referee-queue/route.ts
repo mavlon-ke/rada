@@ -5,7 +5,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { requireAuth } from '@/lib/auth/session';
-import { sendSMS } from '@/lib/sms/africas-talking';
+
 
 export async function GET(req: NextRequest) {
   const user = await requireAuth(req);
