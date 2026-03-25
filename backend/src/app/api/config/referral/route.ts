@@ -2,7 +2,7 @@
 // Public endpoint — returns referral programme config for frontend display.
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
-
+export const dynamic = 'force-dynamic';
 export async function GET() {
   let config = await prisma.referralConfig.findUnique({ where: { id: 'singleton' } });
 

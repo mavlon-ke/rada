@@ -8,7 +8,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
-
+export const dynamic = 'force-dynamic';
 function lmsrPrice(yesPool: number, noPool: number): number {
   const b    = 1000;
   const expY = Math.exp(yesPool / b);
