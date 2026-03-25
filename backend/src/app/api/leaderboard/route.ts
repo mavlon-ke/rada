@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { requireAuth } from '@/lib/auth/session';
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 export async function GET(req: NextRequest) {
   const user = await requireAuth(req);
   const { searchParams } = new URL(req.url);
@@ -37,7 +39,7 @@ export async function GET(req: NextRequest) {
 
   // Build leaderboard
   const entries = payoutRows.map((row, i) => {
-    const u      = userMap.get(row.userId);
+    const u      = userMap.get(row.userId) as any;
     const trades = tradeMap.get(row.userId);
     const profit = Number((row as any)._sum.amountKes ?? 0);
     const volume = Number((trades as any)?._sum?.amountKes ?? 0);
@@ -47,7 +49,7 @@ export async function GET(req: NextRequest) {
     return {
       rank:    i + 1,
       userId:  row.userId,
-      name:    u?.name ?? `Trader #${row.userId.slice(0, 4)}`,
+      name:    (u as any)?.name ?? `Trader #${row.userId.slice(0, 4)}`,
       profit:  parseFloat(profit.toFixed(2)),
       trades:  tradeCount,
       winRate: parseFloat(winRate.toFixed(4)),
