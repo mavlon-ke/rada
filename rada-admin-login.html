@@ -196,7 +196,7 @@ body::before {
 
     <div class="f-group">
       <label class="f-label">Email Address</label>
-      <input class="f-input" type="email" id="adminEmail" placeholder="admin@rada.co.ke" autocomplete="email">
+      <input class="f-input" type="email" id="adminEmail" placeholder="admin@checkrada.co.ke" autocomplete="email">
     </div>
 
     <div class="f-group">
@@ -260,16 +260,12 @@ function attemptAdminLogin() {
     }
   })
   .catch(function(err) {
-    // Demo fallback — hardcoded credentials for testing
-    // REMOVE before production
-    if (email === 'admin@rada.co.ke' && password === 'rada-admin-2025') {
-      setAdminSession({ email: email, name: 'Admin', role: 'SUPER_ADMIN' });
-    } else {
+     
       btn.disabled = false;
       btn.textContent = 'Sign In to Admin Console';
       errorEl.textContent = 'Incorrect credentials. Please try again.';
       errorEl.classList.add('show');
-    }
+    
   });
 }
 

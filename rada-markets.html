@@ -890,16 +890,7 @@ nav {
 .bonus-bal-chip { background:rgba(249,227,0,0.15);border:1px solid rgba(249,227,0,0.3);border-radius:6px;padding:2px 7px;font-size:0.58rem;font-weight:700;color:#92400e;margin-left:6px; }
 
 
-/* ── Dev test login button (demo only) ── */
-.dev-login-btn {
-  position: fixed; bottom: 90px; right: 16px; z-index: 9000;
-  background: #1a1035; color: #a78bfa;
-  border: 1.5px solid #6d28d9; border-radius: 10px;
-  padding: 8px 14px; font-size: 0.65rem; font-weight: 700;
-  cursor: pointer; font-family: inherit;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.3);
-}
-@media(min-width:768px){ .dev-login-btn { bottom: 24px; right: 24px; } }
+
 
 
 /* ── Desktop Multi-Forecast button ── */
@@ -1133,12 +1124,6 @@ document.addEventListener('DOMContentLoaded', function() {
   </script>
 </head>
 <body>
-<!-- RADA BUILD v76-FINAL -->
-<div id="radaBuildStamp" style="position:fixed;top:4px;left:50%;transform:translateX(-50%);
-background:#16a34a;color:#fff;font-size:0.55rem;font-weight:900;padding:2px 10px;
-border-radius:10px;z-index:9999;letter-spacing:0.05em;pointer-events:none;">
-✓ BUILD v76
-</div>
 
 <!-- M-TOP-BAR -->
 <div class="m-top-bar" id="mTopBar">
@@ -2756,19 +2741,7 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 });
 </script>
-<!-- DEV LOGIN HELPER -->
-<div id="devLoginWrap">
-  <button class="dev-login-btn" onclick="devLogin()">🔑 Test Login</button>
-</div>
-<script>
-// Hide dev button if already logged in
-(function() {
-  var wrap = document.getElementById('devLoginWrap');
-  var user = null;
-  try { user = JSON.parse(localStorage.getItem('rada_user') || 'null'); } catch(e) {}
-  if (wrap) wrap.style.display = user ? 'none' : 'block';
-})();
-</script>
+
 <!-- REFER A FRIEND OVERLAY -->
 <div class="refer-overlay" id="referOverlay" onclick="if(event.target===this)closeReferSheet()">
   <div class="refer-sheet">
