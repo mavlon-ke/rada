@@ -249,20 +249,42 @@ body::after{content:'';position:fixed;top:-200px;left:50%;transform:translateX(-
               <div class="step-dot" id="dot3"></div>
             </div>
 
-            <div id="phoneErr" class="err-msg">Please enter a valid Kenyan phone number (e.g. 0712 345 678)</div>
+            <div id="phoneErr" class="err-msg" id="phoneErr">Please enter a valid mobile number</div>
 
             <div class="field">
               <label class="f-label">Mobile Number</label>
               <div class="phone-row">
-                <select class="country-sel" id="countryCode">
+                <select class="country-sel" id="countryCode" onchange="updatePhonePlaceholder(this.value)">
                   <option value="+254">🇰🇪 +254</option>
+                  <option value="+1">🇺🇸 +1</option>
+                  <option value="+44">🇬🇧 +44</option>
                   <option value="+255">🇹🇿 +255</option>
                   <option value="+256">🇺🇬 +256</option>
                   <option value="+251">🇪🇹 +251</option>
                   <option value="+234">🇳🇬 +234</option>
                   <option value="+27">🇿🇦 +27</option>
+                  <option value="+233">🇬🇭 +233</option>
+                  <option value="+237">🇨🇲 +237</option>
+                  <option value="+243">🇨🇩 +243</option>
+                  <option value="+212">🇲🇦 +212</option>
+                  <option value="+20">🇪🇬 +20</option>
+                  <option value="+49">🇩🇪 +49</option>
+                  <option value="+33">🇫🇷 +33</option>
+                  <option value="+31">🇳🇱 +31</option>
+                  <option value="+61">🇦🇺 +61</option>
+                  <option value="+91">🇮🇳 +91</option>
+                  <option value="+971">🇦🇪 +971</option>
+                  <option value="+966">🇸🇦 +966</option>
+                  <option value="+65">🇸🇬 +65</option>
+                  <option value="+86">🇨🇳 +86</option>
+                  <option value="+82">🇰🇷 +82</option>
+                  <option value="+81">🇯🇵 +81</option>
+                  <option value="+55">🇧🇷 +55</option>
+                  <option value="+52">🇲🇽 +52</option>
+                  <option value="+57">🇨🇴 +57</option>
+                  <option value="+7">🇷🇺 +7</option>
                 </select>
-                <input class="f-input" id="phoneInput" type="tel" placeholder="0712 345 678" maxlength="10" oninput="formatPhone(this)">
+                <input class="f-input" id="phoneInput" type="tel" placeholder="712 345 678" maxlength="15" oninput="formatPhone(this)">
               </div>
             </div>
 
@@ -412,8 +434,19 @@ function setMode(btn, mode) {
 
 // ── PHONE FORMATTING ──────────────────────────────────────────────────────────
 function formatPhone(input) {
-  let v = input.value.replace(/\D/g,'');
-  input.value = v;
+  // Strip all non-digits
+  input.value = input.value.replace(/\D/g, '');
+}
+
+function updatePhonePlaceholder(countryCode) {
+  var input = document.getElementById('phoneInput');
+  if (!input) return;
+  // Show local format hint for Kenya, generic for others
+  if (countryCode === '+254') {
+    input.placeholder = '712 345 678';
+  } else {
+    input.placeholder = 'Phone number';
+  }
 }
 
 // ── OTP FLOW ──────────────────────────────────────────────────────────────────
@@ -424,15 +457,33 @@ var returningUser = false;
 var returningUserName = '';
 var currentFullPhone = '';
 
+function normalisePhone(countryCode, localNumber) {
+  // Strip all non-digits from both parts
+  var cc    = countryCode.replace(/\D/g, '');
+  var local = localNumber.replace(/\D/g, '');
+
+  // For Kenya (+254): strip leading 0 if present (0712... → 712...)
+  if (cc === '254' && local.startsWith('0')) {
+    local = local.slice(1);
+  }
+
+  return cc + local;  // E.164 without the + prefix: e.g. 254712345678
+}
+
 function sendOTP() {
-  const phone = document.getElementById('phoneInput').value.trim();
-  const err   = document.getElementById('phoneErr');
-  if (phone.length < 9) { err.style.display = 'block'; return; }
+  var rawPhone  = document.getElementById('phoneInput').value.trim();
+  var err       = document.getElementById('phoneErr');
+  var countryCode = document.getElementById('countryCode').value;
+
+  if (rawPhone.length < 4) {
+    err.textContent   = 'Please enter your phone number';
+    err.style.display = 'block';
+    return;
+  }
   err.style.display = 'none';
 
-  const btn        = document.getElementById('sendOtpBtn');
-  const countryCode = document.getElementById('countryCode').value;
-  currentFullPhone  = countryCode.replace('+','') + phone;
+  var btn      = document.getElementById('sendOtpBtn');
+  currentFullPhone = normalisePhone(countryCode, rawPhone);
 
   btn.textContent = 'Checking…';
   btn.disabled = true;
