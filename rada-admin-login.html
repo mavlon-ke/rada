@@ -251,21 +251,22 @@ function attemptAdminLogin() {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email: email, password: password })
   })
-  .then(function(r) { return r.json(); })
-  .then(function(d) {
-    if (d.success) {
-      setAdminSession(d.admin || { email: email, name: d.name || 'Admin', role: d.role || 'ADMIN' });
-    } else {
-      throw new Error(d.message || 'Invalid credentials');
-    }
+  .then(function(r) {
+    return r.json().then(function(d) {
+      if (r.ok && d.token && d.admin) {
+        setAdminSession(d.admin);
+      } else {
+        throw new Error(d.error || 'Invalid credentials');
+      }
+    });
   })
   .catch(function(err) {
-     
-      btn.disabled = false;
-      btn.textContent = 'Sign In to Admin Console';
-      errorEl.textContent = 'Incorrect credentials. Please try again.';
-      errorEl.classList.add('show');
-    
+    btn.disabled = false;
+    btn.textContent = 'Sign In to Admin Console';
+    errorEl.textContent = err.message === 'auth_failed'
+      ? 'Incorrect credentials. Please try again.'
+      : (err.message || 'Incorrect credentials. Please try again.');
+    errorEl.classList.add('show');
   });
 }
 
