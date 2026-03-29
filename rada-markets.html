@@ -1339,40 +1339,70 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <script>
 // ── DATA ─────────────────────────────────────────────────────────────────────
-const MARKETS = [
-  {
-    id:1, q:'Will Kenya pass the Finance Bill 2026?', slug:'will-kenya-pass-finance-bill-2025', cat:'POLITICS',
-    yes:29, vol:'KES 510K', traders:389, closes:'Mar 15', shift:+22, velocity:18, closingSoon:true,  isNew:false, creator:null,
-  },
-  {
-    id:2, q:'Will the KES/USD exchange rate stay below 130 by Friday?', slug:'kes-usd-exchange-rate-below-130', cat:'ECONOMY',
-    yes:54, vol:'KES 612K', traders:441, closes:'Mar 08', shift:-14, velocity:31, closingSoon:true,  isNew:false, creator:'@murambi_k',
-  },
-  {
-    id:3, q:'Will Kenya launch a national digital ID by end of 2026?', slug:'kenya-digital-id-launch-2025', cat:'TECH',
-    yes:18, vol:'KES 234K', traders:198, closes:'Mar 31', shift:+7,  velocity:5,  closingSoon:false, isNew:false, creator:null,
-  },
-  {
-    id:4, q:'Will Nairobi receive above-average long rains this season?', slug:'nairobi-above-average-long-rains', cat:'WEATHER',
-    yes:67, vol:'KES 89K', traders:76, closes:'Jun 30', shift:+11, velocity:9,  closingSoon:false, isNew:true, creator:'@forecaster_nbi',
-  },
-  {
-    id:5, q:'Will NSE 20 Index close above 2,500 by December 2025?', slug:'nse-20-above-2500-december-2025', cat:'ECONOMY',
-    yes:43, vol:'KES 295K', traders:221, closes:'Dec 31', shift:-3,  velocity:4,  closingSoon:false, isNew:false, creator:null,
-  },
-  {
-    id:6, q:'Will William Ruto complete his first presidential term?', slug:'will-ruto-complete-first-term', cat:'POLITICS',
-    yes:76, vol:'KES 485K', traders:312, closes:'Sep 01 2027', shift:+4,  velocity:12, closingSoon:false, isNew:false, creator:null,
-  },
-  {
-    id:7, q:'Will the NSE 20 Index close above 2,500 by December 2025?', slug:'nse-20-above-2500-dec-2025-b', cat:'TECH',
-    yes:54, vol:'KES 178K', traders:163, closes:'Jul 01', shift:+19, velocity:22, closingSoon:false, isNew:true, creator:'@gor_fan_254',
-  },
-  {
-    id:8, q:'Will super petrol price drop below KES 175 in the next EPRA review?', slug:'petrol-below-kes-175-epra-review', cat:'ECONOMY',
-    yes:38, vol:'KES 145K', traders:89, closes:'Mar 14', shift:-8,  velocity:14, closingSoon:true,  isNew:false, creator:'@energia_ke',
-  },
-];
+// MARKETS — live from backend. Populated by loadMarkets() on page init.
+var MARKETS = [];
+
+const API_BASE = 'https://api.checkrada.co.ke';
+
+function formatVolume(kes) {
+  if (!kes || kes === 0) return 'KES 0';
+  if (kes >= 1000000) return 'KES ' + (kes / 1000000).toFixed(1) + 'M';
+  if (kes >= 1000)    return 'KES ' + Math.round(kes / 1000) + 'K';
+  return 'KES ' + kes;
+}
+
+function formatCloses(isoStr) {
+  if (!isoStr) return '—';
+  var d = new Date(isoStr);
+  return d.toLocaleDateString('en-KE', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function normalizeMarket(m) {
+  var now      = Date.now();
+  var closesMs = new Date(m.closesAt).getTime();
+  return {
+    id:          m.id,
+    slug:        m.slug || m.id,
+    q:           m.title,
+    cat:         m.category,
+    yes:         Math.round((m.yesPrice || 0.5) * 100),
+    vol:         formatVolume(m.totalVolume || 0),
+    traders:     m.tradeCount || 0,
+    closes:      formatCloses(m.closesAt),
+    creator:     m.creator && m.creator.name ? m.creator.name : null,
+    closingSoon: closesMs - now < 7 * 24 * 3600 * 1000 && closesMs > now,
+    isNew:       now - new Date(m.createdAt || now).getTime() < 3 * 24 * 3600 * 1000,
+    shift:       0,
+    velocity:    Math.min(Math.floor((m.tradeCount || 0) / 5), 30),
+    isSocialChallenge: m.isSocialChallenge || false,
+  };
+}
+
+function loadMarkets(category) {
+  var url = '/api/markets?status=OPEN';
+  if (category && category !== 'ALL' && category !== 'TRENDING' && category !== 'LIVE') {
+    url += '&category=' + category;
+  }
+
+  var grid = document.getElementById('marketGrid');
+  if (grid) grid.innerHTML = '<div style="text-align:center;padding:48px;color:var(--text-dim);">Loading markets...</div>';
+
+  fetch(API_BASE + url)
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    MARKETS = (data.markets || []).map(normalizeMarket);
+    if (category === 'TRENDING') {
+      renderTrending();
+    } else {
+      renderMarkets(MARKETS);
+    }
+  })
+  .catch(function(err) {
+    console.error('loadMarkets error:', err);
+    if (grid) grid.innerHTML = '<div style="text-align:center;padding:48px;color:var(--text-dim);">Could not load markets. Please refresh.</div>';
+  });
+}
+
 
 let activeFilter = 'ALL';
 let activeSide = 'YES';
@@ -1406,7 +1436,7 @@ function renderMarkets(data) {
   }
 
   grid.innerHTML = data.map((m, i) => `
-    <div class="market-card" id="mcard_${m.id}" style="opacity:1!important;visibility:visible!important;" onclick="openForecast(${m.id})">
+    <div class="market-card" id="mcard_${m.id}" style="opacity:1!important;visibility:visible!important;" onclick="openForecast('${m.id}')">
       <div class="card-category"><div class="cat-dot"></div>${m.cat}</div>
       ${m.creator ? `<div class="creator-badge">💡 ${m.creator} · Creator</div>` : ''}
       <div class="card-question">${m.q}</div>
@@ -1423,11 +1453,11 @@ function renderMarkets(data) {
         <div class="card-meta-item">⏰ ${m.closes}</div>
       </div>
       <div class="card-actions">
-        <button class="btn-yes" onclick="event.stopPropagation();openForecast(${m.id},'YES')">YES</button>
-        <button class="btn-no"  onclick="event.stopPropagation();openForecast(${m.id},'NO')">NO</button>
-        <button class="card-multi-btn" id="multibtn_${m.id}" data-q="${m.q.slice(0,80)}" onclick="event.stopPropagation();toggleMultiAdd(${m.id},this.dataset.q,${m.yes})">+ Multi</button>
+        <button class="btn-yes" onclick="event.stopPropagation();openForecast('${m.id}','YES')">YES</button>
+        <button class="btn-no"  onclick="event.stopPropagation();openForecast('${m.id}','NO')">NO</button>
+        <button class="card-multi-btn" id="multibtn_${m.id}" data-q="${m.q.slice(0,80)}" onclick="event.stopPropagation();toggleMultiAdd('${m.id}',this.dataset.q,${m.yes})">+ Multi</button>
       </div>
-      <button class="card-share-btn" onclick="event.stopPropagation();smartShare(${m.id},'${m.slug}',this)">⤴ Share</button>
+      <button class="card-share-btn" onclick="event.stopPropagation();smartShare('${m.id}','${m.slug}',this)">⤴ Share</button>
     </div>
   `).join('');
 }
@@ -1466,7 +1496,7 @@ function renderTrending() {
       </div>
     </div>
   ` + ranked.map((m, i) => `
-    <div class="market-card" id="mcard_${m.id}" onclick="openForecast(${m.id})">
+    <div class="market-card" id="mcard_${m.id}" onclick="openForecast('${m.id}')">
       <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
         <span class="trend-rank">#${i+1}</span>
         <div class="card-category" style="margin-bottom:0"><div class="cat-dot"></div>${m.cat}</div>
@@ -1487,11 +1517,11 @@ function renderTrending() {
         <div class="card-meta-item">⏰ ${m.closes}</div>
       </div>
       <div class="card-actions">
-        <button class="btn-yes" onclick="event.stopPropagation();openForecast(${m.id},'YES')">YES</button>
-        <button class="btn-no"  onclick="event.stopPropagation();openForecast(${m.id},'NO')">NO</button>
-        <button class="card-multi-btn" id="multibtn_${m.id}" data-q="${m.q.slice(0,80)}" onclick="event.stopPropagation();toggleMultiAdd(${m.id},this.dataset.q,${m.yes})">+ Multi</button>
+        <button class="btn-yes" onclick="event.stopPropagation();openForecast('${m.id}','YES')">YES</button>
+        <button class="btn-no"  onclick="event.stopPropagation();openForecast('${m.id}','NO')">NO</button>
+        <button class="card-multi-btn" id="multibtn_${m.id}" data-q="${m.q.slice(0,80)}" onclick="event.stopPropagation();toggleMultiAdd('${m.id}',this.dataset.q,${m.yes})">+ Multi</button>
       </div>
-      <button class="card-share-btn" onclick="event.stopPropagation();smartShare(${m.id},'${m.slug}',this)">⤴ Share</button>
+      <button class="card-share-btn" onclick="event.stopPropagation();smartShare('${m.id}','${m.slug}',this)">⤴ Share</button>
     </div>
   `).join('');
 }
@@ -1501,10 +1531,14 @@ function filterCat(btn, cat) {
   document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
   if (btn && btn.classList) btn.classList.add('active');
   activeFilter = cat;
-  if (cat === 'TRENDING') { renderTrending(); return; }
   if (cat === 'LIVE') { renderLiveMarkets(); return; }
-  const filtered = cat === 'ALL' ? MARKETS : MARKETS.filter(m => m.cat === cat);
-  renderMarkets(filtered);
+  // Fetch from backend with category filter (TRENDING uses cached MARKETS)
+  if (cat === 'TRENDING') {
+    if (MARKETS.length > 0) { renderTrending(); return; }
+    loadMarkets('ALL'); // load then trending will render via cached data
+    return;
+  }
+  loadMarkets(cat);
 }
 
 function renderLiveMarkets() {
@@ -1841,7 +1875,7 @@ function openDeposit() { trackEvent('deposit_initiated', {}); alert('M-Pesa STK 
   var grid = document.getElementById('marketGrid');
   if (!grid) return;
   // Render all markets immediately — guaranteed
-  try { renderMarkets(MARKETS); } catch(e) { console.warn('renderMarkets:', e); }
+  loadMarkets('ALL');
   // Mark All Markets button active
   var btns = document.querySelectorAll('.filter-btn');
   btns.forEach(function(b) {

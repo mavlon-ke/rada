@@ -1517,12 +1517,29 @@ body::after {
 </div>
 
 <script>
+// ── API CONFIG ─────────────────────────────────────────────────────────────────
+const API_BASE = 'https://api.checkrada.co.ke';
+
+// adminFetch: attaches admin JWT from sessionStorage to every request
+function adminFetch(path, options) {
+  var token = sessionStorage.getItem('rada_admin_token') || '';
+  var opts  = Object.assign({}, options || {});
+  opts.credentials = 'include';
+  opts.headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers || {});
+  if (token) opts.headers['Authorization'] = 'Bearer ' + token;
+  return fetch(API_BASE + path, opts);
+}
+
 // ── DATA ──────────────────────────────────────────────────────────────────────
 
-const MARKETS_DATA = [
+// Live from backend — populated by loadMarketsTable()
+var MARKETS_DATA = [];
+
+// Placeholder so filterMarkets does not throw before first load
+var _MARKETS_PLACEHOLDER = [
   { title:'Will William Ruto complete his first presidential term?', cat:'POLITICS', yes:76, volume:'KES 485K', trades:312, closes:'2027-09-01', status:'OPEN' },
   { title:'Will KES trade below 120 to USD by end of 2025?',        cat:'ECONOMY',  yes:43, volume:'KES 612K', trades:441, closes:'2025-12-31', status:'OPEN' },
-  { title:'Will Rada Tech Forecast win the NSE 20 Index League 2024/25?',     cat:'TECH',   yes:54, volume:'KES 178K', trades:163, closes:'2025-07-01', status:'OPEN' },
+  { title:'Will Rada Tech Forecast win the NSE 20 Index League 2024/25?', cat:'TECH', yes:54, volume:'KES 178K', trades:163, closes:'2025-07-01', status:'OPEN' },
   { title:'Will NSE 20 close above 2,500 by December 2025?',        cat:'ECONOMY',  yes:38, volume:'KES 295K', trades:221, closes:'2025-12-31', status:'OPEN' },
   { title:'Will Kenya pass the Finance Bill 2025?',                  cat:'POLITICS', yes:29, volume:'KES 510K', trades:389, closes:'2025-03-01', status:'CLOSED' },
   { title:'Will mobile money exceed KES 10T in 2025?',              cat:'TECH',   yes:52, volume:'KES 234K', trades:198, closes:'2026-04-30', status:'OPEN' },
@@ -1770,7 +1787,7 @@ function showPanel(id, btn) {
   document.getElementById('breadcrumbLabel').textContent = id.replace('-', ' ');
 
   // Lazy render
-  if (id === 'markets') renderMarketsTable(MARKETS_DATA);
+  if (id === 'markets') loadMarketsTable();
   if (id === 'users') renderUsersTable();
   if (id === 'kyc') renderKYCTable();
   if (id === 'transactions') renderTxnsTable();
@@ -1857,27 +1874,94 @@ function rejectKYC() {
 // ── MARKET CREATE ─────────────────────────────────────────────────────────────
 
 function submitCreateMarket() {
-  const title = document.getElementById('mktTitle').value;
-  const desc  = document.getElementById('mktDesc').value;
-  const cat   = document.getElementById('mktCategory').value;
-  const date  = document.getElementById('mktClosesAt').value;
+  var title  = document.getElementById('mktTitle').value.trim();
+  var desc   = document.getElementById('mktDesc').value.trim();
+  var cat    = document.getElementById('mktCategory').value;
+  var date   = document.getElementById('mktClosesAt').value;
+  var source = document.getElementById('mktSource').value.trim();
+  var image  = document.getElementById('mktImage').value.trim();
 
   if (!title || !desc || !cat || !date) {
     alert('Please fill in all required fields.'); return;
   }
 
-  const result = document.getElementById('createResult');
-  result.style.display = 'flex';
-  result.style.alignItems = 'center';
+  var btn    = document.querySelector('[onclick="submitCreateMarket()"]');
+  var result = document.getElementById('createResult');
+  if (btn) { btn.disabled = true; btn.textContent = 'Creating...'; }
+  result.style.display = 'none';
 
-  setTimeout(() => {
-    result.style.display = 'none';
-    document.getElementById('mktTitle').value    = '';
-    document.getElementById('mktDesc').value     = '';
-    document.getElementById('mktCategory').value = '';
-    document.getElementById('mktSource').value   = '';
-    document.getElementById('mktImage').value    = '';
-  }, 3000);
+  // Build ISO datetime string from datetime-local input
+  var closesAt = new Date(date).toISOString();
+
+  var body = { title: title, description: desc, category: cat, closesAt: closesAt };
+  if (source) body.sourceNote = source;
+  if (image)  body.imageUrl   = image;
+
+  adminFetch('/api/admin/markets', {
+    method: 'POST',
+    body:   JSON.stringify(body),
+  })
+  .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
+  .then(function(res) {
+    if (res.ok && res.d.success) {
+      result.style.display    = 'flex';
+      result.style.alignItems = 'center';
+      result.style.color      = 'var(--green)';
+      result.textContent      = '✓ Market created: ' + res.d.market.title.slice(0, 50);
+      document.getElementById('mktTitle').value    = '';
+      document.getElementById('mktDesc').value     = '';
+      document.getElementById('mktCategory').value = '';
+      document.getElementById('mktSource').value   = '';
+      document.getElementById('mktImage').value    = '';
+      // Refresh markets table if user switches to it
+      MARKETS_DATA = [];
+    } else {
+      var msg = (res.d.error && typeof res.d.error === 'string') ? res.d.error : 'Failed to create market. Check all fields.';
+      result.style.display    = 'flex';
+      result.style.alignItems = 'center';
+      result.style.color      = '#ce1126';
+      result.textContent      = '✗ ' + msg;
+    }
+  })
+  .catch(function(err) {
+    result.style.display    = 'flex';
+    result.style.alignItems = 'center';
+    result.style.color      = '#ce1126';
+    result.textContent      = '✗ Network error. Please try again.';
+  })
+  .finally(function() {
+    if (btn) { btn.disabled = false; btn.textContent = 'Create Market'; }
+  });
+}
+
+// Load markets table from backend
+function loadMarketsTable() {
+  var tbody = document.getElementById('marketsTableBody');
+  if (tbody) tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-dim);padding:24px;">Loading markets...</td></tr>';
+
+  adminFetch('/api/admin/markets')
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    var markets = data.markets || [];
+    MARKETS_DATA = markets.map(function(m) {
+      return {
+        id:     m.id,
+        title:  m.title,
+        cat:    m.category,
+        yes:    Math.round((m.yesPrice || 0.5) * 100),
+        volume: 'KES ' + Math.round((m.totalVolume || 0) / 1000) + 'K',
+        trades: m.tradeCount || 0,
+        closes: m.closesAt ? new Date(m.closesAt).toLocaleDateString('en-KE', { day:'numeric', month:'short', year:'numeric' }) : '—',
+        status: m.status,
+        marketId: m.id,
+      };
+    });
+    renderMarketsTable(MARKETS_DATA);
+  })
+  .catch(function(err) {
+    console.error('loadMarketsTable error:', err);
+    if (tbody) tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#ce1126;padding:24px;">Failed to load markets. Check connection.</td></tr>';
+  });
 }
 
 // ── MODAL UTILS ───────────────────────────────────────────────────────────────
@@ -2092,7 +2176,7 @@ function initCarouselAdmin() {
   publishBtn.onclick = function() {
     var el = document.getElementById('carouselSaveStatus');
     if (el) el.textContent = '✅ Published at ' + new Date().toLocaleTimeString();
-    fetch('/api/admin/config/carousel', {
+    adminFetch('/api/admin/config/carousel', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({ slides: carouselSlides })
     }).catch(function(){});
@@ -2155,7 +2239,7 @@ function renderCarouselEditor() {
 
 /* ── REFERRAL ADMIN ── */
 function loadReferralConfig() {
-  fetch('/api/admin/config/referral').then(function(r){ return r.json(); }).then(function(d) {
+  adminFetch('/api/admin/config/referral').then(function(r){ return r.json(); }).then(function(d) {
     var cfg = d.config || {};
     var t = document.getElementById('referralMasterToggle');
     var r = document.getElementById('referrerRewardInput');
@@ -2168,7 +2252,7 @@ function loadReferralConfig() {
     updateReferralPreview();
   }).catch(function(){});
 
-  fetch('/api/admin/stats').then(function(r){ return r.json(); }).then(function(d) {
+  adminFetch('/api/admin/stats').then(function(r){ return r.json(); }).then(function(d) {
     var rs = d.referralStats || {};
     var t = document.getElementById('rStatTotal');
     var p = document.getElementById('rStatPending');
@@ -2199,7 +2283,7 @@ function saveReferralConfig() {
   var minDep   = parseFloat((document.getElementById('minDepositInput')     || {value:100}).value);
   var statusEl = document.getElementById('referralSaveStatus');
   if (statusEl) statusEl.textContent = 'Saving...';
-  fetch('/api/admin/config/referral', {
+  adminFetch('/api/admin/config/referral', {
     method:'POST', headers:{'Content-Type':'application/json'},
     body: JSON.stringify({ active: active, referrerRewardKes: referrer, refereeMatchKes: referee, minDepositKes: minDep })
   }).then(function(){ if (statusEl) statusEl.textContent = '✅ Saved at ' + new Date().toLocaleTimeString(); })
@@ -2243,7 +2327,7 @@ function saveSupportWa() {
   }
   localStorage.setItem('rada_support_wa', number);
   if (status) status.innerHTML = '✅ Saved locally. <strong>Also update rada-config.json in GitHub</strong>: set "supportWhatsApp": "' + number + '" for all-device support.';
-  fetch('/api/admin/config/support', {
+  adminFetch('/api/admin/config/support', {
     method: 'POST',
     headers: {'Content-Type':'application/json'},
     body: JSON.stringify({ whatsappNumber: number })
@@ -2257,7 +2341,7 @@ function clearSupportWa() {
   var status = document.getElementById('supportWaStatus');
   if (input) input.value = '';
   if (status) status.textContent = '🗑️ Number cleared — WhatsApp button is now inactive';
-  fetch('/api/admin/config/support', {
+  adminFetch('/api/admin/config/support', {
     method: 'POST',
     headers: {'Content-Type':'application/json'},
     body: JSON.stringify({ whatsappNumber: '' })
