@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/db/prisma';
 import { requireAdmin, adminUnauthorized, logAdminAction } from '@/lib/auth/admin';
-import { initiateB2C, formatPhone } from '@/lib/mpesa/mpesa.service';
+import { initiateTransfer, createTransferRecipient, normalisePhone as formatPhone } from '@/lib/paystack/paystack.service';
 
 const FEE_ADMIN = 0.15; // 15% when admin must intervene
 
@@ -111,17 +111,24 @@ export async function POST(
   // Log admin action
   await logAdminAction(admin.id, 'DISPUTE_RESOLVED', `challenge:${challenge.id}`, { outcome, feeKes, reason }, req);
 
-  // Trigger B2C
-  await Promise.allSettled(
-    payouts
-      .filter(p => p.amountKes > 0 && p.phone)
-      .map(p => initiateB2C({
-        phone:     formatPhone(p.phone),
-        amountKes: p.amountKes,
-        remarks:   'CheckRada Dispute Payout',
-        occasion:  `Challenge: ${challenge.id}`,
-      }))
-  );
+  // Paystack transfers for dispute payouts
+await Promise.allSettled(
+  payouts
+    .filter(p => p.amountKes > 0 && p.phone)
+    .map(async p => {
+      const recipient = await createTransferRecipient({
+        name:     p.phone,
+        phone:    formatPhone(p.phone),
+        bankCode: 'MPesa',
+      });
+      return initiateTransfer({
+        amountKes:     p.amountKes,
+        recipientCode: recipient.recipient_code,
+        reference:     CKR-DSP-${challenge.id.slice(0,8)}-${p.userId.slice(0,4)},
+        reason:        'CheckRada Dispute Payout',
+      });
+    })
+);
 
   return NextResponse.json({
     success:    true,

@@ -7,7 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/db/prisma';
 import { requireAuth } from '@/lib/auth/session';
-import { initiateB2C, formatPhone } from '@/lib/mpesa/mpesa.service';
+import { initiateTransfer, createTransferRecipient, normalisePhone as formatPhone } from '@/lib/paystack/paystack.service';
 
 
 const FEE_STANDARD = 0.05;  // 5%  — mutual/referee resolution
@@ -162,17 +162,24 @@ async function resolveChallenge(
     }
   });
 
-  // Trigger B2C
-  await Promise.allSettled(
-    payouts
-      .filter(p => p.amountKes > 0 && p.phone)
-      .map(p => initiateB2C({
-        phone:     formatPhone(p.phone),
-        amountKes: p.amountKes,
-        remarks:   `Rada Challenge Payout`,
-        occasion:  `Challenge: ${challenge.id}`,
-      }))
-  );
+  // Paystack transfers for challenge payouts
+await Promise.allSettled(
+  payouts
+    .filter(p => p.amountKes > 0 && p.phone)
+    .map(async p => {
+      const recipient = await createTransferRecipient({
+        name:     p.phone,
+        phone:    formatPhone(p.phone),
+        bankCode: 'MPesa',
+      });
+      return initiateTransfer({
+        amountKes:     p.amountKes,
+        recipientCode: recipient.recipient_code,
+        reference:     CKR-CHL-${challenge.id.slice(0,8)}-${p.userId.slice(0,4)},
+        reason:        'Rada Challenge Payout',
+      });
+    })
+);
 
   return NextResponse.json({
     success:    true,

@@ -9,7 +9,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/db/prisma';
 import { requireAdmin, adminUnauthorized } from '@/lib/auth/admin';
-import { initiateB2C, formatPhone } from '@/lib/mpesa/mpesa.service';
+import { initiateTransfer, createTransferRecipient, normalisePhone as formatPhone } from '@/lib/paystack/paystack.service';
 
 // No fee at resolution — fee was taken at trade time (Option B)
 const RESOLUTION_FEE = 0;
@@ -111,22 +111,27 @@ export async function POST(
     });
   });
 
-  // ── Trigger B2C withdrawals ───────────────────────────────────────────────
-  Promise.allSettled(
-    payouts.map(p =>
-      initiateB2C({
-        phone:     formatPhone(p.phone),
-        amountKes: p.netKes,
-        remarks:   `Rada Payout - ${outcome}`,
-        occasion:  `Market: ${market.id}`,
-      })
-    )
-  ).then(results => {
-    const failed = results.filter(r => r.status === 'rejected').length;
-    if (failed > 0) {
-      console.error(`[RESOLVE] ${failed}/${payouts.length} B2C payouts failed for market ${market.id}`);
-    }
-  });
+  // Paystack transfers for market payouts
+Promise.allSettled(
+  payouts.map(async p => {
+    const recipient = await createTransferRecipient({
+      name:     p.phone,
+      phone:    formatPhone(p.phone),
+      bankCode: 'MPesa',
+    });
+    return initiateTransfer({
+      amountKes:     p.netKes,
+      recipientCode: recipient.recipient_code,
+      reference:     CKR-MKT-${market.id.slice(0,8)}-${p.userId.slice(0,4)},
+      reason:        Rada Payout - ${outcome},
+    });
+  })
+).then(results => {
+  const failed = results.filter(r => r.status === 'rejected').length;
+  if (failed > 0) {
+    console.error([RESOLVE] ${failed}/${payouts.length} Paystack payouts failed);
+  }
+});
 
   return NextResponse.json({
     success:         true,

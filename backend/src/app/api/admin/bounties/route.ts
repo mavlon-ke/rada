@@ -6,7 +6,8 @@ import { withErrorHandling } from '@/lib/security/route-guard';
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { requireAdmin, adminUnauthorized, logAdminAction } from '@/lib/auth/admin';
-import { initiateB2C, formatPhone } from '@/lib/mpesa/mpesa.service';
+
+import { initiateTransfer, createTransferRecipient, normalisePhone as formatPhone } from '@/lib/paystack/paystack.service';
 
 const BOUNTY_MIN_PAYOUT = 100; // Only pay out when balance ≥ KES 100
 
@@ -75,13 +76,18 @@ export async function POST(req: NextRequest) {
     });
   });
 
-  // B2C to creator's phone
-  await initiateB2C({
-    phone:     formatPhone(bounty.creator.phone),
-    amountKes: payoutKes,
-    remarks:   'CheckRada Creator Bounty',
-    occasion:  `Market: ${bounty.marketId}`,
-  });
+  // Paystack transfer to creator's phone
+const recipient = await createTransferRecipient({
+  name:     bounty.creator.name ?? bounty.creator.phone,
+  phone:    formatPhone(bounty.creator.phone),
+  bankCode: 'MPesa',
+});
+await initiateTransfer({
+  amountKes:     payoutKes,
+  recipientCode: recipient.recipient_code,
+  reference:     CKR-BNT-${bounty.marketId.slice(0,8).toUpperCase()},
+  reason:        'CheckRada Creator Bounty',
+});
 
   await logAdminAction(admin.id, 'BOUNTY_PAID', `bounty:${bountyId}`, {
     creatorPhone: bounty.creator.phone,
