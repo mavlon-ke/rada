@@ -122,8 +122,8 @@ Promise.allSettled(
     return initiateTransfer({
       amountKes:     p.netKes,
       recipientCode: recipient.recipient_code,
-      reference:     CKR-MKT-${market.id.slice(0,8)}-${p.userId.slice(0,4)},
-      reason:        Rada Payout - ${outcome},
+      reference:     `CKR-MKT-${market.id.slice(0,8)}-${p.userId.slice(0,4)}`,
+      reason:        `Rada Payout - ${outcome}`,
     });
   })
 ).then(results => {

@@ -175,7 +175,7 @@ await Promise.allSettled(
       return initiateTransfer({
         amountKes:     p.amountKes,
         recipientCode: recipient.recipient_code,
-        reference:     CKR-CHL-${challenge.id.slice(0,8)}-${p.userId.slice(0,4)},
+        reference:     `CKR-CHL-${challenge.id.slice(0,8)}-${p.userId.slice(0,4)}`,
         reason:        'Rada Challenge Payout',
       });
     })

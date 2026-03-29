@@ -85,7 +85,7 @@ const recipient = await createTransferRecipient({
 await initiateTransfer({
   amountKes:     payoutKes,
   recipientCode: recipient.recipient_code,
-  reference:     CKR-BNT-${bounty.marketId.slice(0,8).toUpperCase()},
+  reference:     `CKR-BNT-${bounty.marketId.slice(0,8).toUpperCase()}`,
   reason:        'CheckRada Creator Bounty',
 });
 
