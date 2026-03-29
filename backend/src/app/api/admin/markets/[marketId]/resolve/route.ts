@@ -129,7 +129,7 @@ Promise.allSettled(
 ).then(results => {
   const failed = results.filter(r => r.status === 'rejected').length;
   if (failed > 0) {
-    console.error([RESOLVE] ${failed}/${payouts.length} Paystack payouts failed);
+    console.error(`[RESOLVE] ${failed}/${payouts.length} Paystack payouts failed`);
   }
 });
 
