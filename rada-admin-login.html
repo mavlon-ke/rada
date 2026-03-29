@@ -246,7 +246,7 @@ function attemptAdminLogin() {
   errorEl.classList.remove('show');
 
   // Try backend authentication first
-  fetch('/api/admin/auth/login', {
+  fetch('https://api.checkrada.co.ke/api/admin/auth/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email: email, password: password })
