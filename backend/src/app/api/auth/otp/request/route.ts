@@ -14,7 +14,9 @@ import { sendWhatsAppOTP, normaliseToE164 } from '@/lib/whatsapp/whatsapp-otp';
 import { withErrorHandling } from '@/lib/security/route-guard';
 
 const Schema = z.object({
-  phone: z.string().regex(/^(\+?254|0)[17]\d{8}$/, 'Invalid Kenyan phone number'),
+  // Accept any international number: optional +, 1-4 digit country code, 4-14 digit subscriber
+  // Normalisation and deep validation handled by normaliseToE164
+  phone: z.string().min(5).max(20).regex(/^[\+\d][\d\s\-\.\(\)]{3,18}$/, 'Invalid phone number'),
 });
 
 // SECURITY: crypto.randomBytes — NOT Math.random()
@@ -30,7 +32,7 @@ export const POST = withErrorHandling(async (req: NextRequest) => {
 
   if (!parsed.success) {
     return NextResponse.json(
-      { error: 'Enter a valid Kenyan mobile number (e.g. 0712 345678)' },
+      { error: 'Please enter a valid mobile number including your country code.' },
       { status: 400 }
     );
   }

@@ -17,14 +17,24 @@ function requireEnv(key: string): string {
 
 export function normaliseToE164(phone: string): string | null {
   if (!phone || typeof phone !== 'string') return null;
-  const digits = phone.replace(/\D/g, '');
 
-  // Already E.164 Kenya: 254XXXXXXXXX (12 digits)
-  if (digits.startsWith('254') && digits.length === 12) return digits;
+  // Strip all non-digit characters except leading +
+  const hasPlus = phone.trimStart().startsWith('+');
+  const digits  = phone.replace(/\D/g, '');
 
-  // Local format: 07XXXXXXXX or 01XXXXXXXX (10 digits)
+  if (digits.length < 5 || digits.length > 15) return null;
+
+  // ── Kenya local formats ────────────────────────────────────────────────────
+  // 07XXXXXXXX or 01XXXXXXXX (10 digits, no country code)
   if ((digits.startsWith('07') || digits.startsWith('01')) && digits.length === 10) {
     return '254' + digits.slice(1);
+  }
+
+  // ── Already E.164 (with or without leading +) ─────────────────────────────
+  // Phone was sent as e.g. "254712345678" or "+254712345678"
+  // Digits must be 7–15 chars (ITU-T E.164 max is 15 digits total)
+  if (hasPlus || digits.length >= 10) {
+    return digits;
   }
 
   return null;

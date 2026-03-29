@@ -7,7 +7,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 
 function normalisePhone(phone: string): string {
-  return phone.replace(/\D/g, '').replace(/^0/, '254');
+  const digits = phone.replace(/\D/g, '');
+  // Kenyan local format: 07... or 01... → strip leading 0 and prepend 254
+  if ((digits.startsWith('07') || digits.startsWith('01')) && digits.length === 10) {
+    return '254' + digits.slice(1);
+  }
+  return digits;
 }
 
 export async function GET(req: NextRequest) {
