@@ -919,34 +919,61 @@ td{padding:14px 16px;font-size:0.8rem;border-bottom:1px solid rgba(109,40,217,0.
 
 <script>
 // ── SAMPLE DATA ───────────────────────────────────────────────────────────────
-const MY_MARKETS = [
-  { q:'Will KES/USD stay below 130 by Friday?', status:'live', vol:'KES 612K', earned:'KES 1,530', slug:'kes-usd-130-fri' },
-  { q:'Will it rain every day in Nairobi CBD next 72h?', status:'live', vol:'KES 89K', earned:'KES 222', slug:'nairobi-rain-72h' },
-  { q:'Will the Nairobi Expressway tolls increase in Q2?', status:'pending', vol:'—', earned:'—', slug:'expressway-tolls-q2' },
-  { q:'Will Sauti Sol release a new album this year?', status:'review', vol:'—', earned:'—', slug:'sauti-sol-album' },
-];
+var MY_MARKETS = [];
+
+function loadMyMarkets() {
+  var body = document.getElementById('myMarketsBody');
+  if (body) body.innerHTML = '<tr><td colspan="5" class="empty-row">Loading your markets...</td></tr>';
+
+  // Fetch markets where creator is the current user
+  // We use the public markets endpoint filtered by creator, then show proposal status
+  userFetch('/api/markets?status=OPEN')
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    var myPhone = radaUser && radaUser.phone ? String(radaUser.phone).replace(/^\+/, '') : null;
+    var allMarkets = (d.markets || []).filter(function(m) {
+      return m.creator && m.creator.phone && String(m.creator.phone).replace(/^\+/, '') === myPhone;
+    });
+    MY_MARKETS = allMarkets.map(function(m) {
+      var vol = Number(m.totalVolume || 0);
+      var volStr = vol >= 1000000 ? 'KES ' + (vol/1000000).toFixed(1) + 'M'
+                 : vol >= 1000    ? 'KES ' + Math.round(vol/1000) + 'K'
+                 : vol > 0        ? 'KES ' + vol : '—';
+      // Creator earns 0.5% of volume
+      var earned = vol > 0 ? 'KES ' + Math.round(vol * 0.005).toLocaleString() : '—';
+      return { q: m.title, status: 'live', vol: volStr, earned: earned, slug: m.slug, id: m.id };
+    });
+    renderMyMarkets();
+  })
+  .catch(function() {
+    if (body) body.innerHTML = '<tr><td colspan="5" class="empty-row">Could not load markets. Please refresh.</td></tr>';
+  });
+}
 
 function renderMyMarkets() {
-  const body = document.getElementById('myMarketsBody');
+  var body = document.getElementById('myMarketsBody');
+  if (!body) return;
   if (!MY_MARKETS.length) {
-    body.innerHTML = `<tr><td colspan="5" class="empty-row">No creator markets yet. Propose one above to start earning!</td></tr>`;
+    body.innerHTML = '<tr><td colspan="5" class="empty-row">No creator markets yet. Propose one above to start earning!</td></tr>';
     return;
   }
-  body.innerHTML = MY_MARKETS.map(m => `
-    <tr>
-      <td style="max-width:240px;line-height:1.45">${m.q}</td>
-      <td><span class="status-badge ${m.status === 'live' ? 'status-live' : m.status === 'pending' ? 'status-pending' : 'status-review'}">
-        ${m.status === 'live' ? '● Live' : m.status === 'pending' ? '◎ Pending' : '↻ In Review'}
-      </span></td>
-      <td style="font-family:var(--mono);font-size:0.78rem">${m.vol}</td>
-      <td class="earn-val">${m.earned}</td>
-      <td>
-        ${m.status === 'live'
-          ? `<button class="copy-link-btn" onclick="copySlug('${m.slug}')">Copy Link</button>`
-          : '<span style="font-size:0.7rem;color:var(--text-dim)">Awaiting approval</span>'}
-      </td>
-    </tr>
-  `).join('');
+  body.innerHTML = MY_MARKETS.map(function(m) {
+    var badge = m.status === 'live'
+      ? '<span class="status-badge status-live">● Live</span>'
+      : m.status === 'pending'
+      ? '<span class="status-badge status-pending">◎ Pending</span>'
+      : '<span class="status-badge status-review">↻ In Review</span>';
+    var action = m.status === 'live'
+      ? '<button class="copy-link-btn" onclick="copySlug('' + m.slug + '')">Copy Link</button>'
+      : '<span style="font-size:0.7rem;color:var(--text-dim)">Awaiting approval</span>';
+    return '<tr>' +
+      '<td style="max-width:240px;line-height:1.45">' + m.q + '</td>' +
+      '<td>' + badge + '</td>' +
+      '<td style="font-family:var(--mono);font-size:0.78rem">' + m.vol + '</td>' +
+      '<td class="earn-val">' + m.earned + '</td>' +
+      '<td>' + action + '</td>' +
+    '</tr>';
+  }).join('');
 }
 
 // ── FORM LOGIC ────────────────────────────────────────────────────────────────
@@ -997,11 +1024,43 @@ function submitProposal() {
   btn.disabled = true;
   btn.textContent = 'Submitting...';
 
-  setTimeout(() => {
-    document.getElementById('proposalForm').style.display = 'none';
-    document.getElementById('shareLinkPhone').textContent = phone;
-    document.getElementById('successPanel').classList.add('show');
-  }, 900);
+  var token = localStorage.getItem('rada_token') || '';
+  if (!token) {
+    btn.disabled = false;
+    btn.textContent = 'Submit Market Proposal → Start Earning';
+    return alert('Please log in first to submit a proposal.');
+  }
+
+  var body = {
+    question:         q,
+    category:         cat,
+    resolutionSource: truth,
+    whyCareNote:      why,
+  };
+
+  userFetch('/api/markets/propose', {
+    method: 'POST',
+    body:   JSON.stringify(body),
+  })
+  .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
+  .then(function(res) {
+    btn.disabled = false;
+    btn.textContent = 'Submit Market Proposal → Start Earning';
+    if (res.ok) {
+      document.getElementById('proposalForm').style.display = 'none';
+      document.getElementById('shareLinkPhone').textContent = phone;
+      document.getElementById('successPanel').classList.add('show');
+      loadMyMarkets(); // Refresh my markets list
+    } else {
+      var msg = (res.d.error && typeof res.d.error === 'string') ? res.d.error : 'Could not submit proposal. Please try again.';
+      alert('Error: ' + msg);
+    }
+  })
+  .catch(function() {
+    btn.disabled = false;
+    btn.textContent = 'Submit Market Proposal → Start Earning';
+    alert('Network error. Please try again.');
+  });
 }
 
 function shake(id) {
@@ -1033,7 +1092,7 @@ function resetForm() {
   document.getElementById('qCount').textContent = '0 / 120';
 }
 
-renderMyMarkets();
+loadMyMarkets();
 </script>
 
 <script>
@@ -1156,9 +1215,21 @@ var radaUser = null;
 try { radaUser = JSON.parse(localStorage.getItem('rada_user') || 'null'); } catch(e) {}
 var isLoggedIn = !!radaUser;
 
+const API_BASE = 'https://api.checkrada.co.ke';
+
+// userFetch: attaches user JWT to every authenticated request
+function userFetch(path, options) {
+  var token = localStorage.getItem('rada_token') || '';
+  var opts  = Object.assign({}, options || {});
+  opts.credentials = 'include';
+  opts.headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers || {});
+  if (token) opts.headers['Authorization'] = 'Bearer ' + token;
+  return fetch(API_BASE + path, opts);
+}
+
 // ── Referral config (loaded async) ───────────────────────────────────────────
 var referralActive = true;  // default ON for demo; overridden by backend
-fetch('/api/config/referral').then(r => r.json()).then(d => {
+fetch(API_BASE + '/api/config/referral').then(r => r.json()).then(d => {
   referralActive = d.config?.active !== false;  // true unless explicitly false
   // Update refer row visibility
   document.querySelectorAll('.acc-refer-row').forEach(el => {
@@ -1194,7 +1265,7 @@ fetch('/api/config/referral').then(r => r.json()).then(d => {
 
   // Notification badge
   if (isLoggedIn) {
-    fetch('/api/users/me/notifications').then(r => r.json()).then(d => {
+    fetch(API_BASE + '/api/users/me/notifications').then(r => r.json()).then(d => {
       var count = d.unreadCount || 0;
       document.querySelectorAll('.m-notif-badge').forEach(el => {
         el.textContent = count > 9 ? '9+' : count;
@@ -1227,7 +1298,7 @@ function loadNotifications() {
   var body = document.getElementById('notifTrayBody');
   if (!body) return;
   body.innerHTML = '<div class="notif-empty">Loading...</div>';
-  fetch('/api/users/me/notifications').then(r => r.json()).then(d => {
+  fetch(API_BASE + '/api/users/me/notifications').then(r => r.json()).then(d => {
     var notifs = d.notifications || [];
     if (!notifs.length) {
       body.innerHTML = '<div class="notif-empty">🔔 No notifications yet</div>';
@@ -1258,7 +1329,7 @@ function tapNotif(id, link) {
   if (link) window.location.href = link;
 }
 function markAllRead() {
-  fetch('/api/users/me/notifications/read', { method: 'PATCH' })
+  fetch(API_BASE + '/api/users/me/notifications/read', { method: 'PATCH' })
     .then(() => {
       document.querySelectorAll('.notif-item').forEach(el => el.classList.remove('unread'));
       document.querySelectorAll('.notif-unread-dot').forEach(el => el.remove());
@@ -1516,7 +1587,7 @@ function initCarousel() {
     return;
   }
 
-  fetch('/api/config/carousel').then(r => r.json()).then(d => {
+  fetch(API_BASE + '/api/config/carousel').then(r => r.json()).then(d => {
     promoSlides = d.slides || [];
     if (!promoSlides.length) {
       var wrap = document.getElementById('promoCarouselWrap');
@@ -1788,7 +1859,7 @@ function openReferSheet() {
   if (codeEl) codeEl.textContent = code;
 
   // Load stats from API
-  fetch('/api/users/me/referrals')
+  fetch(API_BASE + '/api/users/me/referrals')
     .then(function(r){ return r.json(); })
     .then(function(d) {
       var total    = d.totalReferred || 0;

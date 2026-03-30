@@ -1072,20 +1072,20 @@ nav a.active { color: #8b5cf6 !important; background: rgba(109,40,217,0.12) !imp
     <div class="ov-card" style="animation-delay:0.07s">
       <div class="ov-icon">📊</div>
       <div class="ov-label"><div class="ov-label-dot"></div>Open Positions</div>
-      <div class="ov-value">KES 3,480</div>
-      <div class="ov-change neutral">Across 5 markets</div>
+      <div class="ov-value" id="ovOpenValue">—</div>
+      <div class="ov-change neutral" id="ovOpenCount">Loading...</div>
     </div>
     <div class="ov-card green-tint" style="animation-delay:0.14s">
       <div class="ov-icon">📈</div>
       <div class="ov-label"><div class="ov-label-dot"></div>Total P&amp;L</div>
-      <div class="ov-value" style="color:var(--green)">+KES 1,240</div>
-      <div class="ov-change up">▲ +33.2% all time</div>
+      <div class="ov-value" style="color:var(--green)" id="ovPnl">—</div>
+      <div class="ov-change up" id="ovPnlSub">Loading...</div>
     </div>
     <div class="ov-card gold-tint" style="animation-delay:0.21s">
       <div class="ov-icon">🏆</div>
       <div class="ov-label"><div class="ov-label-dot"></div>Win Rate</div>
-      <div class="ov-value" style="color:var(--gold)">68%</div>
-      <div class="ov-change up">17 wins / 8 losses</div>
+      <div class="ov-value" style="color:var(--gold)" id="ovWinRate">—</div>
+      <div class="ov-change up" id="ovWinDetail">Loading...</div>
     </div>
   </div>
 
@@ -1141,30 +1141,30 @@ nav a.active { color: #8b5cf6 !important; background: rgba(109,40,217,0.12) !imp
       <div class="stats-grid">
         <div class="stat-box">
           <div class="stat-box-label">Total Traded</div>
-          <div class="stat-box-val">KES 12.4K</div>
-          <div class="stat-box-sub">Across 25 trades</div>
+          <div class="stat-box-val" id="statTotalVol">—</div>
+          <div class="stat-box-sub" id="statTotalTrades">Loading...</div>
         </div>
         <div class="stat-box">
           <div class="stat-box-label">Best Trade</div>
-          <div class="stat-box-val green">+KES 840</div>
-          <div class="stat-box-sub">Ruto term market</div>
+          <div class="stat-box-val green" id="statBestTrade">—</div>
+          <div class="stat-box-sub" id="statBestSub">—</div>
         </div>
         <div class="stat-box">
-          <div class="stat-box-label">Avg Hold Time</div>
-          <div class="stat-box-val">14 days</div>
-          <div class="stat-box-sub">Per position</div>
+          <div class="stat-box-label">Total Wins</div>
+          <div class="stat-box-val" id="statWins">—</div>
+          <div class="stat-box-sub" id="statWinsSub">Resolved markets</div>
         </div>
         <div class="stat-box">
-          <div class="stat-box-label">Largest Loss</div>
-          <div class="stat-box-val red">-KES 320</div>
-          <div class="stat-box-sub">Finance Bill market</div>
+          <div class="stat-box-label">Total Losses</div>
+          <div class="stat-box-val red" id="statLosses">—</div>
+          <div class="stat-box-sub" id="statLossesSub">Resolved markets</div>
         </div>
 
         <div class="stat-box win-rate-box">
           <div class="ring-wrap">
             <canvas id="winRing" width="90" height="90"></canvas>
             <div class="ring-label">
-              <div class="ring-pct">68%</div>
+              <div class="ring-pct" id="ringWinPct">—</div>
               <div class="ring-sub-label">Win Rate</div>
             </div>
           </div>
@@ -1173,13 +1173,13 @@ nav a.active { color: #8b5cf6 !important; background: rgba(109,40,217,0.12) !imp
             <div class="win-bars">
               <div class="win-bar-row">
                 <span class="win-bar-label" style="color:var(--green)">Won</span>
-                <div class="win-bar-track"><div class="win-bar-fill-green" style="width:68%"></div></div>
-                <span class="win-bar-count" style="color:var(--green)">17</span>
+                <div class="win-bar-track"><div class="win-bar-fill-green" id="winBarGreen" style="width:0%"></div></div>
+                <span class="win-bar-count" style="color:var(--green)" id="winBarWonCount">0</span>
               </div>
               <div class="win-bar-row">
                 <span class="win-bar-label" style="color:var(--red)">Lost</span>
-                <div class="win-bar-track"><div class="win-bar-fill-red" style="width:32%"></div></div>
-                <span class="win-bar-count" style="color:var(--red)">8</span>
+                <div class="win-bar-track"><div class="win-bar-fill-red" id="winBarRed" style="width:0%"></div></div>
+                <span class="win-bar-count" style="color:var(--red)" id="winBarLostCount">0</span>
               </div>
             </div>
             <div class="badges-row">
@@ -1211,50 +1211,115 @@ nav a.active { color: #8b5cf6 !important; background: rgba(109,40,217,0.12) !imp
 <script>
 // ── DATA ──────────────────────────────────────────────────────────────────────
 
-const POSITIONS = [
-  { market: 'Will Ruto complete his first presidential term?',  side:'YES', shares:806,  avgPrice:0.62, currentProb:0.76, staked:500  },
-  { market: 'Will Kenya launch a digital ID system by end of 2025?', side:'NO', shares:714, avgPrice:0.70, currentProb:0.28, staked:500 },
-  { market: 'Will KES trade below 120 to USD by end of 2025?', side:'YES', shares:420,  avgPrice:0.48, currentProb:0.43, staked:200  },
-  { market: 'Will NSE 20 Index close above 2,500 by Dec 2025?', side:'NO', shares:600, avgPrice:0.60, currentProb:0.38, staked:360 },
-  { market: 'Will NSE 20 Index win the Kenyan Stock Market League?',       side:'YES', shares:720,  avgPrice:0.45, currentProb:0.54, staked:320  },
-];
+var POSITIONS = [];
+var TRANSACTIONS = [];
 
-const TRANSACTIONS = [
-  { type:'payout',   icon:'🏆', desc:'Payout: Finance Bill market (YES)',     amount:+840,  ref:'KE-TXN-4421', date:'2 days ago' },
-  { type:'trade',    icon:'🔄', desc:'Bought YES · Ruto term market',          amount:-500,  ref:'KE-TXN-4418', date:'3 days ago' },
-  { type:'deposit',  icon:'📥', desc:'M-Pesa Deposit',                         amount:+2000, ref:'QHG4X7KL',    date:'5 days ago' },
-  { type:'trade',    icon:'🔄', desc:'Bought NO · World Cup market',            amount:-500,  ref:'KE-TXN-4410', date:'6 days ago' },
-  { type:'trade',    icon:'🔄', desc:'Bought YES · KES/USD market',             amount:-200,  ref:'KE-TXN-4407', date:'8 days ago' },
-  { type:'withdraw', icon:'📤', desc:'M-Pesa Withdrawal',                       amount:-1000, ref:'QXL9K2MN',    date:'12 days ago'},
-  { type:'payout',   icon:'🏆', desc:'Payout: NSE 20 Index league 23/24 (YES)',   amount:+480,  ref:'KE-TXN-4392', date:'18 days ago'},
-  { type:'deposit',  icon:'📥', desc:'M-Pesa Deposit',                          amount:+3000, ref:'QBT7J1PW',    date:'22 days ago'},
-];
-
-// ── CHART DATA ─────────────────────────────────────────────────────────────────
-
-const CHART_DATA = {
-  '30d': {
-    labels: Array.from({length:30},(_,i)=>{
-      const d=new Date(); d.setDate(d.getDate()-(29-i));
-      return d.toLocaleDateString('en-KE',{day:'2-digit',month:'short'});
-    }),
-    portfolio: [3760,3800,3750,3820,3900,3880,3950,4020,4100,4060,4150,4200,4180,4250,4300,4280,4350,4400,4380,4450,4500,4560,4520,4600,4700,4680,4760,4830,4900,5000],
-    deposited: Array(30).fill(4000),
-  },
-  '7d': {
-    labels: Array.from({length:7},(_,i)=>{
-      const d=new Date(); d.setDate(d.getDate()-(6-i));
-      return d.toLocaleDateString('en-KE',{weekday:'short'});
-    }),
-    portfolio: [4680,4700,4760,4830,4870,4940,5000],
-    deposited: Array(7).fill(4000),
-  },
-  'all': {
-    labels: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov'],
-    portfolio: [1000,1200,1100,1450,1800,2200,2600,3000,3400,4200,5000],
-    deposited: [1000,1000,1000,2000,2000,2000,4000,4000,4000,4000,4000],
-  }
+// Hardcoded chart data as fallback; overwritten by loadPortfolioHistory()
+var CHART_DATA = {
+  '30d': { labels: [], portfolio: [], deposited: [] },
+  '7d':  { labels: [], portfolio: [], deposited: [] },
+  'all': { labels: [], portfolio: [], deposited: [] },
 };
+
+function loadPortfolioData() {
+  // 1. Positions
+  userFetch('/api/users/me/positions')
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    POSITIONS = (d.positions || []).map(function(p) {
+      return {
+        market:      p.market ? p.market.title : '—',
+        side:        p.side,
+        shares:      p.shares,
+        avgPrice:    p.avgPrice,
+        currentProb: p.side === 'YES'
+          ? (p.market ? Number(p.market.yesPool) / (Number(p.market.yesPool) + Number(p.market.noPool)) : 0.5)
+          : 1 - (p.market ? Number(p.market.yesPool) / (Number(p.market.yesPool) + Number(p.market.noPool)) : 0.5),
+        staked:      p.shares * p.avgPrice,
+        unrealizedPnl: p.unrealizedPnl,
+      };
+    });
+
+    // Update open positions count
+    var el = document.getElementById('ovOpenCount');
+    if (el) el.textContent = 'Across ' + POSITIONS.length + ' market' + (POSITIONS.length !== 1 ? 's' : '');
+    var ovVal = document.getElementById('ovOpenValue');
+    if (ovVal) {
+      var totalVal = POSITIONS.reduce(function(s, p) { return s + (p.shares * p.currentProb); }, 0);
+      ovVal.textContent = 'KES ' + Math.round(totalVal).toLocaleString();
+    }
+
+    renderPositions();
+  })
+  .catch(function() { renderPositions(); });
+
+  // 2. User stats
+  userFetch('/api/users/me/stats')
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    var winRate = d.winRate || 0;
+    var wins    = d.wins    || 0;
+    var losses  = d.losses  || 0;
+    var total   = d.totalTrades || 0;
+    var vol     = d.totalVolume || 0;
+    var pnl     = d.totalRealizedPnl || 0;
+    var best    = d.bestTrade || 0;
+
+    var s = function(id, v) { var el = document.getElementById(id); if (el) el.textContent = v; };
+    s('ovWinRate',    Math.round(winRate * 100) + '%');
+    s('ovWinDetail',  wins + ' wins / ' + losses + ' losses');
+    s('ovPnl',        (pnl >= 0 ? '+' : '') + 'KES ' + Math.abs(Math.round(pnl)).toLocaleString());
+    s('statTotalVol', vol >= 1000 ? 'KES ' + Math.round(vol/1000) + 'K' : 'KES ' + Math.round(vol));
+    s('statTotalTrades', 'Across ' + total + ' trade' + (total !== 1 ? 's' : ''));
+    s('statBestTrade',   best > 0 ? '+KES ' + Math.round(best).toLocaleString() : '—');
+    s('statWins',        wins);
+    s('statLosses',      losses);
+    s('ringWinPct',      Math.round(winRate * 100) + '%');
+
+    var winPct = Math.round(winRate * 100);
+    var wg = document.getElementById('winBarGreen');
+    var wr = document.getElementById('winBarRed');
+    var wn = document.getElementById('winBarWonCount');
+    var wl = document.getElementById('winBarLostCount');
+    if (wg) wg.style.width = winPct + '%';
+    if (wr) wr.style.width = (100 - winPct) + '%';
+    if (wn) wn.textContent = wins;
+    if (wl) wl.textContent = losses;
+
+    // Redraw win ring with live data
+    drawWinRingWithRate(winRate);
+  })
+  .catch(function() {});
+
+  // 3. Transaction history
+  userFetch('/api/users/me/portfolio-history?period=30d')
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    var txns = d.transactions || [];
+    TRANSACTIONS = txns.map(function(t) {
+      var mins = Math.round((Date.now() - new Date(t.createdAt).getTime()) / 60000);
+      var ago  = mins < 60 ? mins + 'm ago' : mins < 1440 ? Math.round(mins/60) + 'h ago' : Math.round(mins/1440) + 'd ago';
+      var isIn  = ['DEPOSIT','PAYOUT','REFUND'].includes(t.type);
+      var icons = { DEPOSIT:'📥', PAYOUT:'🏆', TRADE_BUY:'🔄', WITHDRAWAL:'📤', REFUND:'↩️', FEE:'💸' };
+      return {
+        type:   t.type.toLowerCase(),
+        icon:   icons[t.type] || '💳',
+        desc:   t.description || t.type,
+        amount: isIn ? Number(t.amountKes) : -Number(t.amountKes),
+        ref:    t.mpesaRef || t.id.slice(0,8).toUpperCase(),
+        date:   ago,
+      };
+    });
+    renderTransactions();
+
+    // Build chart data from transaction history
+    if (d.chartData) {
+      CHART_DATA = d.chartData;
+      drawChart(currentPeriod);
+    }
+  })
+  .catch(function() { renderTransactions(); });
+}
 
 let currentPeriod = '30d';
 let chartCtx, winCtx;
@@ -1418,40 +1483,44 @@ function drawChart(period) {
 
 // ── WIN RATE RING ──────────────────────────────────────────────────────────────
 
-function drawWinRing() {
-  const canvas = document.getElementById('winRing');
-  const dpr = window.devicePixelRatio || 1;
+function drawWinRing() { drawWinRingWithRate(0); }
+
+function drawWinRingWithRate(rate) {
+  var canvas = document.getElementById('winRing');
+  if (!canvas) return;
+  var dpr = window.devicePixelRatio || 1;
   canvas.width  = 90 * dpr;
   canvas.height = 90 * dpr;
-  const ctx = canvas.getContext('2d');
+  var ctx = canvas.getContext('2d');
   ctx.scale(dpr, dpr);
 
-  const cx = 45, cy = 45, r = 34, lw = 7;
-  const winFrac = 0.68;
-  const startAngle = -Math.PI / 2;
+  var cx = 45, cy = 45, r = 34, lw = 7;
+  var winFrac = rate || 0;
+  var startAngle = -Math.PI / 2;
 
-  // Background ring
   ctx.beginPath();
   ctx.arc(cx, cy, r, 0, Math.PI * 2);
   ctx.strokeStyle = 'rgba(109,40,217,0.09)';
   ctx.lineWidth = lw;
   ctx.stroke();
 
-  // Loss arc
-  ctx.beginPath();
-  ctx.arc(cx, cy, r, startAngle + winFrac * Math.PI * 2, startAngle + Math.PI * 2);
-  ctx.strokeStyle = 'rgba(206,17,38,0.5)';
-  ctx.lineWidth = lw;
-  ctx.lineCap = 'round';
-  ctx.stroke();
+  if (winFrac < 1) {
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, startAngle + winFrac * Math.PI * 2, startAngle + Math.PI * 2);
+    ctx.strokeStyle = 'rgba(206,17,38,0.5)';
+    ctx.lineWidth = lw;
+    ctx.lineCap = 'round';
+    ctx.stroke();
+  }
 
-  // Win arc
-  ctx.beginPath();
-  ctx.arc(cx, cy, r, startAngle, startAngle + winFrac * Math.PI * 2);
-  ctx.strokeStyle = '#6d28d9';
-  ctx.lineWidth = lw;
-  ctx.lineCap = 'round';
-  ctx.stroke();
+  if (winFrac > 0) {
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, startAngle, startAngle + winFrac * Math.PI * 2);
+    ctx.strokeStyle = '#6d28d9';
+    ctx.lineWidth = lw;
+    ctx.lineCap = 'round';
+    ctx.stroke();
+  }
 }
 
 // ── INTERACTIONS ──────────────────────────────────────────────────────────────
@@ -1484,11 +1553,10 @@ function animateCounter(el, start, end, prefix, suffix, duration) {
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
 
-window.addEventListener('load', () => {
-  renderPositions();
-  renderTransactions();
+window.addEventListener('load', function() {
   drawChart('30d');
   drawWinRing();
+  loadPortfolioData();
 });
 
 window.addEventListener('resize', () => drawChart(currentPeriod));
@@ -1517,9 +1585,21 @@ var radaUser = null;
 try { radaUser = JSON.parse(localStorage.getItem('rada_user') || 'null'); } catch(e) {}
 var isLoggedIn = !!radaUser;
 
+const API_BASE = 'https://api.checkrada.co.ke';
+
+// userFetch: attaches user JWT to every authenticated request
+function userFetch(path, options) {
+  var token = localStorage.getItem('rada_token') || '';
+  var opts  = Object.assign({}, options || {});
+  opts.credentials = 'include';
+  opts.headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers || {});
+  if (token) opts.headers['Authorization'] = 'Bearer ' + token;
+  return fetch(API_BASE + path, opts);
+}
+
 // ── Referral config (loaded async) ───────────────────────────────────────────
 var referralActive = true;  // default ON for demo; overridden by backend
-fetch('/api/config/referral').then(r => r.json()).then(d => {
+fetch(API_BASE + '/api/config/referral').then(r => r.json()).then(d => {
   referralActive = d.config?.active !== false;  // true unless explicitly false
   // Update refer row visibility
   document.querySelectorAll('.acc-refer-row').forEach(el => {
@@ -1555,7 +1635,7 @@ fetch('/api/config/referral').then(r => r.json()).then(d => {
 
   // Notification badge
   if (isLoggedIn) {
-    fetch('/api/users/me/notifications').then(r => r.json()).then(d => {
+    fetch(API_BASE + '/api/users/me/notifications').then(r => r.json()).then(d => {
       var count = d.unreadCount || 0;
       document.querySelectorAll('.m-notif-badge').forEach(el => {
         el.textContent = count > 9 ? '9+' : count;
@@ -1588,7 +1668,7 @@ function loadNotifications() {
   var body = document.getElementById('notifTrayBody');
   if (!body) return;
   body.innerHTML = '<div class="notif-empty">Loading...</div>';
-  fetch('/api/users/me/notifications').then(r => r.json()).then(d => {
+  fetch(API_BASE + '/api/users/me/notifications').then(r => r.json()).then(d => {
     var notifs = d.notifications || [];
     if (!notifs.length) {
       body.innerHTML = '<div class="notif-empty">🔔 No notifications yet</div>';
@@ -1619,7 +1699,7 @@ function tapNotif(id, link) {
   if (link) window.location.href = link;
 }
 function markAllRead() {
-  fetch('/api/users/me/notifications/read', { method: 'PATCH' })
+  fetch(API_BASE + '/api/users/me/notifications/read', { method: 'PATCH' })
     .then(() => {
       document.querySelectorAll('.notif-item').forEach(el => el.classList.remove('unread'));
       document.querySelectorAll('.notif-unread-dot').forEach(el => el.remove());
@@ -1877,7 +1957,7 @@ function initCarousel() {
     return;
   }
 
-  fetch('/api/config/carousel').then(r => r.json()).then(d => {
+  fetch(API_BASE + '/api/config/carousel').then(r => r.json()).then(d => {
     promoSlides = d.slides || [];
     if (!promoSlides.length) {
       var wrap = document.getElementById('promoCarouselWrap');
@@ -2149,7 +2229,7 @@ function openReferSheet() {
   if (codeEl) codeEl.textContent = code;
 
   // Load stats from API
-  fetch('/api/users/me/referrals')
+  fetch(API_BASE + '/api/users/me/referrals')
     .then(function(r){ return r.json(); })
     .then(function(d) {
       var total    = d.totalReferred || 0;

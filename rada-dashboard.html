@@ -1210,17 +1210,45 @@ function updateChar() {
   document.getElementById('charLeft').textContent = 120 - val.length;
 }
 function submitSuggestion() {
-  const q = document.getElementById('suggestQ').value.trim();
-  const cat = document.getElementById('suggestCat').value;
+  var q      = document.getElementById('suggestQ').value.trim();
+  var cat    = document.getElementById('suggestCat').value;
+  var source = document.getElementById('suggestSource') ? document.getElementById('suggestSource').value.trim() : '';
+  var why    = document.getElementById('suggestWhy')    ? document.getElementById('suggestWhy').value.trim()    : '';
   if (!q || !cat) return alert('Please fill in the question and category.');
-  closeModal('suggestModal');
-  setTimeout(() => {
-    alert('✓ Suggestion submitted!\n\nIf the Admin approves it, KES 50 will be credited to your wallet automatically. Thanks for contributing to the platform!');
-    document.getElementById('suggestQ').value = '';
-    document.getElementById('suggestCat').value = '';
-    document.getElementById('suggestSource').value = '';
-    document.getElementById('suggestWhy').value = '';
-  }, 200);
+  if (q.length < 10) return alert('Please enter a more detailed question (min 10 characters).');
+
+  var btn = document.querySelector('#suggestModal button[onclick="submitSuggestion()"]');
+  if (btn) { btn.disabled = true; btn.textContent = 'Submitting...'; }
+
+  userFetch('/api/markets/propose', {
+    method: 'POST',
+    body: JSON.stringify({
+      question:         q,
+      category:         cat,
+      resolutionSource: source || 'To be determined',
+      whyCareNote:      why,
+    }),
+  })
+  .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
+  .then(function(res) {
+    if (btn) { btn.disabled = false; btn.textContent = 'Submit Suggestion'; }
+    closeModal('suggestModal');
+    if (res.ok) {
+      alert('✓ Suggestion submitted!\n\nIf the Admin approves it, KES 50 will be credited to your wallet automatically. Thanks for contributing!');
+      document.getElementById('suggestQ').value = '';
+      document.getElementById('suggestCat').value = '';
+      if (document.getElementById('suggestSource')) document.getElementById('suggestSource').value = '';
+      if (document.getElementById('suggestWhy'))    document.getElementById('suggestWhy').value    = '';
+    } else {
+      var msg = (res.d.error && typeof res.d.error === 'string') ? res.d.error : 'Could not submit. Please try again.';
+      alert('Error: ' + msg);
+    }
+  })
+  .catch(function() {
+    if (btn) { btn.disabled = false; btn.textContent = 'Submit Suggestion'; }
+    closeModal('suggestModal');
+    alert('Network error. Please try again.');
+  });
 }
 
 // ── DEPOSIT ───────────────────────────────────────────────────────────────────
@@ -1230,23 +1258,47 @@ function setDepositAmount(val, el) {
   el.classList.add('active');
 }
 function sendStkPush() {
-  const amount = parseInt(document.getElementById('depositAmount').value);
+  var amount = parseInt(document.getElementById('depositAmount').value);
   if (!amount || amount < 20) return alert('Minimum deposit is KES 20');
-  const btn = document.getElementById('depositBtn');
+
+  var token = localStorage.getItem('rada_token') || '';
+  if (!token) { window.location.href = 'rada-auth.html'; return; }
+
+  var btn = document.getElementById('depositBtn');
   btn.textContent = '⏳ Sending to your phone...';
   btn.disabled = true;
-  setTimeout(() => {
-    btn.textContent = '📱 Enter M-Pesa PIN on your phone…';
-    setTimeout(() => {
-      closeModal('depositModal');
+
+  var userPhone = (radaUser && radaUser.phone) ? String(radaUser.phone) : '';
+
+  userFetch('/api/payments/deposit', {
+    method: 'POST',
+    body: JSON.stringify({ amountKes: amount, phone: userPhone, method: 'mpesa' }),
+  })
+  .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
+  .then(function(res) {
+    if (res.ok) {
+      btn.textContent = '📱 Enter M-Pesa PIN on your phone…';
+      // Paystack webhook will update balance — show pending message
+      setTimeout(function() {
+        closeModal('depositModal');
+        btn.textContent = '📲 Send STK Push to Phone';
+        btn.disabled = false;
+        alert('✓ M-Pesa prompt sent! Enter your PIN on your phone.
+
+Your balance will update automatically once confirmed.
+Ref: ' + (res.d.reference || '—'));
+      }, 2000);
+    } else {
       btn.textContent = '📲 Send STK Push to Phone';
       btn.disabled = false;
-      // Update balance display
-      const current = parseInt(document.getElementById('walletBalance').textContent.replace(/[^0-9]/g,''));
-      document.getElementById('walletBalance').textContent = `KES ${(current + amount).toLocaleString()}`;
-      alert(`✓ Deposit of KES ${amount.toLocaleString()} confirmed!\nM-Pesa Ref: NK${Math.random().toString(36).substring(2,8).toUpperCase()}`);
-    }, 2500);
-  }, 1500);
+      alert('Payment failed: ' + (res.d.error || 'Please try again.'));
+    }
+  })
+  .catch(function() {
+    btn.textContent = '📲 Send STK Push to Phone';
+    btn.disabled = false;
+    alert('Network error. Please try again.');
+  });
 }
 
 // ── WITHDRAW ──────────────────────────────────────────────────────────────────
@@ -1261,16 +1313,49 @@ function calcWithdraw() {
   calc.style.display = '';
 }
 function submitWithdraw() {
-  const amt = parseFloat(document.getElementById('withdrawAmount').value);
-  if (!amt || amt < 100) return alert('Minimum withdrawal is KES 100');
-  const balance = parseInt(document.getElementById('walletBalance').textContent.replace(/[^0-9]/g,''));
-  if (amt > balance) return alert('Insufficient balance');
-  closeModal('withdrawModal');
-  setTimeout(() => {
-    const fee = Math.round(amt * 0.01);
-    document.getElementById('walletBalance').textContent = `KES ${(balance - amt).toLocaleString()}`;
-    alert(`✓ KES ${(amt - fee).toLocaleString()} sent to your M-Pesa!\n(KES ${fee} processing fee deducted)`);
-  }, 200);
+  var amt = parseFloat(document.getElementById('withdrawAmount').value);
+  if (!amt || amt < 50) return alert('Minimum withdrawal is KES 50');
+
+  var token = localStorage.getItem('rada_token') || '';
+  if (!token) { window.location.href = 'rada-auth.html'; return; }
+
+  var balance = Number((radaUser && radaUser.balanceKes) || 0);
+  if (amt > balance) return alert('Insufficient balance. Available: KES ' + balance.toLocaleString());
+
+  var btn = document.querySelector('#withdrawModal button[onclick="submitWithdraw()"]');
+  if (btn) { btn.disabled = true; btn.textContent = 'Processing...'; }
+
+  var userPhone = (radaUser && radaUser.phone) ? String(radaUser.phone) : '';
+
+  userFetch('/api/payments/withdraw', {
+    method: 'POST',
+    body: JSON.stringify({ amountKes: amt, phone: userPhone }),
+  })
+  .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
+  .then(function(res) {
+    if (btn) { btn.disabled = false; btn.textContent = '↓ Withdraw'; }
+    closeModal('withdrawModal');
+    if (res.ok) {
+      var fee = Math.round(amt * 0.01);
+      // Update local balance display
+      var newBal = Math.max(0, balance - amt);
+      if (radaUser) {
+        radaUser.balanceKes = newBal;
+        localStorage.setItem('rada_user', JSON.stringify(radaUser));
+      }
+      var balEl = document.getElementById('walletBalance');
+      if (balEl) balEl.textContent = 'KES ' + newBal.toLocaleString();
+      alert('✓ KES ' + (amt - fee).toLocaleString() + ' sent to your M-Pesa!
+(KES ' + fee + ' processing fee deducted)
+Ref: ' + (res.d.reference || '—'));
+    } else {
+      alert('Withdrawal failed: ' + (res.d.error || 'Please try again.'));
+    }
+  })
+  .catch(function() {
+    if (btn) { btn.disabled = false; btn.textContent = '↓ Withdraw'; }
+    alert('Network error. Please try again.');
+  });
 }
 
 // ── REFEREE ───────────────────────────────────────────────────────────────────
@@ -1334,9 +1419,61 @@ var radaUser = null;
 try { radaUser = JSON.parse(localStorage.getItem('rada_user') || 'null'); } catch(e) {}
 var isLoggedIn = !!radaUser;
 
+// Refresh user balance + profile from backend on every page load
+refreshUserProfile();
+
+function refreshUserProfile() {
+  var token = localStorage.getItem('rada_token') || '';
+  if (!token) return;
+  userFetch('/api/users/me/profile')
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    if (d.user) {
+      var u = d.user;
+      // Merge fresh data into localStorage
+      var stored = null;
+      try { stored = JSON.parse(localStorage.getItem('rada_user') || 'null'); } catch(e) {}
+      var merged = Object.assign({}, stored || {}, {
+        id:              u.id,
+        name:            u.name,
+        phone:           u.phone,
+        balanceKes:      Number(u.balanceKes),
+        bonusBalanceKes: Number(u.bonusBalanceKes || 0),
+        kycStatus:       u.kycStatus,
+      });
+      localStorage.setItem('rada_user', JSON.stringify(merged));
+      radaUser = merged;
+      // Update all balance displays
+      var bal = Number(merged.balanceKes);
+      var elems = ['walletBalance','balDisplay','mTopBal'];
+      elems.forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) el.textContent = (id === 'walletBalance' ? 'KES ' : '') + bal.toLocaleString();
+      });
+      var accBal = document.getElementById('accUserBal');
+      if (accBal) accBal.textContent = '● KES ' + bal.toLocaleString() + ' available';
+      var nameEl = document.getElementById('accUserName');
+      if (nameEl && merged.name) nameEl.textContent = merged.name;
+    }
+  })
+  .catch(function() {}); // silent fail — use cached localStorage value
+}
+
+const API_BASE = 'https://api.checkrada.co.ke';
+
+// userFetch: attaches user JWT to every authenticated request
+function userFetch(path, options) {
+  var token = localStorage.getItem('rada_token') || '';
+  var opts  = Object.assign({}, options || {});
+  opts.credentials = 'include';
+  opts.headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers || {});
+  if (token) opts.headers['Authorization'] = 'Bearer ' + token;
+  return fetch(API_BASE + path, opts);
+}
+
 // ── Referral config (loaded async) ───────────────────────────────────────────
 var referralActive = true;  // default ON for demo; overridden by backend
-fetch('/api/config/referral').then(r => r.json()).then(d => {
+fetch(API_BASE + '/api/config/referral').then(r => r.json()).then(d => {
   referralActive = d.config?.active !== false;  // true unless explicitly false
   // Update refer row visibility
   document.querySelectorAll('.acc-refer-row').forEach(el => {
@@ -1372,7 +1509,7 @@ fetch('/api/config/referral').then(r => r.json()).then(d => {
 
   // Notification badge
   if (isLoggedIn) {
-    fetch('/api/users/me/notifications').then(r => r.json()).then(d => {
+    fetch(API_BASE + '/api/users/me/notifications').then(r => r.json()).then(d => {
       var count = d.unreadCount || 0;
       document.querySelectorAll('.m-notif-badge').forEach(el => {
         el.textContent = count > 9 ? '9+' : count;
@@ -1405,7 +1542,7 @@ function loadNotifications() {
   var body = document.getElementById('notifTrayBody');
   if (!body) return;
   body.innerHTML = '<div class="notif-empty">Loading...</div>';
-  fetch('/api/users/me/notifications').then(r => r.json()).then(d => {
+  fetch(API_BASE + '/api/users/me/notifications').then(r => r.json()).then(d => {
     var notifs = d.notifications || [];
     if (!notifs.length) {
       body.innerHTML = '<div class="notif-empty">🔔 No notifications yet</div>';
@@ -1436,7 +1573,7 @@ function tapNotif(id, link) {
   if (link) window.location.href = link;
 }
 function markAllRead() {
-  fetch('/api/users/me/notifications/read', { method: 'PATCH' })
+  fetch(API_BASE + '/api/users/me/notifications/read', { method: 'PATCH' })
     .then(() => {
       document.querySelectorAll('.notif-item').forEach(el => el.classList.remove('unread'));
       document.querySelectorAll('.notif-unread-dot').forEach(el => el.remove());
@@ -1694,7 +1831,7 @@ function initCarousel() {
     return;
   }
 
-  fetch('/api/config/carousel').then(r => r.json()).then(d => {
+  fetch(API_BASE + '/api/config/carousel').then(r => r.json()).then(d => {
     promoSlides = d.slides || [];
     if (!promoSlides.length) {
       var wrap = document.getElementById('promoCarouselWrap');
@@ -1966,7 +2103,7 @@ function openReferSheet() {
   if (codeEl) codeEl.textContent = code;
 
   // Load stats from API
-  fetch('/api/users/me/referrals')
+  fetch(API_BASE + '/api/users/me/referrals')
     .then(function(r){ return r.json(); })
     .then(function(d) {
       var total    = d.totalReferred || 0;

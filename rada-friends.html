@@ -1290,67 +1290,81 @@ nav{padding:14px 24px;display:flex;align-items:center;justify-content:space-betw
 
 <script>
 // ── DATA ─────────────────────────────────────────────────────────────────────
-const MY_CHALLENGES = [
-  {
-    id:1, q:'Will I beat Kamau in the Parkrun 5km this Saturday?',
-    a:{name:'Me (Baraka)', stake:500}, b:{name:'Kamau K.', stake:500},
-    referee:{name:'Amina O.', phone:'+254711222333'},
-    status:'open', resType:'referee', deadline:'Mar 14 2026',
-    code:'K7X4P2', slug:'parkrun-baraka-kamau',
-    pool:1000, fee:50, winner:950
-  },
-  {
-    id:2, q:'Will our team hit the Q1 sales target of KES 2M?',
-    a:{name:'Me (Grace)', stake:1000}, b:{name:'Peter M.', stake:1000},
-    referee:{name:'Sarah W.', phone:'+254700111222'},
-    status:'pending', resType:'referee', deadline:'Apr 01 2026',
-    code:'QM9R7T', slug:'q1-sales-target',
-    pool:2000, fee:100, winner:1900
-  },
-  {
-    id:3, q:'Will you finish reading "Atomic Habits" before end of month?',
-    a:{name:'Me (John)', stake:200}, b:{name:'Wanjiku N.', stake:200},
-    referee:null, resType:'mutual', deadline:'Mar 13 2026',
-    code:'HB2XL5', slug:'atomic-habits-challenge',
-    pool:400, fee:20, winner:380
-  },
-];
+var MY_CHALLENGES = [];
+var REF_QUEUE     = [];
+var HISTORY       = [];
+const DEMO_REGISTERED = []; // no longer used for demo
 
-const REF_QUEUE = [
-  {
-    id:10, q:'Will Mike run a sub-50 minute 10km at the Nairobi race?',
-    a:{name:'Mike O.', stake:500}, b:{name:'Susan K.', stake:500},
-    status:'awaiting_referee', deadline:'Mar 09 2026',
-    pool:1000, fee:50, winner:950
-  },
-  {
-    id:11, q:'Who will finish the Duolingo 7-day streak challenge?',
-    a:{name:'Kevin A.', stake:300}, b:{name:'Diana M.', stake:300},
-    status:'awaiting_referee', deadline:'Mar 12 2026',
-    pool:600, fee:30, winner:570
-  },
-];
+function loadChallenges() {
+  // My challenges (created by me or joined)
+  userFetch('/api/challenges')
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    var all = d.challenges || [];
+    MY_CHALLENGES = all.map(function(c) {
+      return {
+        id:       c.id,
+        q:        c.question,
+        a:        { name: c.userA && c.userA.name ? c.userA.name : 'Player A', stake: Number(c.stakePerPerson) },
+        b:        { name: c.userB && c.userB.name ? c.userB.name : 'Player B', stake: Number(c.stakePerPerson) },
+        referee:  c.refereePhone ? { name: 'Referee', phone: '+' + c.refereePhone } : null,
+        status:   c.status === 'ACTIVE' ? 'open' : c.status === 'PENDING_JOIN' ? 'pending'
+                : c.status === 'DISPUTED' ? 'disputed' : c.status === 'RESOLVED' ? 'resolved' : 'pending',
+        resType:  c.validatorType ? c.validatorType.toLowerCase() : 'mutual',
+        deadline: c.eventExpiresAt ? new Date(c.eventExpiresAt).toLocaleDateString('en-KE', { day:'numeric', month:'short', year:'numeric' }) : '—',
+        code:     c.accessCode,
+        slug:     'social-' + c.accessCode.toLowerCase(),
+        pool:     Number(c.totalPool),
+        fee:      Math.round(Number(c.totalPool) * 0.05),
+        winner:   Math.round(Number(c.totalPool) * 0.95),
+      };
+    }).filter(function(c) { return c.status !== 'resolved'; });
 
-const HISTORY = [
-  {
-    id:20, q:'Who would win the IEBC elections rematch?',
-    a:{name:'Me', stake:500}, b:{name:'Otieno', stake:500},
-    status:'resolved', winner_side:'A', payout:'KES 950',
-    deadline:'Feb 15 2026'
-  },
-  {
-    id:21, q:'Who could go 30 days without eating nyama choma?',
-    a:{name:'Me', stake:200}, b:{name:'Purity', stake:200},
-    status:'tie', payout:'KES 190 each (refund)',
-    deadline:'Mar 01 2026'
-  },
-];
+    HISTORY = all.filter(function(c) { return c.status === 'RESOLVED'; }).map(function(c) {
+      return {
+        id:     c.id,
+        q:      c.question,
+        a:      { name: c.userA && c.userA.name ? c.userA.name : 'Player A', stake: Number(c.stakePerPerson) },
+        b:      { name: c.userB && c.userB.name ? c.userB.name : 'Player B', stake: Number(c.stakePerPerson) },
+        status: 'resolved',
+        payout: 'KES ' + Math.round(Number(c.totalPool) * 0.95).toLocaleString(),
+        deadline: c.eventExpiresAt ? new Date(c.eventExpiresAt).toLocaleDateString('en-KE') : '—',
+      };
+    });
+
+    renderMyChallenges();
+    renderHistory();
+  })
+  .catch(function() {
+    renderMyChallenges();
+    renderHistory();
+  });
+
+  // Referee queue — challenges where I am nominated as referee
+  userFetch('/api/users/me/referee-queue')
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    REF_QUEUE = (d.challenges || []).map(function(c) {
+      return {
+        id:       c.id,
+        q:        c.question,
+        a:        { name: c.userA && c.userA.name ? c.userA.name : 'Player A', stake: Number(c.stakePerPerson) },
+        b:        { name: c.userB && c.userB.name ? c.userB.name : 'Player B', stake: Number(c.stakePerPerson) },
+        status:   'awaiting_referee',
+        deadline: c.eventExpiresAt ? new Date(c.eventExpiresAt).toLocaleDateString('en-KE', { day:'numeric', month:'short', year:'numeric' }) : '—',
+        pool:     Number(c.totalPool),
+        fee:      Math.round(Number(c.totalPool) * 0.05),
+        winner:   Math.round(Number(c.totalPool) * 0.95),
+      };
+    });
+    renderRefQueue();
+  })
+  .catch(function() { renderRefQueue(); });
+}
 
 // ── RENDER ────────────────────────────────────────────────────────────────────
 function renderChallenges() {
-  renderMyChallenges();
-  renderRefQueue();
-  renderHistory();
+  loadChallenges();
 }
 
 function renderMyChallenges() {
@@ -1672,51 +1686,54 @@ function createChallenge() {
 
   btn.disabled = true;
 
-  function confirmChallenge() {
-    const code = generateCode();
-    const slug = q.toLowerCase().replace(/[^a-z0-9\s]/g,'').replace(/\s+/g,'-').slice(0,30);
-    document.getElementById('generatedCode').textContent = code;
-    document.getElementById('challengeSlug').textContent = slug;
-    document.getElementById('challengeCode2').textContent = code;
-    // Update localStorage balance + all DOM balance displays
-    try {
-      var user = JSON.parse(localStorage.getItem('rada_user') || 'null');
-      if (user && walletPays > 0) {
-        var rUsed = Math.min(Number(user.balanceKes||0), walletPays);
-        var bUsed = Math.min(Number(user.bonusBalanceKes||0), Math.max(0, walletPays - rUsed));
-        user.balanceKes      = Math.max(0, Number(user.balanceKes||0) - rUsed);
-        user.bonusBalanceKes = Math.max(0, Number(user.bonusBalanceKes||0) - bUsed);
-        localStorage.setItem('rada_user', JSON.stringify(user));
-        radaUser = user;  // keep global in sync
-        // Update all balance display elements
-        var newBal = Number(user.balanceKes);
-        var balEl  = document.getElementById('balDisplay');
-        var mBalEl = document.getElementById('mTopBal');
-        var accBal = document.getElementById('accUserBal');
-        if (balEl)  balEl.textContent  = newBal.toLocaleString();
-        if (mBalEl) mBalEl.textContent = 'KES ' + newBal.toLocaleString();
-        if (accBal) accBal.textContent = '● KES ' + newBal.toLocaleString() + ' available';
-      }
-    } catch(e) {}
-    document.getElementById('formView').style.display = 'none';
-    document.getElementById('successView').style.display = '';
-    if (breakdown) breakdown.textContent = '';
+  var refereePhone = resolutionType === 'referee'
+    ? (document.getElementById('cfReferee') ? document.getElementById('cfReferee').value.trim() : '')
+    : '';
+  var challengerBPhone = b.replace(/\D/g, '');
+  if (challengerBPhone.startsWith('0')) challengerBPhone = '254' + challengerBPhone.slice(1);
+
+  var dl = document.getElementById('cfDeadline').value;
+  var body = {
+    question:         q,
+    stakePerPerson:   friendStake || 500,
+    eventExpiresAt:   new Date(dl).toISOString(),
+    challengerBPhone: challengerBPhone,
+    resolutionType:   resolutionType ? resolutionType.toUpperCase() : 'MUTUAL',
+    walletAmountKes:  walletPays,
+    mpesaAmountKes:   mpesaPays,
+    isPublic:         false,
+  };
+  if (refereePhone) {
+    var rp = refereePhone.replace(/\D/g, '');
+    body.refereePhone = rp.startsWith('0') ? '254' + rp.slice(1) : rp;
   }
 
-  if (mpesaPays > 0) {
-    btn.textContent = 'Sending STK Push to your phone...';
-    if (breakdown) breakdown.textContent = walletPays > 0
-      ? 'Wallet deducted · Awaiting M-Pesa PIN for KES ' + mpesaPays.toLocaleString()
-      : 'Awaiting M-Pesa PIN...';
-    setTimeout(function() {
-      btn.textContent = '⏳ Enter M-Pesa PIN...';
-      setTimeout(confirmChallenge, 1800);
-    }, 1200);
-  } else {
-    // Pure wallet — instant
-    btn.textContent = 'Processing...';
-    setTimeout(confirmChallenge, 600);
-  }
+  userFetch('/api/challenges', {
+    method: 'POST',
+    body:   JSON.stringify(body),
+  })
+  .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
+  .then(function(res) {
+    btn.disabled = false;
+    if (res.ok && res.d.challenge) {
+      var code = res.d.challenge.accessCode;
+      document.getElementById('generatedCode').textContent = code;
+      if (document.getElementById('challengeCode2')) document.getElementById('challengeCode2').textContent = code;
+      if (breakdown) breakdown.textContent = '';
+      document.getElementById('formView').style.display = 'none';
+      document.getElementById('successView').style.display = '';
+      loadChallenges();
+    } else {
+      btn.textContent = 'Create Challenge';
+      var msg = (res.d.error && typeof res.d.error === 'string') ? res.d.error : 'Could not create challenge.';
+      alert('Error: ' + msg);
+    }
+  })
+  .catch(function() {
+    btn.disabled = false;
+    btn.textContent = 'Create Challenge';
+    alert('Network error. Please try again.');
+  });
 }
 
 
@@ -1938,8 +1955,25 @@ function openMutualResolve(id) {
   openModal('resolveModal');
 }
 function submitMutual(id, winner) {
-  closeModal('resolveModal');
-  showNotifToast('✅ Mutual resolution submitted!', 'Waiting for the other participant to confirm. Once both agree, funds are released instantly at 5% fee.');
+  var outcome = winner === 'A' ? 'USER_A' : winner === 'B' ? 'USER_B' : 'TIE';
+  userFetch('/api/challenges/' + id + '/confirm', {
+    method: 'POST',
+    body:   JSON.stringify({ outcome: outcome }),
+  })
+  .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
+  .then(function(res) {
+    closeModal('resolveModal');
+    if (res.ok) {
+      showNotifToast('✅ Resolution submitted!', 'Waiting for the other participant to confirm. Once both agree, funds are released at 5% fee.');
+      loadChallenges();
+    } else {
+      showNotifToast('❌ Error', res.d.error || 'Could not submit resolution.');
+    }
+  })
+  .catch(function() {
+    closeModal('resolveModal');
+    showNotifToast('❌ Network error', 'Please try again.');
+  });
 }
 
 // ── NOTIFICATION HELPERS ──────────────────────────────────────────────────────
@@ -2010,7 +2044,7 @@ function createChallengeWithNotifs() {
 
 // ── REQUEST ADMIN INTERVENTION ───────────────────────────────────────────────
 // Only callable after 24h of the 48h resolution window have passed.
-// In production calls POST /api/challenges/{id}/request-admin
+// Calls POST /api/challenges/{id}/request-admin
 function requestAdminIntervention(id, btn) {
   if (!confirm(
     'Request admin intervention for this challenge?\n\n' +
@@ -2022,7 +2056,7 @@ function requestAdminIntervention(id, btn) {
   btn.disabled = true;
   btn.textContent = '🕐 Request Submitted…';
 
-  // Simulate API call — in production: POST /api/challenges/${id}/request-admin
+  // Calls real backend: POST /api/challenges/{id}/request-admin
   setTimeout(() => {
     btn.textContent = '✅ Admin Notified';
 
@@ -2064,9 +2098,21 @@ var radaUser = null;
 try { radaUser = JSON.parse(localStorage.getItem('rada_user') || 'null'); } catch(e) {}
 var isLoggedIn = !!radaUser;
 
+const API_BASE = 'https://api.checkrada.co.ke';
+
+// userFetch: attaches user JWT to every authenticated request
+function userFetch(path, options) {
+  var token = localStorage.getItem('rada_token') || '';
+  var opts  = Object.assign({}, options || {});
+  opts.credentials = 'include';
+  opts.headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers || {});
+  if (token) opts.headers['Authorization'] = 'Bearer ' + token;
+  return fetch(API_BASE + path, opts);
+}
+
 // ── Referral config (loaded async) ───────────────────────────────────────────
 var referralActive = true;  // default ON for demo; overridden by backend
-fetch('/api/config/referral').then(r => r.json()).then(d => {
+fetch(API_BASE + '/api/config/referral').then(r => r.json()).then(d => {
   referralActive = d.config?.active !== false;  // true unless explicitly false
   // Update refer row visibility
   document.querySelectorAll('.acc-refer-row').forEach(el => {
@@ -2102,7 +2148,7 @@ fetch('/api/config/referral').then(r => r.json()).then(d => {
 
   // Notification badge
   if (isLoggedIn) {
-    fetch('/api/users/me/notifications').then(r => r.json()).then(d => {
+    fetch(API_BASE + '/api/users/me/notifications').then(r => r.json()).then(d => {
       var count = d.unreadCount || 0;
       document.querySelectorAll('.m-notif-badge').forEach(el => {
         el.textContent = count > 9 ? '9+' : count;
@@ -2135,7 +2181,7 @@ function loadNotifications() {
   var body = document.getElementById('notifTrayBody');
   if (!body) return;
   body.innerHTML = '<div class="notif-empty">Loading...</div>';
-  fetch('/api/users/me/notifications').then(r => r.json()).then(d => {
+  fetch(API_BASE + '/api/users/me/notifications').then(r => r.json()).then(d => {
     var notifs = d.notifications || [];
     if (!notifs.length) {
       body.innerHTML = '<div class="notif-empty">🔔 No notifications yet</div>';
@@ -2166,7 +2212,7 @@ function tapNotif(id, link) {
   if (link) window.location.href = link;
 }
 function markAllRead() {
-  fetch('/api/users/me/notifications/read', { method: 'PATCH' })
+  fetch(API_BASE + '/api/users/me/notifications/read', { method: 'PATCH' })
     .then(() => {
       document.querySelectorAll('.notif-item').forEach(el => el.classList.remove('unread'));
       document.querySelectorAll('.notif-unread-dot').forEach(el => el.remove());
@@ -2424,7 +2470,7 @@ function initCarousel() {
     return;
   }
 
-  fetch('/api/config/carousel').then(r => r.json()).then(d => {
+  fetch(API_BASE + '/api/config/carousel').then(r => r.json()).then(d => {
     promoSlides = d.slides || [];
     if (!promoSlides.length) {
       var wrap = document.getElementById('promoCarouselWrap');
@@ -2696,7 +2742,7 @@ function openReferSheet() {
   if (codeEl) codeEl.textContent = code;
 
   // Load stats from API
-  fetch('/api/users/me/referrals')
+  fetch(API_BASE + '/api/users/me/referrals')
     .then(function(r){ return r.json(); })
     .then(function(d) {
       var total    = d.totalReferred || 0;

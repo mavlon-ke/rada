@@ -957,26 +957,45 @@ nav a.active { color: #8b5cf6 !important; background: rgba(109,40,217,0.12) !imp
 </div>
 
 <script>
-const TRADERS = [
-  { rank:1, cat:'POLITICS',  prev:1,  name:'Wanjiru K.',   emoji:'👩🏾', profit:18400, trades:87,  wr:0.78, vol:94000,  badges:['🔥','⚡','🇰🇪'] },
-  { rank:2, cat:'ECONOMY',  prev:3,  name:'Otieno M.',    emoji:'👨🏾', profit:14200, trades:64,  wr:0.72, vol:71000,  badges:['🎯','🔥'] },
-  { rank:3, cat:'POLITICS',  prev:2,  name:'Kamau R.',     emoji:'🧑🏾', profit:12800, trades:55,  wr:0.69, vol:62000,  badges:['📊'] },
-  { rank:4, cat:'ENTERTAINMENT',  prev:4,  name:'Achieng P.',   emoji:'👩🏾', profit:9600,  trades:48,  wr:0.71, vol:49000,  badges:['🔥'] },
-  { rank:5, cat:'ECONOMY',  prev:7,  name:'Mwangi J.',    emoji:'👨🏾', profit:8200,  trades:42,  wr:0.67, vol:43000,  badges:['⚡'] },
-  { rank:6, cat:'TECH',  prev:5,  name:'Mutua S.',     emoji:'🧑🏾', profit:7100,  trades:39,  wr:0.64, vol:38000,  badges:[] },
-  { rank:7, cat:'GENERAL',  prev:6,  name:'Njeri A.',     emoji:'👩🏾', profit:6800,  trades:51,  wr:0.61, vol:52000,  badges:['📊'] },
-  { rank:8, cat:'WEATHER',  prev:9,  name:'Odhiambo T.',  emoji:'👨🏾', profit:5900,  trades:33,  wr:0.70, vol:31000,  badges:['🎯'] },
-  { rank:9, cat:'ECONOMY',  prev:8,  name:'Waweru L.',    emoji:'🧑🏾', profit:5100,  trades:29,  wr:0.66, vol:28000,  badges:[] },
-  { rank:10, cat:'POLITICS', prev:12, name:'Cherop B.',    emoji:'👩🏾', profit:4700,  trades:44,  wr:0.59, vol:45000,  badges:['🔥'] },
-  { rank:11, cat:'ENTERTAINMENT', prev:10, name:'Kibet F.',     emoji:'👨🏾', profit:3900,  trades:26,  wr:0.65, vol:27000,  badges:[] },
-  { rank:12, cat:'TECH', prev:11, name:'Nduta M.',     emoji:'👩🏾', profit:3400,  trades:31,  wr:0.61, vol:32000,  badges:[] },
-  { rank:13, cat:'GENERAL', prev:13, name:'Ouma V.',      emoji:'🧑🏾', profit:1580,  trades:19,  wr:0.63, vol:20000,  badges:[] },
-  { rank:14, cat:'POLITICS', prev:16, name:'You',          emoji:'😊',   profit:1240,  trades:25,  wr:0.68, vol:12400,  badges:['🔥','🇰🇪'], isMe:true },
-  { rank:15, cat:'WEATHER', prev:14, name:'Muthoni C.',   emoji:'👩🏾', profit:1100,  trades:17,  wr:0.59, vol:11000,  badges:[] },
-  { rank:16, cat:'ECONOMY', prev:15, name:'Njoroge H.',   emoji:'👨🏾', profit:920,   trades:22,  wr:0.55, vol:9800,   badges:[] },
-  { rank:17, cat:'TECH', prev:18, name:'Auma G.',      emoji:'👩🏾', profit:740,   trades:14,  wr:0.57, vol:7500,   badges:[] },
-  { rank:18, cat:'GENERAL', prev:17, name:'Kirui D.',     emoji:'👨🏾', profit:580,   trades:11,  wr:0.55, vol:6000,   badges:[] },
-];
+var TRADERS = [];
+var TRADERS_FULL = [];
+
+function loadLeaderboard(period) {
+  period = period || '30d';
+  var url = '/api/leaderboard?period=' + period;
+
+  userFetch(url)
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    var users = d.users || [];
+    var myId  = (typeof radaUser !== 'undefined' && radaUser) ? radaUser.id : null;
+
+    TRADERS = users.map(function(u, i) {
+      return {
+        rank:   i + 1,
+        cat:    u.topCategory || 'GENERAL',
+        prev:   i + 1,
+        name:   u.name || 'Forecaster',
+        emoji:  u.id === myId ? '😊' : '🧑🏾',
+        profit: Math.round(u.totalPayout || 0),
+        trades: u.tradeCount || 0,
+        wr:     u.winRate || 0,
+        vol:    Math.round(u.tradeVolume || 0),
+        badges: u.id === myId ? ['🇰🇪'] : [],
+        isMe:   u.id === myId,
+      };
+    });
+    TRADERS_FULL = TRADERS;
+    renderPodium(TRADERS);
+    renderTable(TRADERS);
+  })
+  .catch(function() {
+    // Show empty state if load fails
+    renderPodium([]);
+    renderTable([]);
+  });
+}
+
 
 function renderPodium(data) {
   data = (data && data.length) ? data : TRADERS;
@@ -1046,21 +1065,20 @@ function renderTable(data) {
 function setPeriod(btn, period) {
   document.querySelectorAll('.period-tab').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  renderTable(TRADERS); // In production, refetch
+  loadLeaderboard(period);
 }
 
 function setCat(btn, cat) {
   document.querySelectorAll('.cat-chip').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  const filtered = cat === 'all' ? TRADERS : TRADERS.filter(t => t.cat === cat);
-  // Re-rank filtered results 1..n for display
-  const reranked = filtered.map((t, i) => ({ ...t, displayRank: i + 1 }));
+  var source   = TRADERS_FULL.length ? TRADERS_FULL : TRADERS;
+  var filtered = cat === 'all' ? source : source.filter(function(t) { return t.cat === cat; });
+  var reranked = filtered.map(function(t, i) { return Object.assign({}, t, { rank: i + 1 }); });
   renderTable(reranked.length ? reranked : filtered);
   renderPodium(filtered);
 }
 
-renderPodium();
-renderTable(TRADERS);
+loadLeaderboard('30d');
 </script>
 
 
@@ -1086,9 +1104,21 @@ var radaUser = null;
 try { radaUser = JSON.parse(localStorage.getItem('rada_user') || 'null'); } catch(e) {}
 var isLoggedIn = !!radaUser;
 
+const API_BASE = 'https://api.checkrada.co.ke';
+
+// userFetch: attaches user JWT to every authenticated request
+function userFetch(path, options) {
+  var token = localStorage.getItem('rada_token') || '';
+  var opts  = Object.assign({}, options || {});
+  opts.credentials = 'include';
+  opts.headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers || {});
+  if (token) opts.headers['Authorization'] = 'Bearer ' + token;
+  return fetch(API_BASE + path, opts);
+}
+
 // ── Referral config (loaded async) ───────────────────────────────────────────
 var referralActive = true;  // default ON for demo; overridden by backend
-fetch('/api/config/referral').then(r => r.json()).then(d => {
+fetch(API_BASE + '/api/config/referral').then(r => r.json()).then(d => {
   referralActive = d.config?.active !== false;  // true unless explicitly false
   // Update refer row visibility
   document.querySelectorAll('.acc-refer-row').forEach(el => {
@@ -1124,7 +1154,7 @@ fetch('/api/config/referral').then(r => r.json()).then(d => {
 
   // Notification badge
   if (isLoggedIn) {
-    fetch('/api/users/me/notifications').then(r => r.json()).then(d => {
+    fetch(API_BASE + '/api/users/me/notifications').then(r => r.json()).then(d => {
       var count = d.unreadCount || 0;
       document.querySelectorAll('.m-notif-badge').forEach(el => {
         el.textContent = count > 9 ? '9+' : count;
@@ -1157,7 +1187,7 @@ function loadNotifications() {
   var body = document.getElementById('notifTrayBody');
   if (!body) return;
   body.innerHTML = '<div class="notif-empty">Loading...</div>';
-  fetch('/api/users/me/notifications').then(r => r.json()).then(d => {
+  fetch(API_BASE + '/api/users/me/notifications').then(r => r.json()).then(d => {
     var notifs = d.notifications || [];
     if (!notifs.length) {
       body.innerHTML = '<div class="notif-empty">🔔 No notifications yet</div>';
@@ -1188,7 +1218,7 @@ function tapNotif(id, link) {
   if (link) window.location.href = link;
 }
 function markAllRead() {
-  fetch('/api/users/me/notifications/read', { method: 'PATCH' })
+  fetch(API_BASE + '/api/users/me/notifications/read', { method: 'PATCH' })
     .then(() => {
       document.querySelectorAll('.notif-item').forEach(el => el.classList.remove('unread'));
       document.querySelectorAll('.notif-unread-dot').forEach(el => el.remove());
@@ -1446,7 +1476,7 @@ function initCarousel() {
     return;
   }
 
-  fetch('/api/config/carousel').then(r => r.json()).then(d => {
+  fetch(API_BASE + '/api/config/carousel').then(r => r.json()).then(d => {
     promoSlides = d.slides || [];
     if (!promoSlides.length) {
       var wrap = document.getElementById('promoCarouselWrap');
@@ -1718,7 +1748,7 @@ function openReferSheet() {
   if (codeEl) codeEl.textContent = code;
 
   // Load stats from API
-  fetch('/api/users/me/referrals')
+  fetch(API_BASE + '/api/users/me/referrals')
     .then(function(r){ return r.json(); })
     .then(function(d) {
       var total    = d.totalReferred || 0;

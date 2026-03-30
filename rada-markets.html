@@ -1344,6 +1344,15 @@ var MARKETS = [];
 
 const API_BASE = 'https://api.checkrada.co.ke';
 
+function userFetch(path, options) {
+  var token = localStorage.getItem('rada_token') || '';
+  var opts  = Object.assign({}, options || {});
+  opts.credentials = 'include';
+  opts.headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers || {});
+  if (token) opts.headers['Authorization'] = 'Bearer ' + token;
+  return fetch(API_BASE + path, opts);
+}
+
 function formatVolume(kes) {
   if (!kes || kes === 0) return 'KES 0';
   if (kes >= 1000000) return 'KES ' + (kes / 1000000).toFixed(1) + 'M';
@@ -1805,6 +1814,15 @@ function computePayout() {
 
 function submitForecast() {
   if (stakeAmount < 20) { alert('Minimum stake is KES 20'); return; }
+  if (!activeMarket) { alert('No market selected.'); return; }
+
+  var token = localStorage.getItem('rada_token') || '';
+  if (!token) {
+    closeModal();
+    window.location.href = 'rada-auth.html';
+    return;
+  }
+
   var btn       = document.getElementById('forecastBtn');
   var breakdown = document.getElementById('walletBreakdown');
   var walletPays = parseInt(btn.dataset.walletPays || 0);
@@ -1813,62 +1831,106 @@ function submitForecast() {
   btn.disabled = true;
 
   trackEvent('forecast_initiated', {
-    side: activeSide,
-    market: activeMarket ? activeMarket.q.slice(0,50) : 'unknown',
+    side:      activeSide,
+    market:    activeMarket ? activeMarket.q.slice(0,50) : 'unknown',
     walletPays: walletPays,
-    mpesaPays: mpesaPays
+    mpesaPays:  mpesaPays,
   });
 
-  function confirmForecast() {
-    btn.style.background = '#16a34a';
-    btn.textContent = '✓ Forecast Confirmed!';
-    if (breakdown) breakdown.textContent = '';
-
-    // Update displayed balance
-    var balEl = document.getElementById('balDisplay');
-    if (balEl) {
-      var newBal = Math.max(0, parseInt(balEl.textContent.replace(/[^0-9]/g,'') || 0) - walletPays);
-      balEl.textContent = newBal.toLocaleString();
-    }
-    // Update localStorage balance
-    try {
-      var user = JSON.parse(localStorage.getItem('rada_user') || 'null');
-      if (user) {
-        var realUsed  = Math.min(walletPays, parseInt(user.balanceKes || 0));
-        var bonusUsed = walletPays - realUsed;
-        user.balanceKes      = Math.max(0, parseInt(user.balanceKes || 0) - realUsed);
-        user.bonusBalanceKes = Math.max(0, parseInt(user.bonusBalanceKes || 0) - bonusUsed);
-        localStorage.setItem('rada_user', JSON.stringify(user));
-      }
-    } catch(e) {}
-
-    setTimeout(function() {
-      closeModal();
-      btn.disabled = false;
-      btn.style.background = '';
-      updateWalletButton();
-    }, 1500);
-  }
-
+  // If payment requires M-Pesa — initiate deposit first via Paystack STK push
   if (mpesaPays > 0) {
-    // Needs M-Pesa — show STK push simulation
     btn.textContent = 'Sending STK Push...';
     if (breakdown) breakdown.textContent = walletPays > 0
       ? 'Wallet deducted · Awaiting M-Pesa PIN for KES ' + mpesaPays.toLocaleString()
       : 'Awaiting M-Pesa PIN...';
 
-    setTimeout(function() {
+    var userPhone = (radaUser && radaUser.phone) ? String(radaUser.phone) : '';
+    userFetch('/api/payments/deposit', {
+      method: 'POST',
+      body: JSON.stringify({ amountKes: mpesaPays, phone: userPhone, method: 'mpesa' }),
+    })
+    .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
+    .then(function(res) {
+      if (!res.ok) {
+        btn.disabled = false;
+        btn.textContent = 'Forecast';
+        if (breakdown) breakdown.textContent = '';
+        alert('Payment failed: ' + (res.d.error || 'Could not initiate M-Pesa payment.'));
+        return;
+      }
       btn.textContent = '⏳ Enter M-Pesa PIN on your phone...';
-      setTimeout(confirmForecast, 1800);
-    }, 1200);
+      // After deposit is initiated, place the trade
+      placeTrade(btn, breakdown, walletPays, mpesaPays);
+    })
+    .catch(function() {
+      btn.disabled = false;
+      btn.textContent = 'Forecast';
+      alert('Network error. Please try again.');
+    });
   } else {
-    // Pure wallet — instant confirmation
+    // Pure wallet — place trade directly
     btn.textContent = 'Processing...';
-    setTimeout(confirmForecast, 600);
+    placeTrade(btn, breakdown, walletPays, 0);
   }
 }
 
-function openDeposit() { trackEvent('deposit_initiated', {}); alert('M-Pesa STK Push deposit flow would open here.'); }
+function placeTrade(btn, breakdown, walletPays, mpesaPays) {
+  userFetch('/api/markets/' + activeMarket.id + '/trade', {
+    method: 'POST',
+    body: JSON.stringify({
+      side:      activeSide,
+      amountKes: stakeAmount,
+    }),
+  })
+  .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
+  .then(function(res) {
+    if (res.ok) {
+      btn.style.background = '#16a34a';
+      btn.textContent = '✓ Forecast Confirmed!';
+      if (breakdown) breakdown.textContent = '';
+
+      // Update localStorage balance from server response
+      try {
+        var user = JSON.parse(localStorage.getItem('rada_user') || 'null');
+        if (user && res.d.newBalance !== undefined) {
+          user.balanceKes = res.d.newBalance;
+          localStorage.setItem('rada_user', JSON.stringify(user));
+          radaUser = user;
+          var balEl = document.getElementById('balDisplay');
+          if (balEl) balEl.textContent = Number(res.d.newBalance).toLocaleString();
+        }
+      } catch(e) {}
+
+      // Reload markets to reflect updated pools
+      setTimeout(function() {
+        closeModal();
+        btn.disabled = false;
+        btn.style.background = '';
+        btn.textContent = 'Forecast';
+        updateWalletButton();
+        loadMarkets(activeFilter || 'ALL');
+      }, 1500);
+    } else {
+      btn.disabled = false;
+      btn.style.background = '';
+      btn.textContent = 'Forecast';
+      if (breakdown) breakdown.textContent = '';
+      alert('Trade failed: ' + (res.d.error || 'Please try again.'));
+    }
+  })
+  .catch(function() {
+    btn.disabled = false;
+    btn.style.background = '';
+    btn.textContent = 'Forecast';
+    alert('Network error. Please try again.');
+  });
+}
+
+function openDeposit() {
+  trackEvent('deposit_initiated', {});
+  // Redirect to dashboard deposit modal which has the full deposit UI
+  window.location.href = 'rada-dashboard.html#deposit';
+}
 
 // ── INIT ─────────────────────────────────────────────────────────────────────
 (function() {
@@ -2139,7 +2201,7 @@ function devLogout() {
 
 // ── Referral config (loaded async) ───────────────────────────────────────────
 var referralActive = true;  // default ON for demo; overridden by backend
-fetch('/api/config/referral').then(r => r.json()).then(d => {
+fetch(API_BASE + '/api/config/referral').then(r => r.json()).then(d => {
   referralActive = d.config?.active !== false;  // true unless explicitly false
   // Update refer row visibility
   document.querySelectorAll('.acc-refer-row').forEach(el => {
@@ -2175,7 +2237,7 @@ fetch('/api/config/referral').then(r => r.json()).then(d => {
 
   // Notification badge
   if (isLoggedIn) {
-    fetch('/api/users/me/notifications').then(r => r.json()).then(d => {
+    fetch(API_BASE + '/api/users/me/notifications').then(r => r.json()).then(d => {
       var count = d.unreadCount || 0;
       document.querySelectorAll('.m-notif-badge').forEach(el => {
         el.textContent = count > 9 ? '9+' : count;
@@ -2208,7 +2270,7 @@ function loadNotifications() {
   var body = document.getElementById('notifTrayBody');
   if (!body) return;
   body.innerHTML = '<div class="notif-empty">Loading...</div>';
-  fetch('/api/users/me/notifications').then(r => r.json()).then(d => {
+  fetch(API_BASE + '/api/users/me/notifications').then(r => r.json()).then(d => {
     var notifs = d.notifications || [];
     if (!notifs.length) {
       body.innerHTML = '<div class="notif-empty">🔔 No notifications yet</div>';
@@ -2239,7 +2301,7 @@ function tapNotif(id, link) {
   if (link) window.location.href = link;
 }
 function markAllRead() {
-  fetch('/api/users/me/notifications/read', { method: 'PATCH' })
+  fetch(API_BASE + '/api/users/me/notifications/read', { method: 'PATCH' })
     .then(() => {
       document.querySelectorAll('.notif-item').forEach(el => el.classList.remove('unread'));
       document.querySelectorAll('.notif-unread-dot').forEach(el => el.remove());
@@ -2555,7 +2617,7 @@ function initCarousel() {
     return;
   }
 
-  fetch('/api/config/carousel').then(r => r.json()).then(d => {
+  fetch(API_BASE + '/api/config/carousel').then(r => r.json()).then(d => {
     promoSlides = d.slides || [];
     if (!promoSlides.length) {
       var wrap = document.getElementById('promoCarouselWrap');
@@ -2862,7 +2924,7 @@ function openReferSheet() {
   if (codeEl) codeEl.textContent = code;
 
   // Load stats from API
-  fetch('/api/users/me/referrals')
+  fetch(API_BASE + '/api/users/me/referrals')
     .then(function(r){ return r.json(); })
     .then(function(d) {
       var total    = d.totalReferred || 0;
