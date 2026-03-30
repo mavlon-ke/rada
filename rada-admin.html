@@ -180,8 +180,8 @@ body::after {
 .content { padding: 24px; flex: 1; }
 
 /* ── PANELS ── */
-.panel { display: none; }
-.panel.active { display: block; animation: panelIn 0.2s ease both; }
+.panel { display: none; } /* initial state — JS controls visibility via style.display */
+.panel.active { display: block; } /* fallback for CSS-only contexts */
 @keyframes panelIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
 
 /* ── PAGE TITLE ── */
@@ -1832,24 +1832,39 @@ function exportDataApps() {
   URL.revokeObjectURL(url);
 }
 
-function showPanel(id, btn) {
-  document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('active'); });
-  document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('active'); });
+// All panel IDs — used to explicitly hide/show panels
+var ALL_PANEL_IDS = [
+  'dashboard','markets','create-market','resolve','users','kyc','transactions',
+  'payouts','proposals','bounties','activity','disputes','suggestions','b2b',
+  'admin-log','carousel','referral','dataapps'
+];
 
+function showPanel(id, btn) {
+  // Explicitly hide ALL panels by style — does not rely on CSS class toggling
+  ALL_PANEL_IDS.forEach(function(pid) {
+    var el = document.getElementById('panel-' + pid);
+    if (el) el.style.display = 'none';
+  });
+
+  // Show the target panel
   var panel = document.getElementById('panel-' + id);
   if (!panel) { console.warn('showPanel: no panel found for id:', id); return; }
-  panel.classList.add('active');
+  panel.style.display = 'block';
+
+  // Update nav active state
+  document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('active'); });
   if (btn) btn.classList.add('active');
 
+  // Update breadcrumb
   var label = document.getElementById('breadcrumbLabel');
   if (label) label.textContent = id.replace(/-/g, ' ');
 
-  // Scroll main content to top so panel is visible
+  // Scroll to top so user sees the panel
+  window.scrollTo(0, 0);
   var mainEl = document.querySelector('.main');
   if (mainEl) mainEl.scrollTop = 0;
-  window.scrollTo(0, 0);
 
-  // Close sidebar on mobile after navigation
+  // Close sidebar on mobile
   if (window.innerWidth <= 640) { setTimeout(closeSidebar, 150); }
 
   // Panel-specific data loads
@@ -2443,6 +2458,15 @@ renderDisputes();
 renderSuggestions();
 renderB2B();
 renderAdminLog();
+
+// Initialise panel display — show dashboard, hide all others
+// This ensures the style-based approach starts correctly
+(function initPanels() {
+  ALL_PANEL_IDS.forEach(function(pid) {
+    var el = document.getElementById('panel-' + pid);
+    if (el) el.style.display = pid === 'dashboard' ? 'block' : 'none';
+  });
+})();
 </script>
 <script>
 /* ── CAROUSEL ADMIN (self-contained) ── */
