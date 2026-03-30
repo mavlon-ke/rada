@@ -848,23 +848,23 @@ body::after {
                 <th>Market</th><th>Closed</th><th>Trades</th><th>Action</th>
               </tr></thead>
               <tbody>
-                <tr onclick="openResolveModal('Finance Bill 2025', 204)">
+                <tr onclick="openResolveModal(null,'Finance Bill 2025',204)">
                   <td><div style="font-weight:600;max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Will Kenya pass the Finance Bill 2025?</div><div style="color:var(--text-dim);font-size:0.7rem;margin-top:2px">POLITICS</div></td>
                   <td class="mono" style="color:var(--text-dim)">2d ago</td>
                   <td class="mono">204</td>
-                  <td><button class="act-btn act-amber" onclick="event.stopPropagation();openResolveModal('Finance Bill 2025', 204)">Resolve →</button></td>
+                  <td><button class="act-btn act-amber" onclick="event.stopPropagation();openResolveModal(null,'Finance Bill 2025',204)">Resolve →</button></td>
                 </tr>
-                <tr onclick="openResolveModal('World Cup Qualifiers', 156)">
+                <tr onclick="openResolveModal(null,'World Cup Qualifiers',156)">
                   <td><div style="font-weight:600;max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Will mobile money transactions exceed KES 10T in 2025?</div><div style="color:var(--text-dim);font-size:0.7rem;margin-top:2px">TECH</div></td>
                   <td class="mono" style="color:var(--text-dim)">5d ago</td>
                   <td class="mono">156</td>
-                  <td><button class="act-btn act-amber" onclick="event.stopPropagation();openResolveModal('World Cup Qualifiers', 156)">Resolve →</button></td>
+                  <td><button class="act-btn act-amber" onclick="event.stopPropagation();openResolveModal(null,'World Cup Qualifiers',156)">Resolve →</button></td>
                 </tr>
-                <tr onclick="openResolveModal('NSE Index 2500', 89)">
+                <tr onclick="openResolveModal(null,'NSE Index 2500',89)">
                   <td><div style="font-weight:600;max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Will NSE 20 close above 2,500 by Dec 2025?</div><div style="color:var(--text-dim);font-size:0.7rem;margin-top:2px">ECONOMY</div></td>
                   <td class="mono" style="color:var(--text-dim)">1d ago</td>
                   <td class="mono">89</td>
-                  <td><button class="act-btn act-amber" onclick="event.stopPropagation();openResolveModal('NSE Index 2500', 89)">Resolve →</button></td>
+                  <td><button class="act-btn act-amber" onclick="event.stopPropagation();openResolveModal(null,'NSE Index 2500',89)">Resolve →</button></td>
                 </tr>
               </tbody>
             </table>
@@ -1043,7 +1043,7 @@ body::after {
               <td class="mono">89 users · KES 48K</td>
               <td class="mono">115 users · KES 62K</td>
               <td class="mono" style="color:var(--amber)">KES 110K</td>
-              <td><button class="act-btn act-amber" onclick="openResolveModal('Finance Bill 2025', 204)">Resolve →</button></td>
+              <td><button class="act-btn act-amber" onclick="openResolveModal(null,'Finance Bill 2025',204)">Resolve →</button></td>
             </tr>
             <tr>
               <td><div style="font-weight:600">Will Kenya launch a digital ID system by end of 2025?</div><div style="font-size:0.68rem;color:var(--text-dim);margin-top:2px">POLITICS · Closed 5 days ago</div></td>
@@ -1051,7 +1051,7 @@ body::after {
               <td class="mono">44 users · KES 21K</td>
               <td class="mono">112 users · KES 67K</td>
               <td class="mono" style="color:var(--amber)">KES 88K</td>
-              <td><button class="act-btn act-amber" onclick="openResolveModal('World Cup Qualifiers', 156)">Resolve →</button></td>
+              <td><button class="act-btn act-amber" onclick="openResolveModal(null,'World Cup Qualifiers',156)">Resolve →</button></td>
             </tr>
             <tr>
               <td><div style="font-weight:600">Will NSE 20 close above 2,500 by Dec 2025?</div><div style="font-size:0.68rem;color:var(--text-dim);margin-top:2px">FINANCE · Closed 1 day ago</div></td>
@@ -1059,7 +1059,7 @@ body::after {
               <td class="mono">30 users · KES 14K</td>
               <td class="mono">59 users · KES 31K</td>
               <td class="mono" style="color:var(--amber)">KES 45K</td>
-              <td><button class="act-btn act-amber" onclick="openResolveModal('NSE Index 2500', 89)">Resolve →</button></td>
+              <td><button class="act-btn act-amber" onclick="openResolveModal(null,'NSE Index 2500',89)">Resolve →</button></td>
             </tr>
           </tbody>
         </table>
@@ -1844,8 +1844,13 @@ function showPanel(id, btn) {
   var label = document.getElementById('breadcrumbLabel');
   if (label) label.textContent = id.replace(/-/g, ' ');
 
+  // Scroll main content to top so panel is visible
+  var mainEl = document.querySelector('.main');
+  if (mainEl) mainEl.scrollTop = 0;
+  window.scrollTo(0, 0);
+
   // Close sidebar on mobile after navigation
-  if (window.innerWidth <= 640) { setTimeout(closeSidebar, 100); }
+  if (window.innerWidth <= 640) { setTimeout(closeSidebar, 150); }
 
   // Panel-specific data loads
   if (id === 'dashboard')     { loadAdminLog(); }

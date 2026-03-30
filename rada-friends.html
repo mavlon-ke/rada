@@ -1,18 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<script>
-/* ── Auth Guard — redirect immediately if not logged in ── */
-(function() {
-  var token = null;
-  var user  = null;
-  try { token = localStorage.getItem('rada_token'); } catch(e) {}
-  try { user  = JSON.parse(localStorage.getItem('rada_user') || 'null'); } catch(e) {}
-  if (!token || !user) {
-    window.location.replace('rada-auth.html');
-  }
-})();
-</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <!-- ═══ SEO META TAGS ═══ -->
