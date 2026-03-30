@@ -1,6 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script>
+/* ── Auth Guard — redirect immediately if not logged in ── */
+(function() {
+  var token = null;
+  var user  = null;
+  try { token = localStorage.getItem('rada_token'); } catch(e) {}
+  try { user  = JSON.parse(localStorage.getItem('rada_user') || 'null'); } catch(e) {}
+  if (!token || !user) {
+    window.location.replace('rada-auth.html');
+  }
+})();
+</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CheckRada — My Dashboard</title>
@@ -1497,6 +1509,8 @@ fetch(API_BASE + '/api/config/referral').then(r => r.json()).then(d => {
   var loggedOutEl = document.getElementById('mTopLoggedOut');
   var loggedInEl  = document.getElementById('mTopLoggedIn');
   if (loggedOutEl) loggedOutEl.style.display = isLoggedIn ? 'none' : 'flex';
+  var hActions = document.querySelector('.h-actions');
+  if (hActions) hActions.style.display = isLoggedIn ? 'flex' : 'none';
   if (loggedInEl)  loggedInEl.style.display  = isLoggedIn ? 'flex' : 'none';
 
   if (isLoggedIn && radaUser) {

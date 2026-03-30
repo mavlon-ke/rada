@@ -1,6 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script>
+/* ── Auth Guard — redirect immediately if not logged in ── */
+(function() {
+  var token = null;
+  var user  = null;
+  try { token = localStorage.getItem('rada_token'); } catch(e) {}
+  try { user  = JSON.parse(localStorage.getItem('rada_user') || 'null'); } catch(e) {}
+  if (!token || !user) {
+    window.location.replace('rada-auth.html');
+  }
+})();
+</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <!-- ═══ SEO META TAGS ═══ -->
@@ -702,7 +714,7 @@ td{padding:14px 16px;font-size:0.8rem;border-bottom:1px solid rgba(109,40,217,0.
     <a href="rada-about.html">About</a>
   </nav>
   <div class="h-actions">
-    <div class="h-balance"><div class="h-dot"></div><span>KES <strong id="balDisplay">5,000</strong></span></div>
+    <div class="h-balance"><div class="h-dot"></div><span>KES <strong id="balDisplay">0</strong></span></div>
     <button class="h-btn h-btn-ghost">Withdraw</button>
     <button class="h-btn h-btn-primary">+ Deposit</button>
   </div>
@@ -1246,6 +1258,8 @@ fetch(API_BASE + '/api/config/referral').then(r => r.json()).then(d => {
   var loggedOutEl = document.getElementById('mTopLoggedOut');
   var loggedInEl  = document.getElementById('mTopLoggedIn');
   if (loggedOutEl) loggedOutEl.style.display = isLoggedIn ? 'none' : 'flex';
+  var hActions = document.querySelector('.h-actions');
+  if (hActions) hActions.style.display = isLoggedIn ? 'flex' : 'none';
   if (loggedInEl)  loggedInEl.style.display  = isLoggedIn ? 'flex' : 'none';
 
   if (isLoggedIn && radaUser) {
