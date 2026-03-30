@@ -1422,6 +1422,13 @@ var isLoggedIn = !!radaUser;
 // Refresh user balance + profile from backend on every page load
 refreshUserProfile();
 
+// Open deposit/withdraw modal if redirected from another page
+(function() {
+  var hash = window.location.hash;
+  if (hash === '#deposit')  { setTimeout(function() { openModal('depositModal');  }, 400); }
+  if (hash === '#withdraw') { setTimeout(function() { openModal('withdrawModal'); }, 400); }
+})();
+
 function refreshUserProfile() {
   var token = localStorage.getItem('rada_token') || '';
   if (!token) return;

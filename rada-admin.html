@@ -763,13 +763,13 @@ body::after {
 
   <div class="sidebar-section">
     <div class="sidebar-section-label">Platform</div>
-    <button class="nav-item" onclick="showPanel('carousel', this); setTimeout(loadCarouselSlides, 50);">
+    <button class="nav-item" onclick="showPanel('carousel', this)">
       <span class="nav-icon">🎠</span><span>Carousel Manager</span>
     </button>
-    <button class="nav-item" onclick="showPanel('referral', this); setTimeout(loadReferralConfig, 50);">
+    <button class="nav-item" onclick="showPanel('referral', this)">
       <span class="nav-icon">🎁</span><span>Referral Programme</span>
     </button>
-        <button class="nav-item" onclick="showPanel('dataapps', this); setTimeout(loadDataApplications, 50);">
+    <button class="nav-item" onclick="showPanel('dataapps', this)">
       <span class="nav-icon">📊</span><span>Data Applications</span>
     </button>
   </div>
@@ -799,7 +799,7 @@ body::after {
     </div>
     <div class="topbar-right">
       <div class="status-pill"><div class="status-dot"></div>Systems Operational</div>
-      <button class="topbar-btn" onclick="showPanel('create-market', document.querySelector('.nav-item:nth-child(2)'))">+ New Market</button>
+      <button class="topbar-btn" onclick="showPanel('create-market', null)">+ New Market</button>
     </div>
   </div>
 
@@ -1833,23 +1833,40 @@ function exportDataApps() {
 }
 
 function showPanel(id, btn) {
-  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.getElementById('panel-' + id).classList.add('active');
-  if (btn) btn.classList.add('active');
-  document.getElementById('breadcrumbLabel').textContent = id.replace('-', ' ');
-  if (id === 'dashboard') loadAdminLog();
+  document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('active'); });
+  document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('active'); });
 
-  // Lazy render
-  if (id === 'markets') loadMarketsTable();
-  if (id === 'users') loadUsersTable();
-  if (id === 'kyc') loadKYCTable();
-  if (id === 'transactions') loadTxnsTable();
-  if (id === 'activity') { renderActivity('fullActivityFeed'); loadAdminLog(); }
+  var panel = document.getElementById('panel-' + id);
+  if (!panel) { console.warn('showPanel: no panel found for id:', id); return; }
+  panel.classList.add('active');
+  if (btn) btn.classList.add('active');
+
+  var label = document.getElementById('breadcrumbLabel');
+  if (label) label.textContent = id.replace(/-/g, ' ');
+
+  // Close sidebar on mobile after navigation
+  if (window.innerWidth <= 640) { setTimeout(closeSidebar, 100); }
+
+  // Panel-specific data loads
+  if (id === 'dashboard')     { loadAdminLog(); }
+  if (id === 'markets')       { loadMarketsTable(); }
+  if (id === 'users')         { loadUsersTable(); }
+  if (id === 'kyc')           { loadKYCTable(); }
+  if (id === 'transactions')  { loadTxnsTable(); }
+  if (id === 'suggestions')   { loadSuggestions(); }
+  if (id === 'disputes')      { renderDisputes(); }
+  if (id === 'proposals')     { loadSuggestions(); }
+  if (id === 'activity')      { renderActivity('fullActivityFeed'); loadAdminLog(); }
+  if (id === 'carousel')      { setTimeout(function() { initCarouselAdmin(); loadCarouselFromBackend(); }, 50); }
+  if (id === 'referral')      { setTimeout(loadReferralConfig, 50); }
+  if (id === 'dataapps')      { setTimeout(loadDataApplications, 50); }
+  if (id === 'admin-log')     { loadAdminLog(); }
+  if (id === 'b2b')           { renderB2B(); }
+  if (id === 'bounties')      { renderB2B(); }
   if (id === 'create-market') {
-    // Set default close date to 30 days from now
-    const d = new Date(); d.setDate(d.getDate() + 30);
-    document.getElementById('mktClosesAt').value = d.toISOString().slice(0, 16);
+    var d = new Date(); d.setDate(d.getDate() + 30);
+    var el = document.getElementById('mktClosesAt');
+    if (el) el.value = d.toISOString().slice(0, 16);
   }
 }
 
@@ -2204,6 +2221,46 @@ Payout: KES ' + (pool - fee) + ' to ' + name + ' (15% fee = KES ' + fee + ').';
 // ── SUGGESTION QUEUE ──────────────────────────────────────────────────────────
 var SUGGESTIONS = []; // populated by loadSuggestions()
 
+function filterProposals(btn, status) {
+  document.querySelectorAll('#panel-proposals .topbar-btn').forEach(function(b) {
+    b.classList.remove('primary');
+  });
+  if (btn) btn.classList.add('primary');
+  // Map filter to API status param
+  var apiStatus = status === 'pending' ? 'PENDING'
+                : status === 'approved' ? 'APPROVED'
+                : status === 'rejected' ? 'REJECTED'
+                : 'ALL';
+  var el = document.getElementById('proposalsList');
+  if (el) el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-dim);">Loading...</div>';
+  adminFetch('/api/admin/proposals?status=' + apiStatus)
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    var proposals = d.proposals || [];
+    SUGGESTIONS = proposals.map(function(p) {
+      return {
+        id:     p.id,
+        q:      p.question,
+        cat:    p.category,
+        from:   (p.proposer && p.proposer.name ? p.proposer.name : 'User') + ' (+' + (p.proposer && p.proposer.phone ? p.proposer.phone.slice(0,7) + '***' + p.proposer.phone.slice(-3) : '???') + ')',
+        source: p.resolutionSource || '—',
+        why:    p.whyCareNote || '',
+        status: p.status,
+      };
+    });
+    if (el) {
+      if (!SUGGESTIONS.length) {
+        el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-dim);">No proposals found.</div>';
+      } else {
+        renderSuggestions();
+      }
+    }
+  })
+  .catch(function() {
+    if (el) el.innerHTML = '<div style="text-align:center;color:#ce1126;padding:20px;">Failed to load proposals.</div>';
+  });
+}
+
 function loadSuggestions() {
   var el = document.getElementById('suggestionsList');
   if (el) el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-dim);">Loading...</div>';
@@ -2545,13 +2602,7 @@ document.addEventListener('DOMContentLoaded', function() {
   initCarouselAdmin();
 });
 
-// Override showPanel to also trigger load functions
-var _origSP = typeof showPanel !== 'undefined' ? showPanel : function(){};
-window.showPanel = function(panelId, btn) {
-  _origSP(panelId, btn);
-  if (panelId === 'carousel') { setTimeout(function(){ initCarouselAdmin(); loadCarouselFromBackend(); }, 50); }
-  if (panelId === 'referral') { setTimeout(loadReferralConfig, 50); }
-};
+// showPanel handles all panel loads directly — no override needed
 </script>
 
 <script>
@@ -2617,16 +2668,7 @@ function closeSidebar() {
   document.body.style.overflow = '';
 }
 
-// Close sidebar when a nav item is tapped on mobile
-document.addEventListener('DOMContentLoaded', function() {
-  if (window.innerWidth <= 640) {
-    document.querySelectorAll('.nav-item').forEach(function(btn) {
-      btn.addEventListener('click', function() {
-        setTimeout(closeSidebar, 150);
-      });
-    });
-  }
-});
+// Mobile sidebar close handled inside showPanel
 </script>
 
 <script>

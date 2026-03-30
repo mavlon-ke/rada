@@ -1597,6 +1597,10 @@ function userFetch(path, options) {
   return fetch(API_BASE + path, opts);
 }
 
+// Deposit/Withdraw redirect to dashboard (modals live there)
+function openDeposit()  { window.location.href = 'rada-dashboard.html#deposit';  }
+function openWithdraw() { window.location.href = 'rada-dashboard.html#withdraw'; }
+
 // ── Referral config (loaded async) ───────────────────────────────────────────
 var referralActive = true;  // default ON for demo; overridden by backend
 fetch(API_BASE + '/api/config/referral').then(r => r.json()).then(d => {
