@@ -1886,10 +1886,20 @@ function showPanel(id, btn) {
   var label = document.getElementById('breadcrumbLabel');
   if (label) label.textContent = id.replace(/-/g, ' ');
 
+<<<<<<< HEAD
+  // Scroll main content to top so panel is visible
+  var mainEl = document.querySelector('.main');
+  if (mainEl) mainEl.scrollTop = 0;
+  window.scrollTo(0, 0);
+
+  // Close sidebar on mobile after navigation
+  if (window.innerWidth <= 640) { setTimeout(closeSidebar, 150); }
+=======
   // Scroll to top so user sees the panel
   window.scrollTo(0, 0);
   var mainEl = document.querySelector('.main');
   if (mainEl) mainEl.scrollTop = 0;
+>>>>>>> 07028e1c90d6dd0b60634cefab39c766c10860e9
 
   // Close sidebar on mobile
   if (window.innerWidth <= 640) { setTimeout(closeSidebar, 150); }
