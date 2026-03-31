@@ -180,8 +180,8 @@ body::after {
 .content { padding: 24px; flex: 1; }
 
 /* ── PANELS ── */
-.panel { display: none; }
-.panel.active { display: block; animation: panelIn 0.2s ease both; }
+.panel { display: none; } /* initial state — JS controls visibility via style.display */
+.panel.active { display: block; } /* fallback for CSS-only contexts */
 @keyframes panelIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
 
 /* ── PAGE TITLE ── */
@@ -763,13 +763,13 @@ body::after {
 
   <div class="sidebar-section">
     <div class="sidebar-section-label">Platform</div>
-    <button class="nav-item" onclick="showPanel('carousel', this); setTimeout(loadCarouselSlides, 50);">
+    <button class="nav-item" onclick="showPanel('carousel', this)">
       <span class="nav-icon">🎠</span><span>Carousel Manager</span>
     </button>
-    <button class="nav-item" onclick="showPanel('referral', this); setTimeout(loadReferralConfig, 50);">
+    <button class="nav-item" onclick="showPanel('referral', this)">
       <span class="nav-icon">🎁</span><span>Referral Programme</span>
     </button>
-        <button class="nav-item" onclick="showPanel('dataapps', this); setTimeout(loadDataApplications, 50);">
+    <button class="nav-item" onclick="showPanel('dataapps', this)">
       <span class="nav-icon">📊</span><span>Data Applications</span>
     </button>
   </div>
@@ -799,7 +799,7 @@ body::after {
     </div>
     <div class="topbar-right">
       <div class="status-pill"><div class="status-dot"></div>Systems Operational</div>
-      <button class="topbar-btn" onclick="showPanel('create-market', document.querySelector('.nav-item:nth-child(2)'))">+ New Market</button>
+      <button class="topbar-btn" onclick="showPanel('create-market', null)">+ New Market</button>
     </div>
   </div>
 
@@ -848,23 +848,23 @@ body::after {
                 <th>Market</th><th>Closed</th><th>Trades</th><th>Action</th>
               </tr></thead>
               <tbody>
-                <tr onclick="openResolveModal('Finance Bill 2025', 204)">
+                <tr onclick="openResolveModal(null,'Finance Bill 2025',204)">
                   <td><div style="font-weight:600;max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Will Kenya pass the Finance Bill 2025?</div><div style="color:var(--text-dim);font-size:0.7rem;margin-top:2px">POLITICS</div></td>
                   <td class="mono" style="color:var(--text-dim)">2d ago</td>
                   <td class="mono">204</td>
-                  <td><button class="act-btn act-amber" onclick="event.stopPropagation();openResolveModal('Finance Bill 2025', 204)">Resolve →</button></td>
+                  <td><button class="act-btn act-amber" onclick="event.stopPropagation();openResolveModal(null,'Finance Bill 2025',204)">Resolve →</button></td>
                 </tr>
-                <tr onclick="openResolveModal('World Cup Qualifiers', 156)">
+                <tr onclick="openResolveModal(null,'World Cup Qualifiers',156)">
                   <td><div style="font-weight:600;max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Will mobile money transactions exceed KES 10T in 2025?</div><div style="color:var(--text-dim);font-size:0.7rem;margin-top:2px">TECH</div></td>
                   <td class="mono" style="color:var(--text-dim)">5d ago</td>
                   <td class="mono">156</td>
-                  <td><button class="act-btn act-amber" onclick="event.stopPropagation();openResolveModal('World Cup Qualifiers', 156)">Resolve →</button></td>
+                  <td><button class="act-btn act-amber" onclick="event.stopPropagation();openResolveModal(null,'World Cup Qualifiers',156)">Resolve →</button></td>
                 </tr>
-                <tr onclick="openResolveModal('NSE Index 2500', 89)">
+                <tr onclick="openResolveModal(null,'NSE Index 2500',89)">
                   <td><div style="font-weight:600;max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Will NSE 20 close above 2,500 by Dec 2025?</div><div style="color:var(--text-dim);font-size:0.7rem;margin-top:2px">ECONOMY</div></td>
                   <td class="mono" style="color:var(--text-dim)">1d ago</td>
                   <td class="mono">89</td>
-                  <td><button class="act-btn act-amber" onclick="event.stopPropagation();openResolveModal('NSE Index 2500', 89)">Resolve →</button></td>
+                  <td><button class="act-btn act-amber" onclick="event.stopPropagation();openResolveModal(null,'NSE Index 2500',89)">Resolve →</button></td>
                 </tr>
               </tbody>
             </table>
@@ -1043,7 +1043,7 @@ body::after {
               <td class="mono">89 users · KES 48K</td>
               <td class="mono">115 users · KES 62K</td>
               <td class="mono" style="color:var(--amber)">KES 110K</td>
-              <td><button class="act-btn act-amber" onclick="openResolveModal('Finance Bill 2025', 204)">Resolve →</button></td>
+              <td><button class="act-btn act-amber" onclick="openResolveModal(null,'Finance Bill 2025',204)">Resolve →</button></td>
             </tr>
             <tr>
               <td><div style="font-weight:600">Will Kenya launch a digital ID system by end of 2025?</div><div style="font-size:0.68rem;color:var(--text-dim);margin-top:2px">POLITICS · Closed 5 days ago</div></td>
@@ -1051,7 +1051,7 @@ body::after {
               <td class="mono">44 users · KES 21K</td>
               <td class="mono">112 users · KES 67K</td>
               <td class="mono" style="color:var(--amber)">KES 88K</td>
-              <td><button class="act-btn act-amber" onclick="openResolveModal('World Cup Qualifiers', 156)">Resolve →</button></td>
+              <td><button class="act-btn act-amber" onclick="openResolveModal(null,'World Cup Qualifiers',156)">Resolve →</button></td>
             </tr>
             <tr>
               <td><div style="font-weight:600">Will NSE 20 close above 2,500 by Dec 2025?</div><div style="font-size:0.68rem;color:var(--text-dim);margin-top:2px">FINANCE · Closed 1 day ago</div></td>
@@ -1059,7 +1059,7 @@ body::after {
               <td class="mono">30 users · KES 14K</td>
               <td class="mono">59 users · KES 31K</td>
               <td class="mono" style="color:var(--amber)">KES 45K</td>
-              <td><button class="act-btn act-amber" onclick="openResolveModal('NSE Index 2500', 89)">Resolve →</button></td>
+              <td><button class="act-btn act-amber" onclick="openResolveModal(null,'NSE Index 2500',89)">Resolve →</button></td>
             </tr>
           </tbody>
         </table>
@@ -1638,24 +1638,27 @@ const ACTIVITY_DATA = [
 // ── RENDER FUNCTIONS ──────────────────────────────────────────────────────────
 
 function renderMarketsTable(data) {
-  document.getElementById('marketsTableBody').innerHTML = data.map(function(m) {
+  var tbody = document.getElementById('marketsTableBody');
+  if (!tbody) return;
+  tbody.innerHTML = data.map(function(m) {
     var statusBadge = m.status === 'OPEN'
       ? '<span class="badge badge-green">OPEN</span>'
       : m.status === 'CLOSED'
       ? '<span class="badge badge-amber">CLOSED</span>'
       : m.status === 'RESOLVED'
       ? '<span class="badge badge-blue">RESOLVED</span>'
-      : '<span class="badge badge-gray">' + m.status + '</span>';
-    var actions = '';
-    if (m.status === 'OPEN') {
-      actions += '<button class="act-btn act-amber" onclick="pauseMarket('' + m.id + '','' + (m.title||'').replace(/'/g, "\'").slice(0,40) + '')">Pause</button> ';
-    }
-    if (m.status === 'CLOSED') {
-      actions += '<button class="act-btn act-green" onclick="openResolveModal('' + m.id + '','' + (m.title||'').replace(/'/g, "\'").slice(0,60) + '',' + (m.trades||0) + ')">Resolve</button> ';
-    }
-    if (m.status !== 'RESOLVED' && m.status !== 'CANCELLED') {
-      actions += '<button class="act-btn act-red" onclick="cancelMarket('' + m.id + '','' + (m.title||'').replace(/'/g, "\'").slice(0,40) + '')">Cancel</button>';
-    }
+      : '<span class="badge badge-gray">' + (m.status||'') + '</span>';
+
+    var pauseBtn  = m.status === 'OPEN'
+      ? '<button class="act-btn act-amber" data-action="pause" data-id="' + m.id + '" data-title="' + (m.title||'').replace(/"/g,'&quot;').slice(0,40) + '">Pause</button> '
+      : '';
+    var resolveBtn = m.status === 'CLOSED'
+      ? '<button class="act-btn act-green" data-action="resolve" data-id="' + m.id + '" data-title="' + (m.title||'').replace(/"/g,'&quot;').slice(0,60) + '" data-trades="' + (m.trades||0) + '">Resolve</button> '
+      : '';
+    var cancelBtn = (m.status !== 'RESOLVED' && m.status !== 'CANCELLED')
+      ? '<button class="act-btn act-red" data-action="cancel" data-id="' + m.id + '" data-title="' + (m.title||'').replace(/"/g,'&quot;').slice(0,40) + '">Cancel</button>'
+      : '';
+
     return '<tr>' +
       '<td style="max-width:260px"><div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (m.title||'—') + '</div></td>' +
       '<td><span class="badge badge-gray" style="font-size:0.62rem">' + (m.cat||'—') + '</span></td>' +
@@ -1664,9 +1667,22 @@ function renderMarketsTable(data) {
       '<td class="mono">' + (m.trades||0) + '</td>' +
       '<td class="mono" style="color:var(--text-dim)">' + (m.closes||'—') + '</td>' +
       '<td>' + statusBadge + '</td>' +
-      '<td style="display:flex;gap:5px">' + actions + '</td>' +
+      '<td style="display:flex;gap:5px">' + pauseBtn + resolveBtn + cancelBtn + '</td>' +
     '</tr>';
   }).join('');
+
+  // Attach click handlers via event delegation — no inline onclick needed
+  tbody.onclick = function(e) {
+    var btn = e.target.closest('button[data-action]');
+    if (!btn) return;
+    var action = btn.dataset.action;
+    var id     = btn.dataset.id;
+    var title  = btn.dataset.title || '';
+    var trades = parseInt(btn.dataset.trades || 0);
+    if (action === 'pause')   pauseMarket(id, title);
+    if (action === 'resolve') openResolveModal(id, title, trades);
+    if (action === 'cancel')  cancelMarket(id, title);
+  };
 }
 
 function filterMarkets(q) {
@@ -1675,40 +1691,51 @@ function filterMarkets(q) {
 }
 
 function renderUsersTable() {
-  document.getElementById('usersTableBody').innerHTML = USERS_DATA.map(u => {
-    const kycBadge = u.kyc === 'VERIFIED'
+  var tbody = document.getElementById('usersTableBody');
+  if (!tbody) return;
+  tbody.innerHTML = USERS_DATA.map(function(u) {
+    var kycBadge = u.kyc === 'VERIFIED'
       ? '<span class="badge badge-green">VERIFIED</span>'
       : u.kyc === 'PENDING'
       ? '<span class="badge badge-amber">PENDING</span>'
       : '<span class="badge badge-red">REJECTED</span>';
-    return `<tr>
-      <td style="font-weight:600">${u.name}</td>
-      <td class="mono" style="color:var(--text-dim)">${u.phone}</td>
-      <td>${kycBadge}</td>
-      <td class="mono">${u.balance}</td>
-      <td class="mono" style="color:var(--text-dim)">${u.volume}</td>
-      <td style="color:var(--text-dim)">${u.joined}</td>
-      <td style="display:flex;gap:5px">
-        ${u.kyc === 'PENDING' ? `<button class="act-btn act-amber" onclick="openKYCModal('${u.name}', '${u.phone}')">Review KYC</button>` : ''}
-        <button class="act-btn act-gray">View</button>
-        <button class="act-btn act-red">Suspend</button>
-      </td>
-    </tr>`;
+    var reviewBtn = u.kyc === 'PENDING'
+      ? '<button class="act-btn act-amber" data-action="kyc" data-id="' + (u.id||'') + '" data-name="' + (u.name||'').replace(/"/g,'') + '" data-phone="' + (u.phone||'') + '">Review KYC</button>'
+      : '';
+    return '<tr>' +
+      '<td style="font-weight:600">' + (u.name||'—') + '</td>' +
+      '<td class="mono" style="color:var(--text-dim)">' + (u.phone||'—') + '</td>' +
+      '<td>' + kycBadge + '</td>' +
+      '<td class="mono">' + (u.balance||'—') + '</td>' +
+      '<td class="mono" style="color:var(--text-dim)">' + (u.volume||'—') + '</td>' +
+      '<td style="color:var(--text-dim)">' + (u.joined||'—') + '</td>' +
+      '<td style="display:flex;gap:5px">' + reviewBtn + '</td>' +
+    '</tr>';
   }).join('');
+  tbody.onclick = function(e) {
+    var btn = e.target.closest('button[data-action="kyc"]');
+    if (!btn) return;
+    openKYCModal(btn.dataset.id, btn.dataset.name, btn.dataset.phone);
+  };
 }
 
 function renderKYCTable() {
-  document.getElementById('kycTableBody').innerHTML = KYC_DATA.map(k => `
-    <tr>
-      <td style="font-weight:600">${k.name}</td>
-      <td class="mono" style="color:var(--text-dim)">${k.phone}</td>
-      <td style="color:var(--text-dim)">${k.submitted}</td>
-      <td>${k.idType}</td>
-      <td style="display:flex;gap:5px">
-        <button class="act-btn act-amber" onclick="openKYCModal('${k.name}', '${k.phone}')">Review →</button>
-      </td>
-    </tr>
-  `).join('');
+  var tbody = document.getElementById('kycTableBody');
+  if (!tbody) return;
+  tbody.innerHTML = KYC_DATA.map(function(k) {
+    return '<tr>' +
+      '<td style="font-weight:600">' + (k.name||'—') + '</td>' +
+      '<td class="mono" style="color:var(--text-dim)">' + (k.phone||'—') + '</td>' +
+      '<td style="color:var(--text-dim)">' + (k.submitted||'—') + '</td>' +
+      '<td>' + (k.idType||'—') + '</td>' +
+      '<td><button class="act-btn act-amber" data-action="kyc-review" data-id="' + (k.id||'') + '" data-name="' + (k.name||'').replace(/"/g,'') + '" data-phone="' + (k.phone||'') + '">Review →</button></td>' +
+    '</tr>';
+  }).join('');
+  tbody.onclick = function(e) {
+    var btn = e.target.closest('button[data-action="kyc-review"]');
+    if (!btn) return;
+    openKYCModal(btn.dataset.id, btn.dataset.name, btn.dataset.phone);
+  };
 }
 
 function renderTxnsTable() {
@@ -1832,24 +1859,61 @@ function exportDataApps() {
   URL.revokeObjectURL(url);
 }
 
-function showPanel(id, btn) {
-  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.getElementById('panel-' + id).classList.add('active');
-  if (btn) btn.classList.add('active');
-  document.getElementById('breadcrumbLabel').textContent = id.replace('-', ' ');
-  if (id === 'dashboard') loadAdminLog();
+// All panel IDs — used to explicitly hide/show panels
+var ALL_PANEL_IDS = [
+  'dashboard','markets','create-market','resolve','users','kyc','transactions',
+  'payouts','proposals','bounties','activity','disputes','suggestions','b2b',
+  'admin-log','carousel','referral','dataapps'
+];
 
-  // Lazy render
-  if (id === 'markets') loadMarketsTable();
-  if (id === 'users') loadUsersTable();
-  if (id === 'kyc') loadKYCTable();
-  if (id === 'transactions') loadTxnsTable();
-  if (id === 'activity') { renderActivity('fullActivityFeed'); loadAdminLog(); }
+function showPanel(id, btn) {
+  // Explicitly hide ALL panels by style — does not rely on CSS class toggling
+  ALL_PANEL_IDS.forEach(function(pid) {
+    var el = document.getElementById('panel-' + pid);
+    if (el) el.style.display = 'none';
+  });
+
+  // Show the target panel
+  var panel = document.getElementById('panel-' + id);
+  if (!panel) { console.warn('showPanel: no panel found for id:', id); return; }
+  panel.style.display = 'block';
+
+  // Update nav active state
+  document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('active'); });
+  if (btn) btn.classList.add('active');
+
+  // Update breadcrumb
+  var label = document.getElementById('breadcrumbLabel');
+  if (label) label.textContent = id.replace(/-/g, ' ');
+
+  // Scroll to top so user sees the panel
+  window.scrollTo(0, 0);
+  var mainEl = document.querySelector('.main');
+  if (mainEl) mainEl.scrollTop = 0;
+
+  // Close sidebar on mobile
+  if (window.innerWidth <= 640) { setTimeout(closeSidebar, 150); }
+
+  // Panel-specific data loads
+  if (id === 'dashboard')     { loadAdminLog(); }
+  if (id === 'markets')       { loadMarketsTable(); }
+  if (id === 'users')         { loadUsersTable(); }
+  if (id === 'kyc')           { loadKYCTable(); }
+  if (id === 'transactions')  { loadTxnsTable(); }
+  if (id === 'suggestions')   { loadSuggestions(); }
+  if (id === 'disputes')      { renderDisputes(); }
+  if (id === 'proposals')     { loadSuggestions(); }
+  if (id === 'activity')      { renderActivity('fullActivityFeed'); loadAdminLog(); }
+  if (id === 'carousel')      { setTimeout(function() { initCarouselAdmin(); loadCarouselFromBackend(); }, 50); }
+  if (id === 'referral')      { setTimeout(loadReferralConfig, 50); }
+  if (id === 'dataapps')      { setTimeout(loadDataApplications, 50); }
+  if (id === 'admin-log')     { loadAdminLog(); }
+  if (id === 'b2b')           { renderB2B(); }
+  if (id === 'bounties')      { renderB2B(); }
   if (id === 'create-market') {
-    // Set default close date to 30 days from now
-    const d = new Date(); d.setDate(d.getDate() + 30);
-    document.getElementById('mktClosesAt').value = d.toISOString().slice(0, 16);
+    var d = new Date(); d.setDate(d.getDate() + 30);
+    var el = document.getElementById('mktClosesAt');
+    if (el) el.value = d.toISOString().slice(0, 16);
   }
 }
 
@@ -1928,9 +1992,7 @@ function confirmResolve() {
 
 // Pause (CLOSE) a market — backend moves it to CLOSED status
 function pauseMarket(marketId, title) {
-  if (!confirm('Pause market: "' + title + '"?
-
-This closes it to new trades. You can then resolve it.')) return;
+  if (!confirm('Pause market: ' + title + '?\n\nThis closes it to new trades. You can then resolve it.')) return;
   adminFetch('/api/admin/markets/' + marketId + '/status', {
     method: 'POST',
     body:   JSON.stringify({ action: 'PAUSE' }),
@@ -1949,9 +2011,7 @@ This closes it to new trades. You can then resolve it.')) return;
 
 // Cancel a market — refunds all positions
 function cancelMarket(marketId, title) {
-  if (!confirm('CANCEL market: "' + title + '"?
-
-All positions will be fully refunded. This cannot be undone.')) return;
+  if (!confirm('CANCEL market: ' + title + '?\n\nAll positions will be fully refunded. This cannot be undone.')) return;
   adminFetch('/api/admin/markets/' + marketId + '/status', {
     method: 'POST',
     body:   JSON.stringify({ action: 'CANCEL' }),
@@ -2171,12 +2231,8 @@ function renderDisputes() {
 function resolveDispute(id, side, name, pool, fee) {
   var outcome = side === 'A' ? 'USER_A' : side === 'B' ? 'USER_B' : 'TIE';
   var msg = side === 'TIE'
-    ? 'Confirm: Declare Tie?
-
-Each user receives KES ' + Math.round((pool - fee)/2).toLocaleString() + ' (15% fee: KES ' + fee + ' total).'
-    : 'Confirm: Award ' + name + '?
-
-Payout: KES ' + (pool - fee) + ' to ' + name + ' (15% fee = KES ' + fee + ').';
+    ? 'Confirm: Declare Tie?\n\nEach user receives KES ' + Math.round((pool - fee)/2).toLocaleString() + ' (15% fee: KES ' + fee + ' total).'
+    : 'Confirm: Award ' + name + '?\n\nPayout: KES ' + (pool - fee) + ' to ' + name + ' (15% fee = KES ' + fee + ').';
   if (!confirm(msg)) return;
 
   adminFetch('/api/admin/challenges/' + id + '/resolve', {
@@ -2203,6 +2259,46 @@ Payout: KES ' + (pool - fee) + ' to ' + name + ' (15% fee = KES ' + fee + ').';
 
 // ── SUGGESTION QUEUE ──────────────────────────────────────────────────────────
 var SUGGESTIONS = []; // populated by loadSuggestions()
+
+function filterProposals(btn, status) {
+  document.querySelectorAll('#panel-proposals .topbar-btn').forEach(function(b) {
+    b.classList.remove('primary');
+  });
+  if (btn) btn.classList.add('primary');
+  // Map filter to API status param
+  var apiStatus = status === 'pending' ? 'PENDING'
+                : status === 'approved' ? 'APPROVED'
+                : status === 'rejected' ? 'REJECTED'
+                : 'ALL';
+  var el = document.getElementById('proposalsList');
+  if (el) el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-dim);">Loading...</div>';
+  adminFetch('/api/admin/proposals?status=' + apiStatus)
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    var proposals = d.proposals || [];
+    SUGGESTIONS = proposals.map(function(p) {
+      return {
+        id:     p.id,
+        q:      p.question,
+        cat:    p.category,
+        from:   (p.proposer && p.proposer.name ? p.proposer.name : 'User') + ' (+' + (p.proposer && p.proposer.phone ? p.proposer.phone.slice(0,7) + '***' + p.proposer.phone.slice(-3) : '???') + ')',
+        source: p.resolutionSource || '—',
+        why:    p.whyCareNote || '',
+        status: p.status,
+      };
+    });
+    if (el) {
+      if (!SUGGESTIONS.length) {
+        el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-dim);">No proposals found.</div>';
+      } else {
+        renderSuggestions();
+      }
+    }
+  })
+  .catch(function() {
+    if (el) el.innerHTML = '<div style="text-align:center;color:#ce1126;padding:20px;">Failed to load proposals.</div>';
+  });
+}
 
 function loadSuggestions() {
   var el = document.getElementById('suggestionsList');
@@ -2260,9 +2356,7 @@ function renderSuggestions() {
 }
 
 function approveSuggestion(id, from) {
-  if (!confirm('Approve this proposal?
-
-KES 50 will be auto-credited to ' + from + ''s wallet and a new market will be created.')) return;
+  if (!confirm('Approve this proposal?\n\nKES 50 will be auto-credited to ' + from + '\'s wallet and a new market will be created.')) return;
   adminFetch('/api/admin/proposals/' + id + '/approve', { method: 'POST', body: JSON.stringify({}) })
   .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
   .then(function(res) {
@@ -2381,6 +2475,15 @@ renderDisputes();
 renderSuggestions();
 renderB2B();
 renderAdminLog();
+
+// Initialise panel display — show dashboard, hide all others
+// This ensures the style-based approach starts correctly
+(function initPanels() {
+  ALL_PANEL_IDS.forEach(function(pid) {
+    var el = document.getElementById('panel-' + pid);
+    if (el) el.style.display = pid === 'dashboard' ? 'block' : 'none';
+  });
+})();
 </script>
 <script>
 /* ── CAROUSEL ADMIN (self-contained) ── */
@@ -2545,13 +2648,7 @@ document.addEventListener('DOMContentLoaded', function() {
   initCarouselAdmin();
 });
 
-// Override showPanel to also trigger load functions
-var _origSP = typeof showPanel !== 'undefined' ? showPanel : function(){};
-window.showPanel = function(panelId, btn) {
-  _origSP(panelId, btn);
-  if (panelId === 'carousel') { setTimeout(function(){ initCarouselAdmin(); loadCarouselFromBackend(); }, 50); }
-  if (panelId === 'referral') { setTimeout(loadReferralConfig, 50); }
-};
+// showPanel handles all panel loads directly — no override needed
 </script>
 
 <script>
@@ -2617,16 +2714,7 @@ function closeSidebar() {
   document.body.style.overflow = '';
 }
 
-// Close sidebar when a nav item is tapped on mobile
-document.addEventListener('DOMContentLoaded', function() {
-  if (window.innerWidth <= 640) {
-    document.querySelectorAll('.nav-item').forEach(function(btn) {
-      btn.addEventListener('click', function() {
-        setTimeout(closeSidebar, 150);
-      });
-    });
-  }
-});
+// Mobile sidebar close handled inside showPanel
 </script>
 
 <script>
