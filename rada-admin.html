@@ -2541,6 +2541,21 @@ function initCarouselAdmin() {
   renderCarouselEditor();
 }
 
+function toggleCarouselSlide(index, active) {
+  if (index < 0 || index >= carouselSlides.length) return;
+  carouselSlides[index].active = active;
+  // Update card border without full re-render
+  var cards = document.querySelectorAll('#carouselSlideList .stat-card');
+  if (cards[index]) {
+    cards[index].style.border = active ? '2px solid #6d28d9' : '2px solid #e5e0ff';
+  }
+  // Update preview opacity
+  var previews = document.querySelectorAll('#previewSlides > div');
+  if (previews[index]) {
+    previews[index].style.opacity = active ? '1' : '0.4';
+  }
+}
+
 function renderCarouselEditor() {
   var list    = document.getElementById('carouselSlideList');
   var preview = document.getElementById('previewSlides');
@@ -2556,7 +2571,7 @@ function renderCarouselEditor() {
               '<span style="font-size:0.75rem;font-weight:700;color:#1a1035;">' + (s.title || 'Untitled') + '</span>' +
             '</div>' +
             '<div style="display:flex;gap:8px;align-items:center;">' +
-              '<label class="toggle-switch"><input type="checkbox" ' + (s.active ? 'checked' : '') + ' onchange="carouselSlides[' + i + '].active=this.checked;renderCarouselEditor()"><span class="toggle-track"></span></label>' +
+              '<label class="toggle-switch"><input type="checkbox" ' + (s.active ? 'checked' : '') + ' onchange="toggleCarouselSlide(' + i + ',this.checked)"><span class="toggle-track"></span></label>' +
               '<button onclick="carouselSlides.splice(' + i + ',1);renderCarouselEditor()" style="background:rgba(206,17,38,0.08);color:#ce1126;border:none;border-radius:6px;padding:4px 10px;font-size:0.65rem;font-weight:700;cursor:pointer;">✕</button>' +
             '</div>' +
           '</div>' +
@@ -2729,6 +2744,20 @@ document.addEventListener('DOMContentLoaded', function() {
   if (nameEl) nameEl.textContent = session.name || 'Admin';
   if (roleEl) roleEl.textContent = session.role || 'ADMIN';
 });
+
+function showToast(msg) {
+  var t = document.getElementById('adminToast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'adminToast';
+    t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1a1035;color:#fff;padding:10px 22px;border-radius:10px;font-size:0.82rem;font-weight:600;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,0.3);transition:opacity 0.3s;pointer-events:none;';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.opacity = '1';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(function() { t.style.opacity = '0'; }, 3000);
+}
 
 function adminLogOut() {
   if (!confirm('Sign out of the admin console?')) return;
