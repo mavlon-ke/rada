@@ -180,8 +180,8 @@ body::after {
 .content { padding: 24px; flex: 1; }
 
 /* ── PANELS ── */
-.panel { display: none; } /* initial state — JS controls visibility via style.display */
-.panel.active { display: block; } /* fallback for CSS-only contexts */
+.panel { display: none; }
+.panel.active { display: block; animation: panelIn 0.2s ease both; }
 @keyframes panelIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
 
 /* ── PAGE TITLE ── */
@@ -763,13 +763,13 @@ body::after {
 
   <div class="sidebar-section">
     <div class="sidebar-section-label">Platform</div>
-    <button class="nav-item" onclick="showPanel('carousel', this)">
+    <button class="nav-item" onclick="showPanel('carousel', this); setTimeout(loadCarouselSlides, 50);">
       <span class="nav-icon">🎠</span><span>Carousel Manager</span>
     </button>
-    <button class="nav-item" onclick="showPanel('referral', this)">
+    <button class="nav-item" onclick="showPanel('referral', this); setTimeout(loadReferralConfig, 50);">
       <span class="nav-icon">🎁</span><span>Referral Programme</span>
     </button>
-    <button class="nav-item" onclick="showPanel('dataapps', this)">
+        <button class="nav-item" onclick="showPanel('dataapps', this); setTimeout(loadDataApplications, 50);">
       <span class="nav-icon">📊</span><span>Data Applications</span>
     </button>
   </div>
@@ -799,7 +799,7 @@ body::after {
     </div>
     <div class="topbar-right">
       <div class="status-pill"><div class="status-dot"></div>Systems Operational</div>
-      <button class="topbar-btn" onclick="showPanel('create-market', null)">+ New Market</button>
+      <button class="topbar-btn" onclick="showPanel('create-market', document.querySelector('.nav-item:nth-child(2)'))">+ New Market</button>
     </div>
   </div>
 
@@ -815,22 +815,22 @@ body::after {
       <div class="stat-row">
         <div class="stat-card" style="animation-delay:0s">
           <div class="stat-label">Total Volume</div>
-          <div class="stat-val amber" id="dashTotalVolume">—</div>
-          <div class="stat-change up" id="dashWeekVolume">Loading...</div>
+          <div class="stat-val amber">KES 2.4M</div>
+          <div class="stat-change up">▲ +12.4% this week</div>
         </div>
         <div class="stat-card" style="animation-delay:0.06s">
           <div class="stat-label">Active Users</div>
-          <div class="stat-val" id="dashTotalUsers">—</div>
-          <div class="stat-change up" id="dashTodayUsers">Loading...</div>
+          <div class="stat-val">1,840</div>
+          <div class="stat-change up">▲ +89 today</div>
         </div>
         <div class="stat-card" style="animation-delay:0.12s">
           <div class="stat-label">Open Markets</div>
-          <div class="stat-val green" id="dashOpenMarkets">—</div>
-          <div class="stat-change" id="dashPendingResolution">Loading...</div>
+          <div class="stat-val green">24</div>
+          <div class="stat-change">3 closing this week</div>
         </div>
         <div class="stat-card" style="animation-delay:0.18s">
           <div class="stat-label">Pending KYC</div>
-          <div class="stat-val red" id="dashPendingKYC">—</div>
+          <div class="stat-val red">7</div>
           <div class="stat-change down">Requires review</div>
         </div>
       </div>
@@ -848,23 +848,23 @@ body::after {
                 <th>Market</th><th>Closed</th><th>Trades</th><th>Action</th>
               </tr></thead>
               <tbody>
-                <tr onclick="openResolveModal(null,'Finance Bill 2025',204)">
+                <tr onclick="openResolveModal('Finance Bill 2025', 204)">
                   <td><div style="font-weight:600;max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Will Kenya pass the Finance Bill 2025?</div><div style="color:var(--text-dim);font-size:0.7rem;margin-top:2px">POLITICS</div></td>
                   <td class="mono" style="color:var(--text-dim)">2d ago</td>
                   <td class="mono">204</td>
-                  <td><button class="act-btn act-amber" onclick="event.stopPropagation();openResolveModal(null,'Finance Bill 2025',204)">Resolve →</button></td>
+                  <td><button class="act-btn act-amber" onclick="event.stopPropagation();openResolveModal('Finance Bill 2025', 204)">Resolve →</button></td>
                 </tr>
-                <tr onclick="openResolveModal(null,'World Cup Qualifiers',156)">
+                <tr onclick="openResolveModal('World Cup Qualifiers', 156)">
                   <td><div style="font-weight:600;max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Will mobile money transactions exceed KES 10T in 2025?</div><div style="color:var(--text-dim);font-size:0.7rem;margin-top:2px">TECH</div></td>
                   <td class="mono" style="color:var(--text-dim)">5d ago</td>
                   <td class="mono">156</td>
-                  <td><button class="act-btn act-amber" onclick="event.stopPropagation();openResolveModal(null,'World Cup Qualifiers',156)">Resolve →</button></td>
+                  <td><button class="act-btn act-amber" onclick="event.stopPropagation();openResolveModal('World Cup Qualifiers', 156)">Resolve →</button></td>
                 </tr>
-                <tr onclick="openResolveModal(null,'NSE Index 2500',89)">
+                <tr onclick="openResolveModal('NSE Index 2500', 89)">
                   <td><div style="font-weight:600;max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Will NSE 20 close above 2,500 by Dec 2025?</div><div style="color:var(--text-dim);font-size:0.7rem;margin-top:2px">ECONOMY</div></td>
                   <td class="mono" style="color:var(--text-dim)">1d ago</td>
                   <td class="mono">89</td>
-                  <td><button class="act-btn act-amber" onclick="event.stopPropagation();openResolveModal(null,'NSE Index 2500',89)">Resolve →</button></td>
+                  <td><button class="act-btn act-amber" onclick="event.stopPropagation();openResolveModal('NSE Index 2500', 89)">Resolve →</button></td>
                 </tr>
               </tbody>
             </table>
@@ -1043,7 +1043,7 @@ body::after {
               <td class="mono">89 users · KES 48K</td>
               <td class="mono">115 users · KES 62K</td>
               <td class="mono" style="color:var(--amber)">KES 110K</td>
-              <td><button class="act-btn act-amber" onclick="openResolveModal(null,'Finance Bill 2025',204)">Resolve →</button></td>
+              <td><button class="act-btn act-amber" onclick="openResolveModal('Finance Bill 2025', 204)">Resolve →</button></td>
             </tr>
             <tr>
               <td><div style="font-weight:600">Will Kenya launch a digital ID system by end of 2025?</div><div style="font-size:0.68rem;color:var(--text-dim);margin-top:2px">POLITICS · Closed 5 days ago</div></td>
@@ -1051,7 +1051,7 @@ body::after {
               <td class="mono">44 users · KES 21K</td>
               <td class="mono">112 users · KES 67K</td>
               <td class="mono" style="color:var(--amber)">KES 88K</td>
-              <td><button class="act-btn act-amber" onclick="openResolveModal(null,'World Cup Qualifiers',156)">Resolve →</button></td>
+              <td><button class="act-btn act-amber" onclick="openResolveModal('World Cup Qualifiers', 156)">Resolve →</button></td>
             </tr>
             <tr>
               <td><div style="font-weight:600">Will NSE 20 close above 2,500 by Dec 2025?</div><div style="font-size:0.68rem;color:var(--text-dim);margin-top:2px">FINANCE · Closed 1 day ago</div></td>
@@ -1059,7 +1059,7 @@ body::after {
               <td class="mono">30 users · KES 14K</td>
               <td class="mono">59 users · KES 31K</td>
               <td class="mono" style="color:var(--amber)">KES 45K</td>
-              <td><button class="act-btn act-amber" onclick="openResolveModal(null,'NSE Index 2500',89)">Resolve →</button></td>
+              <td><button class="act-btn act-amber" onclick="openResolveModal('NSE Index 2500', 89)">Resolve →</button></td>
             </tr>
           </tbody>
         </table>
@@ -1547,82 +1547,35 @@ var _MARKETS_PLACEHOLDER = [
   { title:'Will Nairobi receive above-average long rains?',          cat:'WEATHER',  yes:61, volume:'KES 89K',  trades:76,  closes:'2025-06-15', status:'OPEN' },
 ];
 
-var USERS_DATA = []; // populated by loadUsersTable()
+const USERS_DATA = [
+  { name:'Wanjiru K.',  phone:'+254 712 001 001', kyc:'VERIFIED', balance:'KES 18,420', volume:'KES 94K',  joined:'Jan 2025' },
+  { name:'Otieno M.',   phone:'+254 722 002 002', kyc:'VERIFIED', balance:'KES 14,200', volume:'KES 71K',  joined:'Jan 2025' },
+  { name:'Test User',   phone:'+254 712 345 678', kyc:'VERIFIED', balance:'KES 5,000',  volume:'KES 12K',  joined:'Feb 2025' },
+  { name:'Achieng P.',  phone:'+254 733 003 003', kyc:'PENDING',  balance:'KES 0',      volume:'—',        joined:'Mar 2025' },
+  { name:'Mwangi J.',   phone:'+254 700 004 004', kyc:'VERIFIED', balance:'KES 8,200',  volume:'KES 43K',  joined:'Jan 2025' },
+  { name:'Wanjiku M.',  phone:'+254 711 005 005', kyc:'PENDING',  balance:'KES 0',      volume:'—',        joined:'Mar 2025' },
+  { name:'Njeri A.',    phone:'+254 720 006 006', kyc:'REJECTED', balance:'KES 200',    volume:'KES 2K',   joined:'Feb 2025' },
+];
 
-function loadUsersTable(q) {
-  var url = '/api/admin/users' + (q ? '?q=' + encodeURIComponent(q) : '');
-  var tbody = document.getElementById('usersTableBody');
-  if (tbody) tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--text-dim);">Loading...</td></tr>';
-  adminFetch(url)
-  .then(function(r) { return r.json(); })
-  .then(function(d) {
-    USERS_DATA = (d.users || []).map(function(u) {
-      return {
-        id:      u.id,
-        name:    u.name || '—',
-        phone:   '+' + u.phone,
-        kyc:     u.kycStatus,
-        balance: 'KES ' + Number(u.balanceKes).toLocaleString(),
-        volume:  u.tradeVolume >= 1000 ? 'KES ' + Math.round(u.tradeVolume/1000) + 'K' : 'KES ' + u.tradeVolume,
-        joined:  new Date(u.createdAt).toLocaleDateString('en-KE', { month:'short', year:'numeric' }),
-      };
-    });
-    renderUsersTable();
-  })
-  .catch(function() {
-    if (tbody) tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#ce1126;padding:20px;">Failed to load users.</td></tr>';
-  });
-}
+const KYC_DATA = [
+  { name:'Wanjiku Mwangi',  phone:'+254 711 005 005', submitted:'2h ago',  idType:'National ID' },
+  { name:'Achieng Otieno',  phone:'+254 733 007 007', submitted:'5h ago',  idType:'National ID' },
+  { name:'Kipchoge R.',     phone:'+254 722 008 008', submitted:'1d ago',  idType:'Passport' },
+  { name:'Chebet L.',       phone:'+254 700 009 009', submitted:'1d ago',  idType:'National ID' },
+  { name:'Omondi V.',       phone:'+254 711 010 010', submitted:'2d ago',  idType:'National ID' },
+  { name:'Mutai S.',        phone:'+254 733 011 011', submitted:'2d ago',  idType:'Driving License' },
+  { name:'Waweru P.',       phone:'+254 720 012 012', submitted:'3d ago',  idType:'National ID' },
+];
 
-var KYC_DATA = []; // populated by loadKYCTable()
-
-function loadKYCTable() {
-  var tbody = document.getElementById('kycTableBody');
-  if (tbody) tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--text-dim);">Loading...</td></tr>';
-  adminFetch('/api/admin/users?kyc=PENDING')
-  .then(function(r) { return r.json(); })
-  .then(function(d) {
-    KYC_DATA = (d.users || []).map(function(u) {
-      var mins = Math.round((Date.now() - new Date(u.createdAt).getTime()) / 60000);
-      var ago  = mins < 60 ? mins + 'm ago' : mins < 1440 ? Math.round(mins/60) + 'h ago' : Math.round(mins/1440) + 'd ago';
-      return { id: u.id, name: u.name || '—', phone: '+' + u.phone, submitted: ago, idType: 'National ID' };
-    });
-    renderKYCTable();
-    var el = document.getElementById('dashPendingKYC');
-    if (el) el.textContent = KYC_DATA.length;
-  })
-  .catch(function() {
-    if (tbody) tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#ce1126;padding:20px;">Failed to load KYC queue.</td></tr>';
-  });
-}
-
-var TXNS_DATA = []; // populated by loadTxnsTable()
-
-function loadTxnsTable() {
-  var tbody = document.getElementById('txnsTableBody');
-  if (tbody) tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text-dim);">Loading...</td></tr>';
-  adminFetch('/api/admin/transactions')
-  .then(function(r) { return r.json(); })
-  .then(function(d) {
-    TXNS_DATA = (d.transactions || []).map(function(t) {
-      var mins = Math.round((Date.now() - new Date(t.createdAt).getTime()) / 60000);
-      var ago  = mins < 60 ? mins + 'm ago' : mins < 1440 ? Math.round(mins/60) + 'h ago' : Math.round(mins/1440) + 'd ago';
-      var prefix = ['DEPOSIT','PAYOUT','REFUND'].includes(t.type) ? '+' : '-';
-      return {
-        user:   (t.user && t.user.name) ? t.user.name : (t.user && t.user.phone ? '+' + t.user.phone : '—'),
-        type:   t.type,
-        amount: prefix + 'KES ' + Number(t.amountKes).toLocaleString(),
-        ref:    t.mpesaRef || t.id.slice(0,8).toUpperCase(),
-        time:   ago,
-        status: t.status,
-      };
-    });
-    renderTxnsTable();
-  })
-  .catch(function() {
-    if (tbody) tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#ce1126;padding:20px;">Failed to load transactions.</td></tr>';
-  });
-}
+const TXNS_DATA = [
+  { user:'Wanjiru K.',  type:'DEPOSIT',    amount:'+KES 5,000', ref:'QHG4X7KL', time:'2m ago',  status:'SUCCESS' },
+  { user:'Otieno M.',   type:'TRADE_BUY',  amount:'-KES 500',   ref:'KE-TXN-44', time:'5m ago', status:'SUCCESS' },
+  { user:'Test User',   type:'DEPOSIT',    amount:'+KES 2,000', ref:'QBT7J1PW', time:'12m ago', status:'SUCCESS' },
+  { user:'Mwangi J.',   type:'WITHDRAWAL', amount:'-KES 1,000', ref:'QXL9K2MN', time:'18m ago', status:'SUCCESS' },
+  { user:'Njeri A.',    type:'DEPOSIT',    amount:'+KES 500',   ref:'QPW3M9NK', time:'32m ago', status:'FAILED' },
+  { user:'Kamau R.',    type:'PAYOUT',     amount:'+KES 840',   ref:'KE-PAY-88', time:'1h ago', status:'SUCCESS' },
+  { user:'Auma G.',     type:'DEPOSIT',    amount:'+KES 300',   ref:'QKM2P8XL', time:'2h ago',  status:'PENDING' },
+];
 
 const ACTIVITY_DATA = [
   { icon:'💰', type:'ai-green', text:'<strong>Wanjiru K.</strong> deposited <strong>KES 5,000</strong> via M-Pesa', time:'2 min ago' },
@@ -1638,51 +1591,29 @@ const ACTIVITY_DATA = [
 // ── RENDER FUNCTIONS ──────────────────────────────────────────────────────────
 
 function renderMarketsTable(data) {
-  var tbody = document.getElementById('marketsTableBody');
-  if (!tbody) return;
-  tbody.innerHTML = data.map(function(m) {
-    var statusBadge = m.status === 'OPEN'
+  document.getElementById('marketsTableBody').innerHTML = data.map(m => {
+    const statusBadge = m.status === 'OPEN'
       ? '<span class="badge badge-green">OPEN</span>'
       : m.status === 'CLOSED'
       ? '<span class="badge badge-amber">CLOSED</span>'
-      : m.status === 'RESOLVED'
-      ? '<span class="badge badge-blue">RESOLVED</span>'
-      : '<span class="badge badge-gray">' + (m.status||'') + '</span>';
-
-    var pauseBtn  = m.status === 'OPEN'
-      ? '<button class="act-btn act-amber" data-action="pause" data-id="' + m.id + '" data-title="' + (m.title||'').replace(/"/g,'&quot;').slice(0,40) + '">Pause</button> '
-      : '';
-    var resolveBtn = m.status === 'CLOSED'
-      ? '<button class="act-btn act-green" data-action="resolve" data-id="' + m.id + '" data-title="' + (m.title||'').replace(/"/g,'&quot;').slice(0,60) + '" data-trades="' + (m.trades||0) + '">Resolve</button> '
-      : '';
-    var cancelBtn = (m.status !== 'RESOLVED' && m.status !== 'CANCELLED')
-      ? '<button class="act-btn act-red" data-action="cancel" data-id="' + m.id + '" data-title="' + (m.title||'').replace(/"/g,'&quot;').slice(0,40) + '">Cancel</button>'
-      : '';
-
-    return '<tr>' +
-      '<td style="max-width:260px"><div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (m.title||'—') + '</div></td>' +
-      '<td><span class="badge badge-gray" style="font-size:0.62rem">' + (m.cat||'—') + '</span></td>' +
-      '<td class="mono" style="color:' + ((m.yes||0) > 50 ? 'var(--green)' : 'var(--text-mid)') + '">' + (m.yes||'—') + '%</td>' +
-      '<td class="mono">' + (m.volume||'—') + '</td>' +
-      '<td class="mono">' + (m.trades||0) + '</td>' +
-      '<td class="mono" style="color:var(--text-dim)">' + (m.closes||'—') + '</td>' +
-      '<td>' + statusBadge + '</td>' +
-      '<td style="display:flex;gap:5px">' + pauseBtn + resolveBtn + cancelBtn + '</td>' +
-    '</tr>';
+      : '<span class="badge badge-blue">RESOLVED</span>';
+    return `<tr>
+      <td style="max-width:260px">
+        <div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${m.title}</div>
+      </td>
+      <td><span class="badge badge-gray" style="font-size:0.62rem">${m.cat}</span></td>
+      <td class="mono" style="color:${m.yes > 50 ? 'var(--green)' : 'var(--text-mid)'}">${m.yes}%</td>
+      <td class="mono">${m.volume}</td>
+      <td class="mono">${m.trades}</td>
+      <td class="mono" style="color:var(--text-dim)">${m.closes}</td>
+      <td>${statusBadge}</td>
+      <td style="display:flex;gap:5px">
+        ${m.status === 'OPEN' ? `<button class="act-btn act-gray">Pause</button>` : ''}
+        ${m.status === 'CLOSED' ? `<button class="act-btn act-amber" onclick="openResolveModal('${m.title}', ${m.trades})">Resolve</button>` : ''}
+        <button class="act-btn act-red">Delete</button>
+      </td>
+    </tr>`;
   }).join('');
-
-  // Attach click handlers via event delegation — no inline onclick needed
-  tbody.onclick = function(e) {
-    var btn = e.target.closest('button[data-action]');
-    if (!btn) return;
-    var action = btn.dataset.action;
-    var id     = btn.dataset.id;
-    var title  = btn.dataset.title || '';
-    var trades = parseInt(btn.dataset.trades || 0);
-    if (action === 'pause')   pauseMarket(id, title);
-    if (action === 'resolve') openResolveModal(id, title, trades);
-    if (action === 'cancel')  cancelMarket(id, title);
-  };
 }
 
 function filterMarkets(q) {
@@ -1691,51 +1622,40 @@ function filterMarkets(q) {
 }
 
 function renderUsersTable() {
-  var tbody = document.getElementById('usersTableBody');
-  if (!tbody) return;
-  tbody.innerHTML = USERS_DATA.map(function(u) {
-    var kycBadge = u.kyc === 'VERIFIED'
+  document.getElementById('usersTableBody').innerHTML = USERS_DATA.map(u => {
+    const kycBadge = u.kyc === 'VERIFIED'
       ? '<span class="badge badge-green">VERIFIED</span>'
       : u.kyc === 'PENDING'
       ? '<span class="badge badge-amber">PENDING</span>'
       : '<span class="badge badge-red">REJECTED</span>';
-    var reviewBtn = u.kyc === 'PENDING'
-      ? '<button class="act-btn act-amber" data-action="kyc" data-id="' + (u.id||'') + '" data-name="' + (u.name||'').replace(/"/g,'') + '" data-phone="' + (u.phone||'') + '">Review KYC</button>'
-      : '';
-    return '<tr>' +
-      '<td style="font-weight:600">' + (u.name||'—') + '</td>' +
-      '<td class="mono" style="color:var(--text-dim)">' + (u.phone||'—') + '</td>' +
-      '<td>' + kycBadge + '</td>' +
-      '<td class="mono">' + (u.balance||'—') + '</td>' +
-      '<td class="mono" style="color:var(--text-dim)">' + (u.volume||'—') + '</td>' +
-      '<td style="color:var(--text-dim)">' + (u.joined||'—') + '</td>' +
-      '<td style="display:flex;gap:5px">' + reviewBtn + '</td>' +
-    '</tr>';
+    return `<tr>
+      <td style="font-weight:600">${u.name}</td>
+      <td class="mono" style="color:var(--text-dim)">${u.phone}</td>
+      <td>${kycBadge}</td>
+      <td class="mono">${u.balance}</td>
+      <td class="mono" style="color:var(--text-dim)">${u.volume}</td>
+      <td style="color:var(--text-dim)">${u.joined}</td>
+      <td style="display:flex;gap:5px">
+        ${u.kyc === 'PENDING' ? `<button class="act-btn act-amber" onclick="openKYCModal('${u.name}', '${u.phone}')">Review KYC</button>` : ''}
+        <button class="act-btn act-gray">View</button>
+        <button class="act-btn act-red">Suspend</button>
+      </td>
+    </tr>`;
   }).join('');
-  tbody.onclick = function(e) {
-    var btn = e.target.closest('button[data-action="kyc"]');
-    if (!btn) return;
-    openKYCModal(btn.dataset.id, btn.dataset.name, btn.dataset.phone);
-  };
 }
 
 function renderKYCTable() {
-  var tbody = document.getElementById('kycTableBody');
-  if (!tbody) return;
-  tbody.innerHTML = KYC_DATA.map(function(k) {
-    return '<tr>' +
-      '<td style="font-weight:600">' + (k.name||'—') + '</td>' +
-      '<td class="mono" style="color:var(--text-dim)">' + (k.phone||'—') + '</td>' +
-      '<td style="color:var(--text-dim)">' + (k.submitted||'—') + '</td>' +
-      '<td>' + (k.idType||'—') + '</td>' +
-      '<td><button class="act-btn act-amber" data-action="kyc-review" data-id="' + (k.id||'') + '" data-name="' + (k.name||'').replace(/"/g,'') + '" data-phone="' + (k.phone||'') + '">Review →</button></td>' +
-    '</tr>';
-  }).join('');
-  tbody.onclick = function(e) {
-    var btn = e.target.closest('button[data-action="kyc-review"]');
-    if (!btn) return;
-    openKYCModal(btn.dataset.id, btn.dataset.name, btn.dataset.phone);
-  };
+  document.getElementById('kycTableBody').innerHTML = KYC_DATA.map(k => `
+    <tr>
+      <td style="font-weight:600">${k.name}</td>
+      <td class="mono" style="color:var(--text-dim)">${k.phone}</td>
+      <td style="color:var(--text-dim)">${k.submitted}</td>
+      <td>${k.idType}</td>
+      <td style="display:flex;gap:5px">
+        <button class="act-btn act-amber" onclick="openKYCModal('${k.name}', '${k.phone}')">Review →</button>
+      </td>
+    </tr>
+  `).join('');
 }
 
 function renderTxnsTable() {
@@ -1859,61 +1779,23 @@ function exportDataApps() {
   URL.revokeObjectURL(url);
 }
 
-// All panel IDs — used to explicitly hide/show panels
-var ALL_PANEL_IDS = [
-  'dashboard','markets','create-market','resolve','users','kyc','transactions',
-  'payouts','proposals','bounties','activity','disputes','suggestions','b2b',
-  'admin-log','carousel','referral','dataapps'
-];
-
 function showPanel(id, btn) {
-  // Explicitly hide ALL panels by style — does not rely on CSS class toggling
-  ALL_PANEL_IDS.forEach(function(pid) {
-    var el = document.getElementById('panel-' + pid);
-    if (el) el.style.display = 'none';
-  });
-
-  // Show the target panel
-  var panel = document.getElementById('panel-' + id);
-  if (!panel) { console.warn('showPanel: no panel found for id:', id); return; }
-  panel.style.display = 'block';
-
-  // Update nav active state
-  document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('active'); });
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('panel-' + id).classList.add('active');
   if (btn) btn.classList.add('active');
+  document.getElementById('breadcrumbLabel').textContent = id.replace('-', ' ');
 
-  // Update breadcrumb
-  var label = document.getElementById('breadcrumbLabel');
-  if (label) label.textContent = id.replace(/-/g, ' ');
-
-  // Scroll to top so user sees the panel
-  window.scrollTo(0, 0);
-  var mainEl = document.querySelector('.main');
-  if (mainEl) mainEl.scrollTop = 0;
-
-  // Close sidebar on mobile
-  if (window.innerWidth <= 640) { setTimeout(closeSidebar, 150); }
-
-  // Panel-specific data loads
-  if (id === 'dashboard')     { loadAdminLog(); }
-  if (id === 'markets')       { loadMarketsTable(); }
-  if (id === 'users')         { loadUsersTable(); }
-  if (id === 'kyc')           { loadKYCTable(); }
-  if (id === 'transactions')  { loadTxnsTable(); }
-  if (id === 'suggestions')   { loadSuggestions(); }
-  if (id === 'disputes')      { renderDisputes(); }
-  if (id === 'proposals')     { loadSuggestions(); }
-  if (id === 'activity')      { renderActivity('fullActivityFeed'); loadAdminLog(); }
-  if (id === 'carousel')      { setTimeout(function() { initCarouselAdmin(); loadCarouselFromBackend(); }, 50); }
-  if (id === 'referral')      { setTimeout(loadReferralConfig, 50); }
-  if (id === 'dataapps')      { setTimeout(loadDataApplications, 50); }
-  if (id === 'admin-log')     { loadAdminLog(); }
-  if (id === 'b2b')           { renderB2B(); }
-  if (id === 'bounties')      { renderB2B(); }
+  // Lazy render
+  if (id === 'markets') loadMarketsTable();
+  if (id === 'users') renderUsersTable();
+  if (id === 'kyc') renderKYCTable();
+  if (id === 'transactions') renderTxnsTable();
+  if (id === 'activity') renderActivity('fullActivityFeed');
   if (id === 'create-market') {
-    var d = new Date(); d.setDate(d.getDate() + 30);
-    var el = document.getElementById('mktClosesAt');
-    if (el) el.value = d.toISOString().slice(0, 16);
+    // Set default close date to 30 days from now
+    const d = new Date(); d.setDate(d.getDate() + 30);
+    document.getElementById('mktClosesAt').value = d.toISOString().slice(0, 16);
   }
 }
 
@@ -1923,11 +1805,10 @@ let resolveOutcome = null;
 let resolveMarketName = '';
 let resolveTradeCount = 0;
 
-function openResolveModal(marketId, title, trades) {
-  resolveMarketId   = marketId;
+function openResolveModal(title, trades) {
   resolveMarketName = title;
   resolveTradeCount = trades;
-  resolveOutcome    = null;
+  resolveOutcome = null;
   document.getElementById('resolveMarketTitle').textContent = title;
   document.getElementById('resolveYes').classList.remove('selected');
   document.getElementById('resolveNo').classList.remove('selected');
@@ -1954,142 +1835,40 @@ function selectOutcome(outcome) {
 }
 
 function confirmResolve() {
-  if (!resolveOutcome) { alert('Please select an outcome first.'); return; }
-  if (!resolveMarketId) { alert('No market selected.'); return; }
-  var btn = document.getElementById('resolveConfirmBtn');
+  if (!resolveOutcome) { alert('Please select an outcome.'); return; }
+  const btn = document.getElementById('resolveConfirmBtn');
   btn.textContent = 'Processing...';
   btn.disabled = true;
-
-  adminFetch('/api/admin/markets/' + resolveMarketId + '/resolve', {
-    method: 'POST',
-    body:   JSON.stringify({ outcome: resolveOutcome }),
-  })
-  .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
-  .then(function(res) {
-    if (res.ok) {
-      btn.textContent = '✓ Resolved!';
-      btn.style.background = 'var(--green)';
-      showToast('✓ Market resolved. Payouts triggered via Paystack.');
-      setTimeout(function() {
-        closeModal('resolveModal');
-        btn.textContent = 'Confirm Resolution';
-        btn.disabled = false;
-        btn.style.background = '';
-        loadMarketsTable(); // Refresh table
-      }, 1400);
-    } else {
+  setTimeout(() => {
+    btn.textContent = '✓ Resolved!';
+    btn.style.background = 'var(--green)';
+    setTimeout(() => {
+      closeModal('resolveModal');
       btn.textContent = 'Confirm Resolution';
       btn.disabled = false;
-      alert('Error: ' + (res.d.error || 'Could not resolve market. Is it CLOSED?'));
-    }
-  })
-  .catch(function() {
-    btn.textContent = 'Confirm Resolution';
-    btn.disabled = false;
-    alert('Network error. Please try again.');
-  });
-}
-
-// Pause (CLOSE) a market — backend moves it to CLOSED status
-function pauseMarket(marketId, title) {
-  if (!confirm('Pause market: "' + title + '"?
-
-This closes it to new trades. You can then resolve it.')) return;
-  adminFetch('/api/admin/markets/' + marketId + '/status', {
-    method: 'POST',
-    body:   JSON.stringify({ action: 'PAUSE' }),
-  })
-  .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
-  .then(function(res) {
-    if (res.ok) {
-      showToast('Market paused. It is now CLOSED and ready to resolve.');
-      loadMarketsTable();
-    } else {
-      alert('Error: ' + (res.d.error || 'Could not pause market.'));
-    }
-  })
-  .catch(function() { alert('Network error. Please try again.'); });
-}
-
-// Cancel a market — refunds all positions
-function cancelMarket(marketId, title) {
-  if (!confirm('CANCEL market: "' + title + '"?
-
-All positions will be fully refunded. This cannot be undone.')) return;
-  adminFetch('/api/admin/markets/' + marketId + '/status', {
-    method: 'POST',
-    body:   JSON.stringify({ action: 'CANCEL' }),
-  })
-  .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
-  .then(function(res) {
-    if (res.ok) {
-      showToast('Market cancelled. ' + (res.d.refundedUsers || 0) + ' users refunded.');
-      loadMarketsTable();
-    } else {
-      alert('Error: ' + (res.d.error || 'Could not cancel market.'));
-    }
-  })
-  .catch(function() { alert('Network error. Please try again.'); });
+      btn.style.background = '';
+    }, 1400);
+  }, 1200);
 }
 
 // ── KYC MODAL ─────────────────────────────────────────────────────────────────
 
-var currentKYCUserId = null;
-
-function openKYCModal(userId, name, phone) {
-  currentKYCUserId = userId;
+function openKYCModal(name, phone) {
   document.getElementById('kycUserName').textContent  = name;
   document.getElementById('kycUserPhone').textContent = phone;
   document.getElementById('kycFullName').textContent  = name + ' (full)';
-  document.getElementById('kycIdNum').textContent     = 'Pending upload';
+  document.getElementById('kycIdNum').textContent     = Math.floor(10000000 + Math.random() * 90000000);
   document.getElementById('kycModal').classList.add('open');
 }
 
 function approveKYC() {
-  if (!currentKYCUserId) return;
-  var btn = document.querySelector('#kycModal .act-green');
-  btn.textContent = 'Approving...';
-  btn.disabled    = true;
-  adminFetch('/api/admin/users/' + currentKYCUserId + '/kyc', {
-    method: 'POST',
-    body:   JSON.stringify({ action: 'APPROVE' }),
-  })
-  .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
-  .then(function(res) {
-    if (res.ok) {
-      btn.textContent = '✓ Approved!';
-      showToast('KYC approved for user.');
-      setTimeout(function() {
-        closeModal('kycModal');
-        btn.textContent = '✓ Approve';
-        btn.disabled = false;
-        loadKYCTable();
-      }, 1000);
-    } else {
-      btn.textContent = '✓ Approve';
-      btn.disabled = false;
-      alert('Error: ' + (res.d.error || 'Could not approve KYC.'));
-    }
-  })
-  .catch(function() {
-    btn.textContent = '✓ Approve';
-    btn.disabled = false;
-    alert('Network error.');
-  });
+  const btn = document.querySelector('#kycModal .act-green');
+  btn.textContent = '✓ Approved!';
+  setTimeout(() => { closeModal('kycModal'); btn.textContent = '✓ Approve'; }, 1000);
 }
 
 function rejectKYC() {
-  if (!currentKYCUserId) { closeModal('kycModal'); return; }
-  adminFetch('/api/admin/users/' + currentKYCUserId + '/kyc', {
-    method: 'POST',
-    body:   JSON.stringify({ action: 'REJECT' }),
-  })
-  .then(function() {
-    showToast('KYC rejected.');
-    closeModal('kycModal');
-    loadKYCTable();
-  })
-  .catch(function() { closeModal('kycModal'); });
+  closeModal('kycModal');
 }
 
 // ── MARKET CREATE ─────────────────────────────────────────────────────────────
@@ -2233,107 +2012,26 @@ function renderDisputes() {
 }
 
 function resolveDispute(id, side, name, pool, fee) {
-  var outcome = side === 'A' ? 'USER_A' : side === 'B' ? 'USER_B' : 'TIE';
-  var msg = side === 'TIE'
-    ? 'Confirm: Declare Tie?
-
-Each user receives KES ' + Math.round((pool - fee)/2).toLocaleString() + ' (15% fee: KES ' + fee + ' total).'
-    : 'Confirm: Award ' + name + '?
-
-Payout: KES ' + (pool - fee) + ' to ' + name + ' (15% fee = KES ' + fee + ').';
+  const msg = side === 'TIE'
+    ? `Confirm: Declare Tie?\n\nEach user receives KES ${Math.round((pool - fee)/2).toLocaleString()} (15% fee: KES ${fee} total).`
+    : `Confirm: Award ${name}?\n\nPayout: KES ${pool - fee} to ${name} (15% fee = KES ${fee}).`;
   if (!confirm(msg)) return;
-
-  adminFetch('/api/admin/challenges/' + id + '/resolve', {
-    method: 'POST',
-    body:   JSON.stringify({ outcome: outcome }),
-  })
-  .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
-  .then(function(res) {
-    if (res.ok) {
-      var idx = DISPUTES.findIndex(function(d) { return d.id === id; });
-      if (idx > -1) DISPUTES.splice(idx, 1);
-      var dc = document.getElementById('disputeCount');
-      var dn = document.getElementById('disputeNavBadge');
-      if (dc) dc.textContent = DISPUTES.length;
-      if (dn) dn.textContent = DISPUTES.length;
-      renderDisputes();
-      showToast('✓ Dispute resolved. Paystack B2C payout triggered. 15% fee collected.');
-    } else {
-      alert('Error: ' + (res.d.error || 'Could not resolve dispute.'));
-    }
-  })
-  .catch(function() { alert('Network error. Please try again.'); });
+  const idx = DISPUTES.findIndex(d => d.id === id);
+  if (idx > -1) DISPUTES.splice(idx, 1);
+  document.getElementById('disputeCount').textContent = DISPUTES.length;
+  document.getElementById('disputeNavBadge').textContent = DISPUTES.length;
+  renderDisputes();
+  showToast(`✓ Dispute resolved. M-Pesa B2C payout triggered. 15% fee collected.`);
 }
 
 // ── SUGGESTION QUEUE ──────────────────────────────────────────────────────────
-var SUGGESTIONS = []; // populated by loadSuggestions()
-
-function filterProposals(btn, status) {
-  document.querySelectorAll('#panel-proposals .topbar-btn').forEach(function(b) {
-    b.classList.remove('primary');
-  });
-  if (btn) btn.classList.add('primary');
-  // Map filter to API status param
-  var apiStatus = status === 'pending' ? 'PENDING'
-                : status === 'approved' ? 'APPROVED'
-                : status === 'rejected' ? 'REJECTED'
-                : 'ALL';
-  var el = document.getElementById('proposalsList');
-  if (el) el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-dim);">Loading...</div>';
-  adminFetch('/api/admin/proposals?status=' + apiStatus)
-  .then(function(r) { return r.json(); })
-  .then(function(d) {
-    var proposals = d.proposals || [];
-    SUGGESTIONS = proposals.map(function(p) {
-      return {
-        id:     p.id,
-        q:      p.question,
-        cat:    p.category,
-        from:   (p.proposer && p.proposer.name ? p.proposer.name : 'User') + ' (+' + (p.proposer && p.proposer.phone ? p.proposer.phone.slice(0,7) + '***' + p.proposer.phone.slice(-3) : '???') + ')',
-        source: p.resolutionSource || '—',
-        why:    p.whyCareNote || '',
-        status: p.status,
-      };
-    });
-    if (el) {
-      if (!SUGGESTIONS.length) {
-        el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-dim);">No proposals found.</div>';
-      } else {
-        renderSuggestions();
-      }
-    }
-  })
-  .catch(function() {
-    if (el) el.innerHTML = '<div style="text-align:center;color:#ce1126;padding:20px;">Failed to load proposals.</div>';
-  });
-}
-
-function loadSuggestions() {
-  var el = document.getElementById('suggestionsList');
-  if (el) el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-dim);">Loading...</div>';
-  adminFetch('/api/admin/proposals?status=PENDING')
-  .then(function(r) { return r.json(); })
-  .then(function(d) {
-    SUGGESTIONS = (d.proposals || []).map(function(p) {
-      return {
-        id:     p.id,
-        q:      p.question,
-        cat:    p.category,
-        from:   (p.proposer && p.proposer.name ? p.proposer.name : 'User') + ' (+' + (p.proposer && p.proposer.phone ? p.proposer.phone.slice(0,7) + '***' + p.proposer.phone.slice(-3) : '???') + ')',
-        source: p.resolutionSource || '—',
-        why:    p.whyCareNote || '',
-      };
-    });
-    var badge = document.getElementById('suggCount');
-    var navBadge = document.getElementById('suggNavBadge');
-    if (badge) badge.textContent = SUGGESTIONS.length;
-    if (navBadge) navBadge.textContent = SUGGESTIONS.length;
-    renderSuggestions();
-  })
-  .catch(function() {
-    if (el) el.innerHTML = '<div style="text-align:center;color:#ce1126;padding:20px;">Failed to load proposals.</div>';
-  });
-}
+const SUGGESTIONS = [
+  { id:1, q:'Will Nairobi County pass the 2026/27 budget on first reading?', cat:'Politics', from:'Baraka M. (+254712***456)', source:'NMG / Nation Media', why:'Budget debates are trending on social media every year.' },
+  { id:2, q:'Will Safaricom M-Pesa hit 50M active users by December 2026?', cat:'Economy', from:'Grace W. (+254722***123)', source:'Safaricom Annual Report', why:'Key indicator for fintech growth in Kenya.' },
+  { id:3, q:'Will it rain in Nairobi every day next week?', cat:'Weather', from:'Peter N. (+254733***789)', source:'KMD forecast', why:'Farmers and matatu drivers care deeply about this.' },
+  { id:4, q:'Will a Kenyan artist win an AFRIMMA Award in 2026?', cat:'Entertainment', from:'Wanjiku A. (+254755***321)', source:'AFRIMMA official results', why:'Kenyan music is booming globally right now.' },
+  { id:5, q:'Will GPT-5 be released publicly before June 2026?', cat:'Tech', from:'Kevin O. (+254744***654)', source:'OpenAI official blog', why:'Tech community is debating this constantly.' },
+];
 
 function renderSuggestions() {
   const el = document.getElementById('suggestionsList');
@@ -2364,33 +2062,16 @@ function renderSuggestions() {
 }
 
 function approveSuggestion(id, from) {
-  if (!confirm('Approve this proposal?
-
-KES 50 will be auto-credited to ' + from + ''s wallet and a new market will be created.')) return;
-  adminFetch('/api/admin/proposals/' + id + '/approve', { method: 'POST', body: JSON.stringify({}) })
-  .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
-  .then(function(res) {
-    if (res.ok) {
-      showToast('✓ Market created! KES 50 reward credited to proposer wallet.');
-      loadSuggestions();
-      loadMarketsTable();
-    } else {
-      alert('Error: ' + (res.d.error || 'Could not approve proposal.'));
-    }
-  })
-  .catch(function() { alert('Network error.'); });
+  if (!confirm(`Approve suggestion #${id}?\n\nKES 50 will be auto-credited to ${from}'s wallet.`)) return;
+  document.getElementById(`sugg-${id}`).style.display = 'none';
+  const remaining = SUGGESTIONS.filter((s,_) => document.getElementById(`sugg-${s.id}`) && document.getElementById(`sugg-${s.id}`).style.display !== 'none').length - 1;
+  document.getElementById('suggCount').textContent = Math.max(0, remaining);
+  document.getElementById('suggNavBadge').textContent = Math.max(0, remaining);
+  showToast('✓ Market created! KES 50 reward auto-credited to user wallet.');
 }
-
 function rejectSuggestion(id) {
-  if (!confirm('Reject this proposal? The user will not receive a reward.')) return;
-  adminFetch('/api/admin/proposals/' + id + '/reject', { method: 'POST', body: JSON.stringify({}) })
-  .then(function(r) {
-    if (r.ok) {
-      showToast('Proposal rejected.');
-      loadSuggestions();
-    }
-  })
-  .catch(function() { showToast('Proposal rejected.'); loadSuggestions(); });
+  document.getElementById(`sugg-${id}`).style.display = 'none';
+  showToast('Suggestion rejected. User will be notified.');
 }
 
 // ── B2B ANALYTICS ─────────────────────────────────────────────────────────────
@@ -2442,28 +2123,15 @@ function renderB2B() {
 }
 
 // ── ADMIN LOG ─────────────────────────────────────────────────────────────────
-var ADMIN_LOG_DATA = []; // populated by loadAdminLog()
-
-function loadAdminLog() {
-  var el = document.getElementById('adminLogBody');
-  if (el) el.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text-dim);">Loading...</td></tr>';
-  adminFetch('/api/admin/stats') // stats endpoint also returns recent activity
-  .then(function(r) { return r.json(); })
-  .then(function(d) {
-    // Update dashboard stat cards from live data
-    var fmt = function(n) { return n >= 1000000 ? 'KES ' + (n/1000000).toFixed(1) + 'M' : n >= 1000 ? 'KES ' + Math.round(n/1000) + 'K' : 'KES ' + n; };
-    var s = function(id, v) { var el = document.getElementById(id); if (el) el.textContent = v; };
-    s('dashTotalVolume', fmt(d.totalVolume || 0));
-    s('dashWeekVolume',  '▲ KES ' + Math.round((d.weekVolume||0)/1000) + 'K this week');
-    s('dashTotalUsers',  (d.totalUsers || 0).toLocaleString());
-    s('dashTodayUsers',  '▲ +' + (d.todayUsers || 0) + ' today');
-    s('dashOpenMarkets', d.openMarkets || 0);
-    s('dashPendingResolution', (d.pendingResolution || 0) + ' awaiting resolution');
-    s('dashPendingKYC',  d.pendingKYC || 0);
-    renderAdminLog();
-  })
-  .catch(function() { renderAdminLog(); });
-}
+const ADMIN_LOG_DATA = [
+  { admin:'admin@checkrada.co.ke', action:'Dispute Resolved (A wins)', target:'Challenge #47', ts:'Mar 7 14:32', ip:'102.68.xx.xx' },
+  { admin:'admin@checkrada.co.ke', action:'Market Created', target:'"Will CBK hold rates?"', ts:'Mar 7 11:15', ip:'102.68.xx.xx' },
+  { admin:'admin@checkrada.co.ke', action:'Suggestion Approved + KES 50 Reward', target:'Suggestion #23', ts:'Mar 6 16:44', ip:'102.68.xx.xx' },
+  { admin:'admin@checkrada.co.ke', action:'KYC Approved', target:'User +254712***456', ts:'Mar 6 10:22', ip:'102.68.xx.xx' },
+  { admin:'ops@checkrada.co.ke', action:'Admin Role Assigned', target:'ops@checkrada.co.ke', ts:'Mar 5 09:00', ip:'41.90.xx.xx' },
+  { admin:'admin@checkrada.co.ke', action:'Market Paused (Kill Switch)', target:'"Nairobi Elections 2026"', ts:'Mar 4 18:33', ip:'102.68.xx.xx' },
+  { admin:'admin@checkrada.co.ke', action:'Dispute Resolved (Tie — 15% fee)', target:'Challenge #41', ts:'Mar 3 12:11', ip:'102.68.xx.xx' },
+];
 
 function renderAdminLog() {
   const el = document.getElementById('adminLogBody');
@@ -2485,45 +2153,13 @@ renderDisputes();
 renderSuggestions();
 renderB2B();
 renderAdminLog();
-
-// Initialise panel display — show dashboard, hide all others
-// This ensures the style-based approach starts correctly
-(function initPanels() {
-  ALL_PANEL_IDS.forEach(function(pid) {
-    var el = document.getElementById('panel-' + pid);
-    if (el) el.style.display = pid === 'dashboard' ? 'block' : 'none';
-  });
-})();
 </script>
 <script>
 /* ── CAROUSEL ADMIN (self-contained) ── */
-var carouselSlides = [];
-
-function loadCarouselFromBackend() {
-  adminFetch('/api/admin/config/carousel')
-  .then(function(r) { return r.json(); })
-  .then(function(d) {
-    if (d.slides && d.slides.length > 0) {
-      carouselSlides = d.slides.map(function(s) {
-        return {
-          id:        s.id,
-          tag:       s.tag || '',
-          title:     s.title || '',
-          subtitle:  s.subtitle || '',
-          ctaText:   s.ctaText || '',
-          ctaLink:   s.ctaLink || '',
-          bgColour:  s.bgColour || '#1a1035',
-          active:    s.active !== false,
-          sortOrder: s.sortOrder || 0,
-        };
-      });
-    } else {
-      carouselSlides = [];
-    }
-    renderCarouselEditor();
-  })
-  .catch(function() { renderCarouselEditor(); });
-}
+var carouselSlides = [
+  { tag:'🆕 New Market', title:'Will Ruto Complete His Full Term?', subtitle:'Join 1,200+ forecasters already staking', ctaText:'Forecast Now →', ctaLink:'rada-markets.html', bgColour:'#1a1035', active:true },
+  { tag:'🤝 Social Challenge', title:'Challenge a Friend. Settle It Fairly.', subtitle:'From KES 20. Referee or mutual resolution.', ctaText:'Create Challenge →', ctaLink:'rada-friends.html', bgColour:'#1e1b4b', active:true }
+];
 
 function initCarouselAdmin() {
   var addBtn     = document.getElementById('addSlideBtn');
@@ -2546,7 +2182,13 @@ function initCarouselAdmin() {
     }).catch(function(){});
   };
 
-  reloadBtn.onclick = function() { loadCarouselFromBackend(); };
+  reloadBtn.onclick = function() {
+    carouselSlides = [
+      { tag:'🆕 New Market', title:'Will Ruto Complete His Full Term?', subtitle:'Join 1,200+ forecasters already staking', ctaText:'Forecast Now →', ctaLink:'rada-markets.html', bgColour:'#1a1035', active:true },
+      { tag:'🤝 Social Challenge', title:'Challenge a Friend. Settle It Fairly.', subtitle:'From KES 20. Referee or mutual resolution.', ctaText:'Create Challenge →', ctaLink:'rada-friends.html', bgColour:'#1e1b4b', active:true }
+    ];
+    renderCarouselEditor();
+  };
 
   renderCarouselEditor();
 }
@@ -2658,7 +2300,13 @@ document.addEventListener('DOMContentLoaded', function() {
   initCarouselAdmin();
 });
 
-// showPanel handles all panel loads directly — no override needed
+// Override showPanel to also trigger load functions
+var _origSP = typeof showPanel !== 'undefined' ? showPanel : function(){};
+window.showPanel = function(panelId, btn) {
+  _origSP(panelId, btn);
+  if (panelId === 'carousel') { setTimeout(function(){ initCarouselAdmin(); renderCarouselEditor(); }, 50); }
+  if (panelId === 'referral') { setTimeout(loadReferralConfig, 50); }
+};
 </script>
 
 <script>
@@ -2724,7 +2372,16 @@ function closeSidebar() {
   document.body.style.overflow = '';
 }
 
-// Mobile sidebar close handled inside showPanel
+// Close sidebar when a nav item is tapped on mobile
+document.addEventListener('DOMContentLoaded', function() {
+  if (window.innerWidth <= 640) {
+    document.querySelectorAll('.nav-item').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        setTimeout(closeSidebar, 150);
+      });
+    });
+  }
+});
 </script>
 
 <script>
