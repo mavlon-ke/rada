@@ -1442,6 +1442,57 @@ body::after {
 <!-- ══════════════════════════════════════════════════════════════════════════
      MODAL: KYC REVIEW
 ══════════════════════════════════════════════════════════════════════════ -->
+<!-- Edit Market Modal -->
+<div class="modal-overlay" id="editMarketModal">
+  <div class="modal" style="max-width:620px">
+    <div class="modal-head">
+      <div class="modal-title">✏️ Edit Market</div>
+      <div class="modal-sub" id="editMarketSubtitle">Editing market details</div>
+    </div>
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:14px;">
+      <div>
+        <div class="stat-label" style="margin-bottom:4px;">Title</div>
+        <input class="form-input" id="editMktTitle" placeholder="Market question" style="width:100%;box-sizing:border-box;">
+      </div>
+      <div>
+        <div class="stat-label" style="margin-bottom:4px;">Description</div>
+        <textarea class="form-textarea" id="editMktDesc" rows="3" placeholder="Describe YES/NO resolution conditions" style="width:100%;box-sizing:border-box;resize:vertical;"></textarea>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div>
+          <div class="stat-label" style="margin-bottom:4px;">Category</div>
+          <select class="form-select" id="editMktCategory" style="width:100%;">
+            <option value="POLITICS">🗳️ Politics</option>
+            <option value="ECONOMY">📈 Economy</option>
+            <option value="TECH">💡 Tech</option>
+            <option value="WEATHER">🌦️ Weather</option>
+            <option value="ENTERTAINMENT">🎭 Entertainment</option>
+            <option value="GENERAL">🇰🇪 General</option>
+            <option value="FRIENDS">🤝 Friends</option>
+          </select>
+        </div>
+        <div>
+          <div class="stat-label" style="margin-bottom:4px;">Closes At</div>
+          <input class="form-input" id="editMktClosesAt" type="datetime-local" style="width:100%;box-sizing:border-box;">
+        </div>
+      </div>
+      <div>
+        <div class="stat-label" style="margin-bottom:4px;">Source Note</div>
+        <input class="form-input" id="editMktSourceNote" placeholder="e.g. IEBC official results" style="width:100%;box-sizing:border-box;">
+      </div>
+      <div>
+        <div class="stat-label" style="margin-bottom:4px;">Image URL <span style="color:var(--text-dim);font-weight:400;">(optional)</span></div>
+        <input class="form-input" id="editMktImageUrl" placeholder="https://..." style="width:100%;box-sizing:border-box;">
+      </div>
+      <div id="editMarketStatus" style="font-size:0.78rem;min-height:18px;"></div>
+      <div style="display:flex;gap:10px;">
+        <button class="act-btn act-gray" style="flex:1;padding:12px;" onclick="closeModal('editMarketModal')">Cancel</button>
+        <button id="editMarketSaveBtn" class="act-btn act-green" style="flex:2;padding:12px;font-size:0.85rem;" onclick="saveMarketEdits()">💾 Save Changes</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="kycModal">
   <div class="modal" style="max-width:580px">
     <div class="modal-head">
@@ -1658,6 +1709,7 @@ function renderMarketsTable(data) {
     var cancelBtn = (m.status !== 'RESOLVED' && m.status !== 'CANCELLED')
       ? '<button class="act-btn act-red" data-action="cancel" data-id="' + m.id + '" data-title="' + (m.title||'').replace(/"/g,'&quot;').slice(0,40) + '">Cancel</button>'
       : '';
+    var editBtn = '<button class="act-btn act-gray" data-action="edit" data-id="' + m.id + '">Edit</button>';
 
     return '<tr>' +
       '<td style="max-width:260px"><div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (m.title||'—') + '</div></td>' +
@@ -1667,7 +1719,7 @@ function renderMarketsTable(data) {
       '<td class="mono">' + (m.trades||0) + '</td>' +
       '<td class="mono" style="color:var(--text-dim)">' + (m.closes||'—') + '</td>' +
       '<td>' + statusBadge + '</td>' +
-      '<td style="display:flex;gap:5px">' + pauseBtn + resolveBtn + cancelBtn + '</td>' +
+      '<td style="display:flex;gap:5px">' + editBtn + ' ' + pauseBtn + resolveBtn + cancelBtn + '</td>' +
     '</tr>';
   }).join('');
 
@@ -1679,6 +1731,7 @@ function renderMarketsTable(data) {
     var id     = btn.dataset.id;
     var title  = btn.dataset.title || '';
     var trades = parseInt(btn.dataset.trades || 0);
+    if (action === 'edit')    openEditMarketModal(id);
     if (action === 'pause')   pauseMarket(id, title);
     if (action === 'resolve') openResolveModal(id, title, trades);
     if (action === 'cancel')  cancelMarket(id, title);
@@ -1915,6 +1968,104 @@ function showPanel(id, btn) {
     var el = document.getElementById('mktClosesAt');
     if (el) el.value = d.toISOString().slice(0, 16);
   }
+}
+
+// ── EDIT MARKET ──────────────────────────────────────────────────────────────
+
+var currentEditMarketId = null;
+
+function openEditMarketModal(marketId) {
+  // Find the market in MARKETS_DATA
+  var m = MARKETS_DATA.find(function(x) { return x.id === marketId; });
+  if (!m) {
+    // Fetch fresh from backend if not in cache
+    adminFetch('/api/admin/markets/' + marketId)
+    .then(function(r) { return r.json(); })
+    .then(function(d) { _populateEditModal(marketId, d.market || d); })
+    .catch(function() { alert('Could not load market details.'); });
+    return;
+  }
+  _populateEditModal(marketId, m);
+}
+
+function _populateEditModal(marketId, m) {
+  currentEditMarketId = marketId;
+
+  document.getElementById('editMarketSubtitle').textContent = 'ID: ' + marketId;
+  document.getElementById('editMktTitle').value      = m.title      || '';
+  document.getElementById('editMktDesc').value       = m.description|| m.desc || '';
+  document.getElementById('editMktSourceNote').value = m.sourceNote || '';
+  document.getElementById('editMktImageUrl').value   = m.imageUrl   || '';
+  document.getElementById('editMarketStatus').textContent = '';
+
+  // Set category
+  var catEl = document.getElementById('editMktCategory');
+  if (catEl) catEl.value = m.category || m.cat || 'GENERAL';
+
+  // Set closes date — convert to datetime-local format
+  var closes = m.closesAt || m.closes;
+  if (closes) {
+    try {
+      var d = new Date(closes);
+      // datetime-local needs format: YYYY-MM-DDTHH:MM
+      var iso = d.toISOString().slice(0,16);
+      document.getElementById('editMktClosesAt').value = iso;
+    } catch(e) {
+      document.getElementById('editMktClosesAt').value = '';
+    }
+  }
+
+  document.getElementById('editMarketModal').classList.add('open');
+}
+
+function saveMarketEdits() {
+  if (!currentEditMarketId) return;
+
+  var title    = document.getElementById('editMktTitle').value.trim();
+  var desc     = document.getElementById('editMktDesc').value.trim();
+  var cat      = document.getElementById('editMktCategory').value;
+  var closesAt = document.getElementById('editMktClosesAt').value;
+  var source   = document.getElementById('editMktSourceNote').value.trim();
+  var image    = document.getElementById('editMktImageUrl').value.trim();
+
+  if (!title) { alert('Title is required.'); return; }
+  if (!desc)  { alert('Description is required.'); return; }
+
+  var btn    = document.getElementById('editMarketSaveBtn');
+  var status = document.getElementById('editMarketStatus');
+  btn.disabled    = true;
+  btn.textContent = 'Saving...';
+  status.textContent = '';
+
+  var body = { title: title, description: desc, category: cat, sourceNote: source };
+  if (closesAt) body.closesAt = new Date(closesAt).toISOString();
+  if (image)    body.imageUrl = image;
+
+  adminFetch('/api/admin/markets/' + currentEditMarketId, {
+    method: 'PATCH',
+    body:   JSON.stringify(body),
+  })
+  .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
+  .then(function(res) {
+    btn.disabled    = false;
+    btn.textContent = '💾 Save Changes';
+    if (res.ok && res.d.success) {
+      status.style.color    = 'var(--green)';
+      status.textContent    = '✓ Market updated successfully';
+      showToast('✓ Market "' + title.slice(0,40) + '" updated.');
+      loadMarketsTable(); // Refresh the table
+      setTimeout(function() { closeModal('editMarketModal'); }, 1200);
+    } else {
+      status.style.color  = '#ce1126';
+      status.textContent  = '✗ ' + (res.d.error || 'Could not save changes.');
+    }
+  })
+  .catch(function() {
+    btn.disabled    = false;
+    btn.textContent = '💾 Save Changes';
+    status.style.color = '#ce1126';
+    status.textContent = '✗ Network error. Please try again.';
+  });
 }
 
 // ── RESOLVE MODAL ─────────────────────────────────────────────────────────────
@@ -2162,9 +2313,14 @@ function loadMarketsTable() {
     var markets = data.markets || [];
     MARKETS_DATA = markets.map(function(m) {
       return {
-        id:     m.id,
-        title:  m.title,
-        cat:    m.category,
+        id:          m.id,
+        title:       m.title,
+        description: m.description || '',
+        category:    m.category,
+        cat:         m.category,
+        sourceNote:  m.sourceNote  || '',
+        imageUrl:    m.imageUrl    || '',
+        closesAt:    m.closesAt,
         yes:    Math.round((m.yesPrice || 0.5) * 100),
         volume: 'KES ' + Math.round((m.totalVolume || 0) / 1000) + 'K',
         trades: m.tradeCount || 0,
