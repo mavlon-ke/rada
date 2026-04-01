@@ -135,7 +135,7 @@ export async function DELETE(
       await tx.transaction.create({
         data: {
           userId:      params.userId,
-          type:        'FEE',
+          type:        'WITHDRAWAL',
           amountKes:   walletBalance,
           balAfter:    0,
           status:      'SUCCESS',
