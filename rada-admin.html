@@ -1442,6 +1442,87 @@ body::after {
 <!-- ══════════════════════════════════════════════════════════════════════════
      MODAL: KYC REVIEW
 ══════════════════════════════════════════════════════════════════════════ -->
+<!-- Edit User Modal -->
+<div class="modal-overlay" id="editUserModal">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-head">
+      <div class="modal-title">✏️ Edit User</div>
+      <div class="modal-sub" id="editUserSubtitle">Editing user account</div>
+    </div>
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:14px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div>
+          <div class="stat-label" style="margin-bottom:4px;">Full Name</div>
+          <input class="form-input" id="editUserName" placeholder="Full name" style="width:100%;box-sizing:border-box;">
+        </div>
+        <div>
+          <div class="stat-label" style="margin-bottom:4px;">Phone Number</div>
+          <input class="form-input" id="editUserPhone" placeholder="254712345678" style="width:100%;box-sizing:border-box;">
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div>
+          <div class="stat-label" style="margin-bottom:4px;">KYC Status</div>
+          <select class="form-select" id="editUserKyc" style="width:100%;">
+            <option value="PENDING">Pending</option>
+            <option value="VERIFIED">Verified</option>
+            <option value="REJECTED">Rejected</option>
+          </select>
+        </div>
+        <div>
+          <div class="stat-label" style="margin-bottom:4px;">Account Status</div>
+          <select class="form-select" id="editUserSuspended" style="width:100%;">
+            <option value="0">Active</option>
+            <option value="1">Frozen</option>
+          </select>
+        </div>
+      </div>
+      <div style="background:var(--bg3);border-radius:10px;padding:14px;">
+        <div class="stat-label" style="margin-bottom:8px;">Manual Balance Adjustment</div>
+        <div style="display:grid;grid-template-columns:1fr 2fr;gap:10px;">
+          <input class="form-input" id="editUserBalAdj" type="number" placeholder="e.g. 500 or -200" style="box-sizing:border-box;">
+          <input class="form-input" id="editUserBalReason" placeholder="Reason (e.g. Refund, Bonus)" style="box-sizing:border-box;">
+        </div>
+        <div style="font-size:0.68rem;color:var(--text-dim);margin-top:6px;">Positive = credit, negative = debit. Leave blank to skip. Current balance: <strong id="editUserCurBal">—</strong></div>
+      </div>
+      <div id="editUserStatus" style="font-size:0.78rem;min-height:18px;"></div>
+      <div style="display:flex;gap:10px;">
+        <button class="act-btn act-gray" style="flex:1;padding:12px;" onclick="closeModal('editUserModal')">Cancel</button>
+        <button id="editUserSaveBtn" class="act-btn act-green" style="flex:2;padding:12px;font-size:0.85rem;" onclick="saveUserEdits()">💾 Save Changes</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Delete User Confirmation Modal -->
+<div class="modal-overlay" id="deleteUserModal">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-head">
+      <div class="modal-title" style="color:#ce1126;">⚠️ Permanently Delete User</div>
+      <div class="modal-sub" id="deleteUserSubtitle">This cannot be undone</div>
+    </div>
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:14px;">
+      <div style="background:rgba(206,17,38,0.06);border:1px solid rgba(206,17,38,0.2);border-radius:10px;padding:14px;font-size:0.82rem;line-height:1.6;">
+        <strong>This will permanently:</strong><br>
+        • Delete the user account and login access<br>
+        • Collect their wallet balance as platform revenue<br>
+        • Cancel all open positions<br>
+        • Transaction records are kept for compliance
+      </div>
+      <div id="deleteUserBalNotice" style="font-size:0.82rem;color:#ce1126;font-weight:600;"></div>
+      <div>
+        <div class="stat-label" style="margin-bottom:4px;">Type <strong>DELETE</strong> to confirm</div>
+        <input class="form-input" id="deleteUserConfirmInput" placeholder="Type DELETE here" style="width:100%;box-sizing:border-box;">
+      </div>
+      <div id="deleteUserStatus" style="font-size:0.78rem;min-height:18px;color:#ce1126;"></div>
+      <div style="display:flex;gap:10px;">
+        <button class="act-btn act-gray" style="flex:1;padding:12px;" onclick="closeModal('deleteUserModal')">Cancel</button>
+        <button id="deleteUserConfirmBtn" class="act-btn act-red" style="flex:2;padding:12px;font-size:0.85rem;" onclick="executeDeleteUser()">🗑️ Delete Permanently</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Edit Market Modal -->
 <div class="modal-overlay" id="editMarketModal">
   <div class="modal" style="max-width:620px">
@@ -1615,7 +1696,8 @@ function loadUsersTable(q) {
         kyc:     u.kycStatus,
         balance: 'KES ' + Number(u.balanceKes).toLocaleString(),
         volume:  u.tradeVolume >= 1000 ? 'KES ' + Math.round(u.tradeVolume/1000) + 'K' : 'KES ' + u.tradeVolume,
-        joined:  new Date(u.createdAt).toLocaleDateString('en-KE', { month:'short', year:'numeric' }),
+        joined:    new Date(u.createdAt).toLocaleDateString('en-KE', { month:'short', year:'numeric' }),
+        suspended: u.suspended || false,
       };
     });
     renderUsersTable();
@@ -1755,6 +1837,9 @@ function renderUsersTable() {
     var reviewBtn = u.kyc === 'PENDING'
       ? '<button class="act-btn act-amber" data-action="kyc" data-id="' + (u.id||'') + '" data-name="' + (u.name||'').replace(/"/g,'') + '" data-phone="' + (u.phone||'') + '">Review KYC</button>'
       : '';
+    var editUserBtn   = '<button class="act-btn act-gray" data-action="edit-user" data-id="' + (u.id||'') + '">Edit</button>';
+    var freezeUserBtn = '<button class="act-btn ' + (u.suspended ? 'act-green' : 'act-amber') + '" data-action="freeze-user" data-id="' + (u.id||'') + '" data-suspended="' + (u.suspended ? '1' : '0') + '">' + (u.suspended ? 'Unfreeze' : 'Freeze') + '</button>';
+    var deleteUserBtn = '<button class="act-btn act-red" data-action="delete-user" data-id="' + (u.id||'') + '" data-name="' + (u.name||'—').replace(/"/g,'') + '" data-phone="' + (u.phone||'') + '">Delete</button>';
     return '<tr>' +
       '<td style="font-weight:600">' + (u.name||'—') + '</td>' +
       '<td class="mono" style="color:var(--text-dim)">' + (u.phone||'—') + '</td>' +
@@ -1762,13 +1847,17 @@ function renderUsersTable() {
       '<td class="mono">' + (u.balance||'—') + '</td>' +
       '<td class="mono" style="color:var(--text-dim)">' + (u.volume||'—') + '</td>' +
       '<td style="color:var(--text-dim)">' + (u.joined||'—') + '</td>' +
-      '<td style="display:flex;gap:5px">' + reviewBtn + '</td>' +
+      '<td style="display:flex;gap:5px;flex-wrap:wrap;">' + editUserBtn + ' ' + reviewBtn + ' ' + freezeUserBtn + ' ' + deleteUserBtn + '</td>' +
     '</tr>';
   }).join('');
   tbody.onclick = function(e) {
-    var btn = e.target.closest('button[data-action="kyc"]');
+    var btn = e.target.closest('button[data-action]');
     if (!btn) return;
-    openKYCModal(btn.dataset.id, btn.dataset.name, btn.dataset.phone);
+    var action = btn.dataset.action;
+    if (action === 'kyc')         openKYCModal(btn.dataset.id, btn.dataset.name, btn.dataset.phone);
+    if (action === 'edit-user')   openEditUserModal(btn.dataset.id);
+    if (action === 'freeze-user') freezeUser(btn.dataset.id, btn.dataset.suspended === '1');
+    if (action === 'delete-user') confirmDeleteUser(btn.dataset.id, btn.dataset.name, btn.dataset.phone);
   };
 }
 
@@ -2177,6 +2266,140 @@ function cancelMarket(marketId, title) {
     }
   })
   .catch(function() { alert('Network error. Please try again.'); });
+}
+
+
+// ── USER MANAGEMENT ───────────────────────────────────────────────────────────
+
+var currentEditUserId   = null;
+var currentDeleteUserId = null;
+
+function openEditUserModal(userId) {
+  var u = USERS_DATA.find(function(x) { return x.id === userId; });
+  if (!u) { alert('User not found in current list. Please reload.'); return; }
+
+  currentEditUserId = userId;
+  document.getElementById('editUserSubtitle').textContent = u.phone || userId;
+  document.getElementById('editUserName').value      = u.name    || '';
+  document.getElementById('editUserPhone').value     = (u.phone  || '').replace(/^\+/, '');
+  document.getElementById('editUserKyc').value       = u.kyc     || 'PENDING';
+  document.getElementById('editUserSuspended').value = u.suspended ? '1' : '0';
+  document.getElementById('editUserBalAdj').value    = '';
+  document.getElementById('editUserBalReason').value = '';
+  document.getElementById('editUserCurBal').textContent = u.balance || 'KES 0';
+  document.getElementById('editUserStatus').textContent = '';
+  document.getElementById('editUserModal').classList.add('open');
+}
+
+function saveUserEdits() {
+  if (!currentEditUserId) return;
+
+  var name      = document.getElementById('editUserName').value.trim();
+  var phone     = document.getElementById('editUserPhone').value.trim().replace(/\D/g, '');
+  var kyc       = document.getElementById('editUserKyc').value;
+  var suspended = document.getElementById('editUserSuspended').value === '1';
+  var balAdj    = document.getElementById('editUserBalAdj').value;
+  var balReason = document.getElementById('editUserBalReason').value.trim();
+
+  if (!name)  { alert('Name is required.'); return; }
+  if (!phone) { alert('Phone is required.'); return; }
+
+  var btn    = document.getElementById('editUserSaveBtn');
+  var status = document.getElementById('editUserStatus');
+  btn.disabled = true; btn.textContent = 'Saving...'; status.textContent = '';
+
+  var body = { name: name, phone: phone, kycStatus: kyc, suspended: suspended };
+  if (balAdj !== '' && balAdj !== '0') {
+    body.balanceAdjustKes = parseFloat(balAdj);
+    body.adjustReason     = balReason || 'Admin manual adjustment';
+  }
+
+  adminFetch('/api/admin/users/' + currentEditUserId, {
+    method: 'PATCH',
+    body:   JSON.stringify(body),
+  })
+  .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
+  .then(function(res) {
+    btn.disabled = false; btn.textContent = '💾 Save Changes';
+    if (res.ok && res.d.success) {
+      status.style.color = 'var(--green)';
+      status.textContent = '✓ User updated successfully';
+      showToast('✓ User updated.');
+      loadUsersTable();
+      setTimeout(function() { closeModal('editUserModal'); }, 1200);
+    } else {
+      status.style.color = '#ce1126';
+      status.textContent = '✗ ' + (res.d.error || 'Could not save changes.');
+    }
+  })
+  .catch(function() {
+    btn.disabled = false; btn.textContent = '💾 Save Changes';
+    document.getElementById('editUserStatus').style.color = '#ce1126';
+    document.getElementById('editUserStatus').textContent = '✗ Network error.';
+  });
+}
+
+function freezeUser(userId, currentlySuspended) {
+  var u     = USERS_DATA.find(function(x) { return x.id === userId; });
+  var label = currentlySuspended ? 'Unfreeze' : 'Freeze';
+  var name  = u ? (u.name || u.phone) : userId;
+  if (!confirm(label + ' account for ' + name + '?')) return;
+
+  adminFetch('/api/admin/users/' + userId + '/freeze', { method: 'POST', body: JSON.stringify({}) })
+  .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
+  .then(function(res) {
+    if (res.ok) {
+      showToast(res.d.message || (label + 'd successfully.'));
+      loadUsersTable();
+    } else {
+      alert('Error: ' + (res.d.error || 'Could not ' + label.toLowerCase() + ' user.'));
+    }
+  })
+  .catch(function() { alert('Network error. Please try again.'); });
+}
+
+function confirmDeleteUser(userId, name, phone) {
+  currentDeleteUserId = userId;
+  var u = USERS_DATA.find(function(x) { return x.id === userId; });
+  document.getElementById('deleteUserSubtitle').textContent = (name || '—') + ' · ' + (phone || '');
+  document.getElementById('deleteUserBalNotice').textContent = u
+    ? 'Wallet balance ' + (u.balance || 'KES 0') + ' will be collected as platform revenue.'
+    : '';
+  document.getElementById('deleteUserConfirmInput').value = '';
+  document.getElementById('deleteUserStatus').textContent  = '';
+  document.getElementById('deleteUserModal').classList.add('open');
+}
+
+function executeDeleteUser() {
+  if (!currentDeleteUserId) return;
+  var input = document.getElementById('deleteUserConfirmInput').value.trim();
+  if (input !== 'DELETE') {
+    document.getElementById('deleteUserStatus').textContent = 'You must type DELETE exactly to confirm.';
+    return;
+  }
+
+  var btn = document.getElementById('deleteUserConfirmBtn');
+  btn.disabled = true; btn.textContent = 'Deleting...';
+
+  adminFetch('/api/admin/users/' + currentDeleteUserId, {
+    method: 'DELETE',
+    body:   JSON.stringify({ confirm: 'DELETE' }),
+  })
+  .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
+  .then(function(res) {
+    btn.disabled = false; btn.textContent = '🗑️ Delete Permanently';
+    if (res.ok && res.d.success) {
+      closeModal('deleteUserModal');
+      showToast('✓ User deleted. ' + (res.d.walletCollected > 0 ? 'KES ' + res.d.walletCollected + ' collected as platform revenue.' : ''));
+      loadUsersTable();
+    } else {
+      document.getElementById('deleteUserStatus').textContent = '✗ ' + (res.d.error || 'Could not delete user.');
+    }
+  })
+  .catch(function() {
+    btn.disabled = false; btn.textContent = '🗑️ Delete Permanently';
+    document.getElementById('deleteUserStatus').textContent = '✗ Network error.';
+  });
 }
 
 // ── KYC MODAL ─────────────────────────────────────────────────────────────────
