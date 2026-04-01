@@ -78,9 +78,9 @@ export async function sendWhatsAppOTP(phone: string): Promise<{
         },
         {
           type: 'button',
-          sub_type: 'copy_code',
-          index: 0,
-          parameters: [{ type: 'payload', payload: otp }],
+          sub_type: 'url',
+          index: 0,  // integer, not string
+          parameters: [{ type: 'text', text: otp }],
         },
       ],
     },
