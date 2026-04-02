@@ -1934,12 +1934,40 @@ var allDataApps = [];
 var currentDataFilter = 'all';
 
 function loadDataApplications() {
-  // In production: fetch from POST /api/admin/data/applications
-  // For now load from localStorage (submissions stored by signup page)
-  try {
-    allDataApps = JSON.parse(localStorage.getItem('rada_data_apps') || '[]');
-  } catch(e) { allDataApps = []; }
-  renderDataApps();
+  var list = document.getElementById('dataAppsList');
+  if (list) list.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text-dim);">Loading applications...</div>';
+
+  adminFetch('/api/data/applications')
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    allDataApps = (d.applications || []).map(function(a) {
+      return {
+        ref:         a.refNumber,
+        submittedAt: a.createdAt,
+        plan:        a.planInterest,
+        firstName:   a.firstName,
+        lastName:    a.lastName,
+        email:       a.email,
+        phone:       a.mobile,
+        city:        a.city,
+        country:     a.country,
+        address:     a.city + ', ' + a.country,
+        orgName:     a.orgName,
+        orgType:     a.orgType,
+        jobTitle:    a.jobTitle,
+        website:     a.website || '',
+        useCase:     a.useCase,
+        useDesc:     a.useDescription,
+        dataVolume:  a.dataVolume || '',
+        status:      a.status,
+      };
+    });
+    renderDataApps();
+  })
+  .catch(function(err) {
+    console.error('loadDataApplications error:', err);
+    if (list) list.innerHTML = '<div style="text-align:center;color:#ce1126;padding:30px;">Failed to load applications. Check connection.</div>';
+  });
 }
 
 function filterDataApps(plan, btn) {
