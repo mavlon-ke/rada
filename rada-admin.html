@@ -1942,6 +1942,7 @@ function loadDataApplications() {
   .then(function(d) {
     allDataApps = (d.applications || []).map(function(a) {
       return {
+        id:          a.id,
         ref:         a.refNumber,
         submittedAt: a.createdAt,
         plan:        a.planInterest,
@@ -1997,9 +1998,27 @@ function renderDataApps() {
     var planColors = { lite: '#6d28d9', pro: '#2563eb', enterprise: '#c97d0a' };
     var color = planColors[app.plan] || '#6d28d9';
     var date = app.submittedAt ? new Date(app.submittedAt).toLocaleDateString('en-KE', { day:'numeric', month:'short', year:'numeric' }) : 'Unknown date';
+
+    var statusBadge = app.status === 'APPROVED'
+      ? '<span style="background:#dcfce7;color:#16a34a;border:1px solid #16a34a44;border-radius:6px;padding:2px 9px;font-size:0.58rem;font-weight:800;">✓ APPROVED</span>'
+      : app.status === 'REJECTED'
+      ? '<span style="background:#fee2e2;color:#ce1126;border:1px solid #ce112644;border-radius:6px;padding:2px 9px;font-size:0.58rem;font-weight:800;">✗ REJECTED</span>'
+      : '<span style="background:#fef9c3;color:#b45309;border:1px solid #b4530944;border-radius:6px;padding:2px 9px;font-size:0.58rem;font-weight:800;">⏳ PENDING</span>';
+
+    var approveBtn = app.status !== 'APPROVED'
+      ? '<button class="act-btn act-green" style="font-size:0.7rem;" data-action="approve-app" data-id="' + (app.id||'') + '">✓ Approve</button>'
+      : '';
+    var rejectBtn = app.status !== 'REJECTED'
+      ? '<button class="act-btn act-red" style="font-size:0.7rem;" data-action="reject-app" data-id="' + (app.id||'') + '">✗ Reject</button>'
+      : '';
+    var pendingBtn = app.status !== 'PENDING'
+      ? '<button class="act-btn act-gray" style="font-size:0.7rem;" data-action="pending-app" data-id="' + (app.id||'') + '">Reset</button>'
+      : '';
+
     return '<div class="config-card" style="margin-bottom:10px;">' +
-      '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">' +
+      '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap;">' +
         '<span style="background:' + color + '22;color:' + color + ';border:1px solid ' + color + '44;border-radius:6px;padding:2px 9px;font-size:0.58rem;font-weight:800;text-transform:uppercase;">' + (app.plan || 'lite') + '</span>' +
+        statusBadge +
         '<span style="font-size:0.62rem;color:var(--text-dim);margin-left:auto;">' + date + '</span>' +
       '</div>' +
       '<div style="font-size:0.82rem;font-weight:800;color:var(--text);margin-bottom:2px;">' + (app.firstName || '') + ' ' + (app.lastName || '') + '</div>' +
@@ -2010,10 +2029,44 @@ function renderDataApps() {
         '<div>🌍 ' + (app.city || '') + (app.country ? ', ' + app.country : '') + '</div>' +
         '<div>📊 ' + (app.useCase || '—') + '</div>' +
       '</div>' +
-      '<div style="font-size:0.62rem;color:var(--text-dim);background:var(--bg3);border-radius:7px;padding:8px 10px;margin-bottom:8px;line-height:1.5;">' + (app.useDesc ? app.useDesc.slice(0, 200) + (app.useDesc.length > 200 ? '...' : '') : '—') + '</div>' +
-      '<div style="font-size:0.55rem;color:var(--text-dim);text-align:right;">Ref: ' + (app.ref || '—') + '</div>' +
+      '<div style="font-size:0.62rem;color:var(--text-dim);background:var(--bg3);border-radius:7px;padding:8px 10px;margin-bottom:10px;line-height:1.5;">' + (app.useDesc ? app.useDesc.slice(0, 200) + (app.useDesc.length > 200 ? '...' : '') : '—') + '</div>' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;">' +
+        '<span style="font-size:0.55rem;color:var(--text-dim);">Ref: ' + (app.ref || '—') + '</span>' +
+        '<div style="display:flex;gap:6px;">' + approveBtn + rejectBtn + pendingBtn + '</div>' +
+      '</div>' +
     '</div>';
   }).join('');
+
+  // Event delegation for approve/reject
+  list.onclick = function(e) {
+    var btn = e.target.closest('button[data-action]');
+    if (!btn) return;
+    var action = btn.dataset.action;
+    var id     = btn.dataset.id;
+    if (action === 'approve-app') updateDataApp(id, 'APPROVED');
+    if (action === 'reject-app')  updateDataApp(id, 'REJECTED');
+    if (action === 'pending-app') updateDataApp(id, 'PENDING');
+  };
+}
+
+function updateDataApp(id, status) {
+  var label = status === 'APPROVED' ? 'Approve' : status === 'REJECTED' ? 'Reject' : 'Reset to Pending';
+  if (!confirm(label + ' this application?')) return;
+
+  adminFetch('/api/data/applications/' + id, {
+    method: 'PATCH',
+    body:   JSON.stringify({ status: status }),
+  })
+  .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
+  .then(function(res) {
+    if (res.ok) {
+      showToast('✓ Application ' + status.toLowerCase() + '.');
+      loadDataApplications();
+    } else {
+      alert('Error: ' + (res.d.error || 'Could not update application.'));
+    }
+  })
+  .catch(function() { alert('Network error. Please try again.'); });
 }
 
 function exportDataApps() {
