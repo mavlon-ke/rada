@@ -1127,38 +1127,30 @@ body::after {
     ═══════════════════════════════════════════════════════════════════════ -->
     <div class="panel" id="panel-payouts">
       <div class="page-title">Payout Management</div>
-      <div class="page-sub">Process and monitor resolved market payouts</div>
+      <div class="page-sub">Monitor and retry market payouts via Paystack M-Pesa</div>
       <div class="stat-row">
-        <div class="stat-card"><div class="stat-label">Paid Out (All Time)</div><div class="stat-val green">KES 1.2M</div></div>
-        <div class="stat-card"><div class="stat-label">Pending Payouts</div><div class="stat-val amber">KES 243K</div><div class="stat-change down">3 markets pending</div></div>
-        <div class="stat-card"><div class="stat-label">Avg Payout Time</div><div class="stat-val">4.2 min</div></div>
-        <div class="stat-card"><div class="stat-label">Failed Payouts</div><div class="stat-val red">2</div><div class="stat-change down">Needs retry</div></div>
+        <div class="stat-card"><div class="stat-label">Paid Out (All Time)</div><div class="stat-val green" id="pyTotalPaid">—</div></div>
+        <div class="stat-card"><div class="stat-label">Successful Payouts</div><div class="stat-val green" id="pySuccessCount">—</div></div>
+        <div class="stat-card"><div class="stat-label">Failed Payouts</div><div class="stat-val red" id="pyFailedCount">—</div><div class="stat-change down" id="pyFailedNote">Needs retry</div></div>
+        <div class="stat-card"><div class="stat-label">Pending</div><div class="stat-val amber" id="pyPendingCount">—</div></div>
+      </div>
+      <div class="table-card" style="box-shadow:0 2px 12px rgba(0,0,0,0.05);margin-bottom:16px;">
+        <div class="table-header">
+          <div class="table-title">❌ Failed Payouts — Needs Retry</div>
+          <button class="topbar-btn primary" onclick="loadPayoutsPanel()">🔄 Refresh</button>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>User</th><th>Amount</th><th>Description</th><th>Date</th><th>Action</th></tr></thead>
+          <tbody id="failedPayoutsBody"><tr><td colspan="5" style="text-align:center;color:var(--text-dim);padding:20px;">Loading...</td></tr></tbody>
+        </table>
       </div>
       <div class="table-card" style="box-shadow:0 2px 12px rgba(0,0,0,0.05);">
         <div class="table-header">
-          <div class="table-title">Pending Payouts</div>
-          <button class="topbar-btn primary">Run All Payouts</button>
+          <div class="table-title">✅ Recent Successful Payouts</div>
         </div>
         <table class="tbl">
-          <thead><tr><th>Market</th><th>Outcome</th><th>Winners</th><th>Total Payout</th><th>Status</th><th>Action</th></tr></thead>
-          <tbody>
-            <tr>
-              <td><div style="font-weight:600">Rada Tech Forecast NSE 20 Index League 23/24</div></td>
-              <td><span class="badge badge-green">YES</span></td>
-              <td class="mono">34 users</td>
-              <td class="mono" style="color:var(--green)">KES 87,400</td>
-              <td><span class="badge badge-amber">PENDING</span></td>
-              <td><button class="act-btn act-green">Run Payout</button></td>
-            </tr>
-            <tr>
-              <td><div style="font-weight:600">Will Kenya Power record a profit FY24?</div></td>
-              <td><span class="badge badge-red">NO</span></td>
-              <td class="mono">58 users</td>
-              <td class="mono" style="color:var(--green)">KES 156,200</td>
-              <td><span class="badge badge-amber">PENDING</span></td>
-              <td><button class="act-btn act-green">Run Payout</button></td>
-            </tr>
-          </tbody>
+          <thead><tr><th>User</th><th>Amount</th><th>M-Pesa Ref</th><th>Description</th><th>Date</th></tr></thead>
+          <tbody id="successPayoutsBody"><tr><td colspan="5" style="text-align:center;color:var(--text-dim);padding:20px;">Loading...</td></tr></tbody>
         </table>
       </div>
     </div>
@@ -1632,11 +1624,17 @@ body::after {
       </div>
     </div>
 
+    <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
+      <button class="filter-tab active" id="dtab-all" onclick="filterDataApps('all','plan',this)">All Plans</button>
+      <button class="filter-tab" id="dtab-lite" onclick="filterDataApps('lite','plan',this)">Lite</button>
+      <button class="filter-tab" id="dtab-pro" onclick="filterDataApps('pro','plan',this)">Pro</button>
+      <button class="filter-tab" id="dtab-enterprise" onclick="filterDataApps('enterprise','plan',this)">Enterprise</button>
+    </div>
     <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
-      <button class="filter-tab active" id="dtab-all" onclick="filterDataApps('all', this)">All</button>
-      <button class="filter-tab" id="dtab-lite" onclick="filterDataApps('lite', this)">Lite</button>
-      <button class="filter-tab" id="dtab-pro" onclick="filterDataApps('pro', this)">Pro</button>
-      <button class="filter-tab" id="dtab-enterprise" onclick="filterDataApps('enterprise', this)">Enterprise</button>
+      <button class="filter-tab active" id="dtab-status-all" onclick="filterDataApps('all','status',this)" style="background:rgba(109,40,217,0.08);color:#6d28d9;">All Status</button>
+      <button class="filter-tab" id="dtab-pending" onclick="filterDataApps('PENDING','status',this)" style="color:#b45309;">⏳ Pending</button>
+      <button class="filter-tab" id="dtab-approved" onclick="filterDataApps('APPROVED','status',this)" style="color:#16a34a;">✓ Approved</button>
+      <button class="filter-tab" id="dtab-rejected" onclick="filterDataApps('REJECTED','status',this)" style="color:#ce1126;">✗ Rejected</button>
     </div>
 
     <div id="dataAppsList">
@@ -1931,7 +1929,6 @@ function renderActivity(containerId) {
 
 // ── DATA APPLICATIONS ────────────────────────────────────────────────────────
 var allDataApps = [];
-var currentDataFilter = 'all';
 
 function loadDataApplications() {
   var list = document.getElementById('dataAppsList');
@@ -1971,9 +1968,20 @@ function loadDataApplications() {
   });
 }
 
-function filterDataApps(plan, btn) {
-  currentDataFilter = plan;
-  document.querySelectorAll('.filter-tab').forEach(function(b) { b.classList.remove('active'); });
+var currentDataFilter  = 'all';
+var currentStatusFilter = 'all';
+
+function filterDataApps(value, type, btn) {
+  // Handle old single-arg calls gracefully
+  if (type === undefined) { type = 'plan'; }
+
+  if (type === 'plan') {
+    currentDataFilter = value;
+    document.querySelectorAll('[id^="dtab-"]:not([id^="dtab-status"]):not([id^="dtab-pending"]):not([id^="dtab-approved"]):not([id^="dtab-rejected"])').forEach(function(b) { b.classList.remove('active'); });
+  } else {
+    currentStatusFilter = value;
+    document.querySelectorAll('[id^="dtab-status"],[id^="dtab-pending"],[id^="dtab-approved"],[id^="dtab-rejected"]').forEach(function(b) { b.classList.remove('active'); });
+  }
   if (btn) btn.classList.add('active');
   renderDataApps();
 }
@@ -1983,9 +1991,11 @@ function renderDataApps() {
   var count = document.getElementById('dataAppCount');
   if (!list) return;
 
-  var filtered = currentDataFilter === 'all'
-    ? allDataApps
-    : allDataApps.filter(function(a) { return a.plan === currentDataFilter; });
+  var filtered = allDataApps.filter(function(a) {
+    var planMatch   = currentDataFilter === 'all'   || a.plan   === currentDataFilter;
+    var statusMatch = currentStatusFilter === 'all' || a.status === currentStatusFilter;
+    return planMatch && statusMatch;
+  });
 
   if (count) count.textContent = allDataApps.length;
 
@@ -2029,7 +2039,13 @@ function renderDataApps() {
         '<div>🌍 ' + (app.city || '') + (app.country ? ', ' + app.country : '') + '</div>' +
         '<div>📊 ' + (app.useCase || '—') + '</div>' +
       '</div>' +
-      '<div style="font-size:0.62rem;color:var(--text-dim);background:var(--bg3);border-radius:7px;padding:8px 10px;margin-bottom:10px;line-height:1.5;">' + (app.useDesc ? app.useDesc.slice(0, 200) + (app.useDesc.length > 200 ? '...' : '') : '—') + '</div>' +
+      '<div style="font-size:0.62rem;color:var(--text-dim);background:var(--bg3);border-radius:7px;padding:8px 10px;margin-bottom:10px;line-height:1.5;">' +
+        (app.useDesc
+          ? (app.useDesc.length > 200
+              ? '<span class="desc-short">' + app.useDesc.slice(0, 200) + '...</span><span class="desc-full" style="display:none;">' + app.useDesc + '</span><span style="color:#6d28d9;cursor:pointer;font-weight:700;font-size:0.6rem;" data-action="expand-desc"> Read more</span>'
+              : app.useDesc)
+          : '—') +
+      '</div>' +
       '<div style="display:flex;justify-content:space-between;align-items:center;">' +
         '<span style="font-size:0.55rem;color:var(--text-dim);">Ref: ' + (app.ref || '—') + '</span>' +
         '<div style="display:flex;gap:6px;">' + approveBtn + rejectBtn + pendingBtn + '</div>' +
@@ -2046,16 +2062,33 @@ function renderDataApps() {
     if (action === 'approve-app') updateDataApp(id, 'APPROVED');
     if (action === 'reject-app')  updateDataApp(id, 'REJECTED');
     if (action === 'pending-app') updateDataApp(id, 'PENDING');
+    if (action === 'expand-desc') {
+      var desc = e.target.closest('.data-app-desc');
+      if (desc) {
+        desc.querySelector('.desc-short').style.display = 'none';
+        desc.querySelector('.desc-full').style.display  = 'inline';
+        e.target.style.display = 'none';
+      }
+    }
   };
 }
 
 function updateDataApp(id, status) {
   var label = status === 'APPROVED' ? 'Approve' : status === 'REJECTED' ? 'Reject' : 'Reset to Pending';
-  if (!confirm(label + ' this application?')) return;
+  var notes = '';
+  if (status === 'REJECTED') {
+    notes = prompt('Optional: Enter reason for rejection (visible in logs only)') || '';
+    if (notes === null) return; // User pressed Cancel
+  } else {
+    if (!confirm(label + ' this application?')) return;
+  }
+
+  var body = { status: status };
+  if (notes) body.notes = notes;
 
   adminFetch('/api/data/applications/' + id, {
     method: 'PATCH',
-    body:   JSON.stringify({ status: status }),
+    body:   JSON.stringify(body),
   })
   .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
   .then(function(res) {
@@ -2123,6 +2156,7 @@ function showPanel(id, btn) {
   if (id === 'users')         { loadUsersTable(); }
   if (id === 'kyc')           { loadKYCTable(); }
   if (id === 'transactions')  { loadTxnsTable(); }
+  if (id === 'payouts')        { loadPayoutsPanel(); }
   if (id === 'suggestions')   { loadSuggestions(); }
   if (id === 'disputes')      { renderDisputes(); }
   if (id === 'proposals')     { loadSuggestions(); }
@@ -2481,6 +2515,105 @@ function executeDeleteUser() {
     btn.disabled = false; btn.textContent = '🗑️ Delete Permanently';
     document.getElementById('deleteUserStatus').textContent = '✗ Network error.';
   });
+}
+
+
+// ── PAYOUTS PANEL ─────────────────────────────────────────────────────────────
+
+function loadPayoutsPanel() {
+  var failedBody  = document.getElementById('failedPayoutsBody');
+  var successBody = document.getElementById('successPayoutsBody');
+  if (failedBody)  failedBody.innerHTML  = '<tr><td colspan="5" style="text-align:center;color:var(--text-dim);padding:20px;">Loading...</td></tr>';
+  if (successBody) successBody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-dim);padding:20px;">Loading...</td></tr>';
+
+  adminFetch('/api/admin/transactions?type=PAYOUT&limit=100')
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    var txns    = d.transactions || [];
+    var failed  = txns.filter(function(t) { return t.status === 'FAILED'; });
+    var success = txns.filter(function(t) { return t.status === 'SUCCESS'; });
+    var pending = txns.filter(function(t) { return t.status === 'PENDING'; });
+    var totalPaid = success.reduce(function(s, t) { return s + Number(t.amountKes); }, 0);
+
+    // Update stat cards
+    var s = function(id, v) { var el = document.getElementById(id); if (el) el.textContent = v; };
+    s('pyTotalPaid',    'KES ' + Math.round(totalPaid).toLocaleString());
+    s('pySuccessCount', success.length);
+    s('pyFailedCount',  failed.length);
+    s('pyPendingCount', pending.length);
+    s('pyFailedNote',   failed.length > 0 ? failed.length + ' need retry' : 'None — all clear');
+
+    // Failed payouts table
+    if (failedBody) {
+      failedBody.innerHTML = failed.length === 0
+        ? '<tr><td colspan="5" style="text-align:center;color:var(--green);padding:20px;">✓ No failed payouts</td></tr>'
+        : failed.map(function(t) {
+            var ago  = timeAgo(t.createdAt);
+            var user = t.user ? (t.user.name || t.user.phone) : '—';
+            return '<tr>' +
+              '<td style="font-weight:600">' + user + '</td>' +
+              '<td class="mono" style="color:var(--red)">KES ' + Number(t.amountKes).toLocaleString() + '</td>' +
+              '<td style="font-size:0.72rem;color:var(--text-dim);max-width:200px">' + (t.description || '—').slice(0,80) + '</td>' +
+              '<td class="mono" style="color:var(--text-dim)">' + ago + '</td>' +
+              '<td><button class="act-btn act-green" data-action="retry-payout" data-id="' + t.id + '" data-user="' + user + '" data-amount="' + Number(t.amountKes) + '">↺ Retry</button></td>' +
+            '</tr>';
+          }).join('');
+      failedBody.onclick = function(e) {
+        var btn = e.target.closest('button[data-action="retry-payout"]');
+        if (!btn) return;
+        retryPayout(btn.dataset.id, btn.dataset.user, btn.dataset.amount);
+      };
+    }
+
+    // Successful payouts table
+    if (successBody) {
+      successBody.innerHTML = success.length === 0
+        ? '<tr><td colspan="5" style="text-align:center;color:var(--text-dim);padding:20px;">No successful payouts yet</td></tr>'
+        : success.slice(0, 20).map(function(t) {
+            var ago  = timeAgo(t.createdAt);
+            var user = t.user ? (t.user.name || t.user.phone) : '—';
+            return '<tr>' +
+              '<td style="font-weight:600">' + user + '</td>' +
+              '<td class="mono" style="color:var(--green)">KES ' + Number(t.amountKes).toLocaleString() + '</td>' +
+              '<td class="mono" style="color:var(--text-dim)">' + (t.mpesaRef || '—') + '</td>' +
+              '<td style="font-size:0.72rem;color:var(--text-dim);max-width:200px">' + (t.description || '—').slice(0,80) + '</td>' +
+              '<td class="mono" style="color:var(--text-dim)">' + ago + '</td>' +
+            '</tr>';
+          }).join('');
+    }
+  })
+  .catch(function(err) {
+    console.error('loadPayoutsPanel:', err);
+    var failedBody = document.getElementById('failedPayoutsBody');
+    if (failedBody) failedBody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#ce1126;padding:20px;">Failed to load payouts. Check connection.</td></tr>';
+  });
+}
+
+function retryPayout(txnId, user, amount) {
+  if (!confirm('Retry payout of KES ' + Number(amount).toLocaleString() + ' to ' + user + '?\n\nThis will initiate a new Paystack M-Pesa transfer.')) return;
+
+  adminFetch('/api/admin/transactions/' + txnId + '/retry', {
+    method: 'POST',
+    body:   JSON.stringify({}),
+  })
+  .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
+  .then(function(res) {
+    if (res.ok) {
+      showToast('✓ Retry initiated. Ref: ' + (res.d.reference || '—'));
+      loadPayoutsPanel();
+    } else {
+      alert('Retry failed: ' + (res.d.error || 'Paystack error. Check logs.'));
+    }
+  })
+  .catch(function() { alert('Network error. Please try again.'); });
+}
+
+function timeAgo(isoStr) {
+  if (!isoStr) return '—';
+  var mins = Math.round((Date.now() - new Date(isoStr).getTime()) / 60000);
+  if (mins < 60)   return mins + 'm ago';
+  if (mins < 1440) return Math.round(mins/60) + 'h ago';
+  return Math.round(mins/1440) + 'd ago';
 }
 
 // ── KYC MODAL ─────────────────────────────────────────────────────────────────
