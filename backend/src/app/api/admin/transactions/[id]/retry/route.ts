@@ -41,7 +41,7 @@ export async function POST(
   }
 
   try {
-    const reference = generateReference('RETRY');
+    const reference = generateReference('TRF');
 
     const recipient = await createTransferRecipient({
       name:     txn.user?.name || phone,
