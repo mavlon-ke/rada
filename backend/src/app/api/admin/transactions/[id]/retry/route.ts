@@ -61,7 +61,7 @@ export async function POST(
       where: { id: params.id },
       data: {
         status:   'SUCCESS',
-        mpesaRef: transfer.reference || reference,
+        mpesaRef: transfer.transfer_code || reference,
       },
     });
 
@@ -73,7 +73,7 @@ export async function POST(
 
     return NextResponse.json({
       success:   true,
-      reference: transfer.reference || reference,
+      reference: transfer.transfer_code || reference,
       message:   `KES ${amountKes} retry payout initiated to ${phone}`,
     });
 
