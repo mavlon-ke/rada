@@ -1091,15 +1091,31 @@ body::after {
       <div class="page-title">Transaction Ledger</div>
       <div class="page-sub">All M-Pesa deposits, withdrawals, and trades</div>
       <div class="filter-row">
-        <input class="search-input" placeholder="🔍  Search by M-Pesa ref, user, amount...">
-        <select class="filter-select"><option>All Types</option><option>DEPOSIT</option><option>WITHDRAWAL</option><option>TRADE</option><option>PAYOUT</option></select>
-        <select class="filter-select"><option>All Status</option><option>SUCCESS</option><option>PENDING</option><option>FAILED</option></select>
+        <input class="search-input" id="txnSearch" placeholder="🔍  Search by M-Pesa ref, user, phone...">
+        <select class="filter-select" id="txnTypeFilter">
+          <option value="">All Types</option>
+          <option value="DEPOSIT">DEPOSIT</option>
+          <option value="WITHDRAWAL">WITHDRAWAL</option>
+          <option value="TRADE_BUY">TRADE BUY</option>
+          <option value="TRADE_SELL">TRADE SELL</option>
+          <option value="PAYOUT">PAYOUT</option>
+          <option value="CHALLENGE_PAYOUT">CHALLENGE PAYOUT</option>
+          <option value="REFUND">REFUND</option>
+        </select>
+        <select class="filter-select" id="txnStatusFilter">
+          <option value="">All Status</option>
+          <option value="SUCCESS">SUCCESS</option>
+          <option value="PENDING">PENDING</option>
+          <option value="FAILED">FAILED</option>
+        </select>
+        <button class="topbar-btn" onclick="loadTxnsTable(1)">🔍 Search</button>
       </div>
       <div class="table-card" style="box-shadow:0 2px 12px rgba(0,0,0,0.05);">
         <table class="tbl">
           <thead><tr><th>User</th><th>Type</th><th>Amount</th><th>M-Pesa Ref</th><th>Time</th><th>Status</th></tr></thead>
           <tbody id="txnsTableBody"></tbody>
         </table>
+        <div id="txnsPagination" style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-top:1px solid var(--border);font-size:0.75rem;color:var(--text-dim);"></div>
       </div>
     </div>
 
@@ -1718,30 +1734,63 @@ function loadKYCTable() {
 
 var TXNS_DATA = []; // populated by loadTxnsTable()
 
-function loadTxnsTable() {
+var txnsCurrentPage = 1;
+var txnsTotalPages  = 1;
+
+function loadTxnsTable(page) {
+  page = page || txnsCurrentPage;
+  txnsCurrentPage = page;
+
+  var q      = (document.getElementById('txnSearch')       || {}).value || '';
+  var type   = (document.getElementById('txnTypeFilter')   || {}).value || '';
+  var status = (document.getElementById('txnStatusFilter') || {}).value || '';
+
+  var qs = '?page=' + page;
+  if (q)      qs += '&q='      + encodeURIComponent(q);
+  if (type)   qs += '&type='   + encodeURIComponent(type);
+  if (status) qs += '&status=' + encodeURIComponent(status);
+
   var tbody = document.getElementById('txnsTableBody');
   if (tbody) tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text-dim);">Loading...</td></tr>';
-  adminFetch('/api/admin/transactions')
+
+  adminFetch('/api/admin/transactions' + qs)
   .then(function(r) { return r.json(); })
   .then(function(d) {
+    var total = d.total || 0;
+    var limit = d.limit || 50;
+    txnsTotalPages = Math.max(1, Math.ceil(total / limit));
+
     TXNS_DATA = (d.transactions || []).map(function(t) {
-      var mins = Math.round((Date.now() - new Date(t.createdAt).getTime()) / 60000);
-      var ago  = mins < 60 ? mins + 'm ago' : mins < 1440 ? Math.round(mins/60) + 'h ago' : Math.round(mins/1440) + 'd ago';
-      var prefix = ['DEPOSIT','PAYOUT','REFUND'].includes(t.type) ? '+' : '-';
+      var prefix = ['DEPOSIT','PAYOUT','CHALLENGE_PAYOUT','REFUND','SUGGESTION_REWARD','CREATOR_BOUNTY','REFERRAL_REWARD'].includes(t.type) ? '+' : '-';
       return {
-        user:   (t.user && t.user.name) ? t.user.name : (t.user && t.user.phone ? '+' + t.user.phone : '—'),
+        user:   (t.user && t.user.name) ? t.user.name : (t.user && t.user.phone ? t.user.phone : '—'),
         type:   t.type,
         amount: prefix + 'KES ' + Number(t.amountKes).toLocaleString(),
         ref:    t.mpesaRef || t.id.slice(0,8).toUpperCase(),
-        time:   ago,
+        time:   timeAgo(t.createdAt),
         status: t.status,
       };
     });
+
     renderTxnsTable();
+    renderTxnsPagination(page, txnsTotalPages, total, limit);
   })
   .catch(function() {
     if (tbody) tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#ce1126;padding:20px;">Failed to load transactions.</td></tr>';
   });
+}
+
+function renderTxnsPagination(page, totalPages, total, limit) {
+  var el = document.getElementById('txnsPagination');
+  if (!el) return;
+  var start = (page - 1) * limit + 1;
+  var end   = Math.min(page * limit, total);
+  el.innerHTML =
+    '<span>Showing ' + start + '–' + end + ' of ' + total + ' transactions</span>' +
+    '<div style="display:flex;gap:6px;">' +
+      (page > 1 ? '<button class="act-btn act-gray" onclick="loadTxnsTable(' + (page-1) + ')">← Prev</button>' : '') +
+      (page < totalPages ? '<button class="act-btn act-gray" onclick="loadTxnsTable(' + (page+1) + ')">Next →</button>' : '') +
+    '</div>';
 }
 
 const ACTIVITY_DATA = [
@@ -3333,6 +3382,13 @@ document.addEventListener('input', function(e) {
 
 // Init carousel admin when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
+  // Wire search input Enter key for transactions
+  var txnSearchEl = document.getElementById('txnSearch');
+  if (txnSearchEl) {
+    txnSearchEl.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') loadTxnsTable(1);
+    });
+  }
   initCarouselAdmin();
 });
 
