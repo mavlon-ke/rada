@@ -745,7 +745,7 @@ body::after {
   <div class="sidebar-section">
     <div class="sidebar-section-label">Creator Economy</div>
     <button class="nav-item" onclick="showPanel('proposals', this)" id="proposals-nav">
-      <span class="nav-icon">💡</span><span>Proposals <span id="proposalBadge" style="background:var(--amber);color:#000;border-radius:4px;font-size:0.62rem;padding:1px 6px;margin-left:4px;font-weight:700;">4</span></span>
+      <span class="nav-icon">💡</span><span>Proposals <span id="propNavBadge" style="background:var(--amber);color:#000;border-radius:4px;font-size:0.62rem;padding:1px 6px;margin-left:4px;font-weight:700;">—</span></span>
     </button>
     <button class="nav-item" onclick="showPanel('bounties', this)">
       <span class="nav-icon">💰</span><span>Bounty Ledger</span>
@@ -1156,20 +1156,20 @@ body::after {
     <!-- PANEL: CREATOR PROPOSALS -->
     <div class="panel" id="panel-proposals">
       <div class="page-title">Creator Market Proposals</div>
-      <div class="page-sub">Review, approve, or reject user-submitted forecast market proposals. Approved markets generate 0.5% creator bounties automatically.</div>
+      <div class="page-sub">Formal creator submissions. Edit the question to polish wording before approving. Approved markets generate 0.5% creator bounties automatically.</div>
       <div class="stat-row">
-        <div class="stat-card"><div class="stat-label">Awaiting Review</div><div class="stat-val amber">4</div></div>
-        <div class="stat-card"><div class="stat-label">Approved This Week</div><div class="stat-val green">7</div></div>
-        <div class="stat-card"><div class="stat-label">Rejected</div><div class="stat-val red">2</div></div>
-        <div class="stat-card"><div class="stat-label">Creator Bounties Paid</div><div class="stat-val">KES 12,440</div></div>
+        <div class="stat-card"><div class="stat-label">Awaiting Review</div><div class="stat-val amber" id="propPendingCount">—</div></div>
+        <div class="stat-card"><div class="stat-label">Approved</div><div class="stat-val green" id="propApprovedCount">—</div></div>
+        <div class="stat-card"><div class="stat-label">Rejected</div><div class="stat-val red" id="propRejectedCount">—</div></div>
+        <div class="stat-card"><div class="stat-label">Total Submitted</div><div class="stat-val" id="propTotalCount">—</div></div>
       </div>
       <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
-        <button class="topbar-btn primary" onclick="filterProposals(this,'pending')">Pending (4)</button>
-        <button class="topbar-btn" onclick="filterProposals(this,'all')">All</button>
-        <button class="topbar-btn" onclick="filterProposals(this,'approved')">Approved</button>
-        <button class="topbar-btn" onclick="filterProposals(this,'rejected')">Rejected</button>
+        <button class="filter-tab active" id="ptab-pending"  onclick="loadProposals('PENDING',this)">⏳ Pending</button>
+        <button class="filter-tab" id="ptab-approved" onclick="loadProposals('APPROVED',this)">✓ Approved</button>
+        <button class="filter-tab" id="ptab-rejected" onclick="loadProposals('REJECTED',this)">✗ Rejected</button>
+        <button class="filter-tab" id="ptab-all"      onclick="loadProposals('ALL',this)">All</button>
       </div>
-      <div id="proposalsList"></div>
+      <div id="proposalsList"><div style="text-align:center;padding:30px;color:var(--text-dim);">Loading...</div></div>
     </div>
 
     <!-- PANEL: BOUNTY LEDGER -->
@@ -1521,6 +1521,49 @@ body::after {
       <div style="display:flex;gap:10px;">
         <button class="act-btn act-gray" style="flex:1;padding:12px;" onclick="closeModal('deleteUserModal')">Cancel</button>
         <button id="deleteUserConfirmBtn" class="act-btn act-red" style="flex:2;padding:12px;font-size:0.85rem;" onclick="executeDeleteUser()">🗑️ Delete Permanently</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Proposal Modal -->
+<div class="modal-overlay" id="editProposalModal">
+  <div class="modal" style="max-width:600px">
+    <div class="modal-head">
+      <div class="modal-title">✎ Edit Proposal</div>
+      <div class="modal-sub">Polish the wording before approving</div>
+    </div>
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:14px;">
+      <div>
+        <div class="stat-label" style="margin-bottom:4px;">Market Question</div>
+        <textarea class="form-textarea" id="editPropQuestion" rows="3" placeholder="Will X happen by Y date?" style="width:100%;box-sizing:border-box;resize:vertical;"></textarea>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div>
+          <div class="stat-label" style="margin-bottom:4px;">Category</div>
+          <select class="form-select" id="editPropCategory" style="width:100%;">
+            <option value="POLITICS">🗳️ Politics</option>
+            <option value="ECONOMY">📈 Economy</option>
+            <option value="TECH">💡 Tech</option>
+            <option value="WEATHER">🌦️ Weather</option>
+            <option value="ENTERTAINMENT">🎭 Entertainment</option>
+            <option value="GENERAL">🇰🇪 General</option>
+            <option value="FRIENDS">🤝 Friends</option>
+          </select>
+        </div>
+        <div>
+          <div class="stat-label" style="margin-bottom:4px;">Resolution Source</div>
+          <input class="form-input" id="editPropSource" placeholder="e.g. IEBC, KMD, CBK data" style="width:100%;box-sizing:border-box;">
+        </div>
+      </div>
+      <div>
+        <div class="stat-label" style="margin-bottom:4px;">Why It Matters <span style="color:var(--text-dim);font-weight:400;">(optional)</span></div>
+        <input class="form-input" id="editPropWhyCare" placeholder="Why should forecasters care about this market?" style="width:100%;box-sizing:border-box;">
+      </div>
+      <div id="editPropStatus" style="font-size:0.78rem;min-height:18px;"></div>
+      <div style="display:flex;gap:10px;">
+        <button class="act-btn act-gray" style="flex:1;padding:12px;" onclick="closeModal('editProposalModal')">Cancel</button>
+        <button id="editPropSaveBtn" class="act-btn act-green" style="flex:2;padding:12px;font-size:0.85rem;" onclick="saveProposalEdits()">Save Changes</button>
       </div>
     </div>
   </div>
@@ -2237,7 +2280,7 @@ function showPanel(id, btn) {
   if (id === 'payouts')        { loadPayoutsPanel(); }
   if (id === 'suggestions')   { loadSuggestions(); }
   if (id === 'disputes')      { renderDisputes(); }
-  if (id === 'proposals')     { loadSuggestions(); }
+  if (id === 'proposals')     { loadProposals('PENDING'); }
   if (id === 'activity')      { renderActivity('fullActivityFeed'); loadAdminLog(); }
   if (id === 'carousel')      { setTimeout(function() { initCarouselAdmin(); loadCarouselFromBackend(); }, 50); }
   if (id === 'referral')      { setTimeout(loadReferralConfig, 50); }
@@ -2549,6 +2592,161 @@ function cancelMarket(marketId, title) {
   .catch(function() { alert('Network error. Please try again.'); });
 }
 
+
+
+// ── PROPOSALS PANEL ───────────────────────────────────────────────────────────
+
+var PROPOSALS_DATA    = [];
+var currentEditPropId = null;
+
+function loadProposals(status, btn) {
+  status = status || 'PENDING';
+  if (btn) {
+    document.querySelectorAll('[id^="ptab-"]').forEach(function(b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+  }
+
+  var el = document.getElementById('proposalsList');
+  if (el) el.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text-dim);">Loading...</div>';
+
+  adminFetch('/api/admin/proposals?status=ALL')
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    var all      = d.proposals || [];
+    var pending  = all.filter(function(p) { return p.status === 'PENDING'; });
+    var approved = all.filter(function(p) { return p.status === 'APPROVED'; });
+    var rejected = all.filter(function(p) { return p.status === 'REJECTED'; });
+
+    var s = function(id, v) { var e = document.getElementById(id); if (e) e.textContent = v; };
+    s('propPendingCount',  pending.length);
+    s('propApprovedCount', approved.length);
+    s('propRejectedCount', rejected.length);
+    s('propTotalCount',    all.length);
+
+    var nb = document.getElementById('propNavBadge');
+    if (nb) { nb.textContent = pending.length; nb.style.display = pending.length > 0 ? '' : 'none'; }
+
+    var display = status === 'ALL' ? all : all.filter(function(p) { return p.status === status; });
+    PROPOSALS_DATA = display;
+    renderProposals();
+  })
+  .catch(function() {
+    if (el) el.innerHTML = '<div style="text-align:center;color:#ce1126;padding:30px;">Failed to load proposals.</div>';
+  });
+}
+
+function renderProposals() {
+  var el = document.getElementById('proposalsList');
+  if (!el) return;
+
+  if (!PROPOSALS_DATA.length) {
+    el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-dim);font-size:0.78rem;">No proposals in this category.</div>';
+    return;
+  }
+
+  var statusColors = { PENDING: '#b45309', APPROVED: '#16a34a', REJECTED: '#ce1126' };
+
+  el.innerHTML = PROPOSALS_DATA.map(function(p) {
+    var proposerName  = p.proposer && p.proposer.name  ? p.proposer.name  : 'User';
+    var proposerPhone = p.proposer && p.proposer.phone ? p.proposer.phone.slice(0,7) + '***' + p.proposer.phone.slice(-3) : '???';
+    var stBg  = p.status === 'APPROVED' ? '#dcfce7' : p.status === 'REJECTED' ? '#fee2e2' : '#fef9c3';
+    var stCol = statusColors[p.status] || '#b45309';
+    var statusBadge = '<span style="background:' + stBg + ';color:' + stCol + ';border-radius:6px;padding:2px 9px;font-size:0.6rem;font-weight:800;">' + p.status + '</span>';
+    var date  = p.createdAt ? new Date(p.createdAt).toLocaleDateString('en-KE',{day:'numeric',month:'short',year:'numeric'}) : '—';
+    var safeFrom = proposerName.replace(/"/g,'');
+
+    var actionBtns = p.status === 'PENDING'
+      ? '<button class="act-btn act-gray"  style="flex:1;" data-action="edit-prop"    data-id="' + p.id + '">&#9998; Edit</button>' +
+        '<button class="act-btn act-green" style="flex:1;" data-action="approve-prop" data-id="' + p.id + '" data-from="' + safeFrom + '">&#10003; Approve</button>' +
+        '<button class="act-btn act-red"   style="flex:1;" data-action="reject-prop"  data-id="' + p.id + '">&#10007; Reject</button>'
+      : '<span style="font-size:0.72rem;color:var(--text-dim);padding:6px;">Already ' + p.status.toLowerCase() + '</span>';
+
+    return '<div style="background:#ffffff;border:1.5px solid rgba(167,139,250,0.18);border-radius:14px;padding:20px;margin-bottom:14px;">' +
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;">' +
+        '<div style="flex:1;">' +
+          '<div style="font-weight:700;font-size:0.92rem;margin-bottom:5px;line-height:1.4;">' + p.question + '</div>' +
+          '<div style="font-size:0.7rem;color:var(--text-dim);">By ' + proposerName + ' · ' + proposerPhone + ' · ' + date + '</div>' +
+        '</div>' +
+        '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;margin-left:12px;">' +
+          '<span style="background:rgba(167,139,250,0.1);border:1px solid rgba(167,139,250,0.2);border-radius:8px;padding:4px 10px;font-size:0.7rem;font-weight:700;color:#a78bfa;white-space:nowrap;">' + (p.category||'GENERAL') + '</span>' +
+          statusBadge +
+        '</div>' +
+      '</div>' +
+      '<div style="background:var(--bg3);border-radius:10px;padding:12px;margin-bottom:14px;">' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">' +
+          '<div><div style="font-size:0.6rem;font-weight:700;text-transform:uppercase;color:var(--text-dim);letter-spacing:0.06em;margin-bottom:3px;">Resolution Source</div>' +
+          '<div style="font-size:0.75rem;color:var(--text);">' + (p.resolutionSource||'—') + '</div></div>' +
+          (p.whyCareNote ? '<div><div style="font-size:0.6rem;font-weight:700;text-transform:uppercase;color:var(--text-dim);letter-spacing:0.06em;margin-bottom:3px;">Why It Matters</div>' +
+          '<div style="font-size:0.75rem;color:var(--text-mid);font-style:italic;">' + p.whyCareNote + '</div></div>' : '') +
+        '</div>' +
+      '</div>' +
+      (p.status === 'PENDING' ? '<div style="background:rgba(167,139,250,0.06);border:1px solid rgba(167,139,250,0.12);border-radius:8px;padding:8px 12px;margin-bottom:14px;font-size:0.73rem;color:#a78bfa;">&#127873; Approving credits <strong>KES 50</strong> to this creator wallet and creates the market live.</div>' : '') +
+      '<div style="display:flex;gap:8px;">' + actionBtns + '</div>' +
+    '</div>';
+  }).join('');
+
+  el.onclick = function(e) {
+    var btn = e.target.closest('button[data-action]');
+    if (!btn) return;
+    var action = btn.dataset.action;
+    if (action === 'edit-prop')    openEditProposalModal(btn.dataset.id);
+    if (action === 'approve-prop') approveSuggestion(btn.dataset.id, btn.dataset.from);
+    if (action === 'reject-prop')  rejectSuggestion(btn.dataset.id);
+  };
+}
+
+function openEditProposalModal(id) {
+  var p = PROPOSALS_DATA.find(function(x) { return x.id === id; });
+  if (!p) { alert('Proposal not found. Please refresh.'); return; }
+  currentEditPropId = id;
+  document.getElementById('editPropQuestion').value = p.question         || '';
+  document.getElementById('editPropSource').value   = p.resolutionSource || '';
+  document.getElementById('editPropWhyCare').value  = p.whyCareNote      || '';
+  document.getElementById('editPropCategory').value = p.category         || 'GENERAL';
+  document.getElementById('editPropStatus').textContent = '';
+  document.getElementById('editProposalModal').classList.add('open');
+}
+
+function saveProposalEdits() {
+  if (!currentEditPropId) return;
+  var question = document.getElementById('editPropQuestion').value.trim();
+  var source   = document.getElementById('editPropSource').value.trim();
+  var whyCare  = document.getElementById('editPropWhyCare').value.trim();
+  var category = document.getElementById('editPropCategory').value;
+  if (!question) { alert('Question is required.'); return; }
+  if (!source)   { alert('Resolution source is required.'); return; }
+  var btn    = document.getElementById('editPropSaveBtn');
+  var status = document.getElementById('editPropStatus');
+  btn.disabled = true; btn.textContent = 'Saving...';
+  adminFetch('/api/admin/proposals/' + currentEditPropId, {
+    method: 'PATCH',
+    body:   JSON.stringify({ question: question, category: category, resolutionSource: source, whyCareNote: whyCare }),
+  })
+  .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
+  .then(function(res) {
+    btn.disabled = false; btn.textContent = 'Save Changes';
+    if (res.ok) {
+      status.style.color = 'var(--green)';
+      status.textContent = 'Saved. Now approve when ready.';
+      showToast('Proposal updated.');
+      var idx = PROPOSALS_DATA.findIndex(function(x) { return x.id === currentEditPropId; });
+      if (idx >= 0) {
+        PROPOSALS_DATA[idx].question = question; PROPOSALS_DATA[idx].category = category;
+        PROPOSALS_DATA[idx].resolutionSource = source; PROPOSALS_DATA[idx].whyCareNote = whyCare;
+        renderProposals();
+      }
+      setTimeout(function() { closeModal('editProposalModal'); }, 1200);
+    } else {
+      status.style.color = '#ce1126';
+      status.textContent = res.d.error || 'Could not save.';
+    }
+  })
+  .catch(function() {
+    btn.disabled = false; btn.textContent = 'Save Changes';
+    document.getElementById('editPropStatus').style.color = '#ce1126';
+    document.getElementById('editPropStatus').textContent = 'Network error.';
+  });
+}
 
 // ── USER MANAGEMENT ───────────────────────────────────────────────────────────
 
