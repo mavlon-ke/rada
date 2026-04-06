@@ -1223,10 +1223,16 @@ body::after {
       <div class="page-title">💡 Suggestion Review Queue</div>
       <div class="page-sub">User-submitted market ideas. Approving auto-creates the market AND credits KES 50 reward bonus to that user's wallet immediately.</div>
       <div class="stat-row">
-        <div class="stat-card"><div class="stat-label">Pending Review</div><div class="stat-val amber" id="suggCount">5</div></div>
-        <div class="stat-card"><div class="stat-label">Approved This Week</div><div class="stat-val green">8</div></div>
-        <div class="stat-card"><div class="stat-label">Total Rewards Paid</div><div class="stat-val" style="color:#a78bfa">KES 400</div></div>
-        <div class="stat-card"><div class="stat-label">Conversion Rate</div><div class="stat-val">62%</div></div>
+        <div class="stat-card"><div class="stat-label">Pending Review</div><div class="stat-val amber" id="suggCount">—</div></div>
+        <div class="stat-card"><div class="stat-label">Approved</div><div class="stat-val green" id="suggApprovedCount">—</div></div>
+        <div class="stat-card"><div class="stat-label">Rejected</div><div class="stat-val red" id="suggRejectedCount">—</div></div>
+        <div class="stat-card"><div class="stat-label">Total Submitted</div><div class="stat-val" id="suggTotalCount">—</div></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
+        <button class="filter-tab active" id="stab-pending"  onclick="loadSuggestions('PENDING',this)">⏳ Pending</button>
+        <button class="filter-tab" id="stab-approved" onclick="loadSuggestions('APPROVED',this)">✓ Approved</button>
+        <button class="filter-tab" id="stab-rejected" onclick="loadSuggestions('REJECTED',this)">✗ Rejected</button>
+        <button class="filter-tab" id="stab-all"      onclick="loadSuggestions('ALL',this)">All</button>
       </div>
       <div id="suggestionsList"></div>
     </div>
@@ -1916,37 +1922,70 @@ function renderKYCTable() {
   };
 }
 
+function fmtTxnType(type) {
+  var map = {
+    DEPOSIT: 'Deposit', WITHDRAWAL: 'Withdrawal',
+    TRADE_BUY: 'Trade Buy', TRADE_SELL: 'Trade Sell',
+    PAYOUT: 'Payout', CHALLENGE_PAYOUT: 'Challenge Payout',
+    CHALLENGE_STAKE: 'Challenge Stake',
+    REFUND: 'Refund', SUGGESTION_REWARD: 'Suggestion Reward',
+    CREATOR_BOUNTY: 'Creator Bounty', REFERRAL_REWARD: 'Referral Reward',
+    BONUS_USED: 'Bonus Used',
+  };
+  return map[type] || type;
+}
+
 function renderTxnsTable() {
-  document.getElementById('txnsTableBody').innerHTML = TXNS_DATA.map(t => {
-    const amtColor = t.amount.startsWith('+') ? 'var(--green)' : t.amount.startsWith('-') ? 'var(--red)' : 'var(--text)';
-    const stBadge = t.status === 'SUCCESS' ? '<span class="badge badge-green">OK</span>'
+  var tbody = document.getElementById('txnsTableBody');
+  if (!tbody) return;
+  if (!TXNS_DATA.length) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text-dim);">No transactions found.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = TXNS_DATA.map(function(t) {
+    var amtColor = t.amount.startsWith('+') ? 'var(--green)' : t.amount.startsWith('-') ? 'var(--red)' : 'var(--text)';
+    var stBadge  = t.status === 'SUCCESS' ? '<span class="badge badge-green">OK</span>'
       : t.status === 'PENDING' ? '<span class="badge badge-amber">PENDING</span>'
       : '<span class="badge badge-red">FAILED</span>';
-    return `<tr>
-      <td style="font-weight:600">${t.user}</td>
-      <td><span class="badge badge-gray">${t.type}</span></td>
-      <td class="mono" style="color:${amtColor}">${t.amount}</td>
-      <td class="mono" style="color:var(--text-dim)">${t.ref}</td>
-      <td style="color:var(--text-dim)">${t.time}</td>
-      <td>${stBadge}</td>
-    </tr>`;
+    return '<tr>' +
+      '<td style="font-weight:600">' + t.user + '</td>' +
+      '<td><span class="badge badge-gray">' + fmtTxnType(t.type) + '</span></td>' +
+      '<td class="mono" style="color:' + amtColor + '">' + t.amount + '</td>' +
+      '<td class="mono" style="color:var(--text-dim);font-size:0.72rem">' + t.ref + '</td>' +
+      '<td style="color:var(--text-dim)">' + t.time + '</td>' +
+      '<td>' + stBadge + '</td>' +
+    '</tr>';
   }).join('');
 }
 
 function renderRecentTxns() {
-  document.getElementById('recentTxns').innerHTML = TXNS_DATA.slice(0, 5).map(t => {
-    const amtColor = t.amount.startsWith('+') ? 'var(--green)' : t.amount.startsWith('-') ? 'var(--red)' : 'var(--text)';
-    const stBadge = t.status === 'SUCCESS' ? '<span class="badge badge-green">OK</span>'
-      : t.status === 'PENDING' ? '<span class="badge badge-amber">PEND</span>'
-      : '<span class="badge badge-red">FAIL</span>';
-    return `<tr>
-      <td style="font-weight:600">${t.user}</td>
-      <td><span class="badge badge-gray" style="font-size:0.62rem">${t.type.replace('_',' ')}</span></td>
-      <td class="mono" style="color:${amtColor}">${t.amount}</td>
-      <td class="mono" style="font-size:0.7rem;color:var(--text-dim)">${t.ref}</td>
-      <td>${stBadge}</td>
-    </tr>`;
-  }).join('');
+  var el = document.getElementById('recentTxns');
+  if (!el) return;
+  adminFetch('/api/admin/transactions?limit=5')
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    var txns = (d.transactions || []).slice(0, 5);
+    if (!txns.length) { el.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-dim);padding:12px;">No transactions yet</td></tr>'; return; }
+    el.innerHTML = txns.map(function(t) {
+      var prefix   = ['DEPOSIT','PAYOUT','CHALLENGE_PAYOUT','REFUND','SUGGESTION_REWARD','CREATOR_BOUNTY','REFERRAL_REWARD'].includes(t.type) ? '+' : '-';
+      var amount   = prefix + 'KES ' + Number(t.amountKes).toLocaleString();
+      var amtColor = prefix === '+' ? 'var(--green)' : 'var(--red)';
+      var stBadge  = t.status === 'SUCCESS' ? '<span class="badge badge-green">OK</span>'
+        : t.status === 'PENDING' ? '<span class="badge badge-amber">PEND</span>'
+        : '<span class="badge badge-red">FAIL</span>';
+      var user = (t.user && t.user.name) ? t.user.name : (t.user && t.user.phone ? t.user.phone : '—');
+      return '<tr>' +
+        '<td style="font-weight:600">' + user + '</td>' +
+        '<td><span class="badge badge-gray" style="font-size:0.62rem">' + fmtTxnType(t.type) + '</span></td>' +
+        '<td class="mono" style="color:' + amtColor + '">' + amount + '</td>' +
+        '<td class="mono" style="font-size:0.7rem;color:var(--text-dim)">' + (t.mpesaRef || t.id.slice(0,8).toUpperCase()) + '</td>' +
+        '<td>' + stBadge + '</td>' +
+      '</tr>';
+    }).join('');
+  })
+  .catch(function() {
+    el.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#ce1126;padding:12px;">Failed to load</td></tr>';
+  });
 }
 
 function renderActivity(containerId) {
@@ -3020,26 +3059,52 @@ function filterProposals(btn, status) {
   });
 }
 
-function loadSuggestions() {
+function loadSuggestions(status, btn) {
+  status = status || 'PENDING';
+  // Update filter tab active state
+  if (btn) {
+    document.querySelectorAll('[id^="stab-"]').forEach(function(b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+  }
+
   var el = document.getElementById('suggestionsList');
   if (el) el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-dim);">Loading...</div>';
-  adminFetch('/api/admin/proposals?status=PENDING')
+
+  // Fetch all to compute stats, then filter for display
+  adminFetch('/api/admin/proposals?status=ALL')
   .then(function(r) { return r.json(); })
   .then(function(d) {
-    SUGGESTIONS = (d.proposals || []).map(function(p) {
+    var all      = d.proposals || [];
+    var pending  = all.filter(function(p) { return p.status === 'PENDING'; });
+    var approved = all.filter(function(p) { return p.status === 'APPROVED'; });
+    var rejected = all.filter(function(p) { return p.status === 'REJECTED'; });
+
+    // Update stat cards
+    var s = function(id, v) { var e = document.getElementById(id); if (e) e.textContent = v; };
+    s('suggCount',         pending.length);
+    s('suggApprovedCount', approved.length);
+    s('suggRejectedCount', rejected.length);
+    s('suggTotalCount',    all.length);
+
+    // Update sidebar badge
+    var navBadge = document.getElementById('suggNavBadge');
+    if (navBadge) { navBadge.textContent = pending.length; navBadge.style.display = pending.length > 0 ? '' : 'none'; }
+
+    // Filter for display
+    var display = status === 'ALL' ? all : all.filter(function(p) { return p.status === status; });
+
+    SUGGESTIONS = display.map(function(p) {
       return {
         id:     p.id,
         q:      p.question,
         cat:    p.category,
-        from:   (p.proposer && p.proposer.name ? p.proposer.name : 'User') + ' (+' + (p.proposer && p.proposer.phone ? p.proposer.phone.slice(0,7) + '***' + p.proposer.phone.slice(-3) : '???') + ')',
+        status: p.status,
+        from:   (p.proposer && p.proposer.name ? p.proposer.name : 'User') + ' · ' +
+                (p.proposer && p.proposer.phone ? p.proposer.phone.slice(0,7) + '***' + p.proposer.phone.slice(-3) : '???'),
         source: p.resolutionSource || '—',
         why:    p.whyCareNote || '',
       };
     });
-    var badge = document.getElementById('suggCount');
-    var navBadge = document.getElementById('suggNavBadge');
-    if (badge) badge.textContent = SUGGESTIONS.length;
-    if (navBadge) navBadge.textContent = SUGGESTIONS.length;
     renderSuggestions();
   })
   .catch(function() {
@@ -3048,31 +3113,51 @@ function loadSuggestions() {
 }
 
 function renderSuggestions() {
-  const el = document.getElementById('suggestionsList');
+  var el = document.getElementById('suggestionsList');
   if (!el) return;
-  el.innerHTML = SUGGESTIONS.map(s => `
-    <div style="background:#ffffff;border:1px solid rgba(167,139,250,0.18);border-radius:14px;padding:18px;margin-bottom:12px;" id="sugg-${s.id}">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">
-        <div style="flex:1;">
-          <div style="font-weight:700;font-size:0.9rem;margin-bottom:4px;">${s.q}</div>
-          <div style="font-size:0.7rem;color:var(--text-dim);">From: ${s.from} · Category: ${s.cat}</div>
-        </div>
-        <div style="background:rgba(167,139,250,0.1);border:1px solid rgba(167,139,250,0.2);border-radius:8px;padding:4px 10px;font-size:0.7rem;font-weight:700;color:#a78bfa;margin-left:10px;white-space:nowrap;">${s.cat}</div>
-      </div>
-      <div style="background:var(--bg3);border-radius:8px;padding:10px;margin-bottom:12px;font-size:0.75rem;">
-        <div style="color:var(--text-dim);margin-bottom:3px;font-weight:700;text-transform:uppercase;font-size:0.62rem;letter-spacing:0.06em;">Resolution Source</div>
-        <div style="color:var(--text);">${s.source}</div>
-        ${s.why ? `<div style="margin-top:6px;color:var(--text-mid);font-style:italic;">"${s.why}"</div>` : ''}
-      </div>
-      <div style="background:rgba(167,139,250,0.06);border:1px solid rgba(167,139,250,0.12);border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:0.73rem;color:#a78bfa;">
-        🎁 Approving will automatically credit <strong>KES 50</strong> to this user's wallet as a suggestion reward.
-      </div>
-      <div style="display:flex;gap:8px;">
-        <button class="act-btn act-green" style="flex:1;" onclick="approveSuggestion(${s.id},'${s.from}')">✓ Approve + Credit KES 50</button>
-        <button class="act-btn act-red" style="flex:1;" onclick="rejectSuggestion(${s.id})">✗ Reject</button>
-        <button class="act-btn act-gray" style="flex:1;" onclick="alert('Edit feature coming soon.')">✎ Edit</button>
-      </div>
-    </div>`).join('');
+
+  if (!SUGGESTIONS.length) {
+    el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-dim);font-size:0.78rem;">No proposals in this category.</div>';
+    return;
+  }
+
+  var statusColors = { PENDING: '#b45309', APPROVED: '#16a34a', REJECTED: '#ce1126' };
+
+  el.innerHTML = SUGGESTIONS.map(function(s) {
+    var statusBadge = '<span style="background:' + (s.status==='APPROVED'?'#dcfce7':s.status==='REJECTED'?'#fee2e2':'#fef9c3') + ';color:' + (statusColors[s.status]||'#b45309') + ';border-radius:6px;padding:2px 8px;font-size:0.6rem;font-weight:800;">' + s.status + '</span>';
+    var actionBtns = s.status === 'PENDING'
+      ? '<button class="act-btn act-green" style="flex:1;" data-action="approve-sugg" data-id="' + s.id + '" data-from="' + (s.from||'').replace(/"/g,'') + '">✓ Approve + Credit KES 50</button>' +
+        '<button class="act-btn act-red" style="flex:1;" data-action="reject-sugg" data-id="' + s.id + '">✗ Reject</button>'
+      : '<span style="font-size:0.72rem;color:var(--text-dim);padding:6px;">No actions — already ' + s.status.toLowerCase() + '</span>';
+
+    return '<div style="background:#ffffff;border:1px solid rgba(167,139,250,0.18);border-radius:14px;padding:18px;margin-bottom:12px;">' +
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">' +
+        '<div style="flex:1;">' +
+          '<div style="font-weight:700;font-size:0.9rem;margin-bottom:4px;">' + s.q + '</div>' +
+          '<div style="font-size:0.7rem;color:var(--text-dim);">From: ' + s.from + '</div>' +
+        '</div>' +
+        '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;margin-left:10px;">' +
+          '<span style="background:rgba(167,139,250,0.1);border:1px solid rgba(167,139,250,0.2);border-radius:8px;padding:4px 10px;font-size:0.7rem;font-weight:700;color:#a78bfa;white-space:nowrap;">' + s.cat + '</span>' +
+          statusBadge +
+        '</div>' +
+      '</div>' +
+      '<div style="background:var(--bg3);border-radius:8px;padding:10px;margin-bottom:12px;font-size:0.75rem;">' +
+        '<div style="color:var(--text-dim);margin-bottom:3px;font-weight:700;text-transform:uppercase;font-size:0.62rem;letter-spacing:0.06em;">Resolution Source</div>' +
+        '<div style="color:var(--text);">' + s.source + '</div>' +
+        (s.why ? '<div style="margin-top:6px;color:var(--text-mid);font-style:italic;">"' + s.why + '"</div>' : '') +
+      '</div>' +
+      (s.status === 'PENDING' ? '<div style="background:rgba(167,139,250,0.06);border:1px solid rgba(167,139,250,0.12);border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:0.73rem;color:#a78bfa;">&#127873; Approving will automatically credit <strong>KES 50</strong> to this user wallet as a suggestion reward.</div>' : '') +
+      '<div style="display:flex;gap:8px;">' + actionBtns + '</div>' +
+    '</div>';
+  }).join('');
+
+  // Event delegation — safe, no inline onclick
+  el.onclick = function(e) {
+    var btn = e.target.closest('button[data-action]');
+    if (!btn) return;
+    if (btn.dataset.action === 'approve-sugg') approveSuggestion(btn.dataset.id, btn.dataset.from);
+    if (btn.dataset.action === 'reject-sugg')  rejectSuggestion(btn.dataset.id);
+  };
 }
 
 function approveSuggestion(id, from) {
