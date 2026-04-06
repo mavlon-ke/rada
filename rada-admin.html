@@ -1400,9 +1400,17 @@ body::after {
 
       <div class="resolve-impact" id="resolveImpact">
         <div class="resolve-impact-row"><span class="resolve-impact-label">Total traders</span><span class="mono" id="ri-traders">—</span></div>
-        <div class="resolve-impact-row"><span class="resolve-impact-label">Winning positions</span><span class="mono" id="ri-winners" style="color:var(--green)">—</span></div>
+        <div class="resolve-impact-row"><span class="resolve-impact-label">Winning pool</span><span class="mono" id="ri-winners" style="color:var(--green)">—</span></div>
         <div class="resolve-impact-row"><span class="resolve-impact-label">Total payout</span><span class="mono" id="ri-payout" style="color:var(--amber)">—</span></div>
-        <div class="resolve-impact-row"><span class="resolve-impact-label">Source confirmation</span><span class="mono" id="ri-source" style="color:var(--text-dim)">Select outcome</span></div>
+        <div class="resolve-impact-row"><span class="resolve-impact-label">Outcome</span><span class="mono" id="ri-source" style="color:var(--text-dim)">Select outcome above</span></div>
+      </div>
+
+      <div style="margin-top:14px;">
+        <div class="stat-label" style="margin-bottom:4px;">Source Note <span style="color:var(--text-dim);font-weight:400;">(recommended)</span></div>
+        <input class="form-input" id="resolveSourceNote"
+          placeholder="e.g. IEBC official results, KMD bulletin, CBK data release"
+          style="width:100%;box-sizing:border-box;">
+        <div style="font-size:0.62rem;color:var(--text-dim);margin-top:4px;">Saved to the market record for audit and transparency.</div>
       </div>
     </div>
     <div class="modal-footer">
@@ -2346,7 +2354,9 @@ function openResolveModal(marketId, title, trades, yesPool, noPool, totalVolume)
   document.getElementById('ri-traders').textContent = trades || '—';
   document.getElementById('ri-winners').textContent = '—';
   document.getElementById('ri-payout').textContent = '—';
-  document.getElementById('ri-source').textContent = 'Select outcome';
+  document.getElementById('ri-source').textContent = 'Select outcome above';
+  var snEl = document.getElementById('resolveSourceNote');
+  if (snEl) snEl.value = '';
   document.getElementById('resolveModal').classList.add('open');
 }
 
@@ -2379,7 +2389,10 @@ function confirmResolve() {
 
   adminFetch('/api/admin/markets/' + resolveMarketId + '/resolve', {
     method: 'POST',
-    body:   JSON.stringify({ outcome: resolveOutcome }),
+    body:   JSON.stringify({
+      outcome:    resolveOutcome,
+      sourceNote: (document.getElementById('resolveSourceNote') || {}).value || undefined,
+    }),
   })
   .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
   .then(function(res) {
