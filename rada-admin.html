@@ -848,23 +848,23 @@ body::after {
                 <th>Market</th><th>Closed</th><th>Trades</th><th>Action</th>
               </tr></thead>
               <tbody>
-                <tr onclick="openResolveModal(null,'Finance Bill 2025',204)">
+                <tr onclick="openResolveModal(null,'Finance Bill 2025',204,0,0,0)">
                   <td><div style="font-weight:600;max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Will Kenya pass the Finance Bill 2025?</div><div style="color:var(--text-dim);font-size:0.7rem;margin-top:2px">POLITICS</div></td>
                   <td class="mono" style="color:var(--text-dim)">2d ago</td>
                   <td class="mono">204</td>
-                  <td><button class="act-btn act-amber" onclick="event.stopPropagation();openResolveModal(null,'Finance Bill 2025',204)">Resolve →</button></td>
+                  <td><button class="act-btn act-amber" onclick="event.stopPropagation();openResolveModal(null,'Finance Bill 2025',204,0,0,0)">Resolve →</button></td>
                 </tr>
-                <tr onclick="openResolveModal(null,'World Cup Qualifiers',156)">
+                <tr onclick="openResolveModal(null,'World Cup Qualifiers',156,0,0,0)">
                   <td><div style="font-weight:600;max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Will mobile money transactions exceed KES 10T in 2025?</div><div style="color:var(--text-dim);font-size:0.7rem;margin-top:2px">TECH</div></td>
                   <td class="mono" style="color:var(--text-dim)">5d ago</td>
                   <td class="mono">156</td>
-                  <td><button class="act-btn act-amber" onclick="event.stopPropagation();openResolveModal(null,'World Cup Qualifiers',156)">Resolve →</button></td>
+                  <td><button class="act-btn act-amber" onclick="event.stopPropagation();openResolveModal(null,'World Cup Qualifiers',156,0,0,0)">Resolve →</button></td>
                 </tr>
-                <tr onclick="openResolveModal(null,'NSE Index 2500',89)">
+                <tr onclick="openResolveModal(null,'NSE Index 2500',89,0,0,0)">
                   <td><div style="font-weight:600;max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Will NSE 20 close above 2,500 by Dec 2025?</div><div style="color:var(--text-dim);font-size:0.7rem;margin-top:2px">ECONOMY</div></td>
                   <td class="mono" style="color:var(--text-dim)">1d ago</td>
                   <td class="mono">89</td>
-                  <td><button class="act-btn act-amber" onclick="event.stopPropagation();openResolveModal(null,'NSE Index 2500',89)">Resolve →</button></td>
+                  <td><button class="act-btn act-amber" onclick="event.stopPropagation();openResolveModal(null,'NSE Index 2500',89,0,0,0)">Resolve →</button></td>
                 </tr>
               </tbody>
             </table>
@@ -1032,35 +1032,16 @@ body::after {
     ═══════════════════════════════════════════════════════════════════════ -->
     <div class="panel" id="panel-resolve">
       <div class="page-title">Resolve Markets</div>
-      <div class="page-sub">3 markets are closed and awaiting resolution</div>
+      <div class="page-sub" id="resolveSubtitle">Loading closed markets...</div>
       <div class="table-card" style="box-shadow:0 2px 12px rgba(0,0,0,0.05);">
+        <div class="table-header">
+          <div class="table-title">⏳ Closed — Awaiting Resolution</div>
+          <button class="topbar-btn" onclick="loadResolvePanel()">🔄 Refresh</button>
+        </div>
         <table class="tbl">
-          <thead><tr><th>Market</th><th>Closed</th><th>YES Holders</th><th>NO Holders</th><th>Total Payout</th><th>Action</th></tr></thead>
-          <tbody>
-            <tr>
-              <td><div style="font-weight:600">Will Kenya pass the Finance Bill 2025?</div><div style="font-size:0.68rem;color:var(--text-dim);margin-top:2px">POLITICS · Closed 2 days ago</div></td>
-              <td class="mono" style="color:var(--text-dim)">Mar 01</td>
-              <td class="mono">89 users · KES 48K</td>
-              <td class="mono">115 users · KES 62K</td>
-              <td class="mono" style="color:var(--amber)">KES 110K</td>
-              <td><button class="act-btn act-amber" onclick="openResolveModal(null,'Finance Bill 2025',204)">Resolve →</button></td>
-            </tr>
-            <tr>
-              <td><div style="font-weight:600">Will Kenya launch a digital ID system by end of 2025?</div><div style="font-size:0.68rem;color:var(--text-dim);margin-top:2px">POLITICS · Closed 5 days ago</div></td>
-              <td class="mono" style="color:var(--text-dim)">Feb 26</td>
-              <td class="mono">44 users · KES 21K</td>
-              <td class="mono">112 users · KES 67K</td>
-              <td class="mono" style="color:var(--amber)">KES 88K</td>
-              <td><button class="act-btn act-amber" onclick="openResolveModal(null,'World Cup Qualifiers',156)">Resolve →</button></td>
-            </tr>
-            <tr>
-              <td><div style="font-weight:600">Will NSE 20 close above 2,500 by Dec 2025?</div><div style="font-size:0.68rem;color:var(--text-dim);margin-top:2px">FINANCE · Closed 1 day ago</div></td>
-              <td class="mono" style="color:var(--text-dim)">Mar 05</td>
-              <td class="mono">30 users · KES 14K</td>
-              <td class="mono">59 users · KES 31K</td>
-              <td class="mono" style="color:var(--amber)">KES 45K</td>
-              <td><button class="act-btn act-amber" onclick="openResolveModal(null,'NSE Index 2500',89)">Resolve →</button></td>
-            </tr>
+          <thead><tr><th>Market</th><th>Closed</th><th>YES Pool</th><th>NO Pool</th><th>Total Volume</th><th>Trades</th><th>Action</th></tr></thead>
+          <tbody id="resolveTableBody">
+            <tr><td colspan="7" style="text-align:center;color:var(--text-dim);padding:24px;">Loading...</td></tr>
           </tbody>
         </table>
       </div>
@@ -2153,6 +2134,7 @@ function showPanel(id, btn) {
   // Panel-specific data loads
   if (id === 'dashboard')     { loadAdminLog(); }
   if (id === 'markets')       { loadMarketsTable(); }
+  if (id === 'resolve')        { loadResolvePanel(); }
   if (id === 'users')         { loadUsersTable(); }
   if (id === 'kyc')           { loadKYCTable(); }
   if (id === 'transactions')  { loadTxnsTable(); }
@@ -2272,21 +2254,96 @@ function saveMarketEdits() {
   });
 }
 
+
+// ── RESOLVE PANEL ─────────────────────────────────────────────────────────────
+
+var RESOLVE_DATA = []; // cache for selectOutcome to use real pool values
+
+function loadResolvePanel() {
+  var tbody    = document.getElementById('resolveTableBody');
+  var subtitle = document.getElementById('resolveSubtitle');
+  if (tbody) tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-dim);padding:24px;">Loading...</td></tr>';
+
+  adminFetch('/api/admin/markets?status=CLOSED')
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    var markets = d.markets || [];
+    RESOLVE_DATA = markets;
+
+    if (subtitle) subtitle.textContent = markets.length + ' market' + (markets.length !== 1 ? 's' : '') + ' closed and awaiting resolution';
+
+    if (!tbody) return;
+    if (markets.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--green);padding:24px;">✓ No closed markets awaiting resolution</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = markets.map(function(m) {
+      var closedAgo = m.closesAt ? timeAgo(m.closesAt) : '—';
+      var closedDate = m.closesAt ? new Date(m.closesAt).toLocaleDateString('en-KE', { day:'numeric', month:'short' }) : '—';
+      var yesPool   = 'KES ' + Math.round((m.yesPool || 0) / 1000) + 'K';
+      var noPool    = 'KES ' + Math.round((m.noPool  || 0) / 1000) + 'K';
+      var total     = 'KES ' + Math.round((m.totalVolume || 0) / 1000) + 'K';
+      return '<tr>' +
+        '<td><div style="font-weight:600;max-width:280px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (m.title || '—') + '</div>' +
+          '<div style="font-size:0.68rem;color:var(--text-dim);margin-top:2px">' + (m.category || '') + ' · Closed ' + closedAgo + '</div></td>' +
+        '<td class="mono" style="color:var(--text-dim)">' + closedDate + '</td>' +
+        '<td class="mono" style="color:var(--green)">' + yesPool + '</td>' +
+        '<td class="mono" style="color:var(--red)">' + noPool + '</td>' +
+        '<td class="mono" style="color:var(--amber)">' + total + '</td>' +
+        '<td class="mono">' + (m.tradeCount || 0) + '</td>' +
+        '<td><button class="act-btn act-amber" data-action="open-resolve" ' +
+          'data-id="' + m.id + '" ' +
+          'data-title="' + (m.title || '').replace(/"/g, '&quot;').slice(0, 60) + '" ' +
+          'data-trades="' + (m.tradeCount || 0) + '" ' +
+          'data-yes="' + (m.yesPool || 0) + '" ' +
+          'data-no="' + (m.noPool || 0) + '" ' +
+          'data-volume="' + (m.totalVolume || 0) + '">' +
+          'Resolve →</button></td>' +
+      '</tr>';
+    }).join('');
+
+    tbody.onclick = function(e) {
+      var btn = e.target.closest('button[data-action="open-resolve"]');
+      if (!btn) return;
+      openResolveModal(
+        btn.dataset.id,
+        btn.dataset.title,
+        parseInt(btn.dataset.trades || 0),
+        parseFloat(btn.dataset.yes || 0),
+        parseFloat(btn.dataset.no  || 0),
+        parseFloat(btn.dataset.volume || 0)
+      );
+    };
+  })
+  .catch(function(err) {
+    console.error('loadResolvePanel:', err);
+    if (tbody) tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#ce1126;padding:24px;">Failed to load. Check connection.</td></tr>';
+  });
+}
+
 // ── RESOLVE MODAL ─────────────────────────────────────────────────────────────
 
 let resolveOutcome = null;
 let resolveMarketName = '';
 let resolveTradeCount = 0;
 
-function openResolveModal(marketId, title, trades) {
+var resolveYesPool   = 0;
+var resolveNoPool    = 0;
+var resolveTotalVol  = 0;
+
+function openResolveModal(marketId, title, trades, yesPool, noPool, totalVolume) {
   resolveMarketId   = marketId;
   resolveMarketName = title;
-  resolveTradeCount = trades;
+  resolveTradeCount = trades || 0;
+  resolveYesPool    = yesPool    || 0;
+  resolveNoPool     = noPool     || 0;
+  resolveTotalVol   = totalVolume|| 0;
   resolveOutcome    = null;
   document.getElementById('resolveMarketTitle').textContent = title;
   document.getElementById('resolveYes').classList.remove('selected');
   document.getElementById('resolveNo').classList.remove('selected');
-  document.getElementById('ri-traders').textContent = trades;
+  document.getElementById('ri-traders').textContent = trades || '—';
   document.getElementById('ri-winners').textContent = '—';
   document.getElementById('ri-payout').textContent = '—';
   document.getElementById('ri-source').textContent = 'Select outcome';
@@ -2298,13 +2355,18 @@ function selectOutcome(outcome) {
   document.getElementById('resolveYes').classList.toggle('selected', outcome === 'YES');
   document.getElementById('resolveNo').classList.toggle('selected', outcome === 'NO');
 
-  const winners = outcome === 'YES'
-    ? Math.round(resolveTradeCount * 0.44)
-    : Math.round(resolveTradeCount * 0.56);
-  const payout = (winners * 480 + Math.random() * 10000).toFixed(0);
+  // Use real pool values if available, fall back to estimate
+  var winPool = outcome === 'YES' ? resolveYesPool : resolveNoPool;
+  var payoutKes = resolveTotalVol > 0
+    ? Math.round(resolveTotalVol)  // Winners share total volume (fee taken at trade time)
+    : Math.round(resolveTradeCount * 480); // fallback estimate
 
-  document.getElementById('ri-winners').textContent = `${winners} users`;
-  document.getElementById('ri-payout').textContent  = `KES ${parseInt(payout).toLocaleString()}`;
+  var winnerEstimate = winPool > 0
+    ? 'KES ' + Math.round(winPool).toLocaleString() + ' pool'
+    : resolveTradeCount + ' traders';
+
+  document.getElementById('ri-winners').textContent = winnerEstimate;
+  document.getElementById('ri-payout').textContent  = 'KES ' + payoutKes.toLocaleString();
   document.getElementById('ri-source').textContent  = outcome === 'YES' ? 'Confirmed YES outcome' : 'Confirmed NO outcome';
 }
 
@@ -2331,6 +2393,7 @@ function confirmResolve() {
         btn.disabled = false;
         btn.style.background = '';
         loadMarketsTable(); // Refresh table
+        if (document.getElementById('panel-resolve').style.display !== 'none') { loadResolvePanel(); }
       }, 1400);
     } else {
       btn.textContent = 'Confirm Resolution';
