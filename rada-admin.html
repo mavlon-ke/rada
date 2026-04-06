@@ -3365,7 +3365,11 @@ function approveSuggestion(id, from) {
   .then(function(res) {
     if (res.ok) {
       showToast('✓ Market created! KES 50 reward credited to proposer wallet.');
-      loadSuggestions();
+      // Refresh whichever panel is currently visible
+      var propEl  = document.getElementById('panel-proposals');
+      var suggEl  = document.getElementById('panel-suggestions');
+      if (propEl  && propEl.style.display  !== 'none') loadProposals('PENDING');
+      if (suggEl  && suggEl.style.display  !== 'none') loadSuggestions();
       loadMarketsTable();
     } else {
       alert('Error: ' + (res.d.error || 'Could not approve proposal.'));
@@ -3380,7 +3384,10 @@ function rejectSuggestion(id) {
   .then(function(r) {
     if (r.ok) {
       showToast('Proposal rejected.');
-      loadSuggestions();
+      var propEl = document.getElementById('panel-proposals');
+      var suggEl = document.getElementById('panel-suggestions');
+      if (propEl && propEl.style.display !== 'none') loadProposals('PENDING');
+      if (suggEl && suggEl.style.display !== 'none') loadSuggestions();
     }
   })
   .catch(function() { showToast('Proposal rejected.'); loadSuggestions(); });
