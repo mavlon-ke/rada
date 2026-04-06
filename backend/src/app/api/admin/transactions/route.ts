@@ -12,7 +12,14 @@ export async function GET(req: NextRequest) {
   const type   = searchParams.get('type');
   const status = searchParams.get('status');
   const page   = parseInt(searchParams.get('page') ?? '1');
-  const limit  = 50;
+  const limit  = Math.min(parseInt(searchParams.get('limit') ?? '50'), 200);
+
+  // Support comma-separated types e.g. type=PAYOUT,CHALLENGE_PAYOUT
+  const typeFilter = type
+    ? type.includes(',')
+      ? { in: type.split(',') as any[] }
+      : type as any
+    : undefined;
 
   const txns = await prisma.transaction.findMany({
     where: {
@@ -27,7 +34,7 @@ export async function GET(req: NextRequest) {
             ]}},
           ],
         } : {},
-        type   ? { type:   type   as any } : {},
+        typeFilter ? { type: typeFilter } : {},
         status ? { status: status as any } : {},
       ],
     },

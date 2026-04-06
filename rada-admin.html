@@ -2526,7 +2526,7 @@ function loadPayoutsPanel() {
   if (failedBody)  failedBody.innerHTML  = '<tr><td colspan="5" style="text-align:center;color:var(--text-dim);padding:20px;">Loading...</td></tr>';
   if (successBody) successBody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-dim);padding:20px;">Loading...</td></tr>';
 
-  adminFetch('/api/admin/transactions?type=PAYOUT&limit=100')
+  adminFetch('/api/admin/transactions?type=PAYOUT,CHALLENGE_PAYOUT&limit=200')
   .then(function(r) { return r.json(); })
   .then(function(d) {
     var txns    = d.transactions || [];
