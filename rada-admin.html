@@ -708,7 +708,7 @@ body::after {
     </button>
     <button class="nav-item" onclick="showPanel('resolve', this)">
       <span class="nav-icon">✓</span><span>Resolve</span>
-      <span class="nav-badge amber">3</span>
+      <span class="nav-badge amber" id="resolveBadge">3</span>
     </button>
   </div>
 
@@ -2279,6 +2279,8 @@ function loadResolvePanel() {
     RESOLVE_DATA = markets;
 
     if (subtitle) subtitle.textContent = markets.length + ' market' + (markets.length !== 1 ? 's' : '') + ' closed and awaiting resolution';
+    var rb = document.getElementById('resolveBadge');
+    if (rb) { rb.textContent = markets.length; rb.style.display = markets.length > 0 ? '' : 'none'; }
 
     if (!tbody) return;
     if (markets.length === 0) {
@@ -3118,6 +3120,8 @@ function loadAdminLog() {
     s('dashTodayUsers',  '▲ +' + (d.todayUsers || 0) + ' today');
     s('dashOpenMarkets', d.openMarkets || 0);
     s('dashPendingResolution', (d.pendingResolution || 0) + ' awaiting resolution');
+    var rb = document.getElementById('resolveBadge');
+    if (rb) { rb.textContent = d.pendingResolution || 0; rb.style.display = d.pendingResolution > 0 ? '' : 'none'; }
     s('dashPendingKYC',  d.pendingKYC || 0);
     renderAdminLog();
   })
