@@ -1267,7 +1267,7 @@ body::after {
       <div class="table-card" style="box-shadow:0 2px 12px rgba(0,0,0,0.05);">
         <div class="table-header"><div class="table-title">Market Conviction Scores</div><div style="font-size:0.72rem;color:var(--text-dim)">High avg stake = high expert confidence</div></div>
         <table class="tbl">
-          <thead><tr><th>Market</th><th>Category</th><th>YES%</th><th>Avg Stake (KES)</th><th>Conviction</th><th>Forecasters</th></tr></thead>
+          <thead><tr><th>Market</th><th>Category</th><th>YES%</th><th>NO%</th><th>Avg Stake (KES)</th><th>Conviction</th><th>Forecasters</th></tr></thead>
           <tbody id="convictionBody"></tbody>
         </table>
       </div>
@@ -1278,10 +1278,10 @@ body::after {
       <div class="page-title">🛡️ Admin Role History</div>
       <div class="page-sub">Immutable audit log of all admin actions. Required for CMA Sandbox compliance.</div>
       <div class="stat-row">
-        <div class="stat-card"><div class="stat-label">Active Admins</div><div class="stat-val">2</div></div>
-        <div class="stat-card"><div class="stat-label">Actions This Month</div><div class="stat-val">147</div></div>
-        <div class="stat-card"><div class="stat-label">Dispute Resolutions</div><div class="stat-val amber">12</div></div>
-        <div class="stat-card"><div class="stat-label">Role Changes</div><div class="stat-val">3</div></div>
+        <div class="stat-card"><div class="stat-label">Total Actions</div><div class="stat-val" id="logTotalActions">—</div></div>
+        <div class="stat-card"><div class="stat-label">Market Actions</div><div class="stat-val green" id="logMarketActions">—</div></div>
+        <div class="stat-card"><div class="stat-label">User Actions</div><div class="stat-val amber" id="logUserActions">—</div></div>
+        <div class="stat-card"><div class="stat-label">Finance Actions</div><div class="stat-val" id="logFinanceActions">—</div></div>
       </div>
       <div class="table-card" style="box-shadow:0 2px 12px rgba(0,0,0,0.05);">
         <div class="table-header">
@@ -2338,7 +2338,7 @@ function showPanel(id, btn) {
   if (id === 'carousel')      { setTimeout(function() { initCarouselAdmin(); loadCarouselFromBackend(); }, 50); }
   if (id === 'referral')      { setTimeout(loadReferralConfig, 50); }
   if (id === 'dataapps')      { setTimeout(loadDataApplications, 50); }
-  if (id === 'admin-log')     { loadAdminLog(); loadActivityFeed('adminLogBody'); }
+  if (id === 'admin-log')     { loadAdminLogStats(); loadActivityFeed('adminLogBody'); }
   if (id === 'b2b')           { loadB2BAnalytics(); }
   if (id === 'bounties')      { loadBounties(); }
   if (id === 'create-market') {
@@ -3614,8 +3614,10 @@ function renderB2B(categories, topMarkets) {
           '<div style="flex:1;background:var(--bg3);border-radius:4px;height:8px;overflow:hidden;">' +
             '<div style="width:' + barPct + '%;background:var(--primary);height:100%;border-radius:4px;transition:width 0.6s ease;"></div>' +
           '</div>' +
-          '<div style="font-size:0.72rem;font-family:var(--mono);color:var(--text-dim);min-width:100px;">' +
-            c.yesPct + '% YES · ' + c.markets + ' mkts' +
+          '<div style="font-size:0.72rem;font-family:var(--mono);color:var(--text-dim);min-width:130px;">' +
+            '<span style="color:var(--green);font-weight:700">' + c.yesPct + '% Y</span> · ' +
+            '<span style="color:var(--red);font-weight:700">' + (100 - c.yesPct) + '% N</span> · ' +
+            c.markets + ' mkts' +
           '</div>' +
         '</div>';
       }).join('');
@@ -3632,7 +3634,8 @@ function renderB2B(categories, topMarkets) {
         '<td style="font-weight:600;max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (r.title || r.market || '—') + '</td>' +
         '<td><span class="badge badge-gray">' + (r.category || r.cat || '—') + '</span></td>' +
         '<td class="mono" style="color:' + (r.yesPct > 50 ? 'var(--green)' : 'var(--text-mid)') + ';font-weight:700;">' + (r.yesPct || r.yes || '—') + '%</td>' +
-        '<td class="mono">KES ' + (r.avgStake || r.avgStake || '—').toLocaleString() + '</td>' +
+        '<td class="mono" style="color:' + ((100-(r.yesPct||r.yes||50)) > 50 ? 'var(--red)' : 'var(--text-mid)') + ';font-weight:700;">' + (100-(r.yesPct||r.yes||50)) + '%</td>' +
+        '<td class="mono">KES ' + (r.avgStake || '—').toLocaleString() + '</td>' +
         '<td style="font-weight:700;color:' + convColor + '">' + (r.conviction || '—') + '</td>' +
         '<td class="mono">' + (r.forecasters || '—').toLocaleString() + '</td>' +
       '</tr>';
@@ -3641,6 +3644,23 @@ function renderB2B(categories, topMarkets) {
 }
 
 // ── ADMIN LOG ─────────────────────────────────────────────────────────────────
+function loadAdminLogStats() {
+  adminFetch('/api/admin/activity?limit=200')
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    var logs = d.logs || [];
+    var market  = logs.filter(function(l) { return l.action.startsWith('MARKET'); }).length;
+    var user    = logs.filter(function(l) { return l.action.startsWith('USER') || l.action.startsWith('KYC'); }).length;
+    var finance = logs.filter(function(l) { return l.action.startsWith('PAYOUT') || l.action.startsWith('BOUNTY'); }).length;
+    var s = function(id, v) { var e = document.getElementById(id); if (e) e.textContent = v; };
+    s('logTotalActions',   logs.length);
+    s('logMarketActions',  market);
+    s('logUserActions',    user);
+    s('logFinanceActions', finance);
+  })
+  .catch(function() {});
+}
+
 var ADMIN_LOG_DATA = []; // populated by loadAdminLog()
 
 function loadAdminLog() {

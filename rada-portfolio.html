@@ -1340,6 +1340,30 @@ let chartCtx, winCtx;
 
 function renderPositions() {
   const el = document.getElementById('positionsList');
+  if (!el) return;
+
+  // Fix stuck "Loading..." on stat cards when no positions
+  if (POSITIONS.length === 0) {
+    var ovOpenVal = document.getElementById('ovOpenValue');
+    var ovOpenCnt = document.getElementById('ovOpenCount');
+    var ovPnl     = document.getElementById('ovPnl');
+    var ovPnlSub  = document.getElementById('ovPnlSub');
+    var ovWinRate = document.getElementById('ovWinRate');
+    var ovWinDet  = document.getElementById('ovWinDetail');
+    if (ovOpenVal) ovOpenVal.textContent = '—';
+    if (ovOpenCnt) ovOpenCnt.textContent = 'No open positions';
+    if (ovPnl)     ovPnl.textContent     = 'KES 0';
+    if (ovPnlSub)  ovPnlSub.textContent  = 'Start forecasting to earn';
+    if (ovWinRate) ovWinRate.textContent  = '—';
+    if (ovWinDet)  ovWinDet.textContent   = 'No completed forecasts yet';
+    el.innerHTML = '<div style="text-align:center;padding:40px 20px;color:#9284b8;font-size:0.82rem;">' +
+      '<div style="font-size:2rem;margin-bottom:10px;">📭</div>' +
+      '<div style="font-weight:600;margin-bottom:6px;">No open positions yet</div>' +
+      '<div style="font-size:0.75rem;opacity:0.7;">Forecast on a market to see your positions here</div>' +
+      '</div>';
+    return;
+  }
+
   el.innerHTML = POSITIONS.map(p => {
     const currentVal = p.shares * p.currentProb;
     const pnl = currentVal - p.staked;
