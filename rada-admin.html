@@ -1199,7 +1199,7 @@ body::after {
     ═══════════════════════════════════════════════════════════════════════ -->
     <div class="panel" id="panel-activity">
       <div class="page-title">Activity Feed</div>
-      <div class="page-sub">Recent admin actions across the platform</div>
+      <div class="page-sub">Real-time user deposits, trades, withdrawals and KYC submissions</div>
       <div class="table-card" style="box-shadow:0 2px 12px rgba(0,0,0,0.05);">
         <div class="table-header">
           <div class="table-title">Admin Action Log</div>
@@ -1252,10 +1252,10 @@ body::after {
       <div class="page-title">📊 B2B Analytics Engine</div>
       <div class="page-sub">Sentiment velocity, conviction scores, and market intelligence. Export CSV to package and sell to corporate clients (banks, NGOs, FMCG brands).</div>
       <div class="stat-row">
-        <div class="stat-card"><div class="stat-label">Sentiment Velocity</div><div class="stat-val green">+14%/day</div></div>
-        <div class="stat-card"><div class="stat-label">Avg Conviction Score</div><div class="stat-val">KES 847</div></div>
-        <div class="stat-card"><div class="stat-label">B2B API Calls (30d)</div><div class="stat-val amber">42,310</div></div>
-        <div class="stat-card"><div class="stat-label">Data Revenue</div><div class="stat-val green">KES 45,000</div></div>
+        <div class="stat-card"><div class="stat-label">Avg YES Sentiment</div><div class="stat-val green" id="b2bAvgSentiment">—</div></div>
+        <div class="stat-card"><div class="stat-label">Total Trade Volume</div><div class="stat-val" id="b2bTotalVolume">—</div></div>
+        <div class="stat-card"><div class="stat-label">Active Data Subscribers</div><div class="stat-val amber" id="b2bDataSubs">—</div></div>
+        <div class="stat-card"><div class="stat-label">Total Markets</div><div class="stat-val" id="b2bTotalMarkets">—</div></div>
       </div>
       <div class="table-card" style="box-shadow:0 2px 12px rgba(0,0,0,0.05);" style="padding:20px;margin-bottom:16px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
@@ -1276,7 +1276,7 @@ body::after {
     <!-- PANEL: ADMIN ROLE HISTORY -->
     <div class="panel" id="panel-admin-log">
       <div class="page-title">🛡️ Admin Role History</div>
-      <div class="page-sub">Immutable audit log of all admin actions, logins, dispute resolutions, and role assignments. Required for CMA Sandbox compliance.</div>
+      <div class="page-sub">Immutable audit log of all admin actions. Required for CMA Sandbox compliance.</div>
       <div class="stat-row">
         <div class="stat-card"><div class="stat-label">Active Admins</div><div class="stat-val">2</div></div>
         <div class="stat-card"><div class="stat-label">Actions This Month</div><div class="stat-val">147</div></div>
@@ -2038,48 +2038,56 @@ function renderActivity(containerId) {
 }
 
 function loadActivityFeed(containerId) {
+  // Activity Feed = USER activity (transactions, KYC)
+  // Admin Role Log = ADMIN activity (handled separately via loadAdminLog)
   containerId = containerId || 'fullActivityFeed';
+  var isAdminLog = containerId === 'adminLogBody';
   var el = document.getElementById(containerId);
   if (!el) return;
   el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-dim);">Loading...</div>';
 
-  var actionIcons = {
-    MARKET_CREATED: { icon: '➕', type: 'ai-green' },
-    MARKET_EDITED:  { icon: '✎', type: 'ai-blue'  },
-    MARKET_RESOLVED:{ icon: '✓', type: 'ai-green' },
-    USER_EDITED:    { icon: '👤', type: 'ai-blue'  },
-    USER_FROZEN:    { icon: '❄', type: 'ai-amber'  },
-    USER_UNFROZEN:  { icon: '♻', type: 'ai-green'  },
-    USER_DELETED:   { icon: '🗑', type: 'ai-red'   },
-    KYC_APPROVED:   { icon: '✓', type: 'ai-green'  },
-    KYC_REJECTED:   { icon: '✗', type: 'ai-red'    },
-    PAYOUT_RETRY_SUCCESS: { icon: '💸', type: 'ai-green' },
-    PAYOUT_RETRY_FAILED:  { icon: '✗',  type: 'ai-red'  },
-    DATA_APPLICATION_APPROVED: { icon: '📊', type: 'ai-green' },
-    DATA_APPLICATION_REJECTED: { icon: '📊', type: 'ai-red'   },
-    PROPOSAL_EDITED: { icon: '✎', type: 'ai-blue'  },
-    BOUNTY_PAID:     { icon: '💰', type: 'ai-green' },
-    DISPUTE_RESOLVED:{ icon: '⚖', type: 'ai-amber' },
-  };
+  var url = isAdminLog ? '/api/admin/activity?limit=50' : '/api/admin/user-activity?limit=50';
 
-  adminFetch('/api/admin/activity?limit=50')
+  adminFetch(url)
   .then(function(r) { return r.json(); })
   .then(function(d) {
-    var logs = d.logs || [];
-    if (!logs.length) {
-      el.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text-dim);font-size:0.78rem;">No admin activity yet.</div>';
+    var items = isAdminLog ? (d.logs || []) : (d.activities || []);
+    if (!items.length) {
+      el.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text-dim);font-size:0.78rem;">No activity yet.</div>';
       return;
     }
-    el.innerHTML = logs.map(function(l) {
-      var iconInfo = actionIcons[l.action] || { icon: '⚡', type: 'ai-amber' };
-      var action   = l.action.replace(/_/g, ' ');
-      var detail   = l.detail ? JSON.parse(l.detail || '{}') : {};
-      var detailTxt = l.target && l.target !== '—' ? ' · <span style="color:var(--text-dim)">' + l.target + '</span>' : '';
+    el.innerHTML = items.map(function(item) {
+      var icon, colorClass, text, timeStr;
+      if (isAdminLog) {
+        var adminIcons = {
+          MARKET_CREATED: '➕', MARKET_EDITED: '✎', MARKET_RESOLVED: '✓',
+          USER_EDITED: '👤', USER_FROZEN: '❄', USER_UNFROZEN: '♻', USER_DELETED: '🗑',
+          KYC_APPROVED: '✓', KYC_REJECTED: '✗', BOUNTY_PAID: '💰',
+          PAYOUT_RETRY_SUCCESS: '💸', DISPUTE_RESOLVED: '⚖',
+        };
+        var adminColors = {
+          MARKET_RESOLVED: 'ai-green', KYC_APPROVED: 'ai-green', USER_UNFROZEN: 'ai-green',
+          BOUNTY_PAID: 'ai-green', PAYOUT_RETRY_SUCCESS: 'ai-green', MARKET_CREATED: 'ai-green',
+          USER_DELETED: 'ai-red', KYC_REJECTED: 'ai-red', PAYOUT_RETRY_FAILED: 'ai-red',
+          USER_FROZEN: 'ai-amber', DISPUTE_RESOLVED: 'ai-amber',
+        };
+        icon      = adminIcons[item.action]  || '⚡';
+        colorClass= adminColors[item.action] || 'ai-blue';
+        var act   = item.action.replace(/_/g, ' ');
+        var tgt   = item.target && item.target !== '—' ? ' · <span style="color:var(--text-dim)">' + item.target + '</span>' : '';
+        text      = '<strong>' + item.admin + '</strong> · ' + act + tgt;
+        timeStr   = timeAgo(item.createdAt) + (item.ipAddress ? ' · ' + item.ipAddress : '');
+      } else {
+        icon       = item.icon      || '⚡';
+        colorClass = item.color     || 'ai-blue';
+        text       = item.text      || '';
+        timeStr    = timeAgo(item.createdAt);
+      }
       return '<div class="activity-item">' +
-        '<div class="activity-icon ' + iconInfo.type + '">' + iconInfo.icon + '</div>' +
+        '<div class="activity-icon ' + colorClass + '">' + icon + '</div>' +
         '<div class="activity-main">' +
-          '<div class="activity-text"><strong>' + l.admin + '</strong> · ' + action + detailTxt + '</div>' +
-          '<div class="activity-time">' + timeAgo(l.createdAt) + ' · ' + (l.ipAddress || '') + '</div>' +
+          '<div class="activity-text">' + text + '</div>' +
+          '<div class="activity-time">' + timeStr + '</div>' +
         '</div>' +
       '</div>';
     }).join('');
@@ -2331,7 +2339,7 @@ function showPanel(id, btn) {
   if (id === 'referral')      { setTimeout(loadReferralConfig, 50); }
   if (id === 'dataapps')      { setTimeout(loadDataApplications, 50); }
   if (id === 'admin-log')     { loadAdminLog(); loadActivityFeed('adminLogBody'); }
-  if (id === 'b2b')           { renderB2B(); }
+  if (id === 'b2b')           { loadB2BAnalytics(); }
   if (id === 'bounties')      { loadBounties(); }
   if (id === 'create-market') {
     var d = new Date(); d.setDate(d.getDate() + 30);
@@ -3556,32 +3564,78 @@ const VEL_DATA = [
   { cat:'General', pct:38, change:'+3%' },
 ];
 
-function renderB2B() {
+function loadB2BAnalytics() {
+  var velDiv = document.getElementById('velBars');
+  var convTbl = document.getElementById('convictionBody');
+  if (velDiv) velDiv.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-dim);">Loading...</div>';
+
+  adminFetch('/api/admin/analytics')
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    var s = function(id, v) { var e = document.getElementById(id); if (e) e.textContent = v; };
+    var fmt = function(n) { return n >= 1000000 ? 'KES ' + (n/1000000).toFixed(1) + 'M' : n >= 1000 ? 'KES ' + Math.round(n/1000) + 'K' : 'KES ' + n; };
+
+    // Stat cards
+    s('b2bAvgSentiment',  (d.summary.avgSentiment || 0) + '% YES');
+    s('b2bTotalVolume',   fmt(d.summary.totalVolume || 0));
+    s('b2bDataSubs',      (d.summary.approvedDataApps || 0) + ' active');
+    s('b2bTotalMarkets',  d.summary.totalMarkets || 0);
+
+    renderB2B(d.categories || [], d.topMarkets || []);
+  })
+  .catch(function(err) {
+    console.error('loadB2BAnalytics:', err);
+    var velDiv = document.getElementById('velBars');
+    if (velDiv) velDiv.innerHTML = '<div style="text-align:center;color:#ce1126;padding:20px;">Failed to load analytics.</div>';
+  });
+}
+
+function renderB2B(categories, topMarkets) {
   // Velocity bars
-  const vb = document.getElementById('velBars');
+  var vb = document.getElementById('velBars');
   if (vb) {
-    vb.innerHTML = VEL_DATA.map(v => `
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
-        <div style="width:90px;font-size:0.75rem;color:var(--text-mid);flex-shrink:0;">${v.cat}</div>
-        <div style="flex:1;height:8px;background:var(--bg3);border-radius:100px;overflow:hidden;">
-          <div style="width:${v.pct}%;height:100%;background:linear-gradient(90deg,var(--ke-green),#8b5cf6);border-radius:100px;transition:width 1s ease;"></div>
-        </div>
-        <div style="font-family:var(--mono);font-size:0.72rem;width:70px;text-align:right;">${v.pct}% <span style="color:var(--green);font-size:0.65rem;">${v.change}</span></div>
-      </div>`).join('');
+    if (!categories || !categories.length) {
+      // Fall back to hardcoded display if no live data
+      vb.innerHTML = VEL_DATA.map(function(v) {
+        return '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">' +
+          '<div style="width:100px;font-size:0.75rem;color:var(--text-mid);text-align:right;">' + v.cat + '</div>' +
+          '<div style="flex:1;background:var(--bg3);border-radius:4px;height:8px;overflow:hidden;">' +
+            '<div style="width:' + v.pct + '%;background:var(--primary);height:100%;border-radius:4px;transition:width 0.6s ease;"></div>' +
+          '</div>' +
+          '<div style="font-size:0.72rem;font-family:var(--mono);color:var(--text-dim);min-width:80px;">' + v.pct + '% ' + v.delta + '</div>' +
+        '</div>';
+      }).join('');
+    } else {
+      var maxVol = Math.max.apply(null, categories.map(function(c) { return c.volumeKes; })) || 1;
+      vb.innerHTML = categories.map(function(c) {
+        var barPct = Math.round((c.volumeKes / maxVol) * 100);
+        return '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">' +
+          '<div style="width:110px;font-size:0.75rem;color:var(--text-mid);text-align:right;">' + c.category + '</div>' +
+          '<div style="flex:1;background:var(--bg3);border-radius:4px;height:8px;overflow:hidden;">' +
+            '<div style="width:' + barPct + '%;background:var(--primary);height:100%;border-radius:4px;transition:width 0.6s ease;"></div>' +
+          '</div>' +
+          '<div style="font-size:0.72rem;font-family:var(--mono);color:var(--text-dim);min-width:100px;">' +
+            c.yesPct + '% YES · ' + c.markets + ' mkts' +
+          '</div>' +
+        '</div>';
+      }).join('');
+    }
   }
+
   // Conviction table
-  const cb = document.getElementById('convictionBody');
+  var cb = document.getElementById('convictionBody');
   if (cb) {
-    cb.innerHTML = CONVICTION_DATA.map(r => {
-      const col = r.conviction === 'High' ? 'var(--green)' : r.conviction === 'Medium' ? 'var(--amber)' : 'var(--text-dim)';
-      return `<tr>
-        <td>${r.market}</td>
-        <td><span style="font-size:0.7rem;background:var(--bg3);padding:2px 7px;border-radius:4px;">${r.cat}</span></td>
-        <td style="font-weight:700;color:${r.yes > 50 ? 'var(--green)' : 'var(--red)'};">${r.yes}%</td>
-        <td style="font-family:var(--mono);">KES ${r.avgStake.toLocaleString()}</td>
-        <td style="font-weight:700;color:${col};">${r.conviction}</td>
-        <td style="font-family:var(--mono);">${r.forecasters.toLocaleString()}</td>
-      </tr>`;
+    var rows = (topMarkets && topMarkets.length) ? topMarkets : CONVICTION_DATA;
+    cb.innerHTML = rows.map(function(r) {
+      var convColor = r.conviction === 'High' ? 'var(--green)' : r.conviction === 'Medium' ? 'var(--amber)' : 'var(--text-dim)';
+      return '<tr>' +
+        '<td style="font-weight:600;max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (r.title || r.market || '—') + '</td>' +
+        '<td><span class="badge badge-gray">' + (r.category || r.cat || '—') + '</span></td>' +
+        '<td class="mono" style="color:' + (r.yesPct > 50 ? 'var(--green)' : 'var(--text-mid)') + ';font-weight:700;">' + (r.yesPct || r.yes || '—') + '%</td>' +
+        '<td class="mono">KES ' + (r.avgStake || r.avgStake || '—').toLocaleString() + '</td>' +
+        '<td style="font-weight:700;color:' + convColor + '">' + (r.conviction || '—') + '</td>' +
+        '<td class="mono">' + (r.forecasters || '—').toLocaleString() + '</td>' +
+      '</tr>';
     }).join('');
   }
 }
@@ -3630,7 +3684,7 @@ function renderAdminLog() {
 
 renderRecentTxns();
 renderActivity('liveFeed');
-renderB2B();
+renderB2B([], []);
 
 // Initialise panel display — show dashboard, hide all others
 // This ensures the style-based approach starts correctly
