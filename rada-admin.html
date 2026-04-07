@@ -739,7 +739,7 @@ body::after {
       <span class="nav-icon">⚖️</span><span>Dispute Desk <span id="disputeNavBadge" style="background:#f59e0b;color:#000;border-radius:3px;font-size:0.58rem;padding:1px 5px;font-weight:700;vertical-align:middle;">3</span></span>
     </button>
     <button class="nav-item" onclick="showPanel('suggestions', this)" id="suggestions-nav">
-      <span class="nav-icon">💡</span><span>Suggestion Queue <span id="suggNavBadge" style="background:#a78bfa;color:#000;border-radius:3px;font-size:0.58rem;padding:1px 5px;font-weight:700;vertical-align:middle;">5</span></span>
+      <span class="nav-icon">💡</span><span>Suggestion Queue <span id="suggNavBadge" style="background:#a78bfa;color:#000;border-radius:3px;font-size:0.58rem;padding:1px 5px;font-weight:700;vertical-align:middle;">—</span></span>
     </button>
   </div>
   <div class="sidebar-section">
@@ -1208,14 +1208,20 @@ body::after {
     <!-- PANEL: DISPUTE DESK -->
     <div class="panel" id="panel-disputes">
       <div class="page-title">⚖️ Dispute Desk</div>
-      <div class="page-sub">Friends challenges where the 48-hour window expired without agreement. Admin resolution applies 15% total fee (5% base + 10% penalty).</div>
+      <div class="page-sub">Friends challenges where the deadline expired without mutual agreement. Admin ruling applies a 15% total fee automatically.</div>
       <div class="stat-row">
-        <div class="stat-card"><div class="stat-label">Awaiting Decision</div><div class="stat-val amber" id="disputeCount">3</div></div>
-        <div class="stat-card"><div class="stat-label">Resolved Today</div><div class="stat-val green">2</div></div>
-        <div class="stat-card"><div class="stat-label">15% Fees Collected</div><div class="stat-val">KES 3,750</div></div>
-        <div class="stat-card"><div class="stat-label">Avg Resolution Time</div><div class="stat-val">4.2 hrs</div></div>
+        <div class="stat-card"><div class="stat-label">Awaiting Decision</div><div class="stat-val amber" id="disputeCount">—</div></div>
+        <div class="stat-card"><div class="stat-label">Resolved</div><div class="stat-val green" id="disputeResolvedCount">—</div></div>
+        <div class="stat-card"><div class="stat-label">Active Challenges</div><div class="stat-val" id="disputeActiveCount">—</div></div>
+        <div class="stat-card"><div class="stat-label">Total Challenges</div><div class="stat-val" id="disputeTotalCount">—</div></div>
       </div>
-      <div id="disputesList"></div>
+      <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
+        <button class="filter-tab active" id="dtab-disputed" onclick="loadDisputes('DISPUTED',this)">⚠ Disputed</button>
+        <button class="filter-tab" id="dtab-active"   onclick="loadDisputes('ACTIVE',this)">Active</button>
+        <button class="filter-tab" id="dtab-resolved" onclick="loadDisputes('RESOLVED',this)">Resolved</button>
+        <button class="filter-tab" id="dtab-all-disp" onclick="loadDisputes('ALL',this)">All</button>
+      </div>
+      <div id="disputesList"><div style="text-align:center;padding:30px;color:var(--text-dim);">Loading...</div></div>
     </div>
 
     <!-- PANEL: SUGGESTION REVIEW QUEUE -->
@@ -2279,7 +2285,7 @@ function showPanel(id, btn) {
   if (id === 'transactions')  { loadTxnsTable(); }
   if (id === 'payouts')        { loadPayoutsPanel(); }
   if (id === 'suggestions')   { loadSuggestions(); }
-  if (id === 'disputes')      { renderDisputes(); }
+  if (id === 'disputes')      { loadDisputes('DISPUTED'); }
   if (id === 'proposals')     { loadProposals('PENDING'); }
   if (id === 'activity')      { renderActivity('fullActivityFeed'); loadAdminLog(); }
   if (id === 'carousel')      { setTimeout(function() { initCarouselAdmin(); loadCarouselFromBackend(); }, 50); }
@@ -2465,13 +2471,13 @@ function loadResolvePanel() {
 
 // ── RESOLVE MODAL ─────────────────────────────────────────────────────────────
 
-let resolveOutcome = null;
-let resolveMarketName = '';
-let resolveTradeCount = 0;
-
-var resolveYesPool   = 0;
-var resolveNoPool    = 0;
-var resolveTotalVol  = 0;
+var resolveMarketId   = null;
+var resolveOutcome    = null;
+var resolveMarketName = '';
+var resolveTradeCount = 0;
+var resolveYesPool    = 0;
+var resolveNoPool     = 0;
+var resolveTotalVol   = 0;
 
 function openResolveModal(marketId, title, trades, yesPool, noPool, totalVolume) {
   resolveMarketId   = marketId;
@@ -3149,40 +3155,102 @@ document.querySelectorAll('.modal-overlay').forEach(o => {
 });
 
 // ── DISPUTE DESK ─────────────────────────────────────────────────────────────
-const DISPUTES = [
-  { id:1, q:'Will Otieno beat me at digital ID rematch?', userA:'Baraka M.', userB:'Otieno K.', pool:1000, expiredAgo:'6h ago', stage:'48h window expired', fee15:150 },
-  { id:2, q:'Who finishes the Duolingo 30-day streak first?', userA:'Grace W.', userB:'Peter N.', pool:600, expiredAgo:'2h ago', stage:'48h window expired', fee15:90 },
-  { id:3, q:'Will our project go live before Friday deadline?', userA:'Susan O.', userB:'Kevin A.', pool:2000, expiredAgo:'12h ago', stage:'48h window expired', fee15:300 },
-];
+var DISPUTES_DATA = [];
+
+function loadDisputes(status, btn) {
+  status = status || 'DISPUTED';
+  if (btn) {
+    document.querySelectorAll('[id^="dtab-"]').forEach(function(b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+  }
+
+  var el = document.getElementById('disputesList');
+  if (el) el.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text-dim);">Loading...</div>';
+
+  adminFetch('/api/admin/challenges?status=ALL')
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    var all      = d.challenges || [];
+    var disputed = all.filter(function(c) { return c.status === 'DISPUTED'; });
+    var resolved = all.filter(function(c) { return c.status === 'RESOLVED'; });
+    var active   = all.filter(function(c) { return c.status === 'ACTIVE'; });
+
+    var s = function(id, v) { var e = document.getElementById(id); if (e) e.textContent = v; };
+    s('disputeCount',         disputed.length);
+    s('disputeResolvedCount', resolved.length);
+    s('disputeActiveCount',   active.length);
+    s('disputeTotalCount',    all.length);
+
+    var nb = document.getElementById('disputeNavBadge');
+    if (nb) { nb.textContent = disputed.length; nb.style.display = disputed.length > 0 ? '' : 'none'; }
+
+    var display = status === 'ALL' ? all : all.filter(function(c) { return c.status === status; });
+    DISPUTES_DATA = display;
+    renderDisputes();
+  })
+  .catch(function() {
+    if (el) el.innerHTML = '<div style="text-align:center;color:#ce1126;padding:30px;">Failed to load disputes.</div>';
+  });
+}
 
 function renderDisputes() {
-  const el = document.getElementById('disputesList');
+  var el = document.getElementById('disputesList');
   if (!el) return;
-  el.innerHTML = DISPUTES.map(d => `
-    <div style="background:#ffffff;border:1px solid rgba(245,158,11,0.2);border-radius:14px;padding:18px;margin-bottom:12px;">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;">
-        <div style="flex:1;">
-          <div style="font-weight:700;font-size:0.9rem;margin-bottom:4px;">${d.q}</div>
-          <div style="font-size:0.7rem;color:var(--text-dim);">Window expired ${d.expiredAgo} · 15% fee will apply</div>
-        </div>
-        <div style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.2);border-radius:8px;padding:6px 10px;font-size:0.72rem;font-weight:700;color:var(--amber);white-space:nowrap;margin-left:10px;">⚠ Disputed</div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
-        <div style="background:var(--bg3);border-radius:8px;padding:10px;"><div style="font-size:0.62rem;color:var(--text-dim);text-transform:uppercase;font-weight:700;margin-bottom:3px;">User A</div><div style="font-weight:600;font-size:0.82rem;">${d.userA}</div></div>
-        <div style="background:var(--bg3);border-radius:8px;padding:10px;"><div style="font-size:0.62rem;color:var(--text-dim);text-transform:uppercase;font-weight:700;margin-bottom:3px;">User B</div><div style="font-weight:600;font-size:0.82rem;">${d.userB}</div></div>
-      </div>
-      <div style="background:var(--bg3);border-radius:8px;padding:10px;margin-bottom:14px;display:flex;justify-content:space-between;font-size:0.78rem;">
-        <span style="color:var(--text-dim);">Pool</span><span style="font-family:var(--mono);font-weight:700;">KES ${d.pool.toLocaleString()}</span>
-        <span style="color:var(--text-dim);">15% Fee</span><span style="font-family:var(--mono);font-weight:700;color:var(--amber);">KES ${d.fee15}</span>
-        <span style="color:var(--text-dim);">Winner Gets</span><span style="font-family:var(--mono);font-weight:700;color:var(--green);">KES ${d.pool - d.fee15}</span>
-      </div>
-      <div style="font-size:0.72rem;font-weight:700;color:var(--amber);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;">Admin Ruling — 15% Fee Auto-Applied</div>
-      <div style="display:flex;gap:8px;">
-        <button class="act-btn act-green" style="flex:1;" onclick="resolveDispute(${d.id},'A','${d.userA}',${d.pool},${d.fee15})">Award ${d.userA.split(' ')[0]}</button>
-        <button class="act-btn act-red" style="flex:1;" onclick="resolveDispute(${d.id},'B','${d.userB}',${d.pool},${d.fee15})">Award ${d.userB.split(' ')[0]}</button>
-        <button class="act-btn act-amber" style="flex:1;" onclick="resolveDispute(${d.id},'TIE','Tie',${d.pool},${d.fee15})">🤝 Tie</button>
-      </div>
-    </div>`).join('');
+
+  if (!DISPUTES_DATA.length) {
+    el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--green);font-size:0.78rem;">&#10003; No disputes in this category.</div>';
+    return;
+  }
+
+  el.innerHTML = DISPUTES_DATA.map(function(d) {
+    var isDisputed = d.status === 'DISPUTED';
+    var expiredTxt = d.expiredHoursAgo !== null
+      ? (d.expiredHoursAgo < 24 ? d.expiredHoursAgo + 'h ago' : Math.round(d.expiredHoursAgo/24) + 'd ago')
+      : '—';
+    var userAFirst = (d.userA || 'User A').split(' ')[0];
+    var userBFirst = (d.userB || 'User B').split(' ')[0];
+
+    var confirmRow = (d.userAConfirm || d.userBConfirm)
+      ? '<div style="font-size:0.68rem;color:var(--text-dim);margin-bottom:10px;">' +
+          'A says: <strong>' + (d.userAConfirm || 'No response') + '</strong> &nbsp;·&nbsp; ' +
+          'B says: <strong>' + (d.userBConfirm || 'No response') + '</strong>' +
+        '</div>'
+      : '';
+
+    var actionBtns = isDisputed
+      ? '<button class="act-btn act-green"  style="flex:1;" data-action="disp-award" data-id="' + d.id + '" data-side="A" data-name="' + userAFirst + '" data-pool="' + d.pool + '" data-fee="' + d.fee15 + '">Award ' + userAFirst + '</button>' +
+        '<button class="act-btn act-red"    style="flex:1;" data-action="disp-award" data-id="' + d.id + '" data-side="B" data-name="' + userBFirst + '" data-pool="' + d.pool + '" data-fee="' + d.fee15 + '">Award ' + userBFirst + '</button>' +
+        '<button class="act-btn act-amber"  style="flex:1;" data-action="disp-award" data-id="' + d.id + '" data-side="TIE" data-name="Tie"   data-pool="' + d.pool + '" data-fee="' + d.fee15 + '">&#129308; Tie</button>'
+      : '<span style="font-size:0.72rem;color:var(--text-dim);padding:6px;">Status: ' + d.status + '</span>';
+
+    return '<div style="background:#ffffff;border:1.5px solid rgba(245,158,11,0.2);border-radius:14px;padding:18px;margin-bottom:12px;">' +
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;">' +
+        '<div style="flex:1;">' +
+          '<div style="font-weight:700;font-size:0.9rem;margin-bottom:4px;">' + d.question + '</div>' +
+          '<div style="font-size:0.7rem;color:var(--text-dim);">Deadline expired ' + expiredTxt + (d.referee ? ' · Referee: ' + d.referee : '') + '</div>' +
+        '</div>' +
+        '<div style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.2);border-radius:8px;padding:6px 10px;font-size:0.68rem;font-weight:700;color:var(--amber);margin-left:10px;white-space:nowrap;">' + (isDisputed ? '&#9888; Disputed' : d.status) + '</div>' +
+      '</div>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">' +
+        '<div style="background:var(--bg3);border-radius:8px;padding:10px;"><div style="font-size:0.6rem;color:var(--text-dim);text-transform:uppercase;font-weight:700;margin-bottom:3px;">User A</div><div style="font-weight:600;font-size:0.82rem;">' + (d.userA||'—') + '</div></div>' +
+        '<div style="background:var(--bg3);border-radius:8px;padding:10px;"><div style="font-size:0.6rem;color:var(--text-dim);text-transform:uppercase;font-weight:700;margin-bottom:3px;">User B</div><div style="font-weight:600;font-size:0.82rem;">' + (d.userB||'—') + '</div></div>' +
+      '</div>' +
+      confirmRow +
+      '<div style="background:var(--bg3);border-radius:8px;padding:10px;margin-bottom:14px;display:flex;justify-content:space-between;font-size:0.78rem;">' +
+        '<span style="color:var(--text-dim);">Pool</span><span style="font-family:var(--mono);font-weight:700;">KES ' + (d.pool||0).toLocaleString() + '</span>' +
+        '<span style="color:var(--text-dim);">15% Fee</span><span style="font-family:var(--mono);font-weight:700;color:var(--amber);">KES ' + (d.fee15||0).toLocaleString() + '</span>' +
+        '<span style="color:var(--text-dim);">Winner Gets</span><span style="font-family:var(--mono);font-weight:700;color:var(--green);">KES ' + ((d.pool||0) - (d.fee15||0)).toLocaleString() + '</span>' +
+      '</div>' +
+      (isDisputed ? '<div style="font-size:0.72rem;font-weight:700;color:var(--amber);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;">Admin Ruling — 15% Fee Auto-Applied</div>' : '') +
+      '<div style="display:flex;gap:8px;">' + actionBtns + '</div>' +
+    '</div>';
+  }).join('');
+
+  el.onclick = function(e) {
+    var btn = e.target.closest('button[data-action="disp-award"]');
+    if (!btn) return;
+    resolveDispute(btn.dataset.id, btn.dataset.side, btn.dataset.name, parseFloat(btn.dataset.pool), parseFloat(btn.dataset.fee));
+  };
 }
 
 function resolveDispute(id, side, name, pool, fee) {
@@ -3199,14 +3267,8 @@ function resolveDispute(id, side, name, pool, fee) {
   .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
   .then(function(res) {
     if (res.ok) {
-      var idx = DISPUTES.findIndex(function(d) { return d.id === id; });
-      if (idx > -1) DISPUTES.splice(idx, 1);
-      var dc = document.getElementById('disputeCount');
-      var dn = document.getElementById('disputeNavBadge');
-      if (dc) dc.textContent = DISPUTES.length;
-      if (dn) dn.textContent = DISPUTES.length;
-      renderDisputes();
       showToast('✓ Dispute resolved. Paystack B2C payout triggered. 15% fee collected.');
+      loadDisputes('DISPUTED');
     } else {
       alert('Error: ' + (res.d.error || 'Could not resolve dispute.'));
     }
@@ -3217,45 +3279,6 @@ function resolveDispute(id, side, name, pool, fee) {
 // ── SUGGESTION QUEUE ──────────────────────────────────────────────────────────
 var SUGGESTIONS = []; // populated by loadSuggestions()
 
-function filterProposals(btn, status) {
-  document.querySelectorAll('#panel-proposals .topbar-btn').forEach(function(b) {
-    b.classList.remove('primary');
-  });
-  if (btn) btn.classList.add('primary');
-  // Map filter to API status param
-  var apiStatus = status === 'pending' ? 'PENDING'
-                : status === 'approved' ? 'APPROVED'
-                : status === 'rejected' ? 'REJECTED'
-                : 'ALL';
-  var el = document.getElementById('proposalsList');
-  if (el) el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-dim);">Loading...</div>';
-  adminFetch('/api/admin/proposals?status=' + apiStatus)
-  .then(function(r) { return r.json(); })
-  .then(function(d) {
-    var proposals = d.proposals || [];
-    SUGGESTIONS = proposals.map(function(p) {
-      return {
-        id:     p.id,
-        q:      p.question,
-        cat:    p.category,
-        from:   (p.proposer && p.proposer.name ? p.proposer.name : 'User') + ' (+' + (p.proposer && p.proposer.phone ? p.proposer.phone.slice(0,7) + '***' + p.proposer.phone.slice(-3) : '???') + ')',
-        source: p.resolutionSource || '—',
-        why:    p.whyCareNote || '',
-        status: p.status,
-      };
-    });
-    if (el) {
-      if (!SUGGESTIONS.length) {
-        el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-dim);">No proposals found.</div>';
-      } else {
-        renderSuggestions();
-      }
-    }
-  })
-  .catch(function() {
-    if (el) el.innerHTML = '<div style="text-align:center;color:#ce1126;padding:20px;">Failed to load proposals.</div>';
-  });
-}
 
 function loadSuggestions(status, btn) {
   status = status || 'PENDING';
