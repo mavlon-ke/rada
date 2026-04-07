@@ -719,7 +719,7 @@ body::after {
     </button>
     <button class="nav-item" onclick="showPanel('kyc', this)">
       <span class="nav-icon">◈</span><span>KYC Queue</span>
-      <span class="nav-badge">7</span>
+      <span class="nav-badge" id="kycNavBadge">—</span>
     </button>
   </div>
 
@@ -736,7 +736,7 @@ body::after {
   <div class="sidebar-section">
     <div class="sidebar-section-label">Friends &amp; Disputes</div>
     <button class="nav-item" onclick="showPanel('disputes', this)" id="disputes-nav">
-      <span class="nav-icon">⚖️</span><span>Dispute Desk <span id="disputeNavBadge" style="background:#f59e0b;color:#000;border-radius:3px;font-size:0.58rem;padding:1px 5px;font-weight:700;vertical-align:middle;">3</span></span>
+      <span class="nav-icon">⚖️</span><span>Dispute Desk <span id="disputeNavBadge" style="background:#f59e0b;color:#000;border-radius:3px;font-size:0.58rem;padding:1px 5px;font-weight:700;vertical-align:middle;">—</span></span>
     </button>
     <button class="nav-item" onclick="showPanel('suggestions', this)" id="suggestions-nav">
       <span class="nav-icon">💡</span><span>Suggestion Queue <span id="suggNavBadge" style="background:#a78bfa;color:#000;border-radius:3px;font-size:0.58rem;padding:1px 5px;font-weight:700;vertical-align:middle;">—</span></span>
@@ -1175,21 +1175,21 @@ body::after {
     <!-- PANEL: BOUNTY LEDGER -->
     <div class="panel" id="panel-bounties">
       <div class="page-title">Creator Bounty Ledger</div>
-      <div class="page-sub">Track all creator royalty payouts. 0.5% of each trade's net amount credited to creator Rada wallets automatically.</div>
+      <div class="page-sub">0.5% of each trade credited to the market creator. Pay out when balance reaches KES 100.</div>
       <div class="stat-row">
-        <div class="stat-card"><div class="stat-label">Total Paid Out</div><div class="stat-val green">KES 12,440</div></div>
-        <div class="stat-card"><div class="stat-label">Pending Credits</div><div class="stat-val amber">KES 3,220</div></div>
-        <div class="stat-card"><div class="stat-label">Active Creators</div><div class="stat-val">23</div></div>
-        <div class="stat-card"><div class="stat-label">Avg Bounty/Market</div><div class="stat-val">KES 541</div></div>
+        <div class="stat-card"><div class="stat-label">Total Earned</div><div class="stat-val green" id="bntyTotalEarned">—</div></div>
+        <div class="stat-card"><div class="stat-label">Total Paid Out</div><div class="stat-val" id="bntyTotalPaid">—</div></div>
+        <div class="stat-card"><div class="stat-label">Unpaid Balance</div><div class="stat-val amber" id="bntyUnpaid">—</div></div>
+        <div class="stat-card"><div class="stat-label">Active Creators</div><div class="stat-val" id="bntyCreators">—</div></div>
       </div>
       <div class="table-card" style="box-shadow:0 2px 12px rgba(0,0,0,0.05);">
         <div class="table-header">
-          <div class="table-title">Bounty Transactions</div>
-          <button class="topbar-btn">Export CSV</button>
+          <div class="table-title">Creator Bounties</div>
+          <button class="topbar-btn" onclick="loadBounties()">🔄 Refresh</button>
         </div>
         <table class="tbl">
-          <thead><tr><th>Creator</th><th>Market</th><th>Trade Volume</th><th>Bounty (0.5%)</th><th>Status</th><th>Paid To</th></tr></thead>
-          <tbody id="bountyLedgerBody"></tbody>
+          <thead><tr><th>Creator</th><th>Market</th><th>Trade Volume</th><th>Earned</th><th>Paid Out</th><th>Unpaid</th><th>Action</th></tr></thead>
+          <tbody id="bountyLedgerBody"><tr><td colspan="7" style="text-align:center;color:var(--text-dim);padding:20px;">Loading...</td></tr></tbody>
         </table>
       </div>
     </div>
@@ -1199,9 +1199,13 @@ body::after {
     ═══════════════════════════════════════════════════════════════════════ -->
     <div class="panel" id="panel-activity">
       <div class="page-title">Activity Feed</div>
-      <div class="page-sub">Real-time platform events</div>
+      <div class="page-sub">Recent admin actions across the platform</div>
       <div class="table-card" style="box-shadow:0 2px 12px rgba(0,0,0,0.05);">
-        <div class="activity-feed" id="fullActivityFeed"></div>
+        <div class="table-header">
+          <div class="table-title">Admin Action Log</div>
+          <button class="topbar-btn" onclick="loadActivityFeed()">🔄 Refresh</button>
+        </div>
+        <div class="activity-feed" id="fullActivityFeed"><div style="text-align:center;padding:30px;color:var(--text-dim);">Loading...</div></div>
       </div>
     </div>
 
@@ -1284,10 +1288,7 @@ body::after {
           <div class="table-title">Admin Activity Log</div>
           <button class="topbar-btn" onclick="alert('Exporting admin_audit_log.csv…')">⬇ Export Log</button>
         </div>
-        <table class="tbl">
-          <thead><tr><th>Admin</th><th>Action</th><th>Target</th><th>Timestamp</th><th>IP</th></tr></thead>
-          <tbody id="adminLogBody"></tbody>
-        </table>
+        <div class="activity-feed" id="adminLogBody"><div style="text-align:center;padding:30px;color:var(--text-dim);">Loading...</div></div>
       </div>
     </div>
 
@@ -1848,16 +1849,7 @@ function renderTxnsPagination(page, totalPages, total, limit) {
     '</div>';
 }
 
-const ACTIVITY_DATA = [
-  { icon:'💰', type:'ai-green', text:'<strong>Wanjiru K.</strong> deposited <strong>KES 5,000</strong> via M-Pesa', time:'2 min ago' },
-  { icon:'🔄', type:'ai-blue',  text:'<strong>Otieno M.</strong> bought 806 YES shares on Ruto term market', time:'5 min ago' },
-  { icon:'◈',  type:'ai-amber', text:'New KYC submission from <strong>Wanjiku Mwangi</strong> (+254 711 005 005)', time:'12 min ago' },
-  { icon:'📤', type:'ai-red',   text:'<strong>Mwangi J.</strong> withdrew <strong>KES 1,000</strong> via M-Pesa B2C', time:'18 min ago' },
-  { icon:'✓',  type:'ai-green', text:'KYC approved for <strong>Kipchoge R.</strong>', time:'1 hr ago' },
-  { icon:'⚡',  type:'ai-amber', text:'Finance Bill market closed — <strong>ready for resolution</strong>', time:'2 hr ago' },
-  { icon:'💰', type:'ai-green', text:'<strong>Test User</strong> deposited <strong>KES 2,000</strong> via M-Pesa', time:'2 hr ago' },
-  { icon:'✗',  type:'ai-red',   text:'Deposit failed for <strong>Njeri A.</strong> — M-Pesa timeout', time:'3 hr ago' },
-];
+
 
 // ── RENDER FUNCTIONS ──────────────────────────────────────────────────────────
 
@@ -2038,16 +2030,63 @@ function renderRecentTxns() {
 }
 
 function renderActivity(containerId) {
-  const el = document.getElementById(containerId);
-  el.innerHTML = ACTIVITY_DATA.map(a => `
-    <div class="activity-item">
-      <div class="activity-icon ${a.type}">${a.icon}</div>
-      <div class="activity-main">
-        <div class="activity-text">${a.text}</div>
-        <div class="activity-time">${a.time}</div>
-      </div>
-    </div>
-  `).join('');
+  // Legacy call — now loads from backend
+  var el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-dim);">Loading...</div>';
+  loadActivityFeed(containerId);
+}
+
+function loadActivityFeed(containerId) {
+  containerId = containerId || 'fullActivityFeed';
+  var el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-dim);">Loading...</div>';
+
+  var actionIcons = {
+    MARKET_CREATED: { icon: '➕', type: 'ai-green' },
+    MARKET_EDITED:  { icon: '✎', type: 'ai-blue'  },
+    MARKET_RESOLVED:{ icon: '✓', type: 'ai-green' },
+    USER_EDITED:    { icon: '👤', type: 'ai-blue'  },
+    USER_FROZEN:    { icon: '❄', type: 'ai-amber'  },
+    USER_UNFROZEN:  { icon: '♻', type: 'ai-green'  },
+    USER_DELETED:   { icon: '🗑', type: 'ai-red'   },
+    KYC_APPROVED:   { icon: '✓', type: 'ai-green'  },
+    KYC_REJECTED:   { icon: '✗', type: 'ai-red'    },
+    PAYOUT_RETRY_SUCCESS: { icon: '💸', type: 'ai-green' },
+    PAYOUT_RETRY_FAILED:  { icon: '✗',  type: 'ai-red'  },
+    DATA_APPLICATION_APPROVED: { icon: '📊', type: 'ai-green' },
+    DATA_APPLICATION_REJECTED: { icon: '📊', type: 'ai-red'   },
+    PROPOSAL_EDITED: { icon: '✎', type: 'ai-blue'  },
+    BOUNTY_PAID:     { icon: '💰', type: 'ai-green' },
+    DISPUTE_RESOLVED:{ icon: '⚖', type: 'ai-amber' },
+  };
+
+  adminFetch('/api/admin/activity?limit=50')
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    var logs = d.logs || [];
+    if (!logs.length) {
+      el.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text-dim);font-size:0.78rem;">No admin activity yet.</div>';
+      return;
+    }
+    el.innerHTML = logs.map(function(l) {
+      var iconInfo = actionIcons[l.action] || { icon: '⚡', type: 'ai-amber' };
+      var action   = l.action.replace(/_/g, ' ');
+      var detail   = l.detail ? JSON.parse(l.detail || '{}') : {};
+      var detailTxt = l.target && l.target !== '—' ? ' · <span style="color:var(--text-dim)">' + l.target + '</span>' : '';
+      return '<div class="activity-item">' +
+        '<div class="activity-icon ' + iconInfo.type + '">' + iconInfo.icon + '</div>' +
+        '<div class="activity-main">' +
+          '<div class="activity-text"><strong>' + l.admin + '</strong> · ' + action + detailTxt + '</div>' +
+          '<div class="activity-time">' + timeAgo(l.createdAt) + ' · ' + (l.ipAddress || '') + '</div>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  })
+  .catch(function() {
+    el.innerHTML = '<div style="text-align:center;color:#ce1126;padding:20px;">Failed to load activity.</div>';
+  });
 }
 
 // ── NAVIGATION ────────────────────────────────────────────────────────────────
@@ -2287,13 +2326,13 @@ function showPanel(id, btn) {
   if (id === 'suggestions')   { loadSuggestions(); }
   if (id === 'disputes')      { loadDisputes('DISPUTED'); }
   if (id === 'proposals')     { loadProposals('PENDING'); }
-  if (id === 'activity')      { renderActivity('fullActivityFeed'); loadAdminLog(); }
+  if (id === 'activity')      { loadActivityFeed(); }
   if (id === 'carousel')      { setTimeout(function() { initCarouselAdmin(); loadCarouselFromBackend(); }, 50); }
   if (id === 'referral')      { setTimeout(loadReferralConfig, 50); }
   if (id === 'dataapps')      { setTimeout(loadDataApplications, 50); }
-  if (id === 'admin-log')     { loadAdminLog(); }
+  if (id === 'admin-log')     { loadAdminLog(); loadActivityFeed('adminLogBody'); }
   if (id === 'b2b')           { renderB2B(); }
-  if (id === 'bounties')      { renderB2B(); }
+  if (id === 'bounties')      { loadBounties(); }
   if (id === 'create-market') {
     var d = new Date(); d.setDate(d.getDate() + 30);
     var el = document.getElementById('mktClosesAt');
@@ -3416,6 +3455,89 @@ function rejectSuggestion(id) {
   .catch(function() { showToast('Proposal rejected.'); loadSuggestions(); });
 }
 
+
+// ── BOUNTY LEDGER ─────────────────────────────────────────────────────────────
+
+function loadBounties() {
+  var tbody = document.getElementById('bountyLedgerBody');
+  if (tbody) tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-dim);padding:20px;">Loading...</td></tr>';
+
+  adminFetch('/api/admin/bounties')
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    var bounties = d.bounties || [];
+
+    var totalEarned = bounties.reduce(function(s,b) { return s + Number(b.bountyEarned); }, 0);
+    var totalPaid   = bounties.reduce(function(s,b) { return s + Number(b.paidOut); }, 0);
+    var unpaid      = totalEarned - totalPaid;
+
+    var s = function(id, v) { var e = document.getElementById(id); if (e) e.textContent = v; };
+    s('bntyTotalEarned', 'KES ' + Math.round(totalEarned).toLocaleString());
+    s('bntyTotalPaid',   'KES ' + Math.round(totalPaid).toLocaleString());
+    s('bntyUnpaid',      'KES ' + Math.round(unpaid).toLocaleString());
+    s('bntyCreators',    bounties.length);
+
+    if (!tbody) return;
+    if (!bounties.length) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-dim);padding:24px;">No creator bounties yet.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = bounties.map(function(b) {
+      var earned  = Number(b.bountyEarned);
+      var paid    = Number(b.paidOut);
+      var balance = earned - paid;
+      var canPay  = balance >= 100;
+      var creator = b.creator ? (b.creator.name || b.creator.phone) : '—';
+      var market  = b.market  ? b.market.title.slice(0, 50) + (b.market.title.length > 50 ? '…' : '') : '—';
+      var lastPaid = b.lastPaidAt ? new Date(b.lastPaidAt).toLocaleDateString('en-KE',{day:'numeric',month:'short'}) : 'Never';
+
+      return '<tr>' +
+        '<td style="font-weight:600">' + creator + '</td>' +
+        '<td style="font-size:0.72rem;max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + market + '</td>' +
+        '<td class="mono">KES ' + Math.round(Number(b.tradeVolume)).toLocaleString() + '</td>' +
+        '<td class="mono" style="color:var(--green)">KES ' + earned.toFixed(2) + '</td>' +
+        '<td class="mono" style="color:var(--text-dim)">KES ' + paid.toFixed(2) + ' <span style="font-size:0.65rem;">· ' + lastPaid + '</span></td>' +
+        '<td class="mono" style="color:' + (canPay ? 'var(--amber)' : 'var(--text-dim)') + ';font-weight:' + (canPay ? '700' : '400') + '">KES ' + balance.toFixed(2) + '</td>' +
+        '<td>' + (canPay
+          ? '<button class="act-btn act-green" data-action="pay-bounty" data-id="' + b.id + '" data-creator="' + creator.replace(/"/g,'') + '" data-amount="' + Math.floor(balance) + '">💸 Pay KES ' + Math.floor(balance).toLocaleString() + '</button>'
+          : '<span style="font-size:0.68rem;color:var(--text-dim);">Min KES 100</span>') +
+        '</td>' +
+      '</tr>';
+    }).join('');
+
+    tbody.onclick = function(e) {
+      var btn = e.target.closest('button[data-action="pay-bounty"]');
+      if (!btn) return;
+      payBounty(btn.dataset.id, btn.dataset.creator, btn.dataset.amount);
+    };
+  })
+  .catch(function(err) {
+    console.error('loadBounties:', err);
+    var tbody = document.getElementById('bountyLedgerBody');
+    if (tbody) tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#ce1126;padding:24px;">Failed to load. Check connection.</td></tr>';
+  });
+}
+
+function payBounty(bountyId, creator, amount) {
+  if (!confirm('Pay KES ' + Number(amount).toLocaleString() + ' to ' + creator + '?\n\nThis will credit their wallet and trigger a Paystack M-Pesa transfer.')) return;
+
+  adminFetch('/api/admin/bounties', {
+    method: 'POST',
+    body:   JSON.stringify({ bountyId: bountyId }),
+  })
+  .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
+  .then(function(res) {
+    if (res.ok) {
+      showToast('✓ KES ' + Number(res.d.paidKes).toLocaleString() + ' paid to ' + creator + ' via M-Pesa.');
+      loadBounties();
+    } else {
+      alert('Error: ' + (res.d.error || 'Could not process payout.'));
+    }
+  })
+  .catch(function() { alert('Network error. Please try again.'); });
+}
+
 // ── B2B ANALYTICS ─────────────────────────────────────────────────────────────
 const CONVICTION_DATA = [
   { market:'Will CBK hold rates in April?', cat:'Economy', yes:72, avgStake:1240, conviction:'High', forecasters:847 },
@@ -3485,6 +3607,8 @@ function loadAdminLog() {
     var rb = document.getElementById('resolveBadge');
     if (rb) { rb.textContent = d.pendingResolution || 0; rb.style.display = d.pendingResolution > 0 ? '' : 'none'; }
     s('dashPendingKYC',  d.pendingKYC || 0);
+    var kycNb = document.getElementById('kycNavBadge');
+    if (kycNb) { kycNb.textContent = d.pendingKYC || 0; kycNb.style.display = (d.pendingKYC > 0) ? '' : 'none'; }
     renderAdminLog();
   })
   .catch(function() { renderAdminLog(); });
@@ -3506,10 +3630,7 @@ function renderAdminLog() {
 
 renderRecentTxns();
 renderActivity('liveFeed');
-renderDisputes();
-renderSuggestions();
 renderB2B();
-renderAdminLog();
 
 // Initialise panel display — show dashboard, hide all others
 // This ensures the style-based approach starts correctly
