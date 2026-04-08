@@ -16,6 +16,7 @@ export async function GET(req: NextRequest) {
     totalVolume, weekVolume, totalUsers, todayUsers,
     openMarkets, pendingKYC, pendingResolution,
     depositTotal, depositOk, failedPayouts,
+    verifiedUsers, marketsWithActivity, totalMarkets,
     referralTotal, referralPaidOut, referralPending,
   ] = await Promise.all([
     prisma.transaction.aggregate({ where: { type: 'TRADE_BUY', status: 'SUCCESS' }, _sum: { amountKes: true } }),
@@ -28,6 +29,12 @@ export async function GET(req: NextRequest) {
     prisma.transaction.count({ where: { type: 'DEPOSIT', createdAt: { gte: month } } }),
     prisma.transaction.count({ where: { type: 'DEPOSIT', status: 'SUCCESS', createdAt: { gte: month } } }),
     prisma.transaction.count({ where: { type: 'PAYOUT', status: 'FAILED' } }),
+    // KYC completion
+    prisma.user.count({ where: { kycStatus: 'VERIFIED' } }),
+    // Markets with at least one trade
+    prisma.market.count({ where: { tradeCount: { gt: 0 } } }),
+    // Total markets
+    prisma.market.count(),
     // Referral stats
     prisma.referral.count(),
     prisma.referral.aggregate({ where: { status: 'REWARDED' }, _sum: { referrerRewardKes: true, refereeRewardKes: true } }),
@@ -46,7 +53,9 @@ export async function GET(req: NextRequest) {
     openMarkets,
     pendingKYC,
     pendingResolution,
-    depositSuccessRate: depositTotal > 0 ? parseFloat((depositOk / depositTotal).toFixed(4)) : 0,
+    depositSuccessRate:    depositTotal > 0 ? parseFloat((depositOk / depositTotal).toFixed(4)) : 0,
+    kycCompletionRate:     totalUsers > 0 ? parseFloat((verifiedUsers / totalUsers).toFixed(4)) : 0,
+    marketsActivityRate:   totalMarkets > 0 ? parseFloat((marketsWithActivity / totalMarkets).toFixed(4)) : 0,
     failedPayouts,
     referralStats: {
       totalReferrals:    referralTotal,
