@@ -813,19 +813,19 @@ nav{padding:14px 24px;display:flex;align-items:center;justify-content:space-betw
       <div class="stats-mini">
         <div class="stat-box">
           <div class="sb-label">Win Rate</div>
-          <div class="sb-val green">64%</div>
+          <div class="sb-val green" id="dashWinRate">—</div>
         </div>
         <div class="stat-box">
           <div class="sb-label">Total Won</div>
-          <div class="sb-val gold">KES 8,950</div>
+          <div class="sb-val gold" id="dashTotalWon">—</div>
         </div>
         <div class="stat-box">
           <div class="sb-label">Forecasts</div>
-          <div class="sb-val blue">47</div>
+          <div class="sb-val blue" id="dashForecasts">—</div>
         </div>
         <div class="stat-box">
           <div class="sb-label">Reward Credits</div>
-          <div class="sb-val" style="color:var(--purple)">KES 150</div>
+          <div class="sb-val" style="color:var(--purple)" id="dashRewardBal">—</div>
         </div>
       </div>
 
@@ -1295,10 +1295,7 @@ function sendStkPush() {
         closeModal('depositModal');
         btn.textContent = '📲 Send STK Push to Phone';
         btn.disabled = false;
-        alert('✓ M-Pesa prompt sent! Enter your PIN on your phone.
-
-Your balance will update automatically once confirmed.
-Ref: ' + (res.d.reference || '—'));
+        alert('✓ M-Pesa prompt sent! Enter your PIN on your phone.\n\nYour balance will update automatically once confirmed.\nRef: ' + (res.d.reference || '—'));
       }, 2000);
     } else {
       btn.textContent = '📲 Send STK Push to Phone';
@@ -1357,9 +1354,7 @@ function submitWithdraw() {
       }
       var balEl = document.getElementById('walletBalance');
       if (balEl) balEl.textContent = 'KES ' + newBal.toLocaleString();
-      alert('✓ KES ' + (amt - fee).toLocaleString() + ' sent to your M-Pesa!
-(KES ' + fee + ' processing fee deducted)
-Ref: ' + (res.d.reference || '—'));
+      alert('✓ KES ' + (amt - fee).toLocaleString() + ' sent to your M-Pesa!\n(KES ' + fee + ' processing fee deducted)\nRef: ' + (res.d.reference || '—'));
     } else {
       alert('Withdrawal failed: ' + (res.d.error || 'Please try again.'));
     }
@@ -1473,9 +1468,29 @@ function refreshUserProfile() {
       if (accBal) accBal.textContent = '● KES ' + bal.toLocaleString() + ' available';
       var nameEl = document.getElementById('accUserName');
       if (nameEl && merged.name) nameEl.textContent = merged.name;
+
+      // Also update reward credits balance if in profile
+      if (u.rewardBalance !== undefined) {
+        var rewEl = document.getElementById('dashRewardBal');
+        if (rewEl) rewEl.textContent = 'KES ' + Number(u.rewardBalance || 0).toLocaleString();
+      }
     }
   })
   .catch(function() {}); // silent fail — use cached localStorage value
+
+  // Fetch user stats to populate stat boxes
+  userFetch('/api/users/me/stats')
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    var s = function(id, v) { var el = document.getElementById(id); if (el) el.textContent = v; };
+    var winRate   = Math.round((d.winRate || 0) * 100);
+    var totalWon  = d.totalRealizedPnl > 0 ? d.totalRealizedPnl : (d.wins || 0) * (d.avgWin || 0);
+    var forecasts = d.totalTrades || 0;
+    s('dashWinRate',   winRate + '%');
+    s('dashTotalWon',  'KES ' + Math.round(Math.max(0, totalWon)).toLocaleString());
+    s('dashForecasts', forecasts);
+  })
+  .catch(function() {});
 }
 
 const API_BASE = 'https://api.checkrada.co.ke';

@@ -1078,7 +1078,7 @@ nav a.active { color: #8b5cf6 !important; background: rgba(109,40,217,0.12) !imp
     <div class="ov-card green-tint" style="animation-delay:0s">
       <div class="ov-icon">💰</div>
       <div class="ov-label"><div class="ov-label-dot"></div>Wallet Balance</div>
-      <div class="ov-value" id="walletVal">KES 5,000</div>
+      <div class="ov-value" id="walletVal">KES —</div>
       <div class="ov-change neutral">Available to trade</div>
     </div>
     <div class="ov-card" style="animation-delay:0.07s">
@@ -1234,6 +1234,28 @@ var CHART_DATA = {
 };
 
 function loadPortfolioData() {
+  // 0. Show wallet balance immediately from localStorage, then refresh from API
+  var wEl = document.getElementById('walletVal');
+  if (wEl && radaUser && radaUser.balanceKes !== undefined) {
+    wEl.textContent = 'KES ' + Number(radaUser.balanceKes).toLocaleString();
+  }
+  // Fetch fresh balance from backend
+  userFetch('/api/users/me/profile')
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    if (d.user) {
+      var freshBal = Number(d.user.balanceKes || 0);
+      var wEl2 = document.getElementById('walletVal');
+      if (wEl2) wEl2.textContent = 'KES ' + freshBal.toLocaleString();
+      // Also update localStorage
+      if (radaUser) {
+        radaUser.balanceKes = freshBal;
+        try { localStorage.setItem('rada_user', JSON.stringify(radaUser)); } catch(e) {}
+      }
+    }
+  })
+  .catch(function() {}); // silent — localStorage value already shown
+
   // 1. Positions
   userFetch('/api/users/me/positions')
   .then(function(r) { return r.json(); })
