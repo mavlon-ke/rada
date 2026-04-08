@@ -847,25 +847,8 @@ body::after {
               <thead><tr>
                 <th>Market</th><th>Closed</th><th>Trades</th><th>Action</th>
               </tr></thead>
-              <tbody>
-                <tr onclick="openResolveModal(null,'Finance Bill 2025',204,0,0,0)">
-                  <td><div style="font-weight:600;max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Will Kenya pass the Finance Bill 2025?</div><div style="color:var(--text-dim);font-size:0.7rem;margin-top:2px">POLITICS</div></td>
-                  <td class="mono" style="color:var(--text-dim)">2d ago</td>
-                  <td class="mono">204</td>
-                  <td><button class="act-btn act-amber" onclick="event.stopPropagation();openResolveModal(null,'Finance Bill 2025',204,0,0,0)">Resolve →</button></td>
-                </tr>
-                <tr onclick="openResolveModal(null,'World Cup Qualifiers',156,0,0,0)">
-                  <td><div style="font-weight:600;max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Will mobile money transactions exceed KES 10T in 2025?</div><div style="color:var(--text-dim);font-size:0.7rem;margin-top:2px">TECH</div></td>
-                  <td class="mono" style="color:var(--text-dim)">5d ago</td>
-                  <td class="mono">156</td>
-                  <td><button class="act-btn act-amber" onclick="event.stopPropagation();openResolveModal(null,'World Cup Qualifiers',156,0,0,0)">Resolve →</button></td>
-                </tr>
-                <tr onclick="openResolveModal(null,'NSE Index 2500',89,0,0,0)">
-                  <td><div style="font-weight:600;max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Will NSE 20 close above 2,500 by Dec 2025?</div><div style="color:var(--text-dim);font-size:0.7rem;margin-top:2px">ECONOMY</div></td>
-                  <td class="mono" style="color:var(--text-dim)">1d ago</td>
-                  <td class="mono">89</td>
-                  <td><button class="act-btn act-amber" onclick="event.stopPropagation();openResolveModal(null,'NSE Index 2500',89,0,0,0)">Resolve →</button></td>
-                </tr>
+              <tbody id="dashResolveBody">
+                <tr><td colspan="4" style="text-align:center;color:var(--text-dim);padding:16px;">Loading...</td></tr>
               </tbody>
             </table>
           </div>
@@ -891,30 +874,30 @@ body::after {
               <div>
                 <div style="display:flex;justify-content:space-between;margin-bottom:5px">
                   <span style="font-size:0.75rem;color:var(--text-dim)">KYC Completion Rate</span>
-                  <span class="mono" style="font-size:0.75rem;color:var(--amber)">64%</span>
+                  <span class="mono" style="font-size:0.75rem;color:var(--amber)" id="mKycRate">—</span>
                 </div>
-                <div class="prog-bar"><div class="prog-fill prog-amber" style="width:64%"></div></div>
-              </div>
-              <div>
-                <div style="display:flex;justify-content:space-between;margin-bottom:5px">
-                  <span style="font-size:0.75rem;color:var(--text-dim)">7-Day Active Users</span>
-                  <span class="mono" style="font-size:0.75rem;color:var(--green)">72%</span>
-                </div>
-                <div class="prog-bar"><div class="prog-fill prog-green" style="width:72%"></div></div>
+                <div class="prog-bar"><div class="prog-fill prog-amber" id="mKycBar" style="width:0%"></div></div>
               </div>
               <div>
                 <div style="display:flex;justify-content:space-between;margin-bottom:5px">
                   <span style="font-size:0.75rem;color:var(--text-dim)">Deposit Success Rate</span>
-                  <span class="mono" style="font-size:0.75rem;color:var(--green)">91%</span>
+                  <span class="mono" style="font-size:0.75rem;color:var(--green)" id="mDepositRate">—</span>
                 </div>
-                <div class="prog-bar"><div class="prog-fill prog-green" style="width:91%"></div></div>
+                <div class="prog-bar"><div class="prog-fill prog-green" id="mDepositBar" style="width:0%"></div></div>
               </div>
               <div>
                 <div style="display:flex;justify-content:space-between;margin-bottom:5px">
                   <span style="font-size:0.75rem;color:var(--text-dim)">Markets w/ Activity</span>
-                  <span class="mono" style="font-size:0.75rem;color:var(--amber)">83%</span>
+                  <span class="mono" style="font-size:0.75rem;color:var(--amber)" id="mMktRate">—</span>
                 </div>
-                <div class="prog-bar"><div class="prog-fill prog-amber" style="width:83%"></div></div>
+                <div class="prog-bar"><div class="prog-fill prog-amber" id="mMktBar" style="width:0%"></div></div>
+              </div>
+              <div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+                  <span style="font-size:0.75rem;color:var(--text-dim)">Users Today</span>
+                  <span class="mono" style="font-size:0.75rem;color:var(--green)" id="mTodayUsers">—</span>
+                </div>
+                <div class="prog-bar"><div class="prog-fill prog-green" id="mTodayBar" style="width:0%"></div></div>
               </div>
             </div>
           </div>
@@ -2447,6 +2430,41 @@ function saveMarketEdits() {
 }
 
 
+
+function loadDashResolveWidget() {
+  var tbody = document.getElementById('dashResolveBody');
+  if (!tbody) return;
+
+  adminFetch('/api/admin/markets?status=CLOSED&limit=5')
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    var markets = (d.markets || []).slice(0, 3);
+    if (!markets.length) {
+      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--green);padding:16px;">✓ No markets pending resolution</td></tr>';
+      return;
+    }
+    tbody.innerHTML = markets.map(function(m) {
+      var closedAgo = m.closesAt ? timeAgo(m.closesAt) : '—';
+      return '<tr data-id="' + m.id + '">' +
+        '<td><div style="font-weight:600;max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (m.title||'—') + '</div>' +
+          '<div style="color:var(--text-dim);font-size:0.7rem;margin-top:2px">' + (m.category||'') + '</div></td>' +
+        '<td class="mono" style="color:var(--text-dim)">' + closedAgo + '</td>' +
+        '<td class="mono">' + (m.tradeCount||0) + '</td>' +
+        '<td><button class="act-btn act-amber" data-action="dash-resolve" data-id="' + m.id + '" data-title="' + (m.title||'').replace(/"/g,'&quot;').slice(0,60) + '" data-trades="' + (m.tradeCount||0) + '" data-yes="' + (m.yesPool||0) + '" data-no="' + (m.noPool||0) + '" data-vol="' + (m.totalVolume||0) + '">Resolve →</button></td>' +
+      '</tr>';
+    }).join('');
+
+    tbody.onclick = function(e) {
+      var btn = e.target.closest('button[data-action="dash-resolve"]');
+      if (!btn) return;
+      openResolveModal(btn.dataset.id, btn.dataset.title, parseInt(btn.dataset.trades||0), parseFloat(btn.dataset.yes||0), parseFloat(btn.dataset.no||0), parseFloat(btn.dataset.vol||0));
+    };
+  })
+  .catch(function() {
+    if (tbody) tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#ce1126;padding:16px;">Failed to load</td></tr>';
+  });
+}
+
 // ── RESOLVE PANEL ─────────────────────────────────────────────────────────────
 
 var RESOLVE_DATA = []; // cache for selectOutcome to use real pool values
@@ -3683,6 +3701,25 @@ function loadAdminLog() {
     s('dashPendingKYC',  d.pendingKYC || 0);
     var kycNb = document.getElementById('kycNavBadge');
     if (kycNb) { kycNb.textContent = d.pendingKYC || 0; kycNb.style.display = (d.pendingKYC > 0) ? '' : 'none'; }
+
+    // Platform metrics bars
+    function setBar(valId, barId, rate, suffix) {
+      var pct = Math.round((rate || 0) * 100);
+      var vEl = document.getElementById(valId);
+      var bEl = document.getElementById(barId);
+      if (vEl) vEl.textContent = pct + (suffix || '%');
+      if (bEl) bEl.style.width = pct + '%';
+    }
+    setBar('mKycRate',     'mKycBar',     d.kycCompletionRate,   '%');
+    setBar('mDepositRate', 'mDepositBar', d.depositSuccessRate,  '%');
+    setBar('mMktRate',     'mMktBar',     d.marketsActivityRate, '%');
+    var todayEl = document.getElementById('mTodayUsers');
+    var todayBar = document.getElementById('mTodayBar');
+    if (todayEl) todayEl.textContent = '+' + (d.todayUsers || 0) + ' today';
+    if (todayBar) todayBar.style.width = Math.min(100, (d.todayUsers || 0) * 10) + '%';
+
+    // Load pending resolution widget
+    loadDashResolveWidget();
     renderAdminLog();
   })
   .catch(function() { renderAdminLog(); });
