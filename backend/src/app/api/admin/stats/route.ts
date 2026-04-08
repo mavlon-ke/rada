@@ -32,7 +32,7 @@ export async function GET(req: NextRequest) {
     // KYC completion
     prisma.user.count({ where: { kycStatus: 'VERIFIED' } }),
     // Markets with at least one trade
-    prisma.market.count({ where: { orderstatus: { gt: 0 } } }),
+    prisma.market.count({ where: { marketstatus: { gt: 0 } } }),
     // Total markets
     prisma.market.count(),
     // Referral stats
