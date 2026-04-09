@@ -830,26 +830,9 @@ nav{padding:14px 24px;display:flex;align-items:center;justify-content:space-betw
       </div>
 
       <!-- REFEREE REQUESTS -->
-      <div class="ref-requests">
-        <div class="rr-title">⚖️ Referee Requests <span class="rr-badge">2</span></div>
-
-        <div class="ref-item">
-          <div class="ri-from">Nomination from <strong>Kamau D.</strong> · 2h ago</div>
-          <div class="ri-q">"Will John finish the 10km run under 55 minutes?"</div>
-          <div class="ri-btns">
-            <button class="btn-ref-accept" onclick="handleRef(this, 'accept')">Accept</button>
-            <button class="btn-ref-decline" onclick="handleRef(this, 'decline')">Decline</button>
-          </div>
-        </div>
-
-        <div class="ref-item">
-          <div class="ri-from">Nomination from <strong>Wanjiku N.</strong> · 5h ago</div>
-          <div class="ri-q">"Who will get a promotion first — Grace or Peter?"</div>
-          <div class="ri-btns">
-            <button class="btn-ref-accept" onclick="handleRef(this, 'accept')">Accept</button>
-            <button class="btn-ref-decline" onclick="handleRef(this, 'decline')">Decline</button>
-          </div>
-        </div>
+      <div class="ref-requests" id="refereeSection" style="display:none;">
+        <div class="rr-title">⚖️ Referee Requests <span class="rr-badge" id="refBadge">0</span></div>
+        <div id="refereeList"></div>
       </div>
 
     </div>
@@ -858,20 +841,7 @@ nav{padding:14px 24px;display:flex;align-items:center;justify-content:space-betw
     <div class="main-col">
 
       <!-- DISPUTE COUNTDOWN BANNERS -->
-      <div id="disputeBanners">
-        <div class="dispute-banner">
-          <div class="db-icon">⏳</div>
-          <div class="db-body">
-            <div class="db-label">Friends Challenge — Dispute Window Open</div>
-            "Will Otieno beat me at IEBC?" · Awaiting mutual agreement.
-            Agree now at <strong>5% fee</strong> or admin resolves at <strong>15% fee</strong>.
-          </div>
-          <div>
-            <div class="db-countdown" id="countdown1">31:14:22</div>
-            <div class="db-countdown-sub">remaining</div>
-          </div>
-        </div>
-      </div>
+      <div id="disputeBanners"></div>
 
       <!-- TABS -->
       <div class="tab-row">
@@ -890,209 +860,21 @@ nav{padding:14px 24px;display:flex;align-items:center;justify-content:space-betw
             <div class="pt-col">Status</div>
             <div class="pt-col">P&L</div>
           </div>
-
-          <div class="pt-row">
-            <div>
-              <div class="pt-market">Will CBK hold interest rates in April?</div>
-              <div class="pt-cat">Economy · Closes Apr 5</div>
-            </div>
-            <div class="pt-side side-yes">YES</div>
-            <div class="pt-stake">KES 500</div>
-            <div><span class="status-badge s-active">Active</span></div>
-            <div class="pt-pnl pnl-zero">—</div>
-          </div>
-
-          <div class="pt-row">
-            <div>
-              <div class="pt-market">Will Ruto announce cabinet reshuffle before June?</div>
-              <div class="pt-cat">Politics · Closed</div>
-            </div>
-            <div class="pt-side side-yes">YES</div>
-            <div class="pt-stake">KES 1,000</div>
-            <div><span class="status-badge s-won">Won ✓</span></div>
-            <div class="pt-pnl pnl-pos">+KES 850</div>
-          </div>
-
-          <div class="pt-row">
-            <div>
-              <div class="pt-market">Will Nairobi receive 3+ rainy days this week?</div>
-              <div class="pt-cat">Weather · Closed</div>
-            </div>
-            <div class="pt-side side-no">NO</div>
-            <div class="pt-stake">KES 300</div>
-            <div><span class="status-badge s-lost">Lost ✗</span></div>
-            <div class="pt-pnl pnl-neg">-KES 300</div>
-          </div>
-
-          <div class="pt-row">
-            <div>
-              <div class="pt-market">Will AI replace most data entry jobs in Kenya by 2027?</div>
-              <div class="pt-cat">Tech · Closes Dec 31</div>
-            </div>
-            <div class="pt-side side-yes">YES</div>
-            <div class="pt-stake">KES 200</div>
-            <div><span class="status-badge s-active">Active</span></div>
-            <div class="pt-pnl pnl-zero">—</div>
-          </div>
-
-          <div class="pt-row">
-            <div>
-              <div class="pt-market">Will Nameless release a new album in 2026?</div>
-              <div class="pt-cat">Entertainment · Active</div>
-            </div>
-            <div class="pt-side side-yes">YES</div>
-            <div class="pt-stake">KES 150</div>
-            <div><span class="status-badge s-active">Active</span></div>
-            <div class="pt-pnl pnl-zero">—</div>
-          </div>
-
-          <div class="pt-row">
-            <div>
-              <div class="pt-market">Will KRA hit its March tax collection target?</div>
-              <div class="pt-cat">Economy · Closed</div>
-            </div>
-            <div class="pt-side side-no">NO</div>
-            <div class="pt-stake">KES 500</div>
-            <div><span class="status-badge s-won">Won ✓</span></div>
-            <div class="pt-pnl pnl-pos">+KES 440</div>
-          </div>
-
+          <div id="forecastsList"><div style="text-align:center;padding:24px;color:#9284b8;">Loading...</div></div>
         </div>
       </div>
-
       <!-- FRIENDS CHALLENGES -->
       <div id="tab-challenges" style="display:none;">
-        <div style="display:flex;flex-direction:column;gap:12px;">
-
-          <div class="fc-card" style="border-color:rgba(244,185,66,0.2);">
-            <div class="fc-header">
-              <div class="fc-q">"Will Otieno beat me at IEBC rematch this Friday?"</div>
-              <div class="fc-timer">
-                <div class="fc-timer-val" style="color:var(--gold)">31:14</div>
-                <div class="fc-timer-label">dispute hrs</div>
-              </div>
-            </div>
-            <div class="fc-info">
-              <span class="fc-pill" style="background:var(--gold-dim);color:var(--gold);border-color:rgba(244,185,66,0.2);">⚠ Dispute Window</span>
-              <span class="fc-pill">Pool: KES 1,000</span>
-              <span class="fc-pill">No Referee</span>
-              <span class="fc-pill">Fee: 5% → 15%</span>
-            </div>
-            <div class="fc-actions">
-              <button class="btn-sm btn-green" onclick="window.location='rada-friends.html'">Resolve Now (5%)</button>
-              <button class="btn-sm btn-ghost">View Details</button>
-            </div>
-          </div>
-
-          <div class="fc-card">
-            <div class="fc-header">
-              <div class="fc-q">"Will I complete my Duolingo 30-day streak?"</div>
-              <div class="fc-timer">
-                <div class="fc-timer-val" style="color:var(--blue)">18 days</div>
-                <div class="fc-timer-label">remaining</div>
-              </div>
-            </div>
-            <div class="fc-info">
-              <span class="fc-pill" style="background:var(--ke-green-glow);color:var(--ke-green);border-color:rgba(109,40,217,0.14);">● Active</span>
-              <span class="fc-pill">Pool: KES 400</span>
-              <span class="fc-pill">Referee: Amina O.</span>
-            </div>
-            <div class="fc-actions">
-              <button class="btn-sm btn-ghost" onclick="radaDashShare()">⤴ Share</button>
-              <button class="btn-sm btn-ghost">View Details</button>
-            </div>
-          </div>
-
-          <div class="fc-card" style="opacity:0.65;">
-            <div class="fc-header">
-              <div class="fc-q">"Will our team hit Q1 KES 2M target?"</div>
-              <div class="fc-timer">
-                <div class="fc-timer-val" style="color:var(--ke-green)">Won ✓</div>
-                <div class="fc-timer-label">+KES 950</div>
-              </div>
-            </div>
-            <div class="fc-info">
-              <span class="fc-pill">Settled Feb 28</span>
-              <span class="fc-pill">Pool: KES 2,000</span>
-            </div>
-            <div class="fc-actions">
-              <button class="btn-sm btn-ghost">View Receipt</button>
-            </div>
-          </div>
-
+        <div id="challengesList" style="display:flex;flex-direction:column;gap:12px;">
+          <div style="text-align:center;padding:24px;color:#9284b8;">Loading...</div>
         </div>
       </div>
-
       <!-- TRANSACTIONS -->
       <div id="tab-transactions" style="display:none;">
-        <div class="pred-table">
-          <div class="tx-row">
-            <div class="tx-icon tx-icon-dep">📥</div>
-            <div class="tx-body">
-              <div class="tx-desc">M-Pesa Deposit</div>
-              <div class="tx-sub">Mar 5 · Mpesa Ref: SI90WT3L</div>
-            </div>
-            <div class="tx-amount pos">+KES 2,000</div>
-          </div>
-          <div class="tx-row">
-            <div class="tx-icon tx-icon-win">🏆</div>
-            <div class="tx-body">
-              <div class="tx-desc">Forecast Payout — KRA Tax Target</div>
-              <div class="tx-sub">Mar 4 · Economy Market</div>
-            </div>
-            <div class="tx-amount pos">+KES 440</div>
-          </div>
-          <div class="tx-row">
-            <div class="tx-icon" style="background:var(--ke-red-dim);border:1px solid rgba(206,17,38,0.15);">📤</div>
-            <div class="tx-body">
-              <div class="tx-desc">Forecast Stake — Nairobi Rainfall</div>
-              <div class="tx-sub">Mar 2 · Weather Market</div>
-            </div>
-            <div class="tx-amount neg">-KES 300</div>
-          </div>
-          <div class="tx-row">
-            <div class="tx-icon tx-icon-rew">🎁</div>
-            <div class="tx-body">
-              <div class="tx-desc">Market Suggestion Reward</div>
-              <div class="tx-sub">Feb 28 · Your "KRA Tax Target" market was approved by Admin</div>
-            </div>
-            <div class="tx-amount" style="color:var(--purple)">+KES 50</div>
-          </div>
-          <div class="tx-row">
-            <div class="tx-icon tx-icon-win">🏆</div>
-            <div class="tx-body">
-              <div class="tx-desc">Forecast Payout — Ruto Cabinet Reshuffle</div>
-              <div class="tx-sub">Feb 24 · Politics Market</div>
-            </div>
-            <div class="tx-amount pos">+KES 850</div>
-          </div>
-          <div class="tx-row">
-            <div class="tx-icon tx-icon-dep">📥</div>
-            <div class="tx-body">
-              <div class="tx-desc">M-Pesa Deposit</div>
-              <div class="tx-sub">Feb 20 · Mpesa Ref: SG47XT1K</div>
-            </div>
-            <div class="tx-amount pos">+KES 3,000</div>
-          </div>
-          <div class="tx-row">
-            <div class="tx-icon tx-icon-fee">🏛️</div>
-            <div class="tx-body">
-              <div class="tx-desc">Friends Dispute — Admin Resolution Fee</div>
-              <div class="tx-sub">Feb 18 · 15% fee applied · "IEBC Rematch Round 1"</div>
-            </div>
-            <div class="tx-amount neg">-KES 150</div>
-          </div>
-          <div class="tx-row">
-            <div class="tx-icon tx-icon-wit">📤</div>
-            <div class="tx-body">
-              <div class="tx-desc">M-Pesa Withdrawal</div>
-              <div class="tx-sub">Feb 15 · To +254712***456</div>
-            </div>
-            <div class="tx-amount neg">-KES 2,000</div>
-          </div>
+        <div id="dashTxnList" class="pred-table">
+          <div style="text-align:center;padding:24px;color:#9284b8;">Loading...</div>
         </div>
       </div>
-
     </div>
   </div>
 </div>
@@ -1202,11 +984,22 @@ nav{padding:14px 24px;display:flex;align-items:center;justify-content:space-betw
 <script>
 // ── TABS ──────────────────────────────────────────────────────────────────────
 function switchTab(btn, tab) {
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(function(b) { b.classList.remove('active'); });
   btn.classList.add('active');
-  ['predictions','challenges','transactions'].forEach(id => {
-    document.getElementById(`tab-${id}`).style.display = id === tab ? '' : 'none';
+  var panels = ['predictions','challenges','transactions'];
+  panels.forEach(function(p) {
+    var el = document.getElementById('tab-' + p);
+    if (el) el.style.display = p === tab ? '' : 'none';
   });
+  // Lazy load on first switch
+  if (tab === 'challenges' && !document.getElementById('challengesList').dataset.loaded) {
+    document.getElementById('challengesList').dataset.loaded = '1';
+    loadMyChallenges();
+  }
+  if (tab === 'transactions' && !document.getElementById('dashTxnList').dataset.loaded) {
+    document.getElementById('dashTxnList').dataset.loaded = '1';
+    loadDashTransactions();
+  }
 }
 
 // ── MODALS ────────────────────────────────────────────────────────────────────
@@ -1426,8 +1219,195 @@ var radaUser = null;
 try { radaUser = JSON.parse(localStorage.getItem('rada_user') || 'null'); } catch(e) {}
 var isLoggedIn = !!radaUser;
 
+
+// ── DASHBOARD DATA LOADERS ────────────────────────────────────────────────────
+
+function loadDashboardData() {
+  loadMyForecasts();
+  loadRefereeQueue();
+  // Challenges and transactions loaded lazily on tab switch
+}
+
+function loadMyForecasts() {
+  var el = document.getElementById('forecastsList');
+  if (!el) return;
+  userFetch('/api/users/me/positions')
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    var positions = d.positions || [];
+    if (!positions.length) {
+      el.innerHTML = '<div style="text-align:center;padding:32px;color:#9284b8;font-size:0.82rem;">No forecasts yet. <a href="rada-markets.html" style="color:var(--primary)">Browse markets</a></div>';
+      return;
+    }
+    el.innerHTML = positions.map(function(p) {
+      var market = p.market || {};
+      var status = market.status || 'OPEN';
+      var outcome = market.outcome;
+      var side   = p.side;
+      var won    = outcome === side;
+      var settled = status === 'RESOLVED' || status === 'CANCELLED';
+      var staked  = Math.round(p.shares * p.avgPrice);
+      var pnl     = p.unrealizedPnl ? Number(p.unrealizedPnl) : 0;
+      var pnlStr  = settled ? (won ? '+KES ' + Math.abs(Math.round(pnl)).toLocaleString() : '-KES ' + staked.toLocaleString()) : '—';
+      var pnlCls  = settled ? (won ? 'pnl-pos' : 'pnl-neg') : 'pnl-zero';
+      var bCls    = settled ? (won ? 's-won' : 's-lost') : 's-active';
+      var bTxt    = settled ? (won ? 'Won ✓' : 'Lost ✗') : 'Active';
+      var closes  = market.closesAt ? ' · Closes ' + new Date(market.closesAt).toLocaleDateString('en-KE',{month:'short',day:'numeric'}) : '';
+      var catLine = (market.category || '') + (status !== 'OPEN' ? ' · Closed' : closes);
+      return '<div class="pt-row">' +
+        '<div><div class="pt-market">' + (market.title || '—') + '</div><div class="pt-cat">' + catLine + '</div></div>' +
+        '<div class="pt-side side-' + side.toLowerCase() + '">' + side + '</div>' +
+        '<div class="pt-stake">KES ' + staked.toLocaleString() + '</div>' +
+        '<div><span class="status-badge ' + bCls + '">' + bTxt + '</span></div>' +
+        '<div class="pt-pnl ' + pnlCls + '">' + pnlStr + '</div>' +
+      '</div>';
+    }).join('');
+  })
+  .catch(function() {
+    var el2 = document.getElementById('forecastsList');
+    if (el2) el2.innerHTML = '<div style="text-align:center;padding:24px;color:#9284b8;">Could not load forecasts.</div>';
+  });
+}
+
+function loadMyChallenges() {
+  var el = document.getElementById('challengesList');
+  var db = document.getElementById('disputeBanners');
+  if (!el) return;
+  userFetch('/api/challenges')
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    var challenges = d.challenges || [];
+    if (!challenges.length) {
+      el.innerHTML = '<div style="text-align:center;padding:32px;color:#9284b8;font-size:0.82rem;">No challenges yet. <a href="rada-friends.html" style="color:var(--primary)">Create one</a></div>';
+      return;
+    }
+    var banners = [];
+    el.innerHTML = challenges.map(function(c) {
+      var pool = Number(c.totalPool);
+      var isD  = c.status === 'DISPUTED';
+      var isR  = c.status === 'RESOLVED';
+      var expMs = c.eventExpiresAt ? new Date(c.eventExpiresAt).getTime() - Date.now() : 0;
+      var hrs   = expMs > 0 ? Math.round(expMs / 3600000) : 0;
+      var days  = Math.floor(hrs / 24);
+      var timeStr   = isR ? 'Settled' : isD ? hrs + ' dispute hrs' : days > 0 ? days + ' days' : hrs + 'h';
+      var timeColor = isD ? 'var(--gold)' : isR ? 'var(--ke-green)' : 'var(--blue)';
+      var pillSt = isD
+        ? '<span class="fc-pill" style="background:var(--gold-dim);color:var(--gold);">⚠ Dispute Window</span>'
+        : isR ? '<span class="fc-pill" style="color:var(--ke-green);">✓ Settled</span>'
+        : '<span class="fc-pill" style="color:var(--ke-green);">● Active</span>';
+      var refPill = c.referee ? '<span class="fc-pill">Referee: ' + (c.referee.name || c.referee.phone) + '</span>' : '<span class="fc-pill">No Referee</span>';
+      var acts = isD
+        ? '<button class="btn-sm btn-green" data-nav="rada-friends.html">Resolve Now (5%)</button><button class="btn-sm btn-ghost" data-nav="rada-friends.html">View Details</button>'
+        : isR ? '<button class="btn-sm btn-ghost" data-nav="rada-friends.html">View Receipt</button>'
+        : '<button class="btn-sm btn-ghost" data-share="1">Share</button><button class="btn-sm btn-ghost" data-nav="rada-friends.html">View Details</button>';
+      if (isD && db) {
+        var h2 = Math.floor(expMs/3600000), m2 = Math.floor((expMs%3600000)/60000), s2 = Math.floor((expMs%60000)/1000);
+        banners.push('<div class="dispute-banner"><div class="db-icon">⏳</div><div class="db-body"><div class="db-label">Friends Challenge — Dispute Window Open</div>"' + c.question + '" · Awaiting mutual agreement. Agree now at <strong>5% fee</strong> or admin resolves at <strong>15% fee</strong>.</div><div><div class="db-countdown">' + String(h2).padStart(2,'0') + ':' + String(m2).padStart(2,'0') + ':' + String(s2).padStart(2,'0') + '</div><div class="db-countdown-sub">remaining</div></div></div>');
+      }
+      return '<div class="fc-card' + (isD ? '" style="border-color:rgba(244,185,66,0.2);"' : isR ? '" style="opacity:0.65;"' : '"') + '>' +
+        '<div class="fc-header"><div class="fc-q">"' + c.question + '"</div><div class="fc-timer"><div class="fc-timer-val" style="color:' + timeColor + '">' + timeStr + '</div><div class="fc-timer-label">' + (isR ? '+KES ' + Math.round(pool*0.85).toLocaleString() : 'remaining') + '</div></div></div>' +
+        '<div class="fc-info">' + pillSt + '<span class="fc-pill">Pool: KES ' + pool.toLocaleString() + '</span>' + refPill + (isD ? '<span class="fc-pill">Fee: 5% → 15%</span>' : '') + '</div>' +
+        '<div class="fc-actions">' + acts + '</div>' +
+      '</div>';
+    }).join('');
+    if (db) db.innerHTML = banners.join('');
+    // Event delegation for navigation buttons
+    var el2 = document.getElementById('challengesList');
+    if (el2) el2.onclick = function(e) {
+      var btn = e.target.closest('button[data-nav]');
+      if (btn) window.location.href = btn.dataset.nav;
+      var shareBtn = e.target.closest('button[data-nav-share]');
+      if (shareBtn) radaDashShare();
+    };
+  })
+  .catch(function() {
+    var el2 = document.getElementById('challengesList');
+    if (el2) el2.innerHTML = '<div style="text-align:center;padding:24px;color:#9284b8;">Could not load challenges.</div>';
+  });
+}
+
+function loadDashTransactions() {
+  var el = document.getElementById('dashTxnList');
+  if (!el) return;
+  userFetch('/api/users/me/portfolio-history?period=30d')
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    var txns = d.transactions || [];
+    if (!txns.length) {
+      el.innerHTML = '<div style="text-align:center;padding:32px;color:#9284b8;font-size:0.82rem;">No transactions in the last 30 days.</div>';
+      return;
+    }
+    var icons = { DEPOSIT:'📥', PAYOUT:'🏆', TRADE_BUY:'🔄', TRADE_SELL:'🔄', WITHDRAWAL:'📤', REFUND:'↩️', CHALLENGE_PAYOUT:'🏆', SUGGESTION_REWARD:'🎁', CREATOR_BOUNTY:'💰', REFERRAL_REWARD:'🎁' };
+    var bgMap = { DEPOSIT:'tx-icon-dep', PAYOUT:'tx-icon-win', WITHDRAWAL:'tx-icon-wit', SUGGESTION_REWARD:'tx-icon-rew', CREATOR_BOUNTY:'tx-icon-rew', REFERRAL_REWARD:'tx-icon-rew', CHALLENGE_PAYOUT:'tx-icon-win' };
+    var credits = ['DEPOSIT','PAYOUT','REFUND','CHALLENGE_PAYOUT','SUGGESTION_REWARD','CREATOR_BOUNTY','REFERRAL_REWARD'];
+    el.innerHTML = txns.map(function(t) {
+      var isIn  = credits.includes(t.type);
+      var amt   = Number(t.amountKes);
+      var amtStr = (isIn ? '+' : '-') + 'KES ' + amt.toLocaleString();
+      var desc  = t.description || t.type.replace(/_/g,' ');
+      var ago   = t.createdAt ? new Date(t.createdAt).toLocaleDateString('en-KE',{month:'short',day:'numeric'}) : '';
+      var ref   = t.mpesaRef ? ' · Mpesa Ref: ' + t.mpesaRef : '';
+      return '<div class="tx-row">' +
+        '<div class="tx-icon ' + (bgMap[t.type]||'') + '">' + (icons[t.type]||'💳') + '</div>' +
+        '<div class="tx-body"><div class="tx-desc">' + desc + '</div><div class="tx-sub">' + ago + ref + '</div></div>' +
+        '<div class="tx-amount ' + (isIn?'pos':'neg') + '">' + amtStr + '</div>' +
+      '</div>';
+    }).join('');
+  })
+  .catch(function() {
+    var el2 = document.getElementById('dashTxnList');
+    if (el2) el2.innerHTML = '<div style="text-align:center;padding:24px;color:#9284b8;">Could not load transactions.</div>';
+  });
+}
+
+function loadRefereeQueue() {
+  userFetch('/api/users/me/referee-queue')
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    var queue   = d.queue || [];
+    var section = document.getElementById('refereeSection');
+    var list    = document.getElementById('refereeList');
+    var badge   = document.getElementById('refBadge');
+    if (!queue.length) { if (section) section.style.display = 'none'; return; }
+    if (section) section.style.display = '';
+    if (badge)   badge.textContent = queue.length;
+    if (list) {
+      list.innerHTML = queue.map(function(c) {
+        var from = c.userA ? (c.userA.name || c.userA.phone) : 'Someone';
+        var ago  = c.createdAt ? Math.round((Date.now() - new Date(c.createdAt).getTime())/3600000) + 'h ago' : '';
+        return '<div class="ref-item">' +
+          '<div class="ri-from">Nomination from <strong>' + from + '</strong> · ' + ago + '</div>' +
+          '<div class="ri-q">"' + c.question + '"</div>' +
+          '<div class="ri-btns">' +
+            '<button class="btn-ref-accept" data-cid="' + c.id + '" data-action="ACCEPT">Accept</button>' +
+            '<button class="btn-ref-decline" data-cid="' + c.id + '" data-action="DECLINE">Decline</button>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+      // Add event delegation so data-action buttons work
+      if (list) list.onclick = function(e) {
+        var btn = e.target.closest('button[data-cid]');
+        if (btn) handleRefById(btn, btn.dataset.action);
+      };
+    }
+  })
+  .catch(function() {});
+}
+
+function handleRefById(btn, action) {
+  var cid = btn.dataset.cid;
+  btn.disabled = true;
+  userFetch('/api/users/me/referee-queue', {
+    method: 'POST',
+    body:   JSON.stringify({ challengeId: cid, action: action }),
+  })
+  .then(function(r) { if (r.ok) { btn.closest('.ref-item').remove(); loadRefereeQueue(); } })
+  .catch(function() { btn.disabled = false; });
+}
+
 // Refresh user balance + profile from backend on every page load
 refreshUserProfile();
+loadDashboardData();
 
 // Open deposit/withdraw modal if redirected from another page
 (function() {
