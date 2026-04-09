@@ -785,7 +785,7 @@ nav{padding:14px 24px;display:flex;align-items:center;justify-content:space-betw
     <a href="rada-about.html">About</a>
   </nav>
   <div class="h-actions">
-    <div class="h-balance"><div class="h-dot"></div><span>KES <strong id="balDisplay">3,420</strong></span></div>
+    <div class="h-balance"><div class="h-dot"></div><span>KES <strong id="balDisplay">0</strong></span></div>
     <button class="h-btn h-btn-ghost" onclick="window.location='rada-auth.html'">Log Out</button>
   </div>
 </header>
@@ -801,7 +801,7 @@ nav{padding:14px 24px;display:flex;align-items:center;justify-content:space-betw
       <!-- WALLET -->
       <div class="wallet-card">
         <div class="wc-label" style="color:rgba(0,0,0,0.55);letter-spacing:0.07em;font-size:0.66rem;text-transform:uppercase;font-weight:700;">Wallet Balance</div>
-        <div class="wc-balance" style="color:#000;" id="walletBalance">KES 3,420</div>
+        <div class="wc-balance" style="color:#000;" id="walletBalance">KES —</div>
         <div class="wc-balance-sub" style="color:rgba(0,0,0,0.45);">≈ $26.30 USD · Available to forecast</div>
         <div class="wc-btns">
           <button class="btn-wallet btn-deposit" onclick="openModal('depositModal')">＋ Deposit</button>
@@ -968,7 +968,7 @@ nav{padding:14px 24px;display:flex;align-items:center;justify-content:space-betw
     <div class="modal-body">
       <div style="background:var(--bg3);border-radius:10px;padding:14px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;">
         <span style="font-size:0.78rem;color:var(--text-mid);">Available balance</span>
-        <span style="font-family:var(--mono);font-size:1.1rem;font-weight:700;color:var(--ke-green);">KES 3,420</span>
+        <span style="font-family:var(--mono);font-size:1.1rem;font-weight:700;color:var(--ke-green);" id="withdrawAvailBal">KES —</span>
       </div>
       <label class="mf-label">Amount to Withdraw</label>
       <input class="mf-input" id="withdrawAmount" type="number" placeholder="Enter amount" min="100" oninput="calcWithdraw()">
@@ -1198,7 +1198,7 @@ function radaDashShare() {
 
 
 
-<script>function logOut(){localStorage.removeItem('rada_user');closeAccountTray();window.location.href='rada-auth.html';}</script>
+<script>function logOut(){localStorage.removeItem('rada_user');localStorage.removeItem('rada_token');closeAccountTray();window.location.href='rada-auth.html';}</script>
 
 <div class="m-bot-nav" id="mBotNav"><button class="m-bot-item" id="botHomeBtn" onclick="botHomeClick()"><span class="mbi">🏠</span><span>Home</span></button><button class="m-bot-item" id="botSearchBtn" onclick="botSearchClick()"><span class="mbi">🔍</span><span>Search Events</span></button><button class="m-bot-fab" onclick="openPredictSheet()"><div class="m-fab-circle">✦<div class="m-fab-badge" id="mFabBadge">0</div></div><span>Predict</span></button><button class="m-bot-item" id="botLiveBtn" onclick="botLiveClick()"><span class="mbi">📡</span><span>Live</span></button><button class="m-bot-item" id="botAccountBtn" onclick="openAccountTray()"><span class="mbi">👤</span><span>Account</span></button></div>
 <div class="notif-overlay" id="notifOverlay" onclick="if(event.target===this)closeNotifTray()"><div class="notif-tray"><div class="notif-tray-head"><div class="notif-tray-title">🔔 Notifications</div><button class="notif-mark-read" onclick="markAllRead()">Mark all read</button></div><div class="notif-tray-body" id="notifTrayBody"><div class="notif-empty">Loading...</div></div></div></div>
@@ -1207,7 +1207,7 @@ function radaDashShare() {
 <div class="account-overlay" id="accountOverlay" onclick="if(event.target===this)closeAccountTray()"><div class="account-sheet"><div class="acc-sheet-handle"></div><div id="accLoggedOut"><div class="acc-head"><div class="acc-avatar">👤</div><div><div class="acc-name-txt">Welcome to CheckRada</div><div class="acc-bal-txt" style="color:#9284b8">Sign in to start forecasting</div></div></div><div class="acc-row" onclick="closeAccountTray();window.location.href='rada-auth.html'"><span class="acc-row-icon">🔑</span><span class="acc-row-label">Log In</span><span class="acc-row-arrow">&#8250;</span></div><div class="acc-row" onclick="closeAccountTray();window.location.href='rada-auth.html'"><span class="acc-row-icon">✨</span><span class="acc-row-label">Create Account</span><span class="acc-row-arrow">&#8250;</span></div><div class="acc-row" onclick="closeAccountTray();window.location.href='rada-about.html'"><span class="acc-row-icon">ℹ️</span><span class="acc-row-label">About CheckRada</span><span class="acc-row-arrow">&#8250;</span></div>
 <div class="acc-row" onclick="closeAccountTray();openGetHelp()"><span class="acc-row-icon">🆘</span><span class="acc-row-label">Get Help</span><span class="acc-row-arrow">&#8250;</span></div>
 </div><div id="accLoggedIn" style="display:none"><div class="acc-head"><div class="acc-avatar">🧑🏾</div><div><div class="acc-name-txt" id="accUserName">Forecaster</div><div class="acc-bal-txt" id="accUserBal">&#9679; KES 0 available</div></div></div><div class="acc-row" onclick="closeAccountTray();window.location.href='rada-portfolio.html'"><span class="acc-row-icon">◎</span><span class="acc-row-label">My Portfolio</span><span class="acc-row-arrow">&#8250;</span></div><div class="acc-row" onclick="closeAccountTray()"><span class="acc-row-icon">📥</span><span class="acc-row-label">Deposit via M-Pesa</span><span class="acc-row-arrow">&#8250;</span></div><div class="acc-row" onclick="closeAccountTray()"><span class="acc-row-icon">📤</span><span class="acc-row-label">Withdraw</span><span class="acc-row-arrow">&#8250;</span></div><div class="acc-row acc-refer-row" onclick="openReferSheet()" style="display:none"><span class="acc-row-icon">🎁</span><span class="acc-row-label">Refer a Friend</span><span class="acc-row-arrow">&#8250;</span></div><div class="acc-row" onclick="closeAccountTray();openGetHelp()"><span class="acc-row-icon">🆘</span><span class="acc-row-label">Get Help</span><span class="acc-row-arrow">&#8250;</span></div>
-<div class="acc-row danger" onclick="logOut()"><span class="acc-row-icon">🚪</span><span class="acc-row-label">Log Out</span><span class="acc-row-arrow">&#8250;</span></div></div></div></div><script>function logOut(){localStorage.removeItem("rada_user");closeAccountTray();window.location.href="rada-auth.html";}</script>
+<div class="acc-row danger" onclick="logOut()"><span class="acc-row-icon">🚪</span><span class="acc-row-label">Log Out</span><span class="acc-row-arrow">&#8250;</span></div></div></div></div><script>function logOut(){localStorage.removeItem("rada_user");localStorage.removeItem("rada_token");closeAccountTray();window.location.href="rada-auth.html";}</script>
 
 <script>
 /* ════════════════════════════════════════════════════════════════════
@@ -1217,7 +1217,7 @@ function radaDashShare() {
 // ── Auth state ────────────────────────────────────────────────────────────────
 var radaUser = null;
 try { radaUser = JSON.parse(localStorage.getItem('rada_user') || 'null'); } catch(e) {}
-var isLoggedIn = !!radaUser;
+var isLoggedIn = !!(radaUser && localStorage.getItem('rada_token'));
 
 
 // ── DASHBOARD DATA LOADERS ────────────────────────────────────────────────────
@@ -1444,6 +1444,8 @@ function refreshUserProfile() {
         var el = document.getElementById(id);
         if (el) el.textContent = (id === 'walletBalance' ? 'KES ' : '') + bal.toLocaleString();
       });
+      var wab = document.getElementById('withdrawAvailBal');
+      if (wab) wab.textContent = 'KES ' + bal.toLocaleString();
       var accBal = document.getElementById('accUserBal');
       if (accBal) accBal.textContent = '● KES ' + bal.toLocaleString() + ' available';
       var nameEl = document.getElementById('accUserName');
