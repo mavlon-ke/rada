@@ -733,6 +733,15 @@ var _origVerifyOTP = typeof verifyOTP !== 'undefined' ? verifyOTP : null;
     if (banner) banner.classList.add('show');
   });
 
+  // Show session expired message if redirected
+  if (window.location.search.includes('reason=session_expired')) {
+    var banner = document.createElement('div');
+    banner.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#ce1126;color:#fff;text-align:center;padding:12px 16px;font-size:0.82rem;font-weight:600;z-index:999;';
+    banner.textContent = 'Your session expired. Please log in again.';
+    document.body.appendChild(banner);
+    setTimeout(function() { banner.remove(); }, 5000);
+  }
+
   // Clean URL without reload
   history.replaceState(null, '', 'rada-auth.html');
 })();

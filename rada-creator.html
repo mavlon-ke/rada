@@ -1229,7 +1229,16 @@ function userFetch(path, options) {
   opts.credentials = 'include';
   opts.headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers || {});
   if (token) opts.headers['Authorization'] = 'Bearer ' + token;
-  return fetch(API_BASE + path, opts);
+  return fetch(API_BASE + path, opts).then(function(r) {
+    if (r.status === 401) {
+      // Token expired or invalid — clear and redirect to login
+      localStorage.removeItem('rada_token');
+      localStorage.removeItem('rada_user');
+      window.location.href = 'rada-auth.html?reason=session_expired';
+      return new Promise(function() {}); // never resolves — redirect is happening
+    }
+    return r;
+  });
 }
 
 // ── Referral config (loaded async) ───────────────────────────────────────────

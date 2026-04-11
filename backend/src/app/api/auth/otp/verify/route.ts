@@ -113,7 +113,7 @@ export const POST = withErrorHandling(async (req: NextRequest) => {
   const token = await new SignJWT({ sub: user.id, phone: user.phone })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
-    .setExpirationTime('24h')
+    .setExpirationTime('7d')
     .sign(JWT_SECRET);
 
   const freshUser = await prisma.user.findUnique({
