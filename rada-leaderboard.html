@@ -896,27 +896,27 @@ nav a.active { color: #8b5cf6 !important; background: rgba(109,40,217,0.12) !imp
   </div>
 
   <!-- MY RANK BANNER -->
-  <div class="my-rank-banner">
+  <div class="my-rank-banner" id="myRankBanner" style="display:none;">
     <div>
       <div class="my-rank-label">Your Rank</div>
-      <div class="my-rank-num">#14</div>
+      <div class="my-rank-num" id="myRankNum">#—</div>
     </div>
     <div class="my-rank-info">
-      <div class="my-rank-name">You · Test User</div>
+      <div class="my-rank-name" id="myRankName">You</div>
       <div class="my-rank-stats">
-        <div class="my-stat"><span class="my-stat-val" style="color:var(--green)">+KES 1,240</span><span class="my-stat-label">Profit</span></div>
-        <div class="my-stat"><span class="my-stat-val">68%</span><span class="my-stat-label">Win Rate</span></div>
-        <div class="my-stat"><span class="my-stat-val">25</span><span class="my-stat-label">Trades</span></div>
-        <div class="my-stat"><span class="my-stat-val" style="color:var(--gold)">🔥 5</span><span class="my-stat-label">Streak</span></div>
+        <div class="my-stat"><span class="my-stat-val" id="myRankProfit" style="color:var(--green)">+KES 0</span><span class="my-stat-label">Profit</span></div>
+        <div class="my-stat"><span class="my-stat-val" id="myRankWr">0%</span><span class="my-stat-label">Win Rate</span></div>
+        <div class="my-stat"><span class="my-stat-val" id="myRankTrades">0</span><span class="my-stat-label">Trades</span></div>
+        <div class="my-stat"><span class="my-stat-val" style="color:var(--text-dim)" id="myRankVol">—</span><span class="my-stat-label">Volume</span></div>
       </div>
     </div>
-    <div class="rank-progress">
+    <div class="rank-progress" id="myRankProgress" style="display:none;">
       <div class="rank-progress-label">
-        <span>To #13</span>
-        <span style="color:var(--green)">KES 340 away</span>
+        <span id="myRankProgressLabel">To #—</span>
+        <span style="color:var(--green)" id="myRankProgressAmt">—</span>
       </div>
       <div class="rank-progress-bar">
-        <div class="rank-progress-fill" style="width:72%"></div>
+        <div class="rank-progress-fill" id="myRankProgressFill" style="width:0%"></div>
       </div>
     </div>
   </div>
@@ -967,32 +967,71 @@ function loadLeaderboard(period) {
   userFetch(url)
   .then(function(r) { return r.json(); })
   .then(function(d) {
-    var users = d.users || [];
-    var myId  = (typeof radaUser !== 'undefined' && radaUser) ? radaUser.id : null;
+    var entries = d.entries || [];
+    var myId    = (typeof radaUser !== 'undefined' && radaUser) ? radaUser.id : null;
 
-    TRADERS = users.map(function(u, i) {
+    TRADERS = entries.map(function(u) {
       return {
-        rank:   i + 1,
+        rank:   u.rank,
         cat:    u.topCategory || 'GENERAL',
-        prev:   i + 1,
+        prev:   u.rank,
         name:   u.name || 'Forecaster',
-        emoji:  u.id === myId ? '😊' : '🧑🏾',
-        profit: Math.round(u.totalPayout || 0),
-        trades: u.tradeCount || 0,
+        emoji:  u.isMe ? '😊' : '🧑🏾',
+        profit: Math.round(u.profit || 0),
+        trades: u.trades || 0,
         wr:     u.winRate || 0,
-        vol:    Math.round(u.tradeVolume || 0),
-        badges: u.id === myId ? ['🇰🇪'] : [],
-        isMe:   u.id === myId,
+        vol:    Math.round(u.volume || 0),
+        badges: u.isMe ? ['🇰🇪'] : [],
+        isMe:   !!u.isMe,
       };
     });
     TRADERS_FULL = TRADERS;
     renderPodium(TRADERS);
     renderTable(TRADERS);
+
+    // ── Populate my rank banner ────────────────────────────────────────────
+    var banner = document.getElementById('myRankBanner');
+    if (!banner) return;
+
+    var myEntry = d.myRank ? entries.find(function(e) { return e.isMe; }) : null;
+    if (!myEntry || !d.myRank) {
+      // Not ranked yet — hide banner
+      banner.style.display = 'none';
+      return;
+    }
+
+    banner.style.display = '';
+    var s = function(id, v) { var el = document.getElementById(id); if (el) el.textContent = v; };
+    s('myRankNum',    '#' + d.myRank);
+    s('myRankName',   'You · ' + (myEntry.name || 'Forecaster'));
+    s('myRankProfit', '+KES ' + Math.round(myEntry.profit || 0).toLocaleString());
+    s('myRankWr',     Math.round((myEntry.winRate || 0) * 100) + '%');
+    s('myRankTrades', myEntry.trades || 0);
+    var vol = myEntry.volume || 0;
+    s('myRankVol', vol >= 1000 ? 'KES ' + Math.round(vol/1000) + 'K' : 'KES ' + Math.round(vol));
+
+    // Progress to next rank
+    var progSection = document.getElementById('myRankProgress');
+    if (d.nextRank && progSection) {
+      progSection.style.display = '';
+      s('myRankProgressLabel', 'To #' + d.nextRank.rank);
+      s('myRankProgressAmt',   'KES ' + Math.round(d.nextRank.profitNeeded).toLocaleString() + ' away');
+      // Progress fill: how close are we?
+      var prevEntry = entries.find(function(e) { return e.rank === d.nextRank.rank; });
+      if (prevEntry && prevEntry.profit > 0) {
+        var pct = Math.min(99, Math.round((myEntry.profit / prevEntry.profit) * 100));
+        var fill = document.getElementById('myRankProgressFill');
+        if (fill) fill.style.width = pct + '%';
+      }
+    } else if (progSection) {
+      progSection.style.display = 'none';
+    }
   })
   .catch(function() {
-    // Show empty state if load fails
     renderPodium([]);
     renderTable([]);
+    var banner = document.getElementById('myRankBanner');
+    if (banner) banner.style.display = 'none';
   });
 }
 
