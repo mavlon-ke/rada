@@ -747,7 +747,7 @@ nav{padding:14px 24px;display:flex;align-items:center;justify-content:space-betw
 <div class="m-top-bar" id="mTopBar">
   <div class="m-top-badge">RADA</div>
   <div class="m-top-name">CheckRada</div>
-  <div class="m-top-right" id="mTopLoggedOut">
+  <div class="m-top-right" id="mTopLoggedOut" style="display:none;">
     <button class="m-btn-login" onclick="window.location.href='rada-auth.html'">Log In</button>
     <button class="m-btn-signup" onclick="window.location.href='rada-auth.html'">Sign Up</button>
   </div>
@@ -802,7 +802,7 @@ nav{padding:14px 24px;display:flex;align-items:center;justify-content:space-betw
       <div class="wallet-card">
         <div class="wc-label" style="color:rgba(0,0,0,0.55);letter-spacing:0.07em;font-size:0.66rem;text-transform:uppercase;font-weight:700;">Wallet Balance</div>
         <div class="wc-balance" style="color:#000;" id="walletBalance">KES —</div>
-        <div class="wc-balance-sub" style="color:rgba(0,0,0,0.45);">≈ $26.30 USD · Available to forecast</div>
+        <div class="wc-balance-sub" style="color:rgba(0,0,0,0.45);" id="walletBalSub">Available to forecast</div>
         <div class="wc-btns">
           <button class="btn-wallet btn-deposit" onclick="openModal('depositModal')">＋ Deposit</button>
           <button class="btn-wallet btn-withdraw" onclick="openModal('withdrawModal')">↓ Withdraw</button>
@@ -1506,6 +1506,7 @@ fetch(API_BASE + '/api/config/referral').then(r => r.json()).then(d => {
   var loggedOutEl = document.getElementById('mTopLoggedOut');
   var loggedInEl  = document.getElementById('mTopLoggedIn');
   if (loggedOutEl) loggedOutEl.style.display = isLoggedIn ? 'none' : 'flex';
+  if (!isLoggedIn && loggedOutEl) loggedOutEl.style.display = 'flex';
   var hActions = document.querySelector('.h-actions');
   if (hActions) hActions.style.display = isLoggedIn ? 'flex' : 'none';
   if (loggedInEl)  loggedInEl.style.display  = isLoggedIn ? 'flex' : 'none';
