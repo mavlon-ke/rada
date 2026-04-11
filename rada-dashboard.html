@@ -963,20 +963,33 @@ nav{padding:14px 24px;display:flex;align-items:center;justify-content:space-betw
     <div class="modal-handle" onclick="closeModal('withdrawModal')"></div>
     <div class="modal-head">
       <div class="modal-title" style="color:var(--ke-red)">↓ Withdraw to M-Pesa</div>
-      <div class="modal-sub">Funds sent to your registered number. 1% processing fee applies.</div>
+      <div class="modal-sub">Funds sent to your registered M-Pesa number. 1% processing fee applies.</div>
     </div>
     <div class="modal-body">
       <div style="background:var(--bg3);border-radius:10px;padding:14px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;">
         <span style="font-size:0.78rem;color:var(--text-mid);">Available balance</span>
         <span style="font-family:var(--mono);font-size:1.1rem;font-weight:700;color:var(--ke-green);" id="withdrawAvailBal">KES —</span>
       </div>
-      <label class="mf-label">Amount to Withdraw</label>
-      <input class="mf-input" id="withdrawAmount" type="number" placeholder="Enter amount" min="100" oninput="calcWithdraw()">
-      <div id="withdrawCalc" style="background:var(--bg3);border-radius:10px;padding:12px 14px;margin-bottom:16px;display:none;">
-        <div style="display:flex;justify-content:space-between;font-size:0.78rem;margin-bottom:4px;"><span style="color:var(--text-dim)">Processing fee (1%)</span><span id="wFee" style="font-family:var(--mono)">KES —</span></a>
-  <div style="display:flex;justify-content:space-between;font-size:0.85rem;font-weight:700;padding-top:8px;border-top:1px solid var(--border);"><span style="color:var(--ke-green)">You receive</span><span id="wReceive" style="font-family:var(--mono);color:var(--ke-green)">KES —</span></div>
+      <div class="amount-presets" id="withdrawPresets" style="margin-bottom:12px;">
+        <div class="amount-preset" onclick="setWithdrawAmount(100,this)">100</div>
+        <div class="amount-preset" onclick="setWithdrawAmount(500,this)">500</div>
+        <div class="amount-preset" onclick="setWithdrawAmount(1000,this)">1,000</div>
+        <div class="amount-preset" onclick="setWithdrawAmount(2000,this)">2,000</div>
       </div>
-      <button class="btn-mpesa" style="background:var(--ke-red);" onclick="submitWithdraw()">↓ Withdraw to +254 712 *** 456</button>
+      <label class="mf-label">Amount to Withdraw (min KES 100)</label>
+      <input class="mf-input" id="withdrawAmount" type="number" placeholder="Enter amount (min KES 100)" min="100" oninput="calcWithdraw()">
+      <div id="withdrawCalc" style="background:var(--bg3);border-radius:10px;padding:12px 14px;margin-bottom:16px;display:none;">
+        <div style="display:flex;justify-content:space-between;font-size:0.78rem;margin-bottom:4px;">
+          <span style="color:var(--text-dim)">Processing fee (1%)</span>
+          <span id="wFee" style="font-family:var(--mono)">KES —</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:0.85rem;font-weight:700;padding-top:8px;border-top:1px solid var(--border);">
+          <span style="color:var(--ke-green)">You receive</span>
+          <span id="wReceive" style="font-family:var(--mono);color:var(--ke-green)">KES —</span>
+        </div>
+      </div>
+      <button class="btn-mpesa" style="background:var(--ke-red);" id="withdrawBtn" onclick="submitWithdraw()">↓ Withdraw to M-Pesa</button>
+      <div style="text-align:center;font-size:0.65rem;color:var(--text-dim);margin-top:10px;">Sent to your registered number · Min KES 100</div>
     </div>
   </div>
 </div>
@@ -1061,6 +1074,13 @@ function setDepositAmount(val, el) {
   document.getElementById('depositAmount').value = val;
   document.querySelectorAll('.amount-preset').forEach(e => e.classList.remove('active'));
   el.classList.add('active');
+}
+
+function setWithdrawAmount(val, el) {
+  document.querySelectorAll('#withdrawPresets .amount-preset').forEach(function(p) { p.classList.remove('active'); });
+  if (el) el.classList.add('active');
+  var inp = document.getElementById('withdrawAmount');
+  if (inp) { inp.value = val; calcWithdraw(); }
 }
 function sendStkPush() {
   var amount = parseInt(document.getElementById('depositAmount').value);
