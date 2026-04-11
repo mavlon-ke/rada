@@ -3447,23 +3447,30 @@ function renderSuggestions() {
 }
 
 function approveSuggestion(id, from) {
-  if (!confirm('Approve this proposal?\n\nKES 50 will be auto-credited to ' + from + '\'s wallet and a new market will be created.')) return;
+  if (!confirm('Approve this proposal?\n\nA new market will be created and a reward credited to ' + from + '\'s wallet.')) return;
   adminFetch('/api/admin/proposals/' + id + '/approve', { method: 'POST', body: JSON.stringify({}) })
-  .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
+  .then(function(r) {
+    var ok = r.ok, status = r.status;
+    return r.text().then(function(text) {
+      try { return { ok: ok, status: status, d: JSON.parse(text) }; }
+      catch(e) { return { ok: false, status: status, d: { error: 'Server error (' + status + '): ' + text.slice(0, 200) } }; }
+    });
+  })
   .then(function(res) {
     if (res.ok) {
-      showToast('✓ Market created! KES 50 reward credited to proposer wallet.');
-      // Refresh whichever panel is currently visible
-      var propEl  = document.getElementById('panel-proposals');
-      var suggEl  = document.getElementById('panel-suggestions');
-      if (propEl  && propEl.style.display  !== 'none') loadProposals('PENDING');
-      if (suggEl  && suggEl.style.display  !== 'none') loadSuggestions();
+      var reward = (res.d && res.d.rewardCredited) ? res.d.rewardCredited : 50;
+      showToast('✓ Market created! KES ' + reward + ' reward credited to ' + from + '.');
+      var propEl = document.getElementById('panel-proposals');
+      var suggEl = document.getElementById('panel-suggestions');
+      if (propEl && propEl.style.display !== 'none') loadProposals('PENDING');
+      if (suggEl && suggEl.style.display !== 'none') loadSuggestions();
       loadMarketsTable();
     } else {
-      alert('Error: ' + (res.d.error || 'Could not approve proposal.'));
+      var msg = (res.d && res.d.error) ? res.d.error : 'Could not approve proposal.';
+      alert('Error (' + res.status + '): ' + msg);
     }
   })
-  .catch(function() { alert('Network error.'); });
+  .catch(function(err) { alert('Network error: ' + (err && err.message ? err.message : 'Could not reach server.')); });
 }
 
 function rejectSuggestion(id) {
