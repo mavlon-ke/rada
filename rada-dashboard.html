@@ -889,13 +889,16 @@ nav{padding:14px 24px;display:flex;align-items:center;justify-content:space-betw
 <div class="modal-overlay" id="suggestModal">
   <div class="modal">
     <div class="modal-handle" onclick="closeModal('suggestModal')"></div>
-    <div class="modal-head">
-      <div class="modal-title">💡 Suggest a Market</div>
-      <div class="modal-sub">Good suggestions get approved and earn you a wallet bonus!</div>
+    <div class="modal-head" style="display:flex;justify-content:space-between;align-items:flex-start;">
+      <div>
+        <div class="modal-title">💡 Suggest a Market</div>
+        <div class="modal-sub">Good suggestions get approved and earn you a wallet bonus!</div>
+      </div>
+      <button onclick="closeModal('suggestModal')" style="background:none;border:none;font-size:1.3rem;line-height:1;color:var(--text-dim);cursor:pointer;padding:0 0 0 12px;flex-shrink:0;">✕</button>
     </div>
     <div class="modal-body">
       <div class="reward-note">
-        🎁 <strong>Earn KES 50 when your suggestion goes live.</strong> If the Admin approves your idea, KES 50 is credited to your CheckCheckRada wallet — use it to forecast or withdraw to M-Pesa. Once your market exceeds KES 1,000 in traded volume, you earn 0.5% of every trade's net amount — credited to your CheckCheckRada wallet. A 5% forecasting fee applies to every position taken. Royalties are earned only while the market is active.
+        🎁 <strong>Earn KES 50 when your suggestion goes live.</strong> Admin approval credits KES 50 to your wallet instantly. Once your market exceeds KES 1,000 in volume, you earn 0.5% of every trade as creator royalty.
       </div>
 
       <label class="mf-label">Your Market Question</label>
@@ -905,12 +908,12 @@ nav{padding:14px 24px;display:flex;align-items:center;justify-content:space-betw
       <label class="mf-label">Category</label>
       <select class="mf-select" id="suggestCat">
         <option value="">Select category…</option>
-        <option>General</option>
-        <option>Politics</option>
-        <option>Economy</option>
-        <option>Entertainment</option>
-        <option>Weather</option>
-        <option>Tech</option>
+        <option value="GENERAL">General</option>
+        <option value="POLITICS">Politics</option>
+        <option value="ECONOMY">Economy</option>
+        <option value="ENTERTAINMENT">Entertainment</option>
+        <option value="WEATHER">Weather</option>
+        <option value="TECH">Tech</option>
       </select>
 
       <label class="mf-label">Resolution Source (How will we verify the answer?)</label>
@@ -919,7 +922,8 @@ nav{padding:14px 24px;display:flex;align-items:center;justify-content:space-betw
       <label class="mf-label">Why will Kenyans care about this? <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label>
       <textarea class="mf-textarea" id="suggestWhy" placeholder="Help us understand why this market will get traction…"></textarea>
 
-      <button class="btn-submit" onclick="submitSuggestion()">Submit Suggestion →</button>
+      <div id="suggestStatus" style="font-size:0.78rem;min-height:18px;margin-bottom:4px;"></div>
+      <button class="btn-submit" id="suggestBtn" onclick="submitSuggestion()">Submit Suggestion →</button>
     </div>
   </div>
 </div>
@@ -1044,45 +1048,68 @@ function updateChar() {
   const val = document.getElementById('suggestQ').value;
   document.getElementById('charLeft').textContent = 120 - val.length;
 }
+function showToastDash(msg) {
+  var t = document.createElement('div');
+  t.textContent = msg;
+  t.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#1a1035;color:#fff;padding:10px 20px;border-radius:20px;font-size:0.8rem;z-index:999;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,0.3);';
+  document.body.appendChild(t);
+  setTimeout(function() { t.remove(); }, 3000);
+}
+
 function submitSuggestion() {
   var q      = document.getElementById('suggestQ').value.trim();
   var cat    = document.getElementById('suggestCat').value;
-  var source = document.getElementById('suggestSource') ? document.getElementById('suggestSource').value.trim() : '';
-  var why    = document.getElementById('suggestWhy')    ? document.getElementById('suggestWhy').value.trim()    : '';
-  if (!q || !cat) return alert('Please fill in the question and category.');
-  if (q.length < 10) return alert('Please enter a more detailed question (min 10 characters).');
+  var source = (document.getElementById('suggestSource') || {}).value || '';
+  source = source.trim();
+  var why    = (document.getElementById('suggestWhy') || {}).value || '';
+  why = why.trim();
 
-  var btn = document.querySelector('#suggestModal button[onclick="submitSuggestion()"]');
+  var statusEl = document.getElementById('suggestStatus');
+  var btn      = document.getElementById('suggestBtn');
+
+  function setStatus(msg, color) {
+    if (statusEl) { statusEl.textContent = msg; statusEl.style.color = color || 'var(--text-dim)'; }
+  }
+
+  if (!q) { setStatus('Please enter your market question.', '#ce1126'); return; }
+  if (q.length < 10) { setStatus('Question too short — min 10 characters.', '#ce1126'); return; }
+  if (!cat) { setStatus('Please select a category.', '#ce1126'); return; }
+  if (!source) { setStatus('Please enter a resolution source.', '#ce1126'); return; }
+
   if (btn) { btn.disabled = true; btn.textContent = 'Submitting...'; }
+  setStatus('');
 
   userFetch('/api/markets/propose', {
     method: 'POST',
     body: JSON.stringify({
       question:         q,
       category:         cat,
-      resolutionSource: source || 'To be determined',
-      whyCareNote:      why,
+      resolutionSource: source,
+      whyCareNote:      why || undefined,
     }),
   })
   .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
   .then(function(res) {
-    if (btn) { btn.disabled = false; btn.textContent = 'Submit Suggestion'; }
-    closeModal('suggestModal');
+    if (btn) { btn.disabled = false; btn.textContent = 'Submit Suggestion →'; }
     if (res.ok) {
-      alert('✓ Suggestion submitted!\n\nIf the Admin approves it, KES 50 will be credited to your wallet automatically. Thanks for contributing!');
-      document.getElementById('suggestQ').value = '';
+      closeModal('suggestModal');
+      // Reset form
+      ['suggestQ','suggestSource','suggestWhy'].forEach(function(id) {
+        var el = document.getElementById(id); if (el) el.value = '';
+      });
       document.getElementById('suggestCat').value = '';
-      if (document.getElementById('suggestSource')) document.getElementById('suggestSource').value = '';
-      if (document.getElementById('suggestWhy'))    document.getElementById('suggestWhy').value    = '';
+      if (document.getElementById('charLeft')) document.getElementById('charLeft').textContent = '120';
+      setStatus('');
+      showToastDash('✓ Suggestion submitted! KES 50 credited if approved.');
     } else {
-      var msg = (res.d.error && typeof res.d.error === 'string') ? res.d.error : 'Could not submit. Please try again.';
-      alert('Error: ' + msg);
+      var err = res.d && res.d.error;
+      var msg = typeof err === 'string' ? err : 'Could not submit. Please try again.';
+      setStatus(msg, '#ce1126');
     }
   })
   .catch(function() {
-    if (btn) { btn.disabled = false; btn.textContent = 'Submit Suggestion'; }
-    closeModal('suggestModal');
-    alert('Network error. Please try again.');
+    if (btn) { btn.disabled = false; btn.textContent = 'Submit Suggestion →'; }
+    setStatus('Network error. Please check your connection.', '#ce1126');
   });
 }
 
