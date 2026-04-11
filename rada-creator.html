@@ -964,7 +964,7 @@ function renderMyMarkets() {
       ? '<span class="status-badge status-pending">◎ Pending</span>'
       : '<span class="status-badge status-review">↻ In Review</span>';
     var action = m.status === 'live'
-      ? '<button class="copy-link-btn" onclick="copySlug('' + m.slug + '')">Copy Link</button>'
+      ? '<button class="copy-link-btn" data-slug="' + m.slug + '">Copy Link</button>'
       : '<span style="font-size:0.7rem;color:var(--text-dim)">Awaiting approval</span>';
     return '<tr>' +
       '<td style="max-width:240px;line-height:1.45">' + m.q + '</td>' +
@@ -1004,45 +1004,55 @@ const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate()+1);
 document.getElementById('resDate').min = tomorrow.toISOString().split('T')[0];
 
 function submitProposal() {
-  const q       = document.getElementById('qInput').value.trim();
-  const cat     = document.getElementById('catSelect').value;
-  const date    = document.getElementById('resDate').value;
-  const truth   = document.getElementById('truthSource').value.trim();
-  const why     = document.getElementById('whyCare').value.trim();
-  const phone   = document.getElementById('phoneInput').value.trim();
-  const agreed  = document.getElementById('agreeCheck').checked;
+  var q      = document.getElementById('qInput').value.trim();
+  var cat    = document.getElementById('catSelect').value;
+  var date   = document.getElementById('resDate').value;
+  var truth  = document.getElementById('truthSource').value.trim();
+  var why    = document.getElementById('whyCare').value.trim();
+  var phone  = document.getElementById('phoneInput').value.trim();
+  var agreed = document.getElementById('agreeCheck').checked;
 
-  if (!q || q.length < 20)    { shake('qInput');      return alert('Please enter a more detailed question (min 20 chars)'); }
-  if (!cat)                    { shake('catSelect');   return alert('Please select a category'); }
-  if (!date)                   { shake('resDate');     return alert('Please set a resolution date'); }
-  if (!truth)                  { shake('truthSource'); return alert('Please provide a truth source'); }
-  if (!why || why.length < 20) { shake('whyCare');     return alert('Please explain why Kenyans will care about this'); }
-  if (!phone || phone.length < 9) { shake('phoneInput'); return alert('Please enter your M-Pesa number'); }
-  if (!agreed)                 { shake('agreeCheck');  return alert('Please agree to the Creator Agreement'); }
+  if (!q || q.length < 20)       { shake('qInput');      alert('Please enter a more detailed question (min 20 chars)'); return; }
+  if (!cat)                       { shake('catSelect');   alert('Please select a category'); return; }
+  if (!date)                      { shake('resDate');     alert('Please set a resolution date'); return; }
+  if (!truth || truth.length < 5) { shake('truthSource'); alert('Please provide a resolution source (min 5 chars)'); return; }
+  if (!phone || phone.length < 9) { shake('phoneInput');  alert('Please enter your M-Pesa number'); return; }
+  if (!agreed)                    { shake('agreeCheck');  alert('Please agree to the Creator Agreement'); return; }
 
-  const btn = document.getElementById('submitBtn');
+  var token = localStorage.getItem('rada_token') || '';
+  if (!token) { alert('Please log in first to submit a proposal.'); return; }
+
+  var btn = document.getElementById('submitBtn');
   btn.disabled = true;
   btn.textContent = 'Submitting...';
 
-  var token = localStorage.getItem('rada_token') || '';
-  if (!token) {
-    btn.disabled = false;
-    btn.textContent = 'Submit Market Proposal → Start Earning';
-    return alert('Please log in first to submit a proposal.');
-  }
+  var controller = new AbortController();
+  var timeout = setTimeout(function() { controller.abort(); }, 15000);
 
-  var body = {
-    question:         q,
-    category:         cat,
-    resolutionSource: truth,
-    whyCareNote:      why,
-  };
+  var API_BASE_URL = (typeof API_BASE !== 'undefined') ? API_BASE : 'https://api.checkrada.co.ke';
 
-  userFetch('/api/markets/propose', {
-    method: 'POST',
-    body:   JSON.stringify(body),
+  fetch(API_BASE_URL + '/api/markets/propose', {
+    method:  'POST',
+    signal:  controller.signal,
+    headers: {
+      'Content-Type':  'application/json',
+      'Authorization': 'Bearer ' + token,
+    },
+    body: JSON.stringify({
+      question:         q,
+      category:         cat,
+      resolutionSource: truth,
+      whyCareNote:      why || undefined,
+    }),
   })
-  .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
+  .then(function(r) {
+    clearTimeout(timeout);
+    var ok = r.ok, status = r.status;
+    return r.text().then(function(text) {
+      try { return { ok: ok, status: status, d: JSON.parse(text) }; }
+      catch(e) { return { ok: false, status: status, d: { error: 'Server error (' + status + '). Please try again.' } }; }
+    });
+  })
   .then(function(res) {
     btn.disabled = false;
     btn.textContent = 'Submit Market Proposal → Start Earning';
@@ -1050,16 +1060,30 @@ function submitProposal() {
       document.getElementById('proposalForm').style.display = 'none';
       document.getElementById('shareLinkPhone').textContent = phone;
       document.getElementById('successPanel').classList.add('show');
-      loadMyMarkets(); // Refresh my markets list
+      loadMyMarkets();
     } else {
-      var msg = (res.d.error && typeof res.d.error === 'string') ? res.d.error : 'Could not submit proposal. Please try again.';
+      var err = res.d && res.d.error;
+      var msg = 'Could not submit. Please try again.';
+      if (typeof err === 'string') {
+        msg = err;
+      } else if (err && err.fieldErrors) {
+        var firstField = Object.keys(err.fieldErrors)[0];
+        if (firstField && err.fieldErrors[firstField][0]) {
+          msg = firstField + ': ' + err.fieldErrors[firstField][0];
+        }
+      }
       alert('Error: ' + msg);
     }
   })
-  .catch(function() {
+  .catch(function(err) {
+    clearTimeout(timeout);
     btn.disabled = false;
     btn.textContent = 'Submit Market Proposal → Start Earning';
-    alert('Network error. Please try again.');
+    if (err && err.name === 'AbortError') {
+      alert('Request timed out. Please check your connection and retry.');
+    } else {
+      alert('Network error. Please try again.');
+    }
   });
 }
 
@@ -1144,7 +1168,7 @@ function smartCreatorShare() {
   const link  = 'https://checkrada.co.ke/m/pending-review?c=' + phone;
   radaShare(
     'CheckRada — Forecast Market',
-    '🇰🇪 I just proposed a market on CheckRada — Kenya's forecasting platform. Join and forecast: ' + link,
+    '🇰🇪 I just proposed a market on CheckRada — Kenyass forecasting platform. Join and forecast: ' + link,
     link
   );
 }
