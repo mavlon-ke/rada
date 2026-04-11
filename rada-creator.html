@@ -1019,25 +1019,12 @@ function submitProposal() {
   if (!phone || phone.length < 9) { shake('phoneInput');  alert('Please enter your M-Pesa number'); return; }
   if (!agreed)                    { shake('agreeCheck');  alert('Please agree to the Creator Agreement'); return; }
 
-  var token = localStorage.getItem('rada_token') || '';
-  if (!token) { alert('Please log in first to submit a proposal.'); return; }
-
   var btn = document.getElementById('submitBtn');
   btn.disabled = true;
   btn.textContent = 'Submitting...';
 
-  var controller = new AbortController();
-  var timeout = setTimeout(function() { controller.abort(); }, 15000);
-
-  var API_BASE_URL = (typeof API_BASE !== 'undefined') ? API_BASE : 'https://api.checkrada.co.ke';
-
-  fetch(API_BASE_URL + '/api/markets/propose', {
-    method:  'POST',
-    signal:  controller.signal,
-    headers: {
-      'Content-Type':  'application/json',
-      'Authorization': 'Bearer ' + token,
-    },
+  userFetch('/api/markets/propose', {
+    method: 'POST',
     body: JSON.stringify({
       question:         q,
       category:         cat,
@@ -1046,7 +1033,6 @@ function submitProposal() {
     }),
   })
   .then(function(r) {
-    clearTimeout(timeout);
     var ok = r.ok, status = r.status;
     return r.text().then(function(text) {
       try { return { ok: ok, status: status, d: JSON.parse(text) }; }
@@ -1075,15 +1061,10 @@ function submitProposal() {
       alert('Error: ' + msg);
     }
   })
-  .catch(function(err) {
-    clearTimeout(timeout);
+  .catch(function() {
     btn.disabled = false;
     btn.textContent = 'Submit Market Proposal → Start Earning';
-    if (err && err.name === 'AbortError') {
-      alert('Request timed out. Please check your connection and retry.');
-    } else {
-      alert('Network error. Please try again.');
-    }
+    alert('Network error. Please try again.');
   });
 }
 
