@@ -205,7 +205,7 @@ nav{padding:14px 24px;display:flex;align-items:center;justify-content:space-betw
 .modal-head{padding:16px 20px 12px;border-bottom:1px solid rgba(109,40,217,0.12);flex-shrink:0;}
 .modal-title{font-weight:700;font-size:1rem;color:#6d28d9;}
 .modal-sub{font-size:0.75rem;color:var(--text-mid);margin-top:3px;}
-.modal-body{padding:20px;overflow-y:auto;flex:1;}
+.modal-body{padding:20px;padding-bottom:calc(env(safe-area-inset-bottom,0px) + 80px);overflow-y:auto;flex:1;}
 .mf-label{font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--text-dim);margin-bottom:6px;display:block;}
 .mf-input,.mf-select,.mf-textarea{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:11px 14px;color:var(--text);font-family:var(--font);font-size:0.85rem;outline:none;transition:border-color 0.2s;margin-bottom:16px;}
 .mf-input:focus,.mf-select:focus,.mf-textarea:focus{border-color:rgba(244,185,66,0.5);}
@@ -930,7 +930,7 @@ nav{padding:14px 24px;display:flex;align-items:center;justify-content:space-betw
     <div class="modal-handle" onclick="closeModal('depositModal')"></div>
     <div class="modal-head">
       <div class="modal-title" style="color:var(--ke-green)">📲 Deposit via M-Pesa</div>
-      <div class="modal-sub">STK Push sent to your registered number +254 712 *** 456</div>
+      <div class="modal-sub" id="depositModalSub">STK Push sent to your registered M-Pesa number</div>
     </div>
     <div class="modal-body">
       <div class="deposit-steps">
@@ -952,7 +952,7 @@ nav{padding:14px 24px;display:flex;align-items:center;justify-content:space-betw
       <button class="btn-mpesa" id="depositBtn" onclick="sendStkPush()">
         <span>📲</span> Send STK Push to Phone
       </button>
-      <div style="text-align:center;font-size:0.65rem;color:var(--text-dim);margin-top:10px;">Powered by Safaricom Daraja · Min KES 20</div>
+      <div style="text-align:center;font-size:0.65rem;color:var(--text-dim);margin-top:10px;">Min KES 20 · Balance updates within 30 seconds</div>
     </div>
   </div>
 </div>
@@ -1016,7 +1016,24 @@ function switchTab(btn, tab) {
 }
 
 // ── MODALS ────────────────────────────────────────────────────────────────────
-function openModal(id) { document.getElementById(id).classList.add('open'); }
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+  // Populate live user phone in deposit modal
+  if (id === 'depositModal') {
+    var sub = document.getElementById('depositModalSub');
+    if (sub && radaUser && radaUser.phone) {
+      var p = String(radaUser.phone);
+      var masked = '+' + p.slice(0,4) + ' *** ' + p.slice(-3);
+      sub.textContent = 'STK Push sent to your registered number ' + masked;
+    }
+  }
+  // Populate live balance in withdraw modal
+  if (id === 'withdrawModal') {
+    var balEl = document.getElementById('withdrawAvailBal');
+    var bal = Number((radaUser && radaUser.balanceKes) || 0);
+    if (balEl) balEl.textContent = 'KES ' + bal.toLocaleString();
+  }
+}
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 document.querySelectorAll('.modal-overlay').forEach(m => {
   m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
@@ -1144,7 +1161,7 @@ function submitWithdraw() {
   var balance = Number((radaUser && radaUser.balanceKes) || 0);
   if (amt > balance) return alert('Insufficient balance. Available: KES ' + balance.toLocaleString());
 
-  var btn = document.querySelector('#withdrawModal button[onclick="submitWithdraw()"]');
+  var btn = document.getElementById('withdrawBtn');
   if (btn) { btn.disabled = true; btn.textContent = 'Processing...'; }
 
   var userPhone = (radaUser && radaUser.phone) ? String(radaUser.phone) : '';
@@ -1155,7 +1172,7 @@ function submitWithdraw() {
   })
   .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
   .then(function(res) {
-    if (btn) { btn.disabled = false; btn.textContent = '↓ Withdraw'; }
+    if (btn) { btn.disabled = false; btn.textContent = '↓ Withdraw to M-Pesa'; }
     closeModal('withdrawModal');
     if (res.ok) {
       var fee = Math.round(amt * 0.01);
