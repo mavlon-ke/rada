@@ -1,4 +1,3 @@
-import { withErrorHandling } from '@/lib/security/route-guard';
 // src/app/api/admin/proposals/[id]/approve/route.ts
 // Approve a user suggestion → create a live Market + credit suggestion reward (dynamic from ReferralConfig)
 
@@ -22,21 +21,20 @@ export async function POST(
   if (!proposal)                     return NextResponse.json({ error: 'Proposal not found' }, { status: 404 });
   if (proposal.status !== 'PENDING') return NextResponse.json({ error: 'Proposal already processed' }, { status: 400 });
 
-  // ── Read suggestion reward dynamically from ReferralConfig ──────────────
+  // Read suggestion reward from ReferralConfig (falls back to 50 if not configured)
   const config = await prisma.referralConfig.findUnique({ where: { id: 'singleton' } });
-  const SUGGESTION_REWARD_KES = config ? Number(config.referrerRewardKes) : 50;
+  const rewardKes = config ? Number(config.referrerRewardKes) : 50;
 
   // Generate unique slug
   const slug = await generateUniqueSlug(proposal.question);
 
-  // Default closesAt: 90 days from now — admin can edit afterwards
+  // Default closesAt: 90 days from approval — admin can edit via All Markets panel
   const closesAt = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000);
 
-  let market: any;
-
-  await prisma.$transaction(async (tx) => {
+  // Run everything in one atomic transaction
+  const { market } = await prisma.$transaction(async (tx) => {
     // 1. Create the live Market
-    market = await tx.market.create({
+    const market = await tx.market.create({
       data: {
         slug,
         title:       proposal.question,
@@ -49,7 +47,7 @@ export async function POST(
       },
     });
 
-    // 2. Create CreatorBounty so royalties accrue from first trade
+    // 2. Create CreatorBounty so 0.5% royalties accrue from first trade
     await tx.creatorBounty.create({
       data: {
         marketId:  market.id,
@@ -64,10 +62,10 @@ export async function POST(
       data:  { status: 'APPROVED', slug, rewardPaidAt: new Date() },
     });
 
-    // 4. Credit suggestion reward to proposer's wallet
+    // 4. Credit suggestion reward to proposer wallet
     const updated = await tx.user.update({
       where: { id: proposal.proposerId },
-      data:  { balanceKes: { increment: SUGGESTION_REWARD_KES } },
+      data:  { balanceKes: { increment: rewardKes } },
     });
 
     // 5. Log reward transaction
@@ -75,19 +73,21 @@ export async function POST(
       data: {
         userId:      proposal.proposerId,
         type:        'SUGGESTION_REWARD',
-        amountKes:   SUGGESTION_REWARD_KES,
+        amountKes:   rewardKes,
         balAfter:    Number(updated.balanceKes),
         status:      'SUCCESS',
         description: `Market suggestion reward — "${proposal.question.slice(0, 60)}" approved`,
       },
     });
+
+    return { market };
   });
 
   await logAdminAction(admin.id, 'PROPOSAL_APPROVED', `proposal:${proposal.id}`, {
-    question:   proposal.question,
-    marketId:   market.id,
-    proposer:   proposal.proposer.phone,
-    rewardKes:  SUGGESTION_REWARD_KES,
+    question:  proposal.question,
+    marketId:  market.id,
+    proposer:  proposal.proposer.phone,
+    rewardKes,
   }, req);
 
   return NextResponse.json({
@@ -96,7 +96,7 @@ export async function POST(
     marketId:       market.id,
     slug,
     shareUrl:       buildMarketShareUrl(slug, proposal.proposer.phone),
-    rewardCredited: SUGGESTION_REWARD_KES,
+    rewardCredited: rewardKes,
     proposerPhone:  proposal.proposer.phone,
   });
 }
