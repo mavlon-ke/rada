@@ -1103,7 +1103,18 @@ function submitSuggestion() {
       showToastDash('✓ Suggestion submitted! KES 50 credited if approved.');
     } else {
       var err = res.d && res.d.error;
-      var msg = typeof err === 'string' ? err : 'Could not submit. Please try again.';
+      var msg = 'Could not submit. Please try again.';
+      if (typeof err === 'string') {
+        msg = err;
+      } else if (err && err.fieldErrors) {
+        // Zod validation error — extract first field error
+        var firstField = Object.keys(err.fieldErrors)[0];
+        if (firstField && err.fieldErrors[firstField][0]) {
+          msg = firstField + ': ' + err.fieldErrors[firstField][0];
+        }
+      } else if (err && err.formErrors && err.formErrors[0]) {
+        msg = err.formErrors[0];
+      }
       setStatus(msg, '#ce1126');
     }
   })
