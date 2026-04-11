@@ -1079,8 +1079,16 @@ function submitSuggestion() {
   if (btn) { btn.disabled = true; btn.textContent = 'Submitting...'; }
   setStatus('');
 
-  userFetch('/api/markets/propose', {
-    method: 'POST',
+  var controller = new AbortController();
+  var timeout = setTimeout(function() { controller.abort(); }, 15000);
+
+  fetch(API_BASE + '/api/markets/propose', {
+    method:  'POST',
+    signal:  controller.signal,
+    headers: {
+      'Content-Type':  'application/json',
+      'Authorization': 'Bearer ' + (localStorage.getItem('rada_token') || ''),
+    },
     body: JSON.stringify({
       question:         q,
       category:         cat,
@@ -1088,12 +1096,19 @@ function submitSuggestion() {
       whyCareNote:      why || undefined,
     }),
   })
-  .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
+  .then(function(r) {
+    clearTimeout(timeout);
+    var ok = r.ok;
+    var status = r.status;
+    return r.text().then(function(text) {
+      try { return { ok: ok, status: status, d: JSON.parse(text) }; }
+      catch(e) { return { ok: false, status: status, d: { error: 'Server error (' + status + '). Please try again.' } }; }
+    });
+  })
   .then(function(res) {
     if (btn) { btn.disabled = false; btn.textContent = 'Submit Suggestion →'; }
     if (res.ok) {
       closeModal('suggestModal');
-      // Reset form
       ['suggestQ','suggestSource','suggestWhy'].forEach(function(id) {
         var el = document.getElementById(id); if (el) el.value = '';
       });
@@ -1107,7 +1122,6 @@ function submitSuggestion() {
       if (typeof err === 'string') {
         msg = err;
       } else if (err && err.fieldErrors) {
-        // Zod validation error — extract first field error
         var firstField = Object.keys(err.fieldErrors)[0];
         if (firstField && err.fieldErrors[firstField][0]) {
           msg = firstField + ': ' + err.fieldErrors[firstField][0];
@@ -1118,9 +1132,14 @@ function submitSuggestion() {
       setStatus(msg, '#ce1126');
     }
   })
-  .catch(function() {
+  .catch(function(err) {
+    clearTimeout(timeout);
     if (btn) { btn.disabled = false; btn.textContent = 'Submit Suggestion →'; }
-    setStatus('Network error. Please check your connection.', '#ce1126');
+    if (err && err.name === 'AbortError') {
+      setStatus('Request timed out. Please check your connection and retry.', '#ce1126');
+    } else {
+      setStatus('Network error. Please check your connection.', '#ce1126');
+    }
   });
 }
 
