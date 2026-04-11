@@ -88,7 +88,7 @@ export async function GET(req: NextRequest) {
 
 // ─── POST /api/admin/markets ──────────────────────────────────────────────────
 // Admin creates a market. Uses admin JWT — does NOT require a user account.
-// The market creator is set to the platform's system user (first admin-seeded user).
+// Admin-created markets have no creator (creatorId is null).
 
 const CreateMarketSchema = z.object({
   title:       z.string().min(10).max(200),
@@ -115,18 +115,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'closesAt must be in the future' }, { status: 400 });
   }
 
-  // Use the platform's first seeded user as creator for admin-created markets
-  const systemUser = await prisma.user.findFirst({
-    orderBy: { createdAt: 'asc' },
-  });
-
-  if (!systemUser) {
-    return NextResponse.json(
-      { error: 'No platform user found. Run db:seed first.' },
-      { status: 500 }
-    );
-  }
-
   const slug = await generateUniqueSlug(title);
 
   const market = await prisma.market.create({
@@ -138,7 +126,7 @@ export async function POST(req: NextRequest) {
       closesAt:  new Date(closesAt),
       sourceNote,
       imageUrl,
-      creatorId: systemUser.id,
+      // No creatorId for admin-created markets — only user proposals set a creator
       yesPool:   1000,
       noPool:    1000,
     },

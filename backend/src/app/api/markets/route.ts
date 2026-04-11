@@ -51,7 +51,7 @@ export async function GET(req: NextRequest) {
       noPrice:         parseFloat((1 - yesPrice).toFixed(4)),
       tradeCount:      m._count.orders,
       shareUrl:        buildMarketShareUrl(m.slug, null),
-      creatorShareUrl: buildMarketShareUrl(m.slug, m.creator.phone),
+      creatorShareUrl: buildMarketShareUrl(m.slug, m.creator?.phone ?? null),
       isSocialChallenge: false,
     };
   });

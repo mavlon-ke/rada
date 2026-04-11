@@ -85,8 +85,8 @@ model Market {
   category    Category
   imageUrl    String?
   sourceNote  String?
-  creatorId   String
-  creator     User         @relation("MarketCreator", fields: [creatorId], references: [id])
+  creatorId   String?
+  creator     User?        @relation("MarketCreator", fields: [creatorId], references: [id])
   status      MarketStatus @default(OPEN)
   outcome     Outcome?
   yesPool     Decimal      @default(1000) @db.Decimal(15,2)
