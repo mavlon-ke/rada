@@ -1,21 +1,18 @@
 // src/app/api/cron/close-markets/route.ts
-// POST — auto-close markets whose closesAt has passed and are still OPEN
-// Call every 30 minutes via Railway Cron: */30 * * * *
-// Secure with CRON_SECRET header: x-cron-secret
+// Auto-close markets whose closesAt has passed and are still OPEN.
+//
+// Railway Cron setup:
+//   Schedule : */30 * * * *
+//   URL      : GET https://api.checkrada.co.ke/api/cron/close-markets?secret=YOUR_CRON_SECRET
+//
+// No custom headers needed — Railway cron supports plain GET with query params.
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 
-export async function POST(req: NextRequest) {
-  // ── Auth ─────────────────────────────────────────────────────────────────
-  const secret = req.headers.get('x-cron-secret');
-  if (!secret || secret !== process.env.CRON_SECRET) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-  }
-
+async function runCloseMarkets() {
   const now = new Date();
 
-  // ── Find OPEN markets past their closesAt ─────────────────────────────────
   const expired = await prisma.market.findMany({
     where: {
       status:   'OPEN',
@@ -30,10 +27,9 @@ export async function POST(req: NextRequest) {
   });
 
   if (!expired.length) {
-    return NextResponse.json({ success: true, closed: 0, timestamp: now.toISOString() });
+    return { success: true, closed: 0, timestamp: now.toISOString() };
   }
 
-  // ── Close each market ─────────────────────────────────────────────────────
   const closed: string[] = [];
   const errors:  string[] = [];
 
@@ -43,31 +39,47 @@ export async function POST(req: NextRequest) {
         where: { id: market.id },
         data:  { status: 'CLOSED' },
       });
-
-      // No AdminActivityLog insert (requires FK to AdminAccount).
-      // The admin Pending Resolution widget picks up CLOSED markets automatically.
-
       closed.push(market.id);
     } catch (err) {
       errors.push(`${market.id}: ${(err as Error).message}`);
     }
   }
 
-  return NextResponse.json({
+  return {
     success:   true,
     found:     expired.length,
     closed:    closed.length,
     errors,
     marketIds: closed,
     timestamp: now.toISOString(),
-  });
+  };
 }
 
-// Also allow GET for easy health check / manual trigger from browser
+function checkSecret(req: NextRequest): boolean {
+  const headerSecret = req.headers.get('x-cron-secret');
+  const querySecret  = new URL(req.url).searchParams.get('secret');
+  const provided     = headerSecret || querySecret;
+  return !!provided && provided === process.env.CRON_SECRET;
+}
+
 export async function GET(req: NextRequest) {
-  const secret = req.headers.get('x-cron-secret') || new URL(req.url).searchParams.get('secret');
-  if (!secret || secret !== process.env.CRON_SECRET) {
+  if (!checkSecret(req)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
-  return POST(req);
+  try {
+    return NextResponse.json(await runCloseMarkets());
+  } catch (err) {
+    return NextResponse.json({ success: false, error: (err as Error).message }, { status: 500 });
+  }
+}
+
+export async function POST(req: NextRequest) {
+  if (!checkSecret(req)) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+  try {
+    return NextResponse.json(await runCloseMarkets());
+  } catch (err) {
+    return NextResponse.json({ success: false, error: (err as Error).message }, { status: 500 });
+  }
 }

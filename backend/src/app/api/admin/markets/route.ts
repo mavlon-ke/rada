@@ -17,6 +17,14 @@ export async function GET(req: NextRequest) {
   const admin = await requireAdmin(req);
   if (!admin) return adminUnauthorized();
 
+  // ── Auto-close expired markets ────────────────────────────────────────────
+  try {
+    await prisma.market.updateMany({
+      where: { status: 'OPEN', closesAt: { lte: new Date() } },
+      data:  { status: 'CLOSED' },
+    });
+  } catch { /* non-fatal */ }
+
   const { searchParams } = new URL(req.url);
   const status   = searchParams.get('status');   // optional filter
   const category = searchParams.get('category'); // optional filter

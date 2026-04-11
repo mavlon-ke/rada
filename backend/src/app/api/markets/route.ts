@@ -15,6 +15,14 @@ export async function GET(req: NextRequest) {
   const limit       = 20;
   const includeSocial = searchParams.get('includeSocial') !== 'false'; // default true
 
+  // ── Auto-close expired markets (no cron needed) ───────────────────────────
+  try {
+    await prisma.market.updateMany({
+      where: { status: 'OPEN', closesAt: { lte: new Date() } },
+      data:  { status: 'CLOSED' },
+    });
+  } catch { /* non-fatal */ }
+
   // ── Fetch regular markets ────────────────────────────────────────────────
   const markets = await prisma.market.findMany({
     where: {
