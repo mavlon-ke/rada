@@ -15,14 +15,26 @@ async function paystackRequest<T>(
   path: string,
   body?: object
 ): Promise<T> {
-  const res = await fetch(`${PAYSTACK_BASE}${path}`, {
-    method,
-    headers: {
-      Authorization: `Bearer ${PAYSTACK_SECRET}`,
-      'Content-Type': 'application/json',
-    },
-    ...(body ? { body: JSON.stringify(body) } : {}),
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 25000); // 25s timeout
+
+  let res: Response;
+  try {
+    res = await fetch(`${PAYSTACK_BASE}${path}`, {
+      method,
+      signal: controller.signal,
+      headers: {
+        Authorization: `Bearer ${PAYSTACK_SECRET}`,
+        'Content-Type': 'application/json',
+      },
+      ...(body ? { body: JSON.stringify(body) } : {}),
+    });
+  } catch (err: any) {
+    clearTimeout(timeout);
+    if (err.name === 'AbortError') throw new Error('Paystack request timed out. Please try again.');
+    throw err;
+  }
+  clearTimeout(timeout);
 
   const data = await res.json();
 

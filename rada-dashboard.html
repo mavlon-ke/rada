@@ -1169,15 +1169,28 @@ function sendStkPush() {
 
   var userPhone = (radaUser && radaUser.phone) ? String(radaUser.phone) : '';
 
+  // 30s safety timeout — re-enables button if server doesn't respond
+  var stkTimeout = setTimeout(function() {
+    btn.textContent = '📲 Send STK Push to Phone';
+    btn.disabled = false;
+    alert('Request is taking longer than usual. If you received an M-Pesa prompt, enter your PIN. Otherwise try again.');
+  }, 30000);
+
   userFetch('/api/payments/deposit', {
     method: 'POST',
     body: JSON.stringify({ amountKes: amount, phone: userPhone, method: 'mpesa' }),
   })
-  .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
+  .then(function(r) {
+    var ok = r.ok, status = r.status;
+    return r.text().then(function(text) {
+      try { return { ok: ok, status: status, d: JSON.parse(text) }; }
+      catch(e) { return { ok: false, status: status, d: { error: 'Server error (' + status + '). Please try again.' } }; }
+    });
+  })
   .then(function(res) {
+    clearTimeout(stkTimeout);
     if (res.ok) {
       btn.textContent = '📱 Enter M-Pesa PIN on your phone…';
-      // Paystack webhook will update balance — show pending message
       setTimeout(function() {
         closeModal('depositModal');
         btn.textContent = '📲 Send STK Push to Phone';
@@ -1190,9 +1203,11 @@ function sendStkPush() {
       alert('Payment failed: ' + (res.d.error || 'Please try again.'));
     }
   })
-  .catch(function() {
+  .catch(function(err) {
+    clearTimeout(stkTimeout);
     btn.textContent = '📲 Send STK Push to Phone';
     btn.disabled = false;
+    if (err && err.message && err.message.includes('session')) return;
     alert('Network error. Please try again.');
   });
 }
