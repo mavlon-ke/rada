@@ -115,6 +115,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'closesAt must be in the future' }, { status: 400 });
   }
 
+  // Use the platform's first seeded user as creator for admin-created markets
+  const systemUser = await prisma.user.findFirst({
+    orderBy: { createdAt: 'asc' },
+  });
+
+  if (!systemUser) {
+    return NextResponse.json(
+      { error: 'No platform user found. Run db:seed first.' },
+      { status: 500 }
+    );
+  }
+
   const slug = await generateUniqueSlug(title);
 
   const market = await prisma.market.create({
@@ -126,7 +138,7 @@ export async function POST(req: NextRequest) {
       closesAt:  new Date(closesAt),
       sourceNote,
       imageUrl,
-      // No creatorId for admin-created markets — only user proposals set a creator
+      creatorId: systemUser.id,
       yesPool:   1000,
       noPool:    1000,
     },

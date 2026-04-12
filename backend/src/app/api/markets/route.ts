@@ -23,6 +23,10 @@ export async function GET(req: NextRequest) {
     });
   } catch { /* non-fatal */ }
 
+  // ── System user = admin-created markets — suppress creator badge ──────────
+  const systemUser = await prisma.user.findFirst({ orderBy: { createdAt: 'asc' }, select: { id: true } });
+  const systemUserId = systemUser?.id ?? null;
+
   // ── Fetch regular markets ────────────────────────────────────────────────
   const markets = await prisma.market.findMany({
     where: {
@@ -30,7 +34,7 @@ export async function GET(req: NextRequest) {
       ...(category ? { category: category as any } : {}),
     },
     include: {
-      creator: { select: { phone: true, name: true } },
+      creator: { select: { id: true, phone: true, name: true } },
       _count:  { select: { orders: true } },
     },
     orderBy: { createdAt: 'desc' },
@@ -51,7 +55,9 @@ export async function GET(req: NextRequest) {
       noPrice:         parseFloat((1 - yesPrice).toFixed(4)),
       tradeCount:      m._count.orders,
       shareUrl:        buildMarketShareUrl(m.slug, null),
-      creatorShareUrl: buildMarketShareUrl(m.slug, m.creator?.phone ?? null),
+      // Suppress creator badge for admin-created markets (system user)
+      creatorShareUrl: m.creator.id !== systemUserId ? buildMarketShareUrl(m.slug, m.creator.phone) : buildMarketShareUrl(m.slug, null),
+      isAdminMarket:   m.creator.id === systemUserId,
       isSocialChallenge: false,
     };
   });

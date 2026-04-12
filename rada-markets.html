@@ -1387,7 +1387,7 @@ function normalizeMarket(m) {
     vol:         formatVolume(m.totalVolume || 0),
     traders:     m.tradeCount || 0,
     closes:      formatCloses(m.closesAt),
-    creator:     m.creator && m.creator.name ? m.creator.name : null,
+    creator:     (!m.isAdminMarket && m.creator && m.creator.name) ? m.creator.name : null,
     closingSoon: closesMs - now < 7 * 24 * 3600 * 1000 && closesMs > now,
     isNew:       now - new Date(m.createdAt || now).getTime() < 3 * 24 * 3600 * 1000,
     shift:       0,
