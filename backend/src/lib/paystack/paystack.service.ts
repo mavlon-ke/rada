@@ -37,9 +37,11 @@ async function paystackRequest<T>(
 // ─── Phone normalisation ──────────────────────────────────────────────────────
 
 export function normalisePhone(phone: string): string {
+  // Paystack M-Pesa charge requires 07XXXXXXXXX (10 digits, leading 0) format
   const digits = phone.replace(/\D/g, '');
-  if (digits.startsWith('0') && digits.length === 10) return '254' + digits.slice(1);
-  if (digits.startsWith('254') && digits.length === 12) return digits;
+  if (digits.startsWith('254') && digits.length === 12) return '0' + digits.slice(3);
+  if (digits.startsWith('0') && digits.length === 10) return digits;
+  if (digits.length === 9) return '0' + digits; // e.g. 712345678
   return digits;
 }
 
