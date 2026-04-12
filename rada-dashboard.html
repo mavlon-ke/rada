@@ -1169,28 +1169,15 @@ function sendStkPush() {
 
   var userPhone = (radaUser && radaUser.phone) ? String(radaUser.phone) : '';
 
-  // 30s safety timeout — re-enables button if server doesn't respond
-  var stkTimeout = setTimeout(function() {
-    btn.textContent = '📲 Send STK Push to Phone';
-    btn.disabled = false;
-    alert('Request is taking longer than usual. If you received an M-Pesa prompt, enter your PIN. Otherwise try again.');
-  }, 30000);
-
   userFetch('/api/payments/deposit', {
     method: 'POST',
     body: JSON.stringify({ amountKes: amount, phone: userPhone, method: 'mpesa' }),
   })
-  .then(function(r) {
-    var ok = r.ok, status = r.status;
-    return r.text().then(function(text) {
-      try { return { ok: ok, status: status, d: JSON.parse(text) }; }
-      catch(e) { return { ok: false, status: status, d: { error: 'Server error (' + status + '). Please try again.' } }; }
-    });
-  })
+  .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
   .then(function(res) {
-    clearTimeout(stkTimeout);
     if (res.ok) {
       btn.textContent = '📱 Enter M-Pesa PIN on your phone…';
+      // Paystack webhook will update balance — show pending message
       setTimeout(function() {
         closeModal('depositModal');
         btn.textContent = '📲 Send STK Push to Phone';
@@ -1203,11 +1190,9 @@ function sendStkPush() {
       alert('Payment failed: ' + (res.d.error || 'Please try again.'));
     }
   })
-  .catch(function(err) {
-    clearTimeout(stkTimeout);
+  .catch(function() {
     btn.textContent = '📲 Send STK Push to Phone';
     btn.disabled = false;
-    if (err && err.message && err.message.includes('session')) return;
     alert('Network error. Please try again.');
   });
 }
@@ -1238,31 +1223,47 @@ function submitWithdraw() {
 
   var userPhone = (radaUser && radaUser.phone) ? String(radaUser.phone) : '';
 
+  // 30s safety timeout — re-enables button if server doesn't respond
+  var wdTimeout = setTimeout(function() {
+    if (btn) { btn.disabled = false; btn.textContent = '↓ Withdraw to M-Pesa'; }
+    alert('Request is taking longer than usual. Please check your M-Pesa or try again.');
+  }, 30000);
+
   userFetch('/api/payments/withdraw', {
     method: 'POST',
     body: JSON.stringify({ amountKes: amt, phone: userPhone }),
   })
-  .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
+  .then(function(r) {
+    var ok = r.ok, status = r.status;
+    return r.text().then(function(text) {
+      try { return { ok: ok, status: status, d: JSON.parse(text) }; }
+      catch(e) { return { ok: false, status: status, d: { error: 'Server error (' + status + '). Please try again.' } }; }
+    });
+  })
   .then(function(res) {
+    clearTimeout(wdTimeout);
     if (btn) { btn.disabled = false; btn.textContent = '↓ Withdraw to M-Pesa'; }
     closeModal('withdrawModal');
     if (res.ok) {
       var fee = Math.round(amt * 0.01);
-      // Update local balance display
       var newBal = Math.max(0, balance - amt);
       if (radaUser) {
         radaUser.balanceKes = newBal;
-        localStorage.setItem('rada_user', JSON.stringify(radaUser));
+        try { localStorage.setItem('rada_user', JSON.stringify(radaUser)); } catch(e) {}
       }
       var balEl = document.getElementById('walletBalance');
       if (balEl) balEl.textContent = 'KES ' + newBal.toLocaleString();
+      var wab = document.getElementById('withdrawAvailBal');
+      if (wab) wab.textContent = 'KES ' + newBal.toLocaleString();
       alert('✓ KES ' + (amt - fee).toLocaleString() + ' sent to your M-Pesa!\n(KES ' + fee + ' processing fee deducted)\nRef: ' + (res.d.reference || '—'));
     } else {
       alert('Withdrawal failed: ' + (res.d.error || 'Please try again.'));
     }
   })
-  .catch(function() {
-    if (btn) { btn.disabled = false; btn.textContent = '↓ Withdraw'; }
+  .catch(function(err) {
+    clearTimeout(wdTimeout);
+    if (btn) { btn.disabled = false; btn.textContent = '↓ Withdraw to M-Pesa'; }
+    if (err && err.message && err.message.includes('session')) return;
     alert('Network error. Please try again.');
   });
 }
