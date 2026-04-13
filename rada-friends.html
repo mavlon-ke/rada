@@ -1670,11 +1670,20 @@ function updateChallengeWalletBtn() {
 }
 
 function createChallenge() {
-  const q = document.getElementById('cfQuestion').value.trim();
-  const a = document.getElementById('cfNameA').value.trim();
-  const b = document.getElementById('cfNameB').value.trim();
+  // Auth guard
+  if (!isLoggedIn) {
+    alert('Please log in to create a challenge.');
+    window.location.href = 'rada-auth.html';
+    return;
+  }
+
+  const q  = document.getElementById('cfQuestion').value.trim();
   const dl = document.getElementById('cfDeadline').value;
-  if (!q || !a || !b || !dl) { return alert('Please fill in all required fields.'); }
+  const phoneB = document.getElementById('cfPhoneB') ? document.getElementById('cfPhoneB').value.trim() : '';
+
+  if (!q)     { return alert('Please enter a challenge question.'); }
+  if (!dl)    { return alert('Please set an event deadline.'); }
+  if (!phoneB){ return alert("Please enter your friend's phone number (must be a registered CheckRada user)."); }
   if (resolutionType === 'referee' && !document.getElementById('cfReferee').value.trim()) {
     return alert('Please enter the Referee\'s phone number.');
   }
@@ -1689,7 +1698,7 @@ function createChallenge() {
   var refereePhone = resolutionType === 'referee'
     ? (document.getElementById('cfReferee') ? document.getElementById('cfReferee').value.trim() : '')
     : '';
-  var challengerBPhone = b.replace(/\D/g, '');
+  var challengerBPhone = phoneB.replace(/\D/g, '');
   if (challengerBPhone.startsWith('0')) challengerBPhone = '254' + challengerBPhone.slice(1);
 
   var body = {
@@ -1724,7 +1733,13 @@ function createChallenge() {
       loadChallenges();
     } else {
       btn.textContent = 'Create Challenge';
-      var msg = (res.d.error && typeof res.d.error === 'string') ? res.d.error : 'Could not create challenge.';
+      var err = res.d && res.d.error;
+      var msg = 'Could not create challenge.';
+      if (typeof err === 'string') { msg = err; }
+      else if (err && err.fieldErrors) {
+        var f = Object.keys(err.fieldErrors)[0];
+        if (f && err.fieldErrors[f][0]) msg = err.fieldErrors[f][0];
+      }
       alert('Error: ' + msg);
     }
   })
@@ -1747,6 +1762,7 @@ function resetForm() {
   document.getElementById('cfQuestion').value = '';
   document.getElementById('cfNameA').value = '';
   document.getElementById('cfNameB').value = '';
+  if (document.getElementById('cfPhoneB')) document.getElementById('cfPhoneB').value = '';
   document.getElementById('cfReferee').value = '';
   document.getElementById('createBtn').disabled = false;
   document.getElementById('createBtn').textContent = 'Create Challenge & Pay via M-Pesa →';
@@ -1754,9 +1770,64 @@ function resetForm() {
 
 // ── JOIN VIA CODE ─────────────────────────────────────────────────────────────
 function joinChallenge() {
-  const code = document.getElementById('joinCodeInput').value.trim();
-  if (code.length !== 6) { return alert('Please enter a valid 6-character code.'); }
-  alert(`Looking up challenge ${code}...\n\nIn the live app, this would load the challenge details and allow you to stake your side via M-Pesa STK Push.`);
+  if (!isLoggedIn) {
+    alert('Please log in to join a challenge.');
+    window.location.href = 'rada-auth.html';
+    return;
+  }
+  const code = document.getElementById('joinCodeInput').value.trim().toUpperCase();
+  if (code.length !== 6) { return alert('Please enter a valid 6-character invite code.'); }
+
+  var joinBtn = document.querySelector('.btn-join');
+  if (joinBtn) { joinBtn.disabled = true; joinBtn.textContent = 'Looking up...'; }
+
+  userFetch('/api/challenges/join/' + code)
+  .then(function(r) {
+    var ok = r.ok, status = r.status;
+    return r.text().then(function(t) {
+      try { return { ok: ok, status: status, d: JSON.parse(t) }; }
+      catch(e) { return { ok: false, status: status, d: { error: 'Server error' } }; }
+    });
+  })
+  .then(function(res) {
+    if (joinBtn) { joinBtn.disabled = false; joinBtn.textContent = 'Join →'; }
+    if (res.ok) {
+      var c = res.d;
+      var stake = Number(c.stakePerPerson || 0);
+      var msg = 'Challenge found!\n\nQuestion: ' + c.question + '\nCreated by: ' + (c.createdBy || 'Anonymous') + '\nStake: KES ' + stake.toLocaleString() + ' per person' + (c.hasReferee ? '\nReferee: ' + (c.refereeName || 'Assigned') : '') + '\n\nTap OK to stake KES ' + stake.toLocaleString() + ' and join.';
+      if (confirm(msg)) {
+        userFetch('/api/challenges/join/' + code, {
+          method: 'POST',
+          body: JSON.stringify({ walletAmountKes: stake, mpesaAmountKes: 0 }),
+        })
+        .then(function(r2) {
+          var ok2 = r2.ok;
+          return r2.text().then(function(t2) {
+            try { return { ok: ok2, d: JSON.parse(t2) }; }
+            catch(e) { return { ok: false, d: { error: 'Server error' } }; }
+          });
+        })
+        .then(function(res2) {
+          if (res2.ok) {
+            alert('✓ You have joined the challenge! The challenge is now active. Good luck!');
+            document.getElementById('joinCodeInput').value = '';
+            loadChallenges();
+          } else {
+            var msg2 = (res2.d && typeof res2.d.error === 'string') ? res2.d.error : 'Could not join challenge.';
+            alert('Error: ' + msg2);
+          }
+        })
+        .catch(function() { alert('Network error. Please try again.'); });
+      }
+    } else {
+      var msg3 = (res.d && typeof res.d.error === 'string') ? res.d.error : 'Challenge not found.';
+      alert('Error: ' + msg3);
+    }
+  })
+  .catch(function() {
+    if (joinBtn) { joinBtn.disabled = false; joinBtn.textContent = 'Join →'; }
+    alert('Network error. Please try again.');
+  });
 }
 
 // ── RESOLVE MODAL ─────────────────────────────────────────────────────────────
