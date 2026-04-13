@@ -111,14 +111,16 @@ export async function chargeMpesa(
 ): Promise<ChargeMpesaResult> {
   const phone = normalisePhone(params.phone);
 
+  // Kenya M-Pesa STK Push: Paystack uses bank.code="MPESA" for Kenya (not mobile_money)
+  // mobile_money is for West African providers (MTN Ghana, Vodafone etc.)
   return paystackRequest<ChargeMpesaResult>('POST', '/charge', {
-    email:    params.email,
-    amount:   Math.round(params.amountKes * 100),
-    currency: 'KES',
+    email:     params.email,
+    amount:    Math.round(params.amountKes * 100),
+    currency:  'KES',
     reference: params.reference,
-    mobile_money: {
-      phone,
-      provider: 'mpesa',
+    bank: {
+      code:           'MPESA',
+      account_number: phone,
     },
     metadata: params.metadata ?? {},
   });
@@ -172,7 +174,7 @@ export async function createTransferRecipient(
     type:         'mobile_money',
     name:         params.name,
     account_number: phone,
-    bank_code:    'MPesa',
+    bank_code:    'MPESA',
     currency:     'KES',
   });
 }
