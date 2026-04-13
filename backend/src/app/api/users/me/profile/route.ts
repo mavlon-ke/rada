@@ -15,6 +15,25 @@ const ProfileSchema = z.object({
   confirmedAge:  z.boolean().optional(),
 });
 
+export async function GET(req: NextRequest) {
+  const user = await requireAuth(req);
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const fresh = await prisma.user.findUnique({
+    where:  { id: user.id },
+    select: {
+      id: true, phone: true, name: true,
+      balanceKes: true, bonusBalanceKes: true,
+      kycStatus: true, referralCode: true,
+      agreedToTerms: true, confirmedAge: true,
+      createdAt: true,
+    },
+  });
+
+  if (!fresh) return NextResponse.json({ error: 'User not found' }, { status: 404 });
+  return NextResponse.json({ user: fresh });
+}
+
 export const PATCH = withErrorHandling(async (req: NextRequest) => {
   const user = await requireAuth(req);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

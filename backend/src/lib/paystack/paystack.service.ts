@@ -16,7 +16,7 @@ async function paystackRequest<T>(
   body?: object
 ): Promise<T> {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 25000); // 25s timeout
+  const timeout = setTimeout(() => controller.abort(), 25000);
 
   let res: Response;
   try {
@@ -38,8 +38,10 @@ async function paystackRequest<T>(
 
   const data = await res.json();
 
+  // Log full response to Railway logs for debugging
+  console.log('[Paystack]', method, path, 'status:', res.status, 'body:', JSON.stringify(data));
+
   if (!res.ok || !data.status) {
-    console.error('[Paystack] API error:', JSON.stringify(data));
     throw new Error(data.message ?? 'Paystack API error');
   }
 
