@@ -25,11 +25,18 @@ export async function requireAuth(req: NextRequest) {
       createdAt: true,
     }
   });
-    if (!user) return null;
+    if (!user) {
+      console.warn('[Auth] User not found for id:', userId);
+      return null;
+    }
     // Frozen accounts cannot authenticate
-    if (user.suspended) return null;
+    if (user.suspended === true) {
+      console.warn('[Auth] Blocked suspended user:', user.phone);
+      return null;
+    }
     return user;
-  } catch {
+  } catch (err) {
+    console.warn('[Auth] JWT verify failed:', (err as Error).message);
     return null;
   }
 }
