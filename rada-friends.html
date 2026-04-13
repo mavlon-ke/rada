@@ -1692,7 +1692,6 @@ function createChallenge() {
   var challengerBPhone = b.replace(/\D/g, '');
   if (challengerBPhone.startsWith('0')) challengerBPhone = '254' + challengerBPhone.slice(1);
 
-  var dl = document.getElementById('cfDeadline').value;
   var body = {
     question:         q,
     stakePerPerson:   friendStake || 500,
@@ -2096,7 +2095,7 @@ function requestAdminIntervention(id, btn) {
 // ── Auth state ────────────────────────────────────────────────────────────────
 var radaUser = null;
 try { radaUser = JSON.parse(localStorage.getItem('rada_user') || 'null'); } catch(e) {}
-var isLoggedIn = !!radaUser;
+var isLoggedIn = !!(radaUser && localStorage.getItem('rada_token'));
 
 const API_BASE = 'https://api.checkrada.co.ke';
 
