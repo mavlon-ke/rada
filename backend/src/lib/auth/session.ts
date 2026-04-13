@@ -21,17 +21,11 @@ export async function requireAuth(req: NextRequest) {
       id: true, name: true, phone: true,
       balanceKes: true, bonusBalanceKes: true,
       kycStatus: true, referralCode: true,
-      suspended: true,
       createdAt: true,
     }
   });
     if (!user) {
       console.warn('[Auth] User not found for id:', userId);
-      return null;
-    }
-    // Frozen accounts cannot authenticate
-    if (user.suspended === true) {
-      console.warn('[Auth] Blocked suspended user:', user.phone);
       return null;
     }
     return user;
