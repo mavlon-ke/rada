@@ -51,11 +51,11 @@ async function paystackRequest<T>(
 // ─── Phone normalisation ──────────────────────────────────────────────────────
 
 export function normalisePhone(phone: string): string {
-  // Paystack M-Pesa charge requires 07XXXXXXXXX (10 digits, leading 0) format
+  // Paystack requires 254XXXXXXXXX format (international, no leading +)
   const digits = phone.replace(/\D/g, '');
-  if (digits.startsWith('254') && digits.length === 12) return '0' + digits.slice(3);
-  if (digits.startsWith('0') && digits.length === 10) return digits;
-  if (digits.length === 9) return '0' + digits; // e.g. 712345678
+  if (digits.startsWith('254') && digits.length === 12) return digits;
+  if (digits.startsWith('0') && digits.length === 10) return '254' + digits.slice(1);
+  if (digits.length === 9) return '254' + digits; // e.g. 712345678
   return digits;
 }
 
@@ -111,16 +111,16 @@ export async function chargeMpesa(
 ): Promise<ChargeMpesaResult> {
   const phone = normalisePhone(params.phone);
 
-  // Kenya M-Pesa STK Push: Paystack uses bank.code="MPESA" for Kenya (not mobile_money)
-  // mobile_money is for West African providers (MTN Ghana, Vodafone etc.)
+  // Kenya M-Pesa STK Push: use mobile_money with provider "mpesa"
+  // phone must be in 254XXXXXXXXX format (international, no +)
   return paystackRequest<ChargeMpesaResult>('POST', '/charge', {
     email:     params.email,
     amount:    Math.round(params.amountKes * 100),
     currency:  'KES',
     reference: params.reference,
-    bank: {
-      code:           'MPESA',
-      account_number: phone,
+    mobile_money: {
+      phone,
+      provider: 'mpesa',
     },
     metadata: params.metadata ?? {},
   });
