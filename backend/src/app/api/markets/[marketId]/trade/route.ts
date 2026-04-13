@@ -28,10 +28,6 @@ export async function POST(
   const user = await requireAuth(req);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  if (user.kycStatus !== 'VERIFIED') {
-    return NextResponse.json({ error: 'KYC verification required to trade' }, { status: 403 });
-  }
-
   const body   = await req.json();
   const parsed = TradeSchema.safeParse(body);
   if (!parsed.success) {

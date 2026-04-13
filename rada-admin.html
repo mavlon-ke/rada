@@ -718,7 +718,7 @@ body::after {
       <span class="nav-icon">⊞</span><span>All Users</span>
     </button>
     <button class="nav-item" onclick="showPanel('kyc', this)">
-      <span class="nav-icon">◈</span><span>KYC Queue</span>
+      <span class="nav-icon">◈</span><span style="display:none;">KYC Queue</span>
       <span class="nav-badge" id="kycNavBadge">—</span>
     </button>
   </div>
@@ -1039,15 +1039,14 @@ body::after {
       <div class="filter-row">
         <input class="search-input" placeholder="🔍  Search by name, phone, or ID...">
         <select class="filter-select">
-          <option>All KYC Status</option>
-          <option>VERIFIED</option>
-          <option>PENDING</option>
-          <option>REJECTED</option>
+          <option>All Account Status</option>
+          <option value="active">Active</option>
+          <option value="frozen">Frozen</option>
         </select>
       </div>
       <div class="table-card" style="box-shadow:0 2px 12px rgba(0,0,0,0.05);">
         <table class="tbl">
-          <thead><tr><th>User</th><th>Phone</th><th>KYC</th><th>Balance</th><th>Volume</th><th>Joined</th><th>Actions</th></tr></thead>
+          <thead><tr><th>User</th><th>Phone</th><th>Status</th><th>Balance</th><th>Volume</th><th>Joined</th><th>Actions</th></tr></thead>
           <tbody id="usersTableBody"></tbody>
         </table>
       </div>
@@ -1455,7 +1454,7 @@ body::after {
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
         <div>
-          <div class="stat-label" style="margin-bottom:4px;">KYC Status</div>
+          <div class="stat-label" style="margin-bottom:4px;display:none;">KYC Status</div>
           <select class="form-select" id="editUserKyc" style="width:100%;">
             <option value="PENDING">Pending</option>
             <option value="VERIFIED">Verified</option>
@@ -1895,11 +1894,9 @@ function renderUsersTable() {
   var tbody = document.getElementById('usersTableBody');
   if (!tbody) return;
   tbody.innerHTML = USERS_DATA.map(function(u) {
-    var kycBadge = u.kyc === 'VERIFIED'
-      ? '<span class="badge badge-green">VERIFIED</span>'
-      : u.kyc === 'PENDING'
-      ? '<span class="badge badge-amber">PENDING</span>'
-      : '<span class="badge badge-red">REJECTED</span>';
+    var kycBadge = u.suspended
+      ? '<span class="badge badge-red">FROZEN</span>'
+      : '<span class="badge badge-green">ACTIVE</span>';
     var reviewBtn = u.kyc === 'PENDING'
       ? '<button class="act-btn act-amber" data-action="kyc" data-id="' + (u.id||'') + '" data-name="' + (u.name||'').replace(/"/g,'') + '" data-phone="' + (u.phone||'') + '">Review KYC</button>'
       : '';
@@ -2858,7 +2855,7 @@ function saveUserEdits() {
   var status = document.getElementById('editUserStatus');
   btn.disabled = true; btn.textContent = 'Saving...'; status.textContent = '';
 
-  var body = { name: name, phone: phone, kycStatus: kyc, suspended: suspended };
+  var body = { name: name, phone: phone, suspended: suspended };
   if (balAdj !== '' && balAdj !== '0') {
     body.balanceAdjustKes = parseFloat(balAdj);
     body.adjustReason     = balReason || 'Admin manual adjustment';

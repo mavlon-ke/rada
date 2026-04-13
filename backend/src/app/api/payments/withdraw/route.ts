@@ -27,10 +27,6 @@ export const POST = withErrorHandling(async (req: NextRequest) => {
   const user = await requireAuth(req);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  if (user.kycStatus !== 'VERIFIED') {
-    return NextResponse.json({ error: 'KYC verification required for withdrawals' }, { status: 403 });
-  }
-
   const body   = await req.json();
   const parsed = WithdrawSchema.safeParse(body);
   if (!parsed.success) {

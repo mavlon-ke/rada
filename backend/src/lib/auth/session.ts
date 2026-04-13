@@ -21,11 +21,13 @@ export async function requireAuth(req: NextRequest) {
       id: true, name: true, phone: true,
       balanceKes: true, bonusBalanceKes: true,
       kycStatus: true, referralCode: true,
+      suspended: true,
       createdAt: true,
-      // Explicitly exclude sensitive fields
-      // passwordHash: false — never returned
     }
   });
+    if (!user) return null;
+    // Frozen accounts cannot authenticate
+    if (user.suspended) return null;
     return user;
   } catch {
     return null;
