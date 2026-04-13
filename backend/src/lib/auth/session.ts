@@ -20,7 +20,7 @@ export async function requireAuth(req: NextRequest) {
     select: {
       id: true, name: true, phone: true,
       balanceKes: true, bonusBalanceKes: true,
-      kycStatus: true, referralCode: true,
+      referralCode: true,
       createdAt: true,
     }
   });
