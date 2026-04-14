@@ -1342,7 +1342,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // MARKETS — live from backend. Populated by loadMarkets() on page init.
 var MARKETS = [];
 
-const API_BASE = 'https://api.checkrada.co.ke';
+var API_BASE = 'https://api.checkrada.co.ke';
 
 function userFetch(path, options) {
   var token = localStorage.getItem('rada_token') || '';
