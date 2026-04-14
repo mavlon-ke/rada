@@ -51,12 +51,12 @@ async function paystackRequest<T>(
 // ─── Phone normalisation ──────────────────────────────────────────────────────
 
 export function normalisePhone(phone: string): string {
-  // Paystack requires 254XXXXXXXXX format (international, no leading +)
+  // Paystack mobile_money requires +254XXXXXXXXX format (with + prefix)
   const digits = phone.replace(/\D/g, '');
-  if (digits.startsWith('254') && digits.length === 12) return digits;
-  if (digits.startsWith('0') && digits.length === 10) return '254' + digits.slice(1);
-  if (digits.length === 9) return '254' + digits; // e.g. 712345678
-  return digits;
+  if (digits.startsWith('254') && digits.length === 12) return '+' + digits;
+  if (digits.startsWith('0') && digits.length === 10) return '+254' + digits.slice(1);
+  if (digits.length === 9) return '+254' + digits;
+  return phone; // return as-is if already formatted
 }
 
 // ─── INITIALIZE TRANSACTION ───────────────────────────────────────────────────
