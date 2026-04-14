@@ -1468,6 +1468,15 @@ function drawChart(period) {
   const vals = data.portfolio;
   const deps = data.deposited;
   const n    = vals.length;
+
+  // Guard: need at least 2 points to draw a meaningful chart
+  if (n < 2) {
+    ctx.fillStyle = 'rgba(109,40,217,0.4)';
+    ctx.font = '13px Archivo, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('No trade history yet — make your first prediction!', W / 2, H / 2);
+    return;
+  }
   const minV = Math.min(...vals, ...deps) * 0.97;
   const maxV = Math.max(...vals, ...deps) * 1.02;
 

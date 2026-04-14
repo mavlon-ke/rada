@@ -918,6 +918,25 @@ td{padding:14px 16px;font-size:0.8rem;border-bottom:1px solid rgba(109,40,217,0.
 </div>
 
 <script>
+// ── API helpers (duplicated here so they're available before the shared nav block) ──
+var API_BASE = 'https://api.checkrada.co.ke';
+function userFetch(path, options) {
+  var token = localStorage.getItem('rada_token') || '';
+  var opts  = Object.assign({}, options || {});
+  opts.credentials = 'include';
+  opts.headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers || {});
+  if (token) opts.headers['Authorization'] = 'Bearer ' + token;
+  return fetch(API_BASE + path, opts).then(function(r) {
+    if (r.status === 401) {
+      localStorage.removeItem('rada_token');
+      localStorage.removeItem('rada_user');
+      window.location.href = 'rada-auth.html?reason=session_expired';
+      return new Promise(function() {});
+    }
+    return r;
+  });
+}
+
 // ── SAMPLE DATA ───────────────────────────────────────────────────────────────
 var MY_MARKETS = [];
 
