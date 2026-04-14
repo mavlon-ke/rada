@@ -1143,7 +1143,7 @@ var radaUser = null;
 try { radaUser = JSON.parse(localStorage.getItem('rada_user') || 'null'); } catch(e) {}
 var isLoggedIn = !!radaUser;
 
-const API_BASE = 'https://api.checkrada.co.ke';
+var API_BASE = 'https://api.checkrada.co.ke';
 
 // userFetch: attaches user JWT to every authenticated request
 function userFetch(path, options) {
