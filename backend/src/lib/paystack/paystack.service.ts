@@ -1,14 +1,11 @@
 // src/lib/paystack/paystack.service.ts
 // Paystack integration for CheckRada
-// Supports: M-Pesa STK Push (Kenya mobile money) + Card payments
-// Docs: https://paystack.com/docs/api/
+// Supports: M-Pesa STK Push (Kenya mobile money) + Card payments + Transfers (Withdrawals)
 
 import { createHmac, timingSafeEqual } from 'crypto';
 
 const PAYSTACK_SECRET = process.env.PAYSTACK_SECRET_KEY!;
 const PAYSTACK_BASE   = 'https://api.paystack.co';
-
-// ─── Generic request helper ───────────────────────────────────────────────────
 
 async function paystackRequest<T>(
   method: 'GET' | 'POST',
@@ -37,8 +34,6 @@ async function paystackRequest<T>(
   clearTimeout(timeout);
 
   const data = await res.json();
-
-  // Log full response to Railway logs for debugging
   console.log('[Paystack]', method, path, 'status:', res.status, 'body:', JSON.stringify(data));
 
   if (!res.ok || !data.status) {
@@ -48,26 +43,31 @@ async function paystackRequest<T>(
   return data.data as T;
 }
 
-// ─── Phone normalisation ──────────────────────────────────────────────────────
-
+// Phone normalisation
+// STK Push (/charge): requires +254XXXXXXXXX (with + prefix)
 export function normalisePhone(phone: string): string {
-  // Paystack mobile_money requires +254XXXXXXXXX format (with + prefix)
   const digits = phone.replace(/\D/g, '');
   if (digits.startsWith('254') && digits.length === 12) return '+' + digits;
   if (digits.startsWith('0') && digits.length === 10) return '+254' + digits.slice(1);
   if (digits.length === 9) return '+254' + digits;
-  return phone; // return as-is if already formatted
+  return phone;
 }
 
-// ─── INITIALIZE TRANSACTION ───────────────────────────────────────────────────
-// Used for card payments — returns an authorization URL the user visits
+// Transfer Recipient (/transferrecipient): requires 07XXXXXXXX (local format, no + or country code)
+export function normalisePhoneForTransfer(phone: string): string {
+  const digits = phone.replace(/\D/g, '');
+  if (digits.startsWith('254') && digits.length === 12) return '0' + digits.slice(3);
+  if (digits.startsWith('0') && digits.length === 10) return digits;
+  if (digits.length === 9) return '0' + digits;
+  return phone;
+}
 
 export interface InitializeTransactionParams {
-  email:      string;   // Paystack requires email — use phone@checkrada.co.ke as fallback
-  amountKes:  number;   // In KES (we convert to kobo: KES * 100)
-  reference:  string;   // Your unique transaction reference
-  callbackUrl: string;  // Where Paystack redirects after card payment
-  metadata?:  object;
+  email:       string;
+  amountKes:   number;
+  reference:   string;
+  callbackUrl: string;
+  metadata?:   object;
 }
 
 export interface InitializeTransactionResult {
@@ -81,7 +81,7 @@ export async function initializeTransaction(
 ): Promise<InitializeTransactionResult> {
   return paystackRequest<InitializeTransactionResult>('POST', '/transaction/initialize', {
     email:        params.email,
-    amount:       Math.round(params.amountKes * 100), // Paystack uses kobo (1 KES = 100 kobo)
+    amount:       Math.round(params.amountKes * 100),
     currency:     'KES',
     reference:    params.reference,
     callback_url: params.callbackUrl,
@@ -89,30 +89,24 @@ export async function initializeTransaction(
   });
 }
 
-// ─── CHARGE M-PESA (STK Push) ─────────────────────────────────────────────────
-// Sends STK push directly to user's phone via Paystack
-
 export interface ChargeMpesaParams {
   email:     string;
   amountKes: number;
-  phone:     string;   // 254XXXXXXXXX format
+  phone:     string;
   reference: string;
   metadata?: object;
 }
 
 export interface ChargeMpesaResult {
-  reference:       string;
-  status:          string;   // 'send_otp' | 'pay_offline' | 'success' | 'failed'
-  display_text:    string;
+  reference:    string;
+  status:       string;
+  display_text: string;
 }
 
 export async function chargeMpesa(
   params: ChargeMpesaParams
 ): Promise<ChargeMpesaResult> {
   const phone = normalisePhone(params.phone);
-
-  // Kenya M-Pesa STK Push: use mobile_money with provider "mpesa"
-  // phone must be in 254XXXXXXXXX format (international, no +)
   return paystackRequest<ChargeMpesaResult>('POST', '/charge', {
     email:     params.email,
     amount:    Math.round(params.amountKes * 100),
@@ -126,21 +120,18 @@ export async function chargeMpesa(
   });
 }
 
-// ─── VERIFY TRANSACTION ───────────────────────────────────────────────────────
-// Call this after callback/webhook to confirm payment
-
 export interface VerifyTransactionResult {
-  reference:   string;
-  status:      string;   // 'success' | 'failed' | 'abandoned'
-  amount:      number;   // in kobo
-  currency:    string;
-  paid_at:     string;
-  metadata:    Record<string, unknown>;
+  reference: string;
+  status:    string;
+  amount:    number;
+  currency:  string;
+  paid_at:   string;
+  metadata:  Record<string, unknown>;
   customer: {
     email: string;
     phone: string;
   };
-  channel:     string;   // 'mobile_money' | 'card' etc.
+  channel: string;
 }
 
 export async function verifyTransaction(
@@ -152,14 +143,10 @@ export async function verifyTransaction(
   );
 }
 
-// ─── INITIATE TRANSFER (Withdrawal) ──────────────────────────────────────────
-// Step 1: Create a transfer recipient
-// Step 2: Initiate the transfer
-
 export interface CreateRecipientParams {
-  name:          string;
-  phone:         string;   // 254XXXXXXXXX
-  bankCode:      string;   // 'MPesa' for M-Pesa
+  name:     string;
+  phone:    string;
+  bankCode: string;
 }
 
 export interface TransferRecipient {
@@ -169,21 +156,22 @@ export interface TransferRecipient {
 export async function createTransferRecipient(
   params: CreateRecipientParams
 ): Promise<TransferRecipient> {
-  const phone = normalisePhone(params.phone);
+  // IMPORTANT: /transferrecipient requires 07XXXXXXXX local format, NOT +254XXXXXXXXX
+  const phone = normalisePhoneForTransfer(params.phone);
   return paystackRequest<TransferRecipient>('POST', '/transferrecipient', {
-    type:         'mobile_money',
-    name:         params.name,
+    type:           'mobile_money',
+    name:           params.name,
     account_number: phone,
-    bank_code:    'MPESA',
-    currency:     'KES',
+    bank_code:      'MPESA',
+    currency:       'KES',
   });
 }
 
 export interface InitiateTransferParams {
-  amountKes:      number;
-  recipientCode:  string;
-  reference:      string;
-  reason:         string;
+  amountKes:     number;
+  recipientCode: string;
+  reference:     string;
+  reason:        string;
 }
 
 export interface TransferResult {
@@ -204,28 +192,20 @@ export async function initiateTransfer(
   });
 }
 
-// ─── WEBHOOK SIGNATURE VERIFICATION ──────────────────────────────────────────
-// SECURITY: Always verify Paystack webhook signatures
-
 export function verifyWebhookSignature(
   payload: string,
   signature: string
 ): boolean {
   if (!signature || !PAYSTACK_SECRET) return false;
-
   const expected = createHmac('sha512', PAYSTACK_SECRET)
     .update(payload)
     .digest('hex');
-
   if (expected.length !== signature.length) return false;
-
   return timingSafeEqual(
     Buffer.from(expected, 'utf8'),
     Buffer.from(signature, 'utf8')
   );
 }
-
-// ─── GENERATE REFERENCE ───────────────────────────────────────────────────────
 
 import { randomBytes } from 'crypto';
 
