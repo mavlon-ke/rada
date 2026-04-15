@@ -1321,21 +1321,26 @@ function loadChallenges() {
   .then(function(d) {
     var all = d.challenges || [];
     MY_CHALLENGES = all.map(function(c) {
+      // Determine if current user is the creator (userA) or the invited challenger (userB)
+      var myId = radaUser && radaUser.id ? radaUser.id : null;
+      var isCreator = !myId || (c.userA && c.userA.id === myId) || (!c.userB);
       return {
-        id:       c.id,
-        q:        c.question,
-        a:        { name: c.userA && c.userA.name ? c.userA.name : 'Player A', stake: Number(c.stakePerPerson) },
-        b:        { name: c.userB && c.userB.name ? c.userB.name : 'Player B', stake: Number(c.stakePerPerson) },
-        referee:  c.refereePhone ? { name: 'Referee', phone: '+' + c.refereePhone } : null,
-        status:   c.status === 'ACTIVE' ? 'open' : c.status === 'PENDING_JOIN' ? 'pending'
-                : c.status === 'DISPUTED' ? 'disputed' : c.status === 'RESOLVED' ? 'resolved' : 'pending',
-        resType:  c.validatorType ? c.validatorType.toLowerCase() : 'mutual',
-        deadline: c.eventExpiresAt ? new Date(c.eventExpiresAt).toLocaleDateString('en-KE', { day:'numeric', month:'short', year:'numeric' }) : '—',
-        code:     c.accessCode,
-        slug:     'social-' + c.accessCode.toLowerCase(),
-        pool:     Number(c.totalPool),
-        fee:      Math.round(Number(c.totalPool) * 0.05),
-        winner:   Math.round(Number(c.totalPool) * 0.95),
+        id:        c.id,
+        q:         c.question,
+        a:         { name: c.userA && c.userA.name ? c.userA.name : 'Player A', stake: Number(c.stakePerPerson) },
+        b:         { name: c.userB && c.userB.name ? c.userB.name : 'Player B', stake: Number(c.stakePerPerson) },
+        referee:   c.refereePhone ? { name: 'Referee', phone: '+' + c.refereePhone } : null,
+        status:    c.status === 'ACTIVE' ? 'open' : c.status === 'PENDING_JOIN' ? 'pending'
+                 : c.status === 'DISPUTED' ? 'disputed' : c.status === 'RESOLVED' ? 'resolved' : 'pending',
+        resType:   c.validatorType ? c.validatorType.toLowerCase() : 'mutual',
+        deadline:  c.eventExpiresAt ? new Date(c.eventExpiresAt).toLocaleDateString('en-KE', { day:'numeric', month:'short', year:'numeric' }) : '—',
+        code:      c.accessCode,
+        slug:      'social-' + c.accessCode.toLowerCase(),
+        pool:      Number(c.totalPool),
+        fee:       Math.round(Number(c.totalPool) * 0.05),
+        winner:    Math.round(Number(c.totalPool) * 0.95),
+        isCreator: isCreator,
+        stake:     Number(c.stakePerPerson),
       };
     }).filter(function(c) { return c.status !== 'resolved'; });
 
@@ -1498,7 +1503,8 @@ function challengeCard(c, isMine, isRef = false) {
         <div class="cc-share-row">
           <button class="csh-btn native" onclick="nativeShareChallenge('${c.slug}','${c.code}','${c.q}')">⤴ Share</button>
         </div>
-        ${c.status === 'pending' ? `<button class="btn-sm btn-sm-ghost">Wait for Friend</button>` : ''}
+        ${c.status === 'pending' && c.isCreator ? `<button class="btn-sm btn-sm-ghost">Wait for Friend →</button>` : ''}
+        ${c.status === 'pending' && !c.isCreator ? `<button class="btn-sm btn-sm-purple" onclick="acceptChallenge('${c.code}',${c.stake})">✓ Accept & Stake KES ${c.stake?.toLocaleString()}</button>` : ''}
         ${c.status === 'open' ? `<button class="btn-sm btn-sm-ghost">View Details</button>` : ''}
       </div>`
     : `<div class="cc-actions">
@@ -1742,8 +1748,8 @@ function createChallenge() {
   .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
   .then(function(res) {
     btn.disabled = false;
-    if (res.ok && res.d.success) {
-      var code = res.d.accessCode;
+    if (res.ok && res.d.challenge) {
+      var code = res.d.challenge.accessCode;
       document.getElementById('generatedCode').textContent = code;
       if (document.getElementById('challengeCode2')) document.getElementById('challengeCode2').textContent = code;
       if (breakdown) breakdown.textContent = '';
@@ -1788,6 +1794,40 @@ function resetForm() {
 }
 
 // ── JOIN VIA CODE ─────────────────────────────────────────────────────────────
+function acceptChallenge(code, stake) {
+  if (!isLoggedIn) {
+    alert('Please log in to accept this challenge.');
+    window.location.href = 'rada-auth.html';
+    return;
+  }
+  var confirmed = confirm(
+    'Accept challenge and stake KES ' + Number(stake).toLocaleString() + '?\n\n' +
+    'This will be deducted from your CheckRada wallet.'
+  );
+  if (!confirmed) return;
+
+  userFetch('/api/challenges/join/' + code, {
+    method: 'POST',
+    body: JSON.stringify({ walletAmountKes: stake, mpesaAmountKes: 0 }),
+  })
+  .then(function(r) {
+    return r.text().then(function(t) {
+      try { return { ok: r.ok, d: JSON.parse(t) }; }
+      catch(e) { return { ok: false, d: { error: 'Server error' } }; }
+    });
+  })
+  .then(function(res) {
+    if (res.ok) {
+      alert('✓ Challenge accepted! The challenge is now active. Good luck!');
+      loadChallenges();
+    } else {
+      var msg = (res.d && typeof res.d.error === 'string') ? res.d.error : 'Could not accept challenge.';
+      alert('Error: ' + msg);
+    }
+  })
+  .catch(function() { alert('Network error. Please try again.'); });
+}
+
 function joinChallenge() {
   if (!isLoggedIn) {
     alert('Please log in to join a challenge.');
@@ -1883,6 +1923,21 @@ function submitRuling(side) {
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
 renderChallenges();
+
+// Handle ?join={code} URL param — auto-trigger join flow when arriving via a share link
+(function() {
+  var joinParam = new URLSearchParams(window.location.search).get('join');
+  if (joinParam) {
+    history.replaceState(null, '', 'rada-friends.html');
+    var joinInput = document.getElementById('joinCodeInput');
+    if (joinInput) {
+      joinInput.value = joinParam.toUpperCase();
+      // Small delay to let page render + challenges load, then trigger join
+      setTimeout(function() { joinChallenge(); }, 800);
+    }
+  }
+})();
+
 // Set min date
 const tom = new Date(); tom.setDate(tom.getDate()+1);
 document.getElementById('cfDeadline').min = tom.toISOString().split('T')[0];
