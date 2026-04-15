@@ -2823,6 +2823,7 @@ document.addEventListener('DOMContentLoaded', function() {
   var urlParams = new URLSearchParams(window.location.search);
   var filterParam = urlParams.get('filter');
   var searchParam = urlParams.get('search');
+  var slugParam   = urlParams.get('slug'); // from /m/{slug} share links via 404.html redirect
   if (searchParam === '1') {
     history.replaceState(null, '', 'rada-markets.html');
     renderMarkets(MARKETS);
@@ -2846,194 +2847,20 @@ document.addEventListener('DOMContentLoaded', function() {
     var allBtn = document.querySelector('.filter-btn[onclick*=\"ALL\"]');
     if (allBtn) { allBtn.classList.add('active'); }
   }
+
+  // If arrived via a share link (/m/{slug}), wait for markets to load then open that market
+  if (slugParam) {
+    history.replaceState(null, '', 'rada-markets.html');
+    var attempts = 0;
+    var tryOpen = setInterval(function() {
+      attempts++;
+      var market = MARKETS.find(function(m) { return m.slug === slugParam || m.id === slugParam; });
+      if (market) {
+        clearInterval(tryOpen);
+        openForecast(market.id);
+      } else if (attempts >= 20) {
+        clearInterval(tryOpen); // gave up after 4s — market may be closed/resolved
+      }
+    }, 200);
+  }
 });
-</script>
-
-<!-- REFER A FRIEND OVERLAY -->
-<div class="refer-overlay" id="referOverlay" onclick="if(event.target===this)closeReferSheet()">
-  <div class="refer-sheet">
-    <div class="refer-sheet-handle"></div>
-    <div class="refer-sheet-head">
-      <div class="refer-sheet-title">🎁 Refer a Friend</div>
-      <button class="refer-close-btn" onclick="closeReferSheet()">✕</button>
-    </div>
-    <div class="refer-body">
-
-      <!-- Referral Code -->
-      <div class="refer-code-wrap">
-        <div class="refer-code-label">Your Referral Code</div>
-        <div class="refer-code-value" id="referCodeDisplay">------</div>
-        <div class="refer-code-btns">
-          <button class="btn-copy-code" onclick="copyReferCode()">
-            📋 Copy Code
-          </button>
-          <button class="btn-wa-refer" onclick="shareReferWhatsApp()">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.553 4.113 1.524 5.842L.057 23.571a.5.5 0 0 0 .608.625l5.939-1.554A11.945 11.945 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.891 0-3.659-.52-5.174-1.427l-.371-.22-3.527.924.939-3.432-.242-.381A9.944 9.944 0 0 1 2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
-            Share
-          </button>
-        </div>
-      </div>
-
-      <!-- How it works -->
-      <div class="refer-how">
-        <div class="refer-how-title">How it works</div>
-        <div class="refer-steps">
-          <div class="refer-step">
-            <div class="refer-step-icon">📤</div>
-            <div class="refer-step-text">Share your code</div>
-          </div>
-          <div class="refer-step">
-            <div class="refer-step-icon">🧑🏾</div>
-            <div class="refer-step-text">Friend signs up &amp; deposits</div>
-          </div>
-          <div class="refer-step">
-            <div class="refer-step-icon">🎁</div>
-            <div class="refer-step-text">You both get bonus KES</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Stats -->
-      <div class="refer-stats" id="referStatsWrap">
-        <div class="refer-stat">
-          <div class="refer-stat-val" id="referStatFriends">0</div>
-          <div class="refer-stat-lbl">Referred</div>
-        </div>
-        <div class="refer-stat">
-          <div class="refer-stat-val" id="referStatEarned">KES 0</div>
-          <div class="refer-stat-lbl">Earned</div>
-        </div>
-        <div class="refer-stat">
-          <div class="refer-stat-val" id="referStatPending">0</div>
-          <div class="refer-stat-lbl">Pending</div>
-        </div>
-      </div>
-      <div id="referNoStats" style="display:none;text-align:center;padding:8px 0 12px;font-size:0.68rem;color:#b0a4cc;">
-        No referrals yet. Share your code to start earning.
-      </div>
-
-      <!-- Note -->
-      <div class="refer-note">
-        Bonus balance must be staked before withdrawal.<br>
-        Programme subject to availability.
-      </div>
-
-    </div>
-  </div>
-</div>
-
-<script>
-/* ── Refer a Friend ── */
-function openReferSheet() {
-  if (!isLoggedIn) { window.location.href = 'rada-auth.html'; return; }
-  var user = null;
-  try { user = JSON.parse(localStorage.getItem('rada_user') || 'null'); } catch(e) {}
-  
-  // Display referral code
-  var code = (user && user.referralCode) ? user.referralCode : '------';
-  var codeEl = document.getElementById('referCodeDisplay');
-  if (codeEl) codeEl.textContent = code;
-
-  // Load stats from API
-  fetch(API_BASE + '/api/users/me/referrals')
-    .then(function(r){ return r.json(); })
-    .then(function(d) {
-      var total    = d.totalReferred || 0;
-      var earned   = d.totalEarned   || 0;
-      var pending  = (d.referrals || []).filter(function(r){ return r.status === 'PENDING'; }).length;
-      var statsEl  = document.getElementById('referStatsWrap');
-      var noStats  = document.getElementById('referNoStats');
-      if (total === 0) {
-        if (statsEl) statsEl.style.display = 'none';
-        if (noStats) noStats.style.display = 'block';
-      } else {
-        if (statsEl) statsEl.style.display = 'grid';
-        if (noStats) noStats.style.display = 'none';
-        var f = document.getElementById('referStatFriends');
-        var e = document.getElementById('referStatEarned');
-        var p = document.getElementById('referStatPending');
-        if (f) f.textContent = total;
-        if (e) e.textContent = 'KES ' + Number(earned).toLocaleString();
-        if (p) p.textContent = pending;
-      }
-    })
-    .catch(function() {
-      // Demo mode — show empty state
-      var statsEl = document.getElementById('referStatsWrap');
-      var noStats = document.getElementById('referNoStats');
-      if (statsEl) statsEl.style.display = 'none';
-      if (noStats) noStats.style.display = 'block';
-    });
-
-  document.getElementById('referOverlay').classList.add('open');
-  if (typeof closeAccountTray === 'function') closeAccountTray();
-}
-
-function closeReferSheet() {
-  document.getElementById('referOverlay').classList.remove('open');
-}
-
-function copyReferCode() {
-  var code = document.getElementById('referCodeDisplay').textContent;
-  if (code === '------') return;
-  navigator.clipboard.writeText(code).then(function() {
-    var btn = document.querySelector('.btn-copy-code');
-    if (btn) {
-      btn.textContent = '✅ Copied!';
-      setTimeout(function(){ btn.innerHTML = '📋 Copy Code'; }, 2000);
-    }
-  }).catch(function() {
-    // Fallback for browsers without clipboard API
-    var tmp = document.createElement('input');
-    tmp.value = code;
-    document.body.appendChild(tmp);
-    tmp.select();
-    document.execCommand('copy');
-    document.body.removeChild(tmp);
-    var btn = document.querySelector('.btn-copy-code');
-    if (btn) {
-      btn.textContent = '✅ Copied!';
-      setTimeout(function(){ btn.innerHTML = '📋 Copy Code'; }, 2000);
-    }
-  });
-}
-
-function shareReferWhatsApp() {
-  var user = null;
-  try { user = JSON.parse(localStorage.getItem('rada_user') || 'null'); } catch(e) {}
-  var code = (user && user.referralCode) ? user.referralCode : '';
-  if (!code) return;
-
-  // Get referee reward from config
-  var reward = 100; // default
-  fetch('./rada-config.json').then(function(r){ return r.json(); })
-    .then(function(cfg){ if (cfg.refereeReward) reward = cfg.refereeReward; })
-    .catch(function(){});
-
-  var msg = "I've been using CheckRada to predict Kenyan events outcomes and winning real money. Join me — use my code " + code + " and we both get KES " + reward + ". checkrada.co.ke/rada-auth.html?ref=" + code;
-  window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank');
-}
-
-// ── Get Help → WhatsApp direct ───────────────────────────────────────────────
-function openGetHelp() {
-  // Load support number from config
-  fetch('./rada-config.json?_=' + Date.now())
-    .then(function(r) { return r.json(); })
-    .then(function(cfg) {
-      var num = (cfg && cfg.supportWhatsApp) ? cfg.supportWhatsApp : '';
-      if (num) {
-        var msg = 'Hi CheckRada Support, I need some help with my account.';
-        var url = 'https://wa.me/' + num.replace(/[^0-9]/g,'') + '?text=' + encodeURIComponent(msg);
-        window.open(url, '_blank');
-      } else {
-        // Fallback to FAQ page if no WhatsApp number configured
-        window.location.href = 'rada-faq.html';
-      }
-    })
-    .catch(function() {
-      window.location.href = 'rada-faq.html';
-    });
-}
-</script>
-</body>
-</html>

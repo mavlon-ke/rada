@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>CheckRada — Redirecting…</title>
+  <script>
+    // GitHub Pages 404 handler — intercepts /m/{slug} share URLs
+    // and redirects to rada-markets.html?slug={slug}
+    (function() {
+      var path = window.location.pathname;
+      var search = window.location.search;
+
+      // Handle /m/{slug} market share links
+      var marketMatch = path.match(/^\/m\/([^\/]+)\/?$/);
+      if (marketMatch) {
+        var slug = marketMatch[1];
+        // Preserve ?c= referral param if present
+        var qs = search ? search + '&slug=' + encodeURIComponent(slug) : '?slug=' + encodeURIComponent(slug);
+        window.location.replace('/rada-markets.html' + qs);
+        return;
+      }
+
+      // Handle /join/{code} challenge join links
+      var joinMatch = path.match(/^\/join\/([^\/]+)\/?$/);
+      if (joinMatch) {
+        var code = joinMatch[1];
+        window.location.replace('/rada-friends.html?join=' + encodeURIComponent(code));
+        return;
+      }
+
+      // Fallback — send to home
+      window.location.replace('/');
+    })();
+  </script>
+</head>
+<body>
+  <p style="font-family:sans-serif;text-align:center;margin-top:80px;color:#666;">
+    Redirecting to CheckRada…
+  </p>
+</body>
+</html>
