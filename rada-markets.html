@@ -2569,49 +2569,106 @@ function updateMultiTotals() {
 function submitMultiForecast() {
   var keys = Object.keys(multiItems);
   if (!keys.length) return;
+
   var btn = document.getElementById('multiSubmitBtn');
-  if (btn) { btn.disabled = true; }
+  if (btn) { btn.disabled = true; btn.textContent = 'Processing...'; }
 
-  var total     = keys.reduce(function(s,id){ return s + (multiItems[id].stake||0); }, 0);
-  var realBal   = Number((radaUser && radaUser.balanceKes)      || 0);
-  var bonusBal  = Number((radaUser && radaUser.bonusBalanceKes) || 0);
-  var mpesaAmt  = Math.max(0, total - realBal - bonusBal);
+  // Calculate bonus split across all trades — use bonus first, then real balance
+  var realBal  = Number((radaUser && radaUser.balanceKes)      || 0);
+  var bonusBal = Number((radaUser && radaUser.bonusBalanceKes) || 0);
+  var bonusLeft = bonusBal; // track how much bonus remains to allocate
 
-  if (btn) btn.textContent = mpesaAmt > 0 ? 'Sending STK Push...' : 'Processing...';
+  // Build trade list with per-trade bonus allocation
+  var trades = keys.map(function(id) {
+    var item = multiItems[id];
+    var stake = item.stake || 0;
+    var bonusForThis = Math.min(bonusLeft, stake);
+    bonusLeft -= bonusForThis;
+    return { marketId: id, side: item.side, amountKes: stake, bonusAmountKes: bonusForThis };
+  });
 
-  // In production: call POST /api/markets/[id]/trade for each item sequentially
-  setTimeout(() => {
-    keys.forEach(id => {
-      delete multiItems[id];
-      var mbtn = document.getElementById('multibtn_' + id);
-      if (mbtn) { mbtn.textContent = '+ Multi'; mbtn.classList.remove('added'); }
-      var card = document.getElementById('mcard_' + id);
-      if (card) card.style.borderColor = '';
-    });
-    updateFabBadge();
-    closeMultiSheet();
-    showToast('✅ ' + keys.length + ' forecast' + (keys.length > 1 ? 's' : '') + ' submitted!');
-    // Update localStorage balance + all balance displays
-    try {
-      var user = JSON.parse(localStorage.getItem('rada_user') || 'null');
-      if (user) {
-        var rUsed = Math.min(Number(user.balanceKes||0), total);
-        var bUsed = Math.min(Number(user.bonusBalanceKes||0), Math.max(0, total - rUsed));
-        user.balanceKes      = Math.max(0, Number(user.balanceKes||0) - rUsed);
-        user.bonusBalanceKes = Math.max(0, Number(user.bonusBalanceKes||0) - bUsed);
-        localStorage.setItem('rada_user', JSON.stringify(user));
-        radaUser = user;  // keep global in sync
-        // Update all balance displays
-        var newBal = Number(user.balanceKes);
-        var balEl  = document.getElementById('balDisplay');
-        var mBalEl = document.getElementById('mTopBal');
-        var accBal = document.getElementById('accUserBal');
-        if (balEl)  balEl.textContent  = newBal.toLocaleString();
-        if (mBalEl) mBalEl.textContent = 'KES ' + newBal.toLocaleString();
-        if (accBal) accBal.textContent = '● KES ' + newBal.toLocaleString() + ' available';
+  // Submit trades sequentially — stop on first failure
+  var successCount = 0;
+  var errors = [];
+
+  function submitNext(i) {
+    if (i >= trades.length) {
+      // All done
+      if (btn) { btn.disabled = false; btn.textContent = 'Submit All →'; }
+
+      // Clear submitted items from multiItems
+      trades.slice(0, successCount).forEach(function(t) {
+        delete multiItems[t.marketId];
+        var mbtn = document.getElementById('multibtn_' + t.marketId);
+        if (mbtn) { mbtn.textContent = '+ Multi'; mbtn.classList.remove('added'); }
+        var card = document.getElementById('mcard_' + t.marketId);
+        if (card) card.style.borderColor = '';
+      });
+      updateFabBadge();
+      closeMultiSheet();
+
+      if (errors.length === 0) {
+        showToast('✅ ' + successCount + ' forecast' + (successCount !== 1 ? 's' : '') + ' placed!');
+      } else if (successCount > 0) {
+        showToast('⚠ ' + successCount + ' placed, ' + errors.length + ' failed: ' + errors[0]);
+      } else {
+        showToast('❌ Failed: ' + errors[0]);
       }
-    } catch(e) {}
-  }, mpesaAmt > 0 ? 2800 : 600);
+
+      // Refresh balance from backend
+      userFetch('/api/users/me/profile')
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          if (d.user) {
+            var fresh = d.user;
+            var bal = Number(fresh.balanceKes || 0);
+            try {
+              var stored = JSON.parse(localStorage.getItem('rada_user') || 'null');
+              if (stored) {
+                stored.balanceKes = bal;
+                stored.bonusBalanceKes = Number(fresh.bonusBalanceKes || 0);
+                localStorage.setItem('rada_user', JSON.stringify(stored));
+                radaUser = stored;
+              }
+            } catch(e) {}
+            var mBalEl = document.getElementById('mTopBal');
+            var accBal = document.getElementById('accUserBal');
+            if (mBalEl) mBalEl.textContent = 'KES ' + bal.toLocaleString();
+            if (accBal) accBal.textContent = '● KES ' + bal.toLocaleString() + ' available';
+          }
+        }).catch(function() {});
+
+      return;
+    }
+
+    var t = trades[i];
+    userFetch('/api/markets/' + t.marketId + '/trade', {
+      method: 'POST',
+      body: JSON.stringify({
+        side:           t.side,
+        amountKes:      t.amountKes,
+        bonusAmountKes: t.bonusAmountKes,
+      }),
+    })
+    .then(function(r) {
+      return r.json().then(function(d) { return { ok: r.ok, d: d }; });
+    })
+    .then(function(res) {
+      if (res.ok && res.d.success) {
+        successCount++;
+      } else {
+        var msg = (res.d && typeof res.d.error === 'string') ? res.d.error : 'Trade failed';
+        errors.push(msg);
+      }
+      submitNext(i + 1);
+    })
+    .catch(function(err) {
+      errors.push('Network error');
+      submitNext(i + 1);
+    });
+  }
+
+  submitNext(0);
 }
 
 // ── Promotional carousel ──────────────────────────────────────────────────────
