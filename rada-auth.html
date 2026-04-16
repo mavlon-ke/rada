@@ -214,8 +214,8 @@ body::after{content:'';position:fixed;top:-200px;left:50%;transform:translateX(-
 <div style="height:4px;background:linear-gradient(90deg,#6d28d9,#7c3aed,#6d28d9);position:fixed;top:0;left:0;right:0;z-index:100;"></div><div class="page" style="padding-top:28px;">
   <div class="auth-card">
 
-    <!-- Back button -->
-    <a class="auth-back-btn" href="rada-markets.html" onclick="if(document.referrer && document.referrer.indexOf('rada')!==-1){event.preventDefault();history.back();}">
+    <!-- Back button — hidden on welcome/success screen -->
+    <a class="auth-back-btn" id="authBackBtn" href="rada-markets.html" onclick="if(document.referrer && document.referrer.indexOf('rada')!==-1){event.preventDefault();history.back();}">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <polyline points="15 18 9 12 15 6"></polyline>
       </svg>
@@ -588,9 +588,13 @@ function verifyOTP() {
         document.getElementById('sv-cta-secondary').onclick = function() { window.location = 'rada-markets.html'; };
         document.getElementById('sv-cta-secondary').style.display = '';
         document.getElementById('step4').style.display = '';
+        var backBtn = document.getElementById('authBackBtn');
+        if (backBtn) backBtn.style.display = 'none';
       } else {
         isNewUser = true;
         document.getElementById('step3').style.display = '';
+        var backBtn = document.getElementById('authBackBtn');
+        if (backBtn) backBtn.style.display = 'none';
         setTimeout(function() {
           var nameEl = document.getElementById('nameInput');
           if (nameEl) nameEl.focus();
