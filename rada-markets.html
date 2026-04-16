@@ -1675,6 +1675,15 @@ function openForecast(id, side = 'YES') {
 }
 
 function closeModal() {
+  // Cancel any active M-Pesa polling interval when modal is closed
+  if (_mpesaPollInterval) {
+    clearInterval(_mpesaPollInterval);
+    _mpesaPollInterval = null;
+    var btn = document.getElementById('forecastBtn');
+    var breakdown = document.getElementById('walletBreakdown');
+    if (btn) { btn.disabled = false; btn.textContent = 'Forecast'; btn.style.background = ''; }
+    if (breakdown) breakdown.textContent = '';
+  }
   document.getElementById('forecastModal').classList.remove('open');
 }
 
@@ -1821,6 +1830,9 @@ function computePayout() {
   updateWalletButton();
 }
 
+// Tracks active M-Pesa polling interval so closeModal can cancel it
+var _mpesaPollInterval = null;
+
 function submitForecast() {
   if (stakeAmount < 20) { alert('Minimum stake is KES 20'); return; }
   if (!activeMarket) { alert('No market selected.'); return; }
@@ -1846,19 +1858,27 @@ function submitForecast() {
     mpesaPays:  mpesaPays,
   });
 
-  // If payment requires M-Pesa — initiate deposit first via Paystack STK push
   if (mpesaPays > 0) {
+    // ── M-Pesa path ──────────────────────────────────────────────────────────
+    // Step 1: snapshot current balance so we can detect when payment lands
     btn.textContent = 'Sending STK Push...';
     if (breakdown) breakdown.textContent = walletPays > 0
       ? 'Wallet deducted · Awaiting M-Pesa PIN for KES ' + mpesaPays.toLocaleString()
       : 'Awaiting M-Pesa PIN...';
 
-    var userPhone = (radaUser && radaUser.phone) ? String(radaUser.phone) : '';
-    userFetch('/api/payments/deposit', {
-      method: 'POST',
-      body: JSON.stringify({ amountKes: mpesaPays, phone: userPhone, method: 'mpesa' }),
+    // Get fresh balance baseline before STK push fires
+    userFetch('/api/users/me/profile')
+    .then(function(r) { return r.json(); })
+    .then(function(profileData) {
+      var baseBalance = Number((profileData.user && profileData.user.balanceKes) || 0);
+
+      var userPhone = (radaUser && radaUser.phone) ? String(radaUser.phone) : '';
+      return userFetch('/api/payments/deposit', {
+        method: 'POST',
+        body: JSON.stringify({ amountKes: mpesaPays, phone: userPhone, method: 'mpesa' }),
+      })
+      .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d, baseBalance: baseBalance }; }); });
     })
-    .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
     .then(function(res) {
       if (!res.ok) {
         btn.disabled = false;
@@ -1867,17 +1887,82 @@ function submitForecast() {
         alert('Payment failed: ' + (res.d.error || 'Could not initiate M-Pesa payment.'));
         return;
       }
+
+      // Step 2: STK push sent — now poll for balance increase
       btn.textContent = '⏳ Enter M-Pesa PIN on your phone...';
-      // After deposit is initiated, place the trade
-      placeTrade(btn, breakdown, walletPays, mpesaPays);
+      if (breakdown) breakdown.textContent = walletPays > 0
+        ? 'Wallet deducted · Waiting for M-Pesa confirmation...'
+        : 'Waiting for M-Pesa confirmation...';
+
+      var baseBalance  = res.baseBalance;
+      var elapsed      = 0;
+      var pollInterval = 3000;   // check every 3 seconds
+      var maxWait      = 120000; // 120 second timeout
+      var secondsLeft  = Math.round(maxWait / 1000);
+
+      // Countdown display
+      var countdownTimer = setInterval(function() {
+        secondsLeft--;
+        if (secondsLeft > 0 && btn.textContent.indexOf('PIN') !== -1) {
+          btn.textContent = '⏳ Enter M-Pesa PIN... (' + secondsLeft + 's)';
+        }
+      }, 1000);
+
+      _mpesaPollInterval = setInterval(function() {
+        elapsed += pollInterval;
+
+        if (elapsed >= maxWait) {
+          // Timed out — clean up and inform user
+          clearInterval(_mpesaPollInterval);
+          clearInterval(countdownTimer);
+          _mpesaPollInterval = null;
+          btn.disabled = false;
+          btn.textContent = 'Forecast';
+          if (breakdown) breakdown.textContent = '';
+          alert('M-Pesa payment timed out. Your STK push request has expired. Please try again.');
+          return;
+        }
+
+        // Poll fresh balance
+        userFetch('/api/users/me/profile')
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          var freshBalance = Number((d.user && d.user.balanceKes) || 0);
+          if (freshBalance >= baseBalance + mpesaPays) {
+            // Payment confirmed — clear poll and place trade
+            clearInterval(_mpesaPollInterval);
+            clearInterval(countdownTimer);
+            _mpesaPollInterval = null;
+            btn.textContent = 'Processing forecast...';
+            if (breakdown) breakdown.textContent = 'M-Pesa confirmed ✓ · Placing forecast...';
+
+            // Update in-memory user with fresh balance
+            try {
+              var stored = JSON.parse(localStorage.getItem('rada_user') || 'null');
+              if (stored) {
+                stored.balanceKes = d.user.balanceKes;
+                stored.bonusBalanceKes = d.user.bonusBalanceKes || stored.bonusBalanceKes;
+                localStorage.setItem('rada_user', JSON.stringify(stored));
+                radaUser = stored;
+              }
+            } catch(e) {}
+
+            placeTrade(btn, breakdown, walletPays, mpesaPays);
+          }
+          // Otherwise balance hasn't changed yet — keep polling
+        })
+        .catch(function() {}); // silently ignore poll errors — keep trying
+      }, pollInterval);
     })
     .catch(function() {
       btn.disabled = false;
       btn.textContent = 'Forecast';
+      if (breakdown) breakdown.textContent = '';
       alert('Network error. Please try again.');
     });
+
   } else {
-    // Pure wallet — place trade directly
+    // ── Pure wallet path — place trade directly ───────────────────────────────
     btn.textContent = 'Processing...';
     placeTrade(btn, breakdown, walletPays, 0);
   }
@@ -1898,17 +1983,27 @@ function placeTrade(btn, breakdown, walletPays, mpesaPays) {
       btn.textContent = '✓ Forecast Confirmed!';
       if (breakdown) breakdown.textContent = '';
 
-      // Update localStorage balance from server response
-      try {
-        var user = JSON.parse(localStorage.getItem('rada_user') || 'null');
-        if (user && res.d.newBalance !== undefined) {
-          user.balanceKes = res.d.newBalance;
-          localStorage.setItem('rada_user', JSON.stringify(user));
-          radaUser = user;
-          var balEl = document.getElementById('balDisplay');
-          if (balEl) balEl.textContent = Number(res.d.newBalance).toLocaleString();
+      // Fetch fresh balance from server (trade route doesn't return newBalance)
+      userFetch('/api/users/me/profile')
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        if (d.user) {
+          var bal = Number(d.user.balanceKes || 0);
+          try {
+            var stored = JSON.parse(localStorage.getItem('rada_user') || 'null');
+            if (stored) {
+              stored.balanceKes = bal;
+              stored.bonusBalanceKes = d.user.bonusBalanceKes || stored.bonusBalanceKes;
+              localStorage.setItem('rada_user', JSON.stringify(stored));
+              radaUser = stored;
+            }
+          } catch(e) {}
+          var mBalEl = document.getElementById('mTopBal');
+          var accBal = document.getElementById('accUserBal');
+          if (mBalEl) mBalEl.textContent = 'KES ' + bal.toLocaleString();
+          if (accBal) accBal.textContent = '● KES ' + bal.toLocaleString() + ' available';
         }
-      } catch(e) {}
+      }).catch(function() {});
 
       // Reload markets to reflect updated pools
       setTimeout(function() {
