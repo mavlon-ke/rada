@@ -1,14 +1,15 @@
 // src/app/api/challenges/[id]/confirm/route.ts
-// Mutual consent resolution — each user submits their view of the outcome
-// If both agree (or referee submits): auto-resolve at 5% fee
-// If no agreement after 48h: escalate to admin (15% fee)
+// Mutual consent resolution — each user submits their view of the outcome.
+// If both agree (or referee submits): auto-resolve at 5% fee.
+// If no agreement after 48h: escalate to admin (15% fee).
+//
+// Payout model: winnings credited to CheckRada wallet balance only.
+// Users withdraw to M-Pesa manually via the standard withdrawal flow.
 
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/db/prisma';
 import { requireAuth } from '@/lib/auth/session';
-import { initiateTransfer, createTransferRecipient, normalisePhone as formatPhone } from '@/lib/paystack/paystack.service';
-
 
 const FEE_STANDARD = 0.05;  // 5%  — mutual/referee resolution
 const FEE_DISPUTE  = 0.15;  // 15% — admin intervention
@@ -111,9 +112,9 @@ async function resolveChallenge(
   feeRate: number,
   method: 'MUTUAL' | 'REFEREE' | 'ADMIN'
 ) {
-  const pool      = Number(challenge.totalPool);
-  const feeKes    = Math.floor(pool * feeRate);
-  const netPool   = pool - feeKes;
+  const pool    = Number(challenge.totalPool);
+  const feeKes  = Math.floor(pool * feeRate);
+  const netPool = pool - feeKes;
 
   // Calculate payouts
   let payouts: { userId: string; phone: string; amountKes: number }[] = [];
@@ -130,16 +131,16 @@ async function resolveChallenge(
     payouts = [{ userId: winnerId, phone: winnerPhone, amountKes: netPool }];
   }
 
-  // Atomic DB update
+  // Atomic DB update — wallet credit only
   await prisma.$transaction(async (tx) => {
     await tx.marketChallenge.update({
       where: { id: challenge.id },
       data: {
-        status:        'RESOLVED',
-        resolution:    outcome,
-        feePercent:    feeRate * 100,
+        status:         'RESOLVED',
+        resolution:     outcome,
+        feePercent:     feeRate * 100,
         platformFeeKes: feeKes,
-        resolvedAt:    new Date(),
+        resolvedAt:     new Date(),
       },
     });
 
@@ -155,31 +156,17 @@ async function resolveChallenge(
           type:        'CHALLENGE_PAYOUT',
           amountKes:   p.amountKes,
           balAfter:    Number(updated.balanceKes),
-          status:      'PENDING',
-          description: `Rada Friends payout (${outcome}) — ${method} resolution. Fee: KES ${feeKes} (${feeRate * 100}%)`,
+          status:      'SUCCESS', // wallet credit is the completed payout
+          description: `Challenge payout (${outcome}) — ${method} resolution. Fee: KES ${feeKes} (${feeRate * 100}%). Credited to CheckRada wallet.`,
         },
       });
     }
   });
 
-  // Paystack transfers for challenge payouts
-await Promise.allSettled(
-  payouts
-    .filter(p => p.amountKes > 0 && p.phone)
-    .map(async p => {
-      const recipient = await createTransferRecipient({
-        name:     p.phone,
-        phone:    formatPhone(p.phone),
-        bankCode: 'MPesa',
-      });
-      return initiateTransfer({
-        amountKes:     p.amountKes,
-        recipientCode: recipient.recipient_code,
-        reference:     `CKR-CHL-${challenge.id.slice(0,8)}-${p.userId.slice(0,4)}`,
-        reason:        'Rada Challenge Payout',
-      });
-    })
-);
+  // No Paystack transfer — winnings are in the user's CheckRada wallet.
+  // Users withdraw to M-Pesa via the standard withdrawal flow at their convenience.
+
+  console.log(`[CHALLENGE RESOLVE] Challenge ${challenge.id} resolved as ${outcome} via ${method}. Fee: KES ${feeKes}. Net: KES ${netPool}.`);
 
   return NextResponse.json({
     success:    true,

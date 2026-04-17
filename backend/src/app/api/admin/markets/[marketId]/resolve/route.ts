@@ -1,15 +1,19 @@
 // src/app/api/admin/markets/[marketId]/resolve/route.ts
-// Resolves a market and triggers M-Pesa B2C payouts to winners.
+// Resolves a market and credits winners' CheckRada wallets.
 //
 // Fee model (Option B): The 5% forecasting fee was already collected at trade time.
 // Resolution is therefore FEE-FREE: each winning share redeems for KES 1 in full.
 // Exception: unanimous markets still refund everyone in full (unchanged).
+//
+// Payout model: winnings are credited to the user's CheckRada wallet balance.
+// Users withdraw to M-Pesa manually via the standard withdrawal flow.
+// This avoids double-payment, eliminates per-resolution Paystack transfer costs,
+// and removes dependency on Paystack transfer balance being funded at resolution time.
 
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/db/prisma';
 import { requireAdmin, adminUnauthorized } from '@/lib/auth/admin';
-import { initiateTransfer, createTransferRecipient, normalisePhone as formatPhone } from '@/lib/paystack/paystack.service';
 
 // No fee at resolution — fee was taken at trade time (Option B)
 const RESOLUTION_FEE = 0;
@@ -61,16 +65,13 @@ export async function POST(
     return {
       userId:     p.userId,
       phone:      p.user.phone,
-      grossKes:   netKes,
-      feeKes:     0,
       netKes,
       shares:     Number(p.shares),
       positionId: p.id,
     };
   }).filter(p => p.netKes >= 1);
 
-  const totalNet   = payouts.reduce((s, p) => s + p.netKes, 0);
-  const totalGross = totalNet; // same since no resolution fee
+  const totalNet = payouts.reduce((s, p) => s + p.netKes, 0);
 
   // ── Atomic DB resolution ──────────────────────────────────────────────────
   await prisma.$transaction(async (tx) => {
@@ -85,7 +86,7 @@ export async function POST(
       },
     });
 
-    // 2. Credit winners and log transactions
+    // 2. Credit winners' wallet balances and log transactions as SUCCESS
     for (const p of payouts) {
       const updatedUser = await tx.user.update({
         where: { id: p.userId },
@@ -98,8 +99,8 @@ export async function POST(
           type:        'PAYOUT',
           amountKes:   p.netKes,
           balAfter:    Number(updatedUser.balanceKes),
-          status:      'PENDING',
-          description: `CheckRada payout (${outcome}) — ${market.title.slice(0, 80)}. Forecasting fee was collected at trade time.`,
+          status:      'SUCCESS', // wallet credit is the completed payout
+          description: `Market payout (${outcome}) — ${market.title.slice(0, 80)}. Credited to CheckRada wallet. Withdraw to M-Pesa anytime.`,
         },
       });
     }
@@ -111,35 +112,18 @@ export async function POST(
     });
   });
 
-  // Paystack transfers for market payouts
-Promise.allSettled(
-  payouts.map(async p => {
-    const recipient = await createTransferRecipient({
-      name:     p.phone,
-      phone:    formatPhone(p.phone),
-      bankCode: 'MPesa',
-    });
-    return initiateTransfer({
-      amountKes:     p.netKes,
-      recipientCode: recipient.recipient_code,
-      reference:     `CKR-MKT-${market.id.slice(0,8)}-${p.userId.slice(0,4)}`,
-      reason:        `Rada Payout - ${outcome}`,
-    });
-  })
-).then(results => {
-  const failed = results.filter(r => r.status === 'rejected').length;
-  if (failed > 0) {
-    console.error(`[RESOLVE] ${failed}/${payouts.length} Paystack payouts failed`);
-  }
-});
+  // No Paystack transfer here — winnings are in the user's CheckRada wallet.
+  // Users withdraw to M-Pesa via the standard withdrawal flow at their convenience.
+
+  console.log(`[RESOLVE] Market ${market.id} resolved as ${outcome}. ${payouts.length} winners credited. Total: KES ${totalNet}.`);
 
   return NextResponse.json({
-    success:         true,
+    success:        true,
     outcome,
-    marketId:        market.id,
+    marketId:       market.id,
     isUnanimous,
-    feeNote:         'Forecasting fee (5%) was collected at trade time — no deduction at resolution.',
-    winnersCount:    payouts.length,
-    totalPayoutKes:  totalNet,
+    feeNote:        'Forecasting fee (5%) collected at trade time. Winnings credited to CheckRada wallets — no M-Pesa transfer fees incurred.',
+    winnersCount:   payouts.length,
+    totalPayoutKes: totalNet,
   });
 }

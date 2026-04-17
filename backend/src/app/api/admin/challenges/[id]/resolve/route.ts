@@ -1,11 +1,13 @@
 // src/app/api/admin/challenges/[id]/resolve/route.ts
-// Admin-forced resolution after 48h dispute window — applies 15% total fee
+// Admin-forced resolution after 48h dispute window — applies 15% total fee.
+//
+// Payout model: winnings credited to CheckRada wallet balance only.
+// Users withdraw to M-Pesa manually via the standard withdrawal flow.
 
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/db/prisma';
 import { requireAdmin, adminUnauthorized, logAdminAction } from '@/lib/auth/admin';
-import { initiateTransfer, createTransferRecipient, normalisePhone as formatPhone } from '@/lib/paystack/paystack.service';
 
 const FEE_ADMIN = 0.15; // 15% when admin must intervene
 
@@ -70,7 +72,7 @@ export async function POST(
     payouts = [{ userId: winner.id, phone: winner.phone, amountKes: netPool }];
   }
 
-  // Atomic resolution
+  // Atomic resolution — wallet credit only
   await prisma.$transaction(async (tx) => {
     await tx.marketChallenge.update({
       where: { id: challenge.id },
@@ -95,8 +97,8 @@ export async function POST(
           type:        'CHALLENGE_PAYOUT',
           amountKes:   p.amountKes,
           balAfter:    Number(updated.balanceKes),
-          status:      'PENDING',
-          description: `CheckRada admin dispute resolution — Social Challenge (${outcome}). Fee: KES ${feeKes} (15%)`,
+          status:      'SUCCESS', // wallet credit is the completed payout
+          description: `Challenge payout (${outcome}) — admin dispute resolution. Fee: KES ${feeKes} (15%). Credited to CheckRada wallet.`,
         },
       });
     }
@@ -108,27 +110,13 @@ export async function POST(
     }
   });
 
+  // No Paystack transfer — winnings are in the user's CheckRada wallet.
+  // Users withdraw to M-Pesa via the standard withdrawal flow at their convenience.
+
   // Log admin action
   await logAdminAction(admin.id, 'DISPUTE_RESOLVED', `challenge:${challenge.id}`, { outcome, feeKes, reason }, req);
 
-  // Paystack transfers for dispute payouts
-await Promise.allSettled(
-  payouts
-    .filter(p => p.amountKes > 0 && p.phone)
-    .map(async p => {
-      const recipient = await createTransferRecipient({
-        name:     p.phone,
-        phone:    formatPhone(p.phone),
-        bankCode: 'MPesa',
-      });
-      return initiateTransfer({
-        amountKes:     p.amountKes,
-        recipientCode: recipient.recipient_code,
-        reference:     `CKR-DSP-${challenge.id.slice(0,8)}-${p.userId.slice(0,4)}`,
-        reason:        'CheckRada Dispute Payout',
-      });
-    })
-);
+  console.log(`[CHALLENGE RESOLVE] Challenge ${challenge.id} resolved as ${outcome} by admin. Fee: KES ${feeKes}. Net pool: KES ${netPool}.`);
 
   return NextResponse.json({
     success:    true,
