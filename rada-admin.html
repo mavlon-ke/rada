@@ -731,6 +731,9 @@ body::after {
     <button class="nav-item" onclick="showPanel('payouts', this)">
       <span class="nav-icon">◉</span><span>Payouts</span>
     </button>
+    <button class="nav-item" onclick="showPanel('revenue', this)">
+      <span class="nav-icon">◈</span><span>Platform Revenue</span>
+    </button>
   </div>
 
   <div class="sidebar-section">
@@ -1188,6 +1191,43 @@ body::after {
           <button class="topbar-btn" onclick="loadActivityFeed()">🔄 Refresh</button>
         </div>
         <div class="activity-feed" id="fullActivityFeed"><div style="text-align:center;padding:30px;color:var(--text-dim);">Loading...</div></div>
+      </div>
+    </div>
+
+    <!-- PANEL: PLATFORM REVENUE -->
+    <div id="panel-revenue" class="panel" style="display:none;">
+      <div class="page-head">
+        <div>
+          <div class="page-title">Platform Revenue</div>
+          <div class="page-sub">Forecasting fees, market surplus, and challenge fees collected by CheckRada</div>
+        </div>
+      </div>
+      <div class="stats-grid" style="margin-bottom:24px;">
+        <div class="stat-card"><div class="stat-label">Forecasting Fees</div><div class="stat-val green" id="revFees">—</div><div class="stat-change" id="revFeesCount" style="color:var(--text-dim);">— markets</div></div>
+        <div class="stat-card"><div class="stat-label">Market Surplus</div><div class="stat-val green" id="revSurplus">—</div><div class="stat-change" id="revSurplusCount" style="color:var(--text-dim);">— markets</div></div>
+        <div class="stat-card"><div class="stat-label">Challenge Fees</div><div class="stat-val green" id="revChallenge">—</div><div class="stat-change" id="revChallengeCount" style="color:var(--text-dim);">— challenges</div></div>
+        <div class="stat-card"><div class="stat-label">Grand Total</div><div class="stat-val green" id="revTotal">—</div><div class="stat-change" style="color:var(--ke-green);">All time</div></div>
+      </div>
+      <div class="table-wrap" style="margin-bottom:24px;">
+        <div class="table-head"><div class="table-title">📅 Monthly Revenue (Last 6 Months)</div></div>
+        <table class="data-table">
+          <thead><tr><th>Month</th><th>Forecasting Fees</th><th>Market Surplus</th><th>Challenge Fees</th><th>Total</th></tr></thead>
+          <tbody id="revMonthlyBody"><tr><td colspan="5" style="text-align:center;color:var(--text-dim);padding:20px;">Loading...</td></tr></tbody>
+        </table>
+      </div>
+      <div class="table-wrap" style="margin-bottom:24px;">
+        <div class="table-head"><div class="table-title">🏆 Top Markets by Revenue</div></div>
+        <table class="data-table">
+          <thead><tr><th>Market</th><th>Status</th><th>Revenue</th></tr></thead>
+          <tbody id="revTopMarketsBody"><tr><td colspan="3" style="text-align:center;color:var(--text-dim);padding:20px;">Loading...</td></tr></tbody>
+        </table>
+      </div>
+      <div class="table-wrap">
+        <div class="table-head"><div class="table-title">🕒 Recent Revenue Records</div><button class="topbar-btn" onclick="loadRevenuePanel()">🔄 Refresh</button></div>
+        <table class="data-table">
+          <thead><tr><th>Date</th><th>Type</th><th>Market / Challenge</th><th>Amount</th></tr></thead>
+          <tbody id="revRecentBody"><tr><td colspan="4" style="text-align:center;color:var(--text-dim);padding:20px;">Loading...</td></tr></tbody>
+        </table>
       </div>
     </div>
 
@@ -2321,6 +2361,7 @@ function showPanel(id, btn) {
   if (id === 'admin-log')     { loadAdminLogStats(); loadActivityFeed('adminLogBody'); }
   if (id === 'b2b')           { loadB2BAnalytics(); }
   if (id === 'bounties')      { loadBounties(); }
+  if (id === 'revenue')      { loadRevenuePanel(); }
   if (id === 'create-market') {
     var d = new Date(); d.setDate(d.getDate() + 30);
     var el = document.getElementById('mktClosesAt');
@@ -2600,7 +2641,7 @@ function confirmResolve() {
     if (res.ok) {
       btn.textContent = '✓ Resolved!';
       btn.style.background = 'var(--green)';
-      showToast('✓ Market resolved. Payouts triggered via Paystack.');
+      showToast('✓ Market resolved. Winnings credited to winners\' CheckRada wallets.');
       setTimeout(function() {
         closeModal('resolveModal');
         btn.textContent = 'Confirm Resolution';
@@ -3940,6 +3981,86 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   initCarouselAdmin();
 });
+
+function loadRevenuePanel() {
+  var fmt = function(n) { return 'KES ' + Number(n).toLocaleString(); };
+
+  adminFetch('/api/admin/revenue')
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    // Summary cards
+    var s = function(id, v) { var el = document.getElementById(id); if (el) el.textContent = v; };
+    s('revFees',           fmt(d.totals.forecastingFees));
+    s('revFeesCount',      d.counts.forecastingFees + ' markets resolved');
+    s('revSurplus',        fmt(d.totals.marketSurplus));
+    s('revSurplusCount',   d.counts.marketSurplus + ' markets with surplus');
+    s('revChallenge',      fmt(d.totals.challengeFees));
+    s('revChallengeCount', d.counts.challengeFees + ' challenges resolved');
+    s('revTotal',          fmt(d.totals.grandTotal));
+
+    // Monthly breakdown
+    var monthlyBody = document.getElementById('revMonthlyBody');
+    if (monthlyBody) {
+      if (!d.monthly || !d.monthly.length) {
+        monthlyBody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-dim);padding:20px;">No revenue recorded yet.</td></tr>';
+      } else {
+        monthlyBody.innerHTML = d.monthly.map(function(m) {
+          return '<tr>' +
+            '<td>' + m.month + '</td>' +
+            '<td style="font-family:var(--mono);color:var(--ke-green)">' + fmt(m.fees) + '</td>' +
+            '<td style="font-family:var(--mono);color:var(--ke-green)">' + fmt(m.surplus) + '</td>' +
+            '<td style="font-family:var(--mono);color:var(--ke-green)">' + fmt(m.challenge) + '</td>' +
+            '<td style="font-family:var(--mono);font-weight:700;color:var(--ke-green)">' + fmt(m.total) + '</td>' +
+          '</tr>';
+        }).join('');
+      }
+    }
+
+    // Top markets
+    var topBody = document.getElementById('revTopMarketsBody');
+    if (topBody) {
+      if (!d.topMarkets || !d.topMarkets.length) {
+        topBody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--text-dim);padding:20px;">No market revenue yet.</td></tr>';
+      } else {
+        topBody.innerHTML = d.topMarkets.map(function(m) {
+          return '<tr>' +
+            '<td>' + (m.title || '—') + '</td>' +
+            '<td><span class="badge">' + (m.status || '—') + '</span></td>' +
+            '<td style="font-family:var(--mono);color:var(--ke-green);font-weight:700">' + fmt(m.totalKes) + '</td>' +
+          '</tr>';
+        }).join('');
+      }
+    }
+
+    // Recent records
+    var recentBody = document.getElementById('revRecentBody');
+    if (recentBody) {
+      if (!d.recent || !d.recent.length) {
+        recentBody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-dim);padding:20px;">No revenue records yet.</td></tr>';
+      } else {
+        var typeLabel = { FORECASTING_FEE: '📊 Forecasting Fee', MARKET_SURPLUS: '💰 Market Surplus', CHALLENGE_FEE: '🤝 Challenge Fee' };
+        recentBody.innerHTML = d.recent.map(function(r) {
+          var when = new Date(r.createdAt).toLocaleDateString('en-KE', { day: 'numeric', month: 'short', year: 'numeric' });
+          var source = r.marketTitle || r.challengeQ || '—';
+          return '<tr>' +
+            '<td style="font-size:0.78rem;color:var(--text-dim)">' + when + '</td>' +
+            '<td>' + (typeLabel[r.type] || r.type) + '</td>' +
+            '<td style="font-size:0.78rem">' + source + '</td>' +
+            '<td style="font-family:var(--mono);color:var(--ke-green);font-weight:700">' + fmt(r.amountKes) + '</td>' +
+          '</tr>';
+        }).join('');
+      }
+    }
+  })
+  .catch(function(err) {
+    console.error('loadRevenuePanel:', err);
+    var els = ['revMonthlyBody','revTopMarketsBody','revRecentBody'];
+    els.forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) el.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--ke-red);padding:20px;">Failed to load revenue data.</td></tr>';
+    });
+  });
+}
 
 // showPanel handles all panel loads directly — no override needed
 </script>

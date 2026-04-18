@@ -967,9 +967,17 @@ nav{padding:14px 24px;display:flex;align-items:center;justify-content:space-betw
     <div class="modal-handle" onclick="closeModal('withdrawModal')"></div>
     <div class="modal-head">
       <div class="modal-title" style="color:var(--ke-red)">↓ Withdraw to M-Pesa</div>
-      <div class="modal-sub">Funds sent to your registered M-Pesa number. 1% processing fee applies.</div>
+      <div class="modal-sub">Funds sent to your registered M-Pesa number. M-Pesa processing fee applies.</div>
     </div>
     <div class="modal-body">
+      <!-- Fee schedule info -->
+      <div style="background:rgba(109,40,217,0.06);border:1px solid rgba(109,40,217,0.15);border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:0.72rem;color:var(--text-mid);">
+        <div style="font-weight:700;color:var(--text);margin-bottom:4px;">M-Pesa Processing Fees</div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:2px;"><span>KES 100 – 1,500</span><span style="font-family:var(--mono);color:var(--text);">KES 20</span></div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:2px;"><span>KES 1,501 – 20,000</span><span style="font-family:var(--mono);color:var(--text);">KES 40</span></div>
+        <div style="display:flex;justify-content:space-between;"><span>KES 20,001 – 70,000</span><span style="font-family:var(--mono);color:var(--text);">KES 60</span></div>
+        <div style="margin-top:6px;font-size:0.68rem;color:var(--text-dim);">Passed through at zero CheckRada markup.</div>
+      </div>
       <div style="background:var(--bg3);border-radius:10px;padding:14px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;">
         <span style="font-size:0.78rem;color:var(--text-mid);">Available balance</span>
         <span style="font-family:var(--mono);font-size:1.1rem;font-weight:700;color:var(--ke-green);" id="withdrawAvailBal">KES —</span>
@@ -980,11 +988,11 @@ nav{padding:14px 24px;display:flex;align-items:center;justify-content:space-betw
         <div class="amount-preset" onclick="setWithdrawAmount(1000,this)">1,000</div>
         <div class="amount-preset" onclick="setWithdrawAmount(2000,this)">2,000</div>
       </div>
-      <label class="mf-label">Amount to Withdraw (min KES 100)</label>
-      <input class="mf-input" id="withdrawAmount" type="number" placeholder="Enter amount (min KES 100)" min="100" oninput="calcWithdraw()">
+      <label class="mf-label">Amount to Withdraw (min KES 100, max KES 70,000)</label>
+      <input class="mf-input" id="withdrawAmount" type="number" placeholder="Enter amount (min KES 100)" min="100" max="70000" oninput="calcWithdraw()">
       <div id="withdrawCalc" style="background:var(--bg3);border-radius:10px;padding:12px 14px;margin-bottom:16px;display:none;">
         <div style="display:flex;justify-content:space-between;font-size:0.78rem;margin-bottom:4px;">
-          <span style="color:var(--text-dim)">Processing fee (1%)</span>
+          <span style="color:var(--text-dim)">M-Pesa processing fee</span>
           <span id="wFee" style="font-family:var(--mono)">KES —</span>
         </div>
         <div style="display:flex;justify-content:space-between;font-size:0.85rem;font-weight:700;padding-top:8px;border-top:1px solid var(--border);">
@@ -993,7 +1001,7 @@ nav{padding:14px 24px;display:flex;align-items:center;justify-content:space-betw
         </div>
       </div>
       <button class="btn-mpesa" style="background:var(--ke-red);" id="withdrawBtn" onclick="submitWithdraw()">↓ Withdraw to M-Pesa</button>
-      <div style="text-align:center;font-size:0.65rem;color:var(--text-dim);margin-top:10px;">Sent to your registered number · Min KES 100</div>
+      <div style="text-align:center;font-size:0.65rem;color:var(--text-dim);margin-top:10px;">Sent to your registered number · Min KES 100 · Max KES 70,000</div>
     </div>
   </div>
 </div>
@@ -1031,11 +1039,30 @@ function openModal(id) {
       sub.textContent = 'STK Push sent to your registered number ' + masked;
     }
   }
-  // Populate live balance in withdraw modal
+  // Populate live balance in withdraw modal — fetch fresh from API
   if (id === 'withdrawModal') {
     var balEl = document.getElementById('withdrawAvailBal');
-    var bal = Number((radaUser && radaUser.balanceKes) || 0);
-    if (balEl) balEl.textContent = 'KES ' + bal.toLocaleString();
+    // Show cached value immediately while fetching
+    var cachedBal = Number((radaUser && radaUser.balanceKes) || 0);
+    if (balEl) balEl.textContent = 'KES ' + cachedBal.toLocaleString();
+    // Fetch fresh balance from backend
+    userFetch('/api/users/me/profile')
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        if (d.user) {
+          var freshBal = Number(d.user.balanceKes || 0);
+          if (balEl) balEl.textContent = 'KES ' + freshBal.toLocaleString();
+          // Update localStorage
+          try {
+            var stored = JSON.parse(localStorage.getItem('rada_user') || 'null');
+            if (stored) {
+              stored.balanceKes = d.user.balanceKes;
+              localStorage.setItem('rada_user', JSON.stringify(stored));
+              radaUser = stored;
+            }
+          } catch(e) {}
+        }
+      }).catch(function() {}); // silent — cached value already shown
   }
 }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
@@ -1217,15 +1244,17 @@ function calcWithdraw() {
   const amt = parseFloat(document.getElementById('withdrawAmount').value);
   const calc = document.getElementById('withdrawCalc');
   if (!amt || amt < 100) { calc.style.display = 'none'; return; }
-  const fee = Math.round(amt * 0.01);
+  // Paystack flat fee bands — zero CheckRada markup
+  var fee = amt <= 1500 ? 20 : amt <= 20000 ? 40 : 60;
   const receive = amt - fee;
-  document.getElementById('wFee').textContent = `KES ${fee}`;
+  document.getElementById('wFee').textContent = 'KES ' + fee;
   document.getElementById('wReceive').textContent = `KES ${receive.toLocaleString()}`;
   calc.style.display = '';
 }
 function submitWithdraw() {
   var amt = parseFloat(document.getElementById('withdrawAmount').value);
-  if (!amt || amt < 50) return alert('Minimum withdrawal is KES 50');
+  if (!amt || amt < 100) return alert('Minimum withdrawal is KES 100.');
+  if (amt > 70000) return alert('Maximum withdrawal is KES 70,000.');
 
   var token = localStorage.getItem('rada_token') || '';
   if (!token) { window.location.href = 'rada-auth.html'; return; }
@@ -1260,17 +1289,22 @@ function submitWithdraw() {
     if (btn) { btn.disabled = false; btn.textContent = '↓ Withdraw to M-Pesa'; }
     closeModal('withdrawModal');
     if (res.ok) {
-      var fee = Math.round(amt * 0.01);
-      var newBal = Math.max(0, balance - amt);
+      // Use flat fee from response or recalculate
+      var paystackFee = res.d.paystackFee || (amt <= 1500 ? 20 : amt <= 20000 ? 40 : 60);
+      var newBal = Math.max(0, balance - amt - paystackFee);
       if (radaUser) {
         radaUser.balanceKes = newBal;
         try { localStorage.setItem('rada_user', JSON.stringify(radaUser)); } catch(e) {}
       }
       var balEl = document.getElementById('walletBalance');
       if (balEl) balEl.textContent = 'KES ' + newBal.toLocaleString();
-      var wab = document.getElementById('withdrawAvailBal');
-      if (wab) wab.textContent = 'KES ' + newBal.toLocaleString();
-      alert('✓ KES ' + (amt - fee).toLocaleString() + ' sent to your M-Pesa!\n(KES ' + fee + ' processing fee deducted)\nRef: ' + (res.d.reference || '—'));
+      var mTopBal = document.getElementById('mTopBal');
+      if (mTopBal) mTopBal.textContent = 'KES ' + newBal.toLocaleString();
+      var accBal = document.getElementById('accUserBal');
+      if (accBal) accBal.textContent = '● KES ' + newBal.toLocaleString() + ' available';
+      alert('✓ KES ' + amt.toLocaleString() + ' sent to your M-Pesa!
+(KES ' + paystackFee + ' M-Pesa processing fee deducted from wallet)
+Ref: ' + (res.d.reference || '—'));
     } else {
       alert('Withdrawal failed: ' + (res.d.error || 'Please try again.'));
     }
