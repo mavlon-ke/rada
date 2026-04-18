@@ -1,7 +1,9 @@
 // src/app/api/markets/[marketId]/trade/route.ts
 // Option B fee model: 5% forecasting fee deducted on every trade.
+// Creator royalty (0.5%) is carved from the 5% fee — only when market totalVolume >= KES 1,000.
+// Net amount entering AMM = stake - 5% fee (always).
+// When royalty applies: platform keeps 4.5%, creator gets 0.5%.
 // Wallet-first payment: real balance used first, then bonus balance.
-// Bonus balance (referral reward) converts to withdrawable real balance when staked.
 
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
@@ -10,15 +12,15 @@ import { requireAuth } from '@/lib/auth/session';
 import { sharesToReceive, newPools } from '@/lib/market/amm';
 import { createNotification } from '@/lib/notifications';
 
-const FORECASTING_FEE_RATE        = 0.05;
-const CREATOR_ROYALTY_RATE        = 0.005;
-const CREATOR_ROYALTY_THRESHOLD   = 1000;
+const FORECASTING_FEE_RATE      = 0.05;   // 5% total fee
+const CREATOR_ROYALTY_RATE      = 0.005;  // 0.5% carved from the 5%
+const PLATFORM_NET_RATE         = 0.045;  // 4.5% platform keeps when royalty applies
+const CREATOR_ROYALTY_THRESHOLD = 1000;   // KES 1,000 real trading volume before royalty kicks in
 
 const TradeSchema = z.object({
-  side:      z.enum(['YES', 'NO']),
-  amountKes: z.number().min(20).max(20000),
-  // paymentSource: used by multi-forecast to indicate source breakdown
-  bonusAmountKes: z.number().min(0).default(0),  // how much to draw from bonus balance
+  side:           z.enum(['YES', 'NO']),
+  amountKes:      z.number().min(20).max(20000),
+  bonusAmountKes: z.number().min(0).default(0),
 });
 
 export async function POST(
@@ -41,8 +43,6 @@ export async function POST(
   const netAmount = amountKes - feeKes;
 
   // ── Wallet-first payment split ────────────────────────────────────────────
-  // bonusAmountKes: portion drawn from bonus balance (max = user.bonusBalanceKes)
-  // realAmountKes:  portion drawn from real balance
   const clampedBonus  = Math.min(bonusAmountKes, amountKes);
   const realAmountKes = amountKes - clampedBonus;
 
@@ -60,26 +60,20 @@ export async function POST(
       throw new Error(`Insufficient real balance. Need KES ${realAmountKes}, have KES ${Number(freshUser.balanceKes)}`);
     }
     if (clampedBonus > 0 && Number(freshUser.bonusBalanceKes) < clampedBonus) {
-      throw new Error(`Insufficient bonus balance`);
+      throw new Error('Insufficient bonus balance');
     }
 
     // AMM calculation
-    const yesPool  = Number(market.yesPool);
-    const noPool   = Number(market.noPool);
-    const shares   = sharesToReceive(yesPool, noPool, side, netAmount);
+    const yesPool = Number(market.yesPool);
+    const noPool  = Number(market.noPool);
+    const shares  = sharesToReceive(yesPool, noPool, side, netAmount);
     const pricePerShare = netAmount / shares;
     const { yesPool: newYes, noPool: newNo } = newPools(yesPool, noPool, side, shares);
 
-    // Deduct real balance
+    // Deduct balances
     const balanceUpdate: any = {};
-    if (realAmountKes > 0) {
-      balanceUpdate.balanceKes = { decrement: realAmountKes };
-    }
-    // Deduct bonus balance and convert to real (bonus is "used" when staked)
-    if (clampedBonus > 0) {
-      balanceUpdate.bonusBalanceKes = { decrement: clampedBonus };
-      // Bonus converts to real balance record on use — already deducted, winnings go to real balance
-    }
+    if (realAmountKes > 0) balanceUpdate.balanceKes = { decrement: realAmountKes };
+    if (clampedBonus > 0)  balanceUpdate.bonusBalanceKes = { decrement: clampedBonus };
     await tx.user.update({ where: { id: user.id }, data: balanceUpdate });
 
     // Update market pools
@@ -96,16 +90,16 @@ export async function POST(
     const attributionPhone = req.cookies.get(`rada_ref_${market.id}`)?.value ?? null;
     const order = await tx.order.create({
       data: {
-        userId:            user.id,
-        marketId:          market.id,
+        userId:             user.id,
+        marketId:           market.id,
         side,
         amountKes,
-        netAmountKes:      netAmount,
-        forecastingFeeKes: feeKes,
-        bonusUsedKes:      clampedBonus,
+        netAmountKes:       netAmount,
+        forecastingFeeKes:  feeKes,
+        bonusUsedKes:       clampedBonus,
         shares,
         pricePerShare,
-        status:            'FILLED',
+        status:             'FILLED',
         creatorAttribution: attributionPhone,
       },
     });
@@ -140,55 +134,67 @@ export async function POST(
       },
     });
 
-    // If bonus was used, mark referral as REWARDED
+    // Mark referral as REWARDED if bonus was used
     if (clampedBonus > 0) {
       await tx.referral.updateMany({
-        where:  { refereeId: user.id, status: 'QUALIFIED' },
-        data:   { status: 'REWARDED', rewardPaidAt: new Date() },
+        where: { refereeId: user.id, status: 'QUALIFIED' },
+        data:  { status: 'REWARDED', rewardPaidAt: new Date() },
       });
     }
 
-    // Creator royalty
+    // ── Creator royalty — carved from 5% fee, only when real volume >= KES 1,000 ──
+    // The 0.5% comes out of the 5% fee already collected.
+    // Platform keeps 4.5%, creator gets 0.5%. Pool is unaffected.
     const updatedMarket = await tx.market.findUnique({
-      where: { id: market.id },
+      where:  { id: market.id },
       select: { totalVolume: true, creatorId: true },
     });
     const marketVolume = Number(updatedMarket?.totalVolume ?? 0);
-    if (updatedMarket?.creatorId && marketVolume >= CREATOR_ROYALTY_THRESHOLD) {
-      const bountyKes = parseFloat((netAmount * CREATOR_ROYALTY_RATE).toFixed(2));
-      if (bountyKes >= 0.01) {
+
+    let creatorRoyaltyKes = 0;
+    if (updatedMarket?.creatorId && updatedMarket.creatorId !== user.id && marketVolume >= CREATOR_ROYALTY_THRESHOLD) {
+      creatorRoyaltyKes = Math.floor(netAmount * CREATOR_ROYALTY_RATE);
+      if (creatorRoyaltyKes >= 1) {
+        // Credit creator from the fee — carved out of platform's 5% take
         await tx.user.update({
           where: { id: updatedMarket.creatorId },
-          data:  { balanceKes: { increment: bountyKes } },
+          data:  { balanceKes: { increment: creatorRoyaltyKes } },
         });
         await tx.creatorBounty.upsert({
           where:  { marketId: market.id },
-          update: { tradeVolume: { increment: netAmount }, bountyEarned: { increment: bountyKes } },
-          create: { marketId: market.id, creatorId: updatedMarket.creatorId, tradeVolume: netAmount, bountyEarned: bountyKes, active: true },
+          update: { tradeVolume: { increment: netAmount }, bountyEarned: { increment: creatorRoyaltyKes } },
+          create: {
+            marketId:     market.id,
+            creatorId:    updatedMarket.creatorId,
+            tradeVolume:  netAmount,
+            bountyEarned: creatorRoyaltyKes,
+            active:       true,
+          },
         });
       }
     }
 
     return {
       order,
-      shares:           parseFloat(shares.toFixed(4)),
-      pricePerShare:    parseFloat(pricePerShare.toFixed(4)),
+      shares:            parseFloat(shares.toFixed(4)),
+      pricePerShare:     parseFloat(pricePerShare.toFixed(4)),
       forecastingFeeKes: feeKes,
-      netAmountKes:     netAmount,
-      bonusUsedKes:     clampedBonus,
+      netAmountKes:      netAmount,
+      bonusUsedKes:      clampedBonus,
+      creatorRoyaltyKes,
       newYesPrice: parseFloat(
         (Math.exp(newYes/1000) / (Math.exp(newYes/1000) + Math.exp(newNo/1000))).toFixed(4)
       ),
     };
   });
 
-  // Notify user (fire-and-forget, non-blocking)
+  // Notify user (fire-and-forget)
   createNotification({
     userId:  user.id,
     type:    'MARKET_CLOSING_SOON',
-    title:   `✅ Forecast placed`,
-    message: `Your ${result.order.side} forecast is live. ${result.shares} shares at KES ${(result.pricePerShare).toFixed(2)}/share.`,
-    link:    `/rada-portfolio.html`,
+    title:   '✅ Forecast placed',
+    message: `Your ${result.order.side} forecast is live. ${result.shares} shares at KES ${result.pricePerShare.toFixed(2)}/share.`,
+    link:    '/rada-portfolio.html',
   }).catch(() => {});
 
   return NextResponse.json({ success: true, ...result });

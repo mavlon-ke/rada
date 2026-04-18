@@ -101,6 +101,8 @@ model Market {
   positions Position[]
   bounty    CreatorBounty?
 
+  platformRevenue PlatformRevenue[]
+
   @@map("markets")
 }
 
@@ -132,6 +134,8 @@ userBId         String?
   updatedAt       DateTime         @updatedAt
 
   transactions Transaction[]
+
+  platformRevenue PlatformRevenue[]
 
   @@map("market_challenges")
 }
@@ -304,6 +308,28 @@ model DataApplication {
   notes          String?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+}
+
+
+model PlatformRevenue {
+  id          String           @id @default(cuid())
+  marketId    String?
+  market      Market?          @relation(fields: [marketId], references: [id])
+  challengeId String?
+  challenge   MarketChallenge? @relation(fields: [challengeId], references: [id])
+  type        RevenueType
+  amountKes   Decimal          @db.Decimal(15,2)
+  description String
+  createdAt   DateTime         @default(now())
+
+  @@map("platform_revenue")
+}
+
+
+enum RevenueType {
+  FORECASTING_FEE
+  MARKET_SURPLUS
+  CHALLENGE_FEE
 }
 
 enum KycStatus {

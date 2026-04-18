@@ -166,6 +166,18 @@ async function resolveChallenge(
   // No Paystack transfer — winnings are in the user's CheckRada wallet.
   // Users withdraw to M-Pesa via the standard withdrawal flow at their convenience.
 
+  // Record platform revenue for the challenge fee
+  if (feeKes > 0) {
+    await prisma.platformRevenue.create({
+      data: {
+        challengeId: challenge.id,
+        type:        'CHALLENGE_FEE',
+        amountKes:   feeKes,
+        description: `Challenge fee (${feeRate * 100}%) — ${method} resolution. Question: "${challenge.question.slice(0, 60)}"`,
+      },
+    });
+  }
+
   console.log(`[CHALLENGE RESOLVE] Challenge ${challenge.id} resolved as ${outcome} via ${method}. Fee: KES ${feeKes}. Net: KES ${netPool}.`);
 
   return NextResponse.json({

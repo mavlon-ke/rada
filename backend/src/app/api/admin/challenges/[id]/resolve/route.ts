@@ -113,6 +113,18 @@ export async function POST(
   // No Paystack transfer — winnings are in the user's CheckRada wallet.
   // Users withdraw to M-Pesa via the standard withdrawal flow at their convenience.
 
+  // Record platform revenue for the dispute fee
+  if (feeKes > 0) {
+    await prisma.platformRevenue.create({
+      data: {
+        challengeId: challenge.id,
+        type:        'CHALLENGE_FEE',
+        amountKes:   feeKes,
+        description: `Admin dispute fee (15%) — forced resolution. Question: "${challenge.question.slice(0, 60)}"`,
+      },
+    });
+  }
+
   // Log admin action
   await logAdminAction(admin.id, 'DISPUTE_RESOLVED', `challenge:${challenge.id}`, { outcome, feeKes, reason }, req);
 
