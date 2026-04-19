@@ -881,7 +881,7 @@ nav{padding:14px 24px;display:flex;align-items:center;justify-content:space-betw
 
 <!-- SUGGEST A MARKET FAB -->
 <div class="fab-wrap">
-  <div class="fab-tooltip">🎁 KES 50 credited to your CheckCheckRada wallet when approved!</div>
+  <div class="fab-tooltip">🎁 KES 50 credited to your CheckRada wallet when approved!</div>
   <button class="fab-suggest" onclick="openModal('suggestModal')">💡 Suggest a Market</button>
 </div>
 
@@ -1302,9 +1302,7 @@ function submitWithdraw() {
       if (mTopBal) mTopBal.textContent = 'KES ' + newBal.toLocaleString();
       var accBal = document.getElementById('accUserBal');
       if (accBal) accBal.textContent = '● KES ' + newBal.toLocaleString() + ' available';
-      alert('✓ KES ' + amt.toLocaleString() + ' sent to your M-Pesa!
-(KES ' + paystackFee + ' M-Pesa processing fee deducted from wallet)
-Ref: ' + (res.d.reference || '—'));
+      alert('✓ KES ' + amt.toLocaleString() + ' sent to your M-Pesa!' + '\n(KES ' + paystackFee + ' M-Pesa processing fee deducted from wallet)' + '\nRef: ' + (res.d.reference || '—'));
     } else {
       alert('Withdrawal failed: ' + (res.d.error || 'Please try again.'));
     }
