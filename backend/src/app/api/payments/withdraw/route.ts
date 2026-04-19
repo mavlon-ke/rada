@@ -1,12 +1,16 @@
 // src/app/api/payments/withdraw/route.ts
 // Withdrawal via Paystack Transfer (M-Pesa)
-// Fee model: Paystack flat fee passed through at zero markup.
-// CheckRada earns nothing on withdrawals — revenue comes from forecasting fees.
+//
+// Fee model: processing fee deducted FROM the withdrawal amount.
+// User enters amount to withdraw from wallet.
+// Wallet is debited the full entered amount.
+// M-Pesa receives: amountKes - paystackFee.
+// User can always withdraw their full wallet balance.
 //
 // Fee bands (Paystack Kenya transfer pricing):
-//   KES 100  – 1,500:  KES 20 flat
-//   KES 1,501 – 20,000: KES 40 flat
-//   KES 20,001 – 70,000: KES 60 flat
+//   KES 100  – 1,500:  KES 20 flat  → user receives amountKes - 20
+//   KES 1,501 – 20,000: KES 40 flat → user receives amountKes - 40
+//   KES 20,001 – 70,000: KES 60 flat → user receives amountKes - 60
 
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
@@ -27,7 +31,7 @@ const WithdrawSchema = z.object({
   phone:     z.string().min(9).max(15),
 });
 
-// Paystack Kenya transfer fee bands — passed through at zero markup
+// Paystack Kenya transfer fee bands
 function getPaystackFee(amountKes: number): number {
   if (amountKes <= 1500)  return 20;
   if (amountKes <= 20000) return 40;
@@ -45,27 +49,35 @@ export const POST = withErrorHandling(async (req: NextRequest) => {
   }
 
   const { amountKes, phone } = parsed.data;
-  const paystackFee    = getPaystackFee(amountKes);
-  const totalDeduction = amountKes + paystackFee; // deduct amount + fee from wallet
+  const paystackFee   = getPaystackFee(amountKes);
+  const transferAmount = amountKes - paystackFee; // amount sent to M-Pesa
   const formattedPhone = normalisePhoneForTransfer(phone);
   const reference      = generateReference('WIT');
 
-  // Atomic balance check + deduct
+  // Guard: transfer amount must be positive
+  if (transferAmount <= 0) {
+    return NextResponse.json(
+      { error: `Withdrawal amount too small. Minimum is KES ${paystackFee + 1} after the KES ${paystackFee} processing fee.` },
+      { status: 400 }
+    );
+  }
+
+  // Atomic balance check + deduct full amountKes from wallet
   const result = await prisma.$transaction(async (tx: any) => {
     const freshUser = await tx.user.findUnique({ where: { id: user.id } });
 
-    if (!freshUser || Number(freshUser.balanceKes) < totalDeduction) {
+    if (!freshUser || Number(freshUser.balanceKes) < amountKes) {
       throw new Error(
-        `Insufficient balance. Need KES ${totalDeduction.toLocaleString()} (KES ${amountKes.toLocaleString()} + KES ${paystackFee} M-Pesa processing fee).`
+        `Insufficient balance. Available: KES ${Number(freshUser?.balanceKes ?? 0).toLocaleString()}`
       );
     }
 
     await tx.user.update({
       where: { id: user.id },
-      data:  { balanceKes: { decrement: totalDeduction } },
+      data:  { balanceKes: { decrement: amountKes } },
     });
 
-    const newBalance = Number(freshUser.balanceKes) - totalDeduction;
+    const newBalance = Number(freshUser.balanceKes) - amountKes;
 
     const transaction = await tx.transaction.create({
       data: {
@@ -76,7 +88,7 @@ export const POST = withErrorHandling(async (req: NextRequest) => {
         phone:       formattedPhone,
         mpesaRef:    reference,
         status:      'PENDING',
-        description: `Withdrawal of KES ${amountKes.toLocaleString()} to ${formattedPhone}. M-Pesa processing fee: KES ${paystackFee} (Paystack pass-through, zero CheckRada markup).`,
+        description: `Withdrawal of KES ${amountKes.toLocaleString()} from wallet. M-Pesa processing fee KES ${paystackFee} deducted — KES ${transferAmount.toLocaleString()} sent to ${formattedPhone}.`,
       },
     });
 
@@ -91,9 +103,9 @@ export const POST = withErrorHandling(async (req: NextRequest) => {
       bankCode: 'MPesa',
     });
 
-    // Initiate transfer — send amountKes only (paystackFee already deducted from wallet)
+    // Send transferAmount (amountKes minus fee) to M-Pesa
     const transfer = await initiateTransfer({
-      amountKes,
+      amountKes:     transferAmount,
       recipientCode: recipient.recipient_code,
       reference,
       reason: 'CheckRada Withdrawal',
@@ -105,21 +117,21 @@ export const POST = withErrorHandling(async (req: NextRequest) => {
     });
 
     return NextResponse.json({
-      success:          true,
-      message:          `KES ${amountKes.toLocaleString()} will be sent to your M-Pesa shortly.`,
+      success:        true,
+      message:        `KES ${transferAmount.toLocaleString()} will be sent to your M-Pesa shortly.`,
       amountKes,
       paystackFee,
-      totalDeducted:    totalDeduction,
+      transferAmount,
       reference,
-      transactionId:    result.transaction.id,
+      transactionId:  result.transaction.id,
     });
 
   } catch (err: any) {
-    // Refund full deduction (amount + fee) on failure
+    // Refund full amountKes on failure
     await prisma.$transaction(async (tx: any) => {
       await tx.user.update({
         where: { id: user.id },
-        data:  { balanceKes: { increment: totalDeduction } },
+        data:  { balanceKes: { increment: amountKes } },
       });
       await tx.transaction.update({
         where: { id: result.transaction.id },
