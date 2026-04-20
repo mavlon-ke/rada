@@ -28,7 +28,7 @@
   <meta name="twitter:image" content="https://checkrada.co.ke/assets/og/og-brand.png">
   <meta name="twitter:site" content="@checkrada">
   <!-- ═══════════════════════ -->
-<title>CheckCheckRada — About</title>
+<title>CheckRada — About</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Archivo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -592,14 +592,41 @@ body { background: var(--bg); color: var(--text); font-family: var(--font); min-
     <a href="rada-leaderboard.html">Leaderboard</a>
     <a href="rada-data.html">Data Platform</a>
     <a href="rada-creator.html">Creator Hub</a>
+    <a href="rada-friends.html">Social Challenge</a>
     <a class="active" href="rada-about.html">About</a>
   </nav>
   <div class="h-actions">
-    <div class="h-balance"><div class="h-dot"></div><span>KES <strong id="balDisplay">0</strong></span></div>
-    <button class="h-btn h-btn-ghost">Withdraw</button>
-    <button class="h-btn h-btn-primary">+ Deposit</button>
+    <!-- Logged out -->
+    <div id="hActLoggedOut" style="display:flex;gap:8px;align-items:center;">
+      <a class="h-btn h-btn-ghost" href="rada-auth.html">Log In</a>
+      <a class="h-btn h-btn-primary" href="rada-auth.html">Sign Up</a>
+    </div>
+    <!-- Logged in -->
+    <div id="hActLoggedIn" style="display:none;gap:8px;align-items:center;">
+      <div class="h-balance"><div class="h-dot"></div><span>KES <strong id="balDisplay">0</strong></span></div>
+      <button class="h-btn h-btn-ghost" onclick="openWithdraw ? openWithdraw() : null">Withdraw</button>
+      <button class="h-btn h-btn-primary" onclick="openDeposit ? openDeposit() : null">+ Deposit</button>
+    </div>
   </div>
 </header>
+<script>
+// ── Update desktop header auth state ─────────────────────────────────────────
+(function() {
+  var loggedOut = document.getElementById('hActLoggedOut');
+  var loggedIn  = document.getElementById('hActLoggedIn');
+  var balEl     = document.getElementById('balDisplay');
+  var user = null;
+  try { user = JSON.parse(localStorage.getItem('rada_user') || 'null'); } catch(e) {}
+  if (user) {
+    if (loggedOut) loggedOut.style.display = 'none';
+    if (loggedIn)  loggedIn.style.display  = 'flex';
+    if (balEl)     balEl.textContent = Number(user.balanceKes || 0).toLocaleString();
+  } else {
+    if (loggedOut) loggedOut.style.display = 'flex';
+    if (loggedIn)  loggedIn.style.display  = 'none';
+  }
+})();
+</script>
 <!-- CAROUSEL -->
 <div id="promoCarouselWrap" class="promo-carousel-wrap"><div class="promo-track" id="promoTrack"></div><div class="promo-dots" id="promoDots"></div></div>
 
@@ -672,7 +699,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--font); min-
       <div class="creator-card-icon">💡</div>
       <div>
         <div class="creator-card-title">Propose a Forecast Market · Earn 0.5% Per Trade</div>
-        <div class="creator-card-sub">Submit a YES/NO question. If approved and it hits KES 1,000 in volume, you earn 0.5% of every trade fee — credited to your CheckCheckRada wallet while the market is active. Withdraw to M-Pesa anytime.</div>
+        <div class="creator-card-sub">Submit a YES/NO question. If approved and it hits KES 1,000 in volume, you earn 0.5% of every trade fee — credited to your CheckRada wallet while the market is active. Withdraw to M-Pesa anytime.</div>
       </div>
     </div>
     <button class="btn-creator" onclick="window.location='rada-creator.html'">Become a Creator →</button>

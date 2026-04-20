@@ -717,11 +717,37 @@ nav{padding:14px 24px;display:flex;align-items:center;justify-content:space-betw
     <a href="rada-about.html">About</a>
   </nav>
   <div class="h-actions">
-    <div class="h-balance"><div class="h-dot"></div><span>KES <strong id="balDisplay">0</strong></span></div>
-    <button class="h-btn h-btn-ghost" onclick="openWithdraw ? openWithdraw() : null">Withdraw</button>
-    <button class="h-btn h-btn-primary" onclick="openDeposit ? openDeposit() : null">+ Deposit</button>
+    <!-- Logged out -->
+    <div id="hActLoggedOut" style="display:flex;gap:8px;align-items:center;">
+      <a class="h-btn h-btn-ghost" href="rada-auth.html">Log In</a>
+      <a class="h-btn h-btn-primary" href="rada-auth.html">Sign Up</a>
+    </div>
+    <!-- Logged in -->
+    <div id="hActLoggedIn" style="display:none;gap:8px;align-items:center;">
+      <div class="h-balance"><div class="h-dot"></div><span>KES <strong id="balDisplay">0</strong></span></div>
+      <button class="h-btn h-btn-ghost" onclick="openWithdraw ? openWithdraw() : null">Withdraw</button>
+      <button class="h-btn h-btn-primary" onclick="openDeposit ? openDeposit() : null">+ Deposit</button>
+    </div>
   </div>
 </header>
+<script>
+// ── Update desktop header auth state ─────────────────────────────────────────
+(function() {
+  var loggedOut = document.getElementById('hActLoggedOut');
+  var loggedIn  = document.getElementById('hActLoggedIn');
+  var balEl     = document.getElementById('balDisplay');
+  var user = null;
+  try { user = JSON.parse(localStorage.getItem('rada_user') || 'null'); } catch(e) {}
+  if (user) {
+    if (loggedOut) loggedOut.style.display = 'none';
+    if (loggedIn)  loggedIn.style.display  = 'flex';
+    if (balEl)     balEl.textContent = Number(user.balanceKes || 0).toLocaleString();
+  } else {
+    if (loggedOut) loggedOut.style.display = 'flex';
+    if (loggedIn)  loggedIn.style.display  = 'none';
+  }
+})();
+</script>
 <!-- CAROUSEL -->
 <div id="promoCarouselWrap" class="promo-carousel-wrap"><div class="promo-track" id="promoTrack"></div><div class="promo-dots" id="promoDots"></div></div>
 

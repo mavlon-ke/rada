@@ -702,11 +702,37 @@ td{padding:14px 16px;font-size:0.8rem;border-bottom:1px solid rgba(109,40,217,0.
     <a href="rada-about.html">About</a>
   </nav>
   <div class="h-actions">
-    <div class="h-balance"><div class="h-dot"></div><span>KES <strong id="balDisplay">0</strong></span></div>
-    <button class="h-btn h-btn-ghost">Withdraw</button>
-    <button class="h-btn h-btn-primary">+ Deposit</button>
+    <!-- Logged out -->
+    <div id="hActLoggedOut" style="display:flex;gap:8px;align-items:center;">
+      <a class="h-btn h-btn-ghost" href="rada-auth.html">Log In</a>
+      <a class="h-btn h-btn-primary" href="rada-auth.html">Sign Up</a>
+    </div>
+    <!-- Logged in -->
+    <div id="hActLoggedIn" style="display:none;gap:8px;align-items:center;">
+      <div class="h-balance"><div class="h-dot"></div><span>KES <strong id="balDisplay">0</strong></span></div>
+      <button class="h-btn h-btn-ghost" onclick="openWithdraw ? openWithdraw() : null">Withdraw</button>
+      <button class="h-btn h-btn-primary" onclick="openDeposit ? openDeposit() : null">+ Deposit</button>
+    </div>
   </div>
 </header>
+<script>
+// ── Update desktop header auth state ─────────────────────────────────────────
+(function() {
+  var loggedOut = document.getElementById('hActLoggedOut');
+  var loggedIn  = document.getElementById('hActLoggedIn');
+  var balEl     = document.getElementById('balDisplay');
+  var user = null;
+  try { user = JSON.parse(localStorage.getItem('rada_user') || 'null'); } catch(e) {}
+  if (user) {
+    if (loggedOut) loggedOut.style.display = 'none';
+    if (loggedIn)  loggedIn.style.display  = 'flex';
+    if (balEl)     balEl.textContent = Number(user.balanceKes || 0).toLocaleString();
+  } else {
+    if (loggedOut) loggedOut.style.display = 'flex';
+    if (loggedIn)  loggedIn.style.display  = 'none';
+  }
+})();
+</script>
 <!-- CAROUSEL -->
 <div id="promoCarouselWrap" class="promo-carousel-wrap"><div class="promo-track" id="promoTrack"></div><div class="promo-dots" id="promoDots"></div></div>
 
@@ -739,7 +765,7 @@ td{padding:14px 16px;font-size:0.8rem;border-bottom:1px solid rgba(109,40,217,0.
     <div class="how-card" data-n="4">
       <div class="how-icon">💰</div>
       <div class="how-title">Earn Royalties</div>
-      <div class="how-body">0.5% of every trade's net amount on your market is credited to your CheckCheckRada wallet while the market is active. Once the market resolves, royalties stop. You can withdraw your balance to M-Pesa at any time.</div>
+      <div class="how-body">0.5% of every trade's net amount on your market is credited to your CheckRada wallet while the market is active. Once the market resolves, royalties stop. You can withdraw your balance to M-Pesa at any time.</div>
     </div>
   </div>
 
@@ -840,7 +866,7 @@ td{padding:14px 16px;font-size:0.8rem;border-bottom:1px solid rgba(109,40,217,0.
               <button class="wm-btn" id="wm-wallet" onclick="setWalletMethod('wallet')">Wallet</button>
             </div>
           </div>
-          <span class="field-hint">Royalties are credited to your CheckCheckRada wallet when your market trades. You can withdraw to this M-Pesa number anytime.</span>
+          <span class="field-hint">Royalties are credited to your CheckRada wallet when your market trades. You can withdraw to this M-Pesa number anytime.</span>
         </div>
         <div class="form-field">
           <label class="field-label">Your Creator Handle (Optional)</label>
@@ -856,7 +882,7 @@ td{padding:14px 16px;font-size:0.8rem;border-bottom:1px solid rgba(109,40,217,0.
           <div class="url-preview" id="urlPreview">
             checkrada.co.ke/m/<span id="urlSlug">your-market-slug</span>?c=<span id="urlPhone">07XXXXXXXX</span>
           </div>
-          <span class="field-hint">Share this link. Every trade from it credits your CheckCheckRada wallet for as long as the market is open.</span>
+          <span class="field-hint">Share this link. Every trade from it credits your CheckRada wallet for as long as the market is open.</span>
         </div>
       </div>
 
