@@ -1062,7 +1062,10 @@ nav{padding:14px 24px;display:flex;align-items:center;justify-content:space-betw
     </div>
     <!-- Logged in -->
     <div id="hActLoggedIn" style="display:none;gap:8px;align-items:center;">
-      <div class="h-balance"><div class="h-dot"></div><span>KES <strong id="balDisplay">0</strong></span></div>
+      <div class="h-balance" onclick="openAccountTray()" style="cursor:pointer;" title="Account & Settings">
+        <div class="h-dot"></div><span>KES <strong id="balDisplay">0</strong></span>
+      </div>
+      <button class="h-btn h-btn-ghost" onclick="openAccountTray()" style="padding:7px 10px;" title="Account & Log Out">👤</button>
       <button class="h-btn h-btn-ghost" onclick="openWithdraw ? openWithdraw() : null">Withdraw</button>
       <button class="h-btn h-btn-primary" onclick="openDeposit ? openDeposit() : null">+ Deposit</button>
     </div>
