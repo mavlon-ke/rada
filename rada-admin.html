@@ -3822,6 +3822,11 @@ function loadCarouselFromBackend() {
     } else {
       carouselSlides = [];
     }
+    // Set master toggle: ON if any slide is active, OFF if all inactive
+    var masterToggle = document.getElementById('carouselMasterToggle');
+    if (masterToggle) {
+      masterToggle.checked = carouselSlides.some(function(s) { return s.active; });
+    }
     renderCarouselEditor();
   })
   .catch(function() { renderCarouselEditor(); });
@@ -3840,15 +3845,35 @@ function initCarouselAdmin() {
   };
 
   publishBtn.onclick = function() {
+    var masterToggle = document.getElementById('carouselMasterToggle');
+    var globalOn = masterToggle ? masterToggle.checked : true;
+    // If master toggle is OFF, save all slides as inactive
+    // If master toggle is ON, save slides with their individual active states
+    var slidesToSave = carouselSlides.map(function(s) {
+      return Object.assign({}, s, { active: globalOn ? s.active : false });
+    });
     var el = document.getElementById('carouselSaveStatus');
-    if (el) el.textContent = '✅ Published at ' + new Date().toLocaleTimeString();
+    if (el) el.textContent = '✅ Published at ' + new Date().toLocaleTimeString() + (globalOn ? '' : ' (carousel OFF)');
     adminFetch('/api/admin/config/carousel', {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ slides: carouselSlides })
+      body: JSON.stringify({ slides: slidesToSave })
     }).catch(function(){});
   };
 
   reloadBtn.onclick = function() { loadCarouselFromBackend(); };
+
+  // Wire master toggle — when toggled, update all slides active state visually
+  var masterToggle = document.getElementById('carouselMasterToggle');
+  if (masterToggle) {
+    masterToggle.addEventListener('change', function() {
+      var globalOn = this.checked;
+      carouselSlides.forEach(function(s) { s.active = globalOn; });
+      renderCarouselEditor();
+      // Update status hint
+      var el = document.getElementById('carouselSaveStatus');
+      if (el) el.textContent = globalOn ? 'Carousel ON — click Publish to save.' : 'Carousel OFF — click Publish to save.';
+    });
+  }
 
   renderCarouselEditor();
 }

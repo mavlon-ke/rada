@@ -769,7 +769,7 @@ var isLoggedIn = !!radaUser;
 
 // ── Referral config (loaded async) ───────────────────────────────────────────
 var referralActive = true;  // default ON for demo; overridden by backend
-fetch('/api/config/referral').then(r => r.json()).then(d => {
+fetch('https://api.checkrada.co.ke/api/config/referral').then(r => r.json()).then(d => {
   referralActive = d.config?.active !== false;  // true unless explicitly false
   // Update refer row visibility
   document.querySelectorAll('.acc-refer-row').forEach(el => {
@@ -807,7 +807,7 @@ fetch('/api/config/referral').then(r => r.json()).then(d => {
 
   // Notification badge
   if (isLoggedIn) {
-    fetch('/api/users/me/notifications').then(r => r.json()).then(d => {
+    fetch('https://api.checkrada.co.ke/api/users/me/notifications').then(r => r.json()).then(d => {
       var count = d.unreadCount || 0;
       document.querySelectorAll('.m-notif-badge').forEach(el => {
         el.textContent = count > 9 ? '9+' : count;
@@ -840,7 +840,7 @@ function loadNotifications() {
   var body = document.getElementById('notifTrayBody');
   if (!body) return;
   body.innerHTML = '<div class="notif-empty">Loading...</div>';
-  fetch('/api/users/me/notifications').then(r => r.json()).then(d => {
+  fetch('https://api.checkrada.co.ke/api/users/me/notifications').then(r => r.json()).then(d => {
     var notifs = d.notifications || [];
     if (!notifs.length) {
       body.innerHTML = '<div class="notif-empty">🔔 No notifications yet</div>';
@@ -871,7 +871,7 @@ function tapNotif(id, link) {
   if (link) window.location.href = link;
 }
 function markAllRead() {
-  fetch('/api/users/me/notifications/read', { method: 'PATCH' })
+  fetch('https://api.checkrada.co.ke/api/users/me/notifications/read', { method: 'PATCH' })
     .then(() => {
       document.querySelectorAll('.notif-item').forEach(el => el.classList.remove('unread'));
       document.querySelectorAll('.notif-unread-dot').forEach(el => el.remove());
@@ -1129,7 +1129,7 @@ function initCarousel() {
     return;
   }
 
-  fetch('/api/config/carousel').then(r => r.json()).then(d => {
+  fetch('https://api.checkrada.co.ke/api/config/carousel').then(r => r.json()).then(d => {
     promoSlides = d.slides || [];
     if (!promoSlides.length) {
       var wrap = document.getElementById('promoCarouselWrap');
@@ -1139,13 +1139,9 @@ function initCarousel() {
     renderCarousel();
     startCarouselAuto();
   }).catch(() => {
-    // On error (demo mode), show sample slides
-    promoSlides = [
-      { tag:'🆕 New Market', title:'Will Ruto Complete His Full Term?', subtitle:'Join 1,200+ forecasters already staking', ctaText:'Forecast Now →', ctaLink:'rada-markets.html', bgColour:'#1a1035' },
-      { tag:'🤝 Social Challenge', title:'Challenge a Friend. Settle It Fairly.', subtitle:'From KES 20. Referee or mutual resolution.', ctaText:'Create Challenge →', ctaLink:'rada-friends.html', bgColour:'#1e1b4b' },
-    ];
-    renderCarousel();
-    startCarouselAuto();
+    // On error — hide carousel (respect admin toggle, don't show stale demo content)
+    var wrap = document.getElementById('promoCarouselWrap');
+    if (wrap) wrap.style.display = 'none';
   });
 }
 
@@ -1419,7 +1415,7 @@ function openReferSheet() {
   if (codeEl) codeEl.textContent = code;
 
   // Load stats from API
-  fetch('/api/users/me/referrals')
+  fetch('https://api.checkrada.co.ke/api/users/me/referrals')
     .then(function(r){ return r.json(); })
     .then(function(d) {
       var total    = d.totalReferred || 0;
