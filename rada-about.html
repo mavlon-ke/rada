@@ -604,8 +604,8 @@ body { background: var(--bg); color: var(--text); font-family: var(--font); min-
     <!-- Logged in -->
     <div id="hActLoggedIn" style="display:none;gap:8px;align-items:center;">
       <div class="h-balance"><div class="h-dot"></div><span>KES <strong id="balDisplay">0</strong></span></div>
-      <button class="h-btn h-btn-ghost" onclick="openWithdraw ? openWithdraw() : null">Withdraw</button>
-      <button class="h-btn h-btn-primary" onclick="openDeposit ? openDeposit() : null">+ Deposit</button>
+      <button class="h-btn h-btn-ghost" onclick="window.location.href='rada-dashboard.html#withdraw'">Withdraw</button>
+      <button class="h-btn h-btn-primary" onclick="window.location.href='rada-dashboard.html#deposit'">+ Deposit</button>
     </div>
   </div>
 </header>
