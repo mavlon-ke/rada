@@ -1207,7 +1207,7 @@ fetch(API_BASE + '/api/config/referral').then(r => r.json()).then(d => {
   var loggedInEl  = document.getElementById('mTopLoggedIn');
   if (loggedOutEl) loggedOutEl.style.display = isLoggedIn ? 'none' : 'flex';
   var hActions = document.querySelector('.h-actions');
-  if (hActions) hActions.style.display = isLoggedIn ? 'flex' : 'none';
+  if (hActions) hActions.style.display = 'flex'; // always visible — inner divs control logged in/out state
   if (loggedInEl)  loggedInEl.style.display  = isLoggedIn ? 'flex' : 'none';
 
   if (isLoggedIn && radaUser) {
