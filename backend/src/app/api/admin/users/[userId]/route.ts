@@ -1,6 +1,6 @@
 // src/app/api/admin/users/[userId]/route.ts
-// PATCH  — edit user fields (name, phone, KYC, balance adjustment, suspended)
-// DELETE — permanent delete: credits balance as platform revenue, keeps transaction records
+// PATCH  — edit user fields (name, phone, balance adjustment, suspended)
+// DELETE — permanent delete with optional blacklist
 
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
@@ -10,12 +10,11 @@ import { requireAdmin, adminUnauthorized, logAdminAction } from '@/lib/auth/admi
 // ─── PATCH /api/admin/users/[userId] ─────────────────────────────────────────
 
 const EditSchema = z.object({
-  name:           z.string().min(1).max(100).optional(),
-  phone:          z.string().min(9).max(15).optional(),
-  kycStatus:      z.enum(['PENDING', 'VERIFIED', 'REJECTED']).optional(),
-  suspended:      z.boolean().optional(),
-  balanceAdjustKes: z.number().optional(), // positive = credit, negative = debit
-  adjustReason:   z.string().max(200).optional(),
+  name:             z.string().min(1).max(100).optional(),
+  phone:            z.string().min(9).max(15).optional(),
+  suspended:        z.boolean().optional(),
+  balanceAdjustKes: z.number().optional(),
+  adjustReason:     z.string().max(200).optional(),
 });
 
 export async function PATCH(
@@ -34,7 +33,7 @@ export async function PATCH(
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const { name, phone, kycStatus, suspended, balanceAdjustKes, adjustReason } = parsed.data;
+  const { name, phone, suspended, balanceAdjustKes, adjustReason } = parsed.data;
 
   // Check phone uniqueness if changing
   if (phone && phone !== user.phone) {
@@ -44,14 +43,11 @@ export async function PATCH(
     }
   }
 
-  // Build user update payload
   const updateData: Record<string, any> = {};
   if (name      !== undefined) updateData.name      = name;
   if (phone     !== undefined) updateData.phone     = phone;
-  if (kycStatus !== undefined) updateData.kycStatus = kycStatus;
   if (suspended !== undefined) updateData.suspended = suspended;
 
-  // Handle balance adjustment separately inside a transaction
   const updated = await prisma.$transaction(async (tx) => {
     let updatedUser = user;
 
@@ -96,18 +92,24 @@ export async function PATCH(
 
   return NextResponse.json({
     success: true,
-    user: {
-      ...updated,
-      balanceKes: Number(updated.balanceKes),
-    },
+    user: { ...updated, balanceKes: Number(updated.balanceKes) },
   });
 }
 
 // ─── DELETE /api/admin/users/[userId] ────────────────────────────────────────
-// Permanent delete:
-// 1. Logs wallet balance as PLATFORM_COLLECTION transaction
-// 2. Cancels all open positions (no refund — balance already credited to platform)
-// 3. Deletes the user record (transactions are kept, userId becomes null/orphaned)
+// 1. Sweep wallet to PlatformRevenue (USER_DELETION type)
+// 2. Zero out positions (keep records with null userId via onDelete: SetNull)
+// 3. Delete referrals (can't SetNull due to unique constraint)
+// 4. Delete notifications (no audit value)
+// 5. Delete OTP codes
+// 6. Optionally blacklist the phone number
+// 7. Delete the user — FK relations use onDelete: SetNull so records are kept
+
+const DeleteSchema = z.object({
+  confirm:   z.literal('DELETE'),
+  blacklist: z.boolean().optional().default(false),
+  reason:    z.string().max(200).optional(),
+});
 
 export async function DELETE(
   req: NextRequest,
@@ -117,57 +119,92 @@ export async function DELETE(
   if (!admin) return adminUnauthorized();
 
   const user = await prisma.user.findUnique({
-    where:   { id: params.userId },
-    include: { positions: { where: { shares: { gt: 0 } } } },
+    where: { id: params.userId },
   });
   if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
   const body = await req.json().catch(() => ({}));
-  if (body.confirm !== 'DELETE') {
-    return NextResponse.json({ error: 'Must send { confirm: "DELETE" } to permanently delete a user' }, { status: 400 });
+  const parsed = DeleteSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: 'Must send { confirm: "DELETE" } to permanently delete a user' },
+      { status: 400 }
+    );
   }
 
+  const { blacklist, reason } = parsed.data;
   const walletBalance = Number(user.balanceKes) + Number(user.bonusBalanceKes);
 
   await prisma.$transaction(async (tx) => {
-    // Log balance as platform revenue before deletion
+    // 1. Sweep wallet balance to platform revenue
     if (walletBalance > 0) {
+      await tx.platformRevenue.create({
+        data: {
+          type:        'USER_DELETION',
+          amountKes:   walletBalance,
+          description: `Account permanently deleted by admin. Wallet balance KES ${walletBalance} swept to platform. User: ${user.phone} (${user.name || 'no name'}).`,
+        },
+      });
+      // Also create a transaction record for the user's history
       await tx.transaction.create({
         data: {
-          userId:      params.userId,
+          userId:      user.id,
           type:        'WITHDRAWAL',
           amountKes:   walletBalance,
           balAfter:    0,
           status:      'SUCCESS',
-          description: `PLATFORM_COLLECTION: Account permanently deleted by admin. Wallet balance KES ${walletBalance} collected as platform revenue.`,
+          description: `ACCOUNT_DELETED: Wallet balance swept to platform revenue on account deletion.`,
         },
       });
     }
 
-    // Zero out all positions
+    // 2. Zero out all positions (shares become 0 — records kept with null userId after delete)
     await tx.position.updateMany({
-      where: { userId: params.userId },
+      where: { userId: user.id },
       data:  { shares: 0 },
     });
 
-    // Cancel any OTP codes
+    // 3. Delete referrals (unique constraint on refereeId prevents SetNull)
+    await tx.referral.deleteMany({
+      where: { OR: [{ referrerId: user.id }, { refereeId: user.id }] },
+    });
+
+    // 4. Delete notifications (no audit value)
+    await tx.notification.deleteMany({ where: { userId: user.id } });
+
+    // 5. Delete OTP codes
     await tx.otpCode.deleteMany({ where: { phone: user.phone } });
 
-    // Delete the user — transactions are kept with userId intact for records
-    // (Prisma will set userId to null on Transaction if onDelete: SetNull, 
-    //  otherwise we keep the userId as a string reference even after user deletion)
-    await tx.user.delete({ where: { id: params.userId } });
+    // 6. Blacklist the phone number if requested
+    if (blacklist) {
+      await tx.blacklist.upsert({
+        where:  { phone: user.phone },
+        create: {
+          phone:             user.phone,
+          reason:            reason || 'Account deleted by admin',
+          createdByAdminId:  admin.id,
+        },
+        update: {
+          reason:            reason || 'Account deleted by admin',
+          createdByAdminId:  admin.id,
+        },
+      });
+    }
+
+    // 7. Delete the user — onDelete: SetNull handles Order, Transaction, Market, etc.
+    await tx.user.delete({ where: { id: user.id } });
   });
 
   await logAdminAction(
     admin.id, 'USER_DELETED', params.userId,
-    { phone: user.phone, name: user.name, walletCollected: walletBalance },
+    { phone: user.phone, name: user.name, walletCollected: walletBalance, blacklisted: blacklist },
     req
   );
 
   return NextResponse.json({
-    success: true,
-    message: `User ${user.phone} permanently deleted. KES ${walletBalance} collected as platform revenue.`,
+    success:         true,
+    message:         `User ${user.phone} permanently deleted.${walletBalance > 0 ? ` KES ${walletBalance} swept to platform revenue.` : ''}${blacklist ? ' Phone number blacklisted.' : ''}`,
     walletCollected: walletBalance,
+    blacklisted:     blacklist,
   });
 }

@@ -5,6 +5,9 @@
 //   [HIGH]     isNewUser removed from response — user enumeration risk
 //   [HIGH]     WhatsApp OTP via Meta Cloud API replaces Africa's Talking SMS
 //   [HIGH]     OTP stored in DB ONLY after confirmed delivery
+// v9:
+//   [HIGH]     Blacklist check — blocked numbers cannot request OTP
+//   [HIGH]     Suspended check — frozen accounts cannot request OTP
 
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
@@ -14,8 +17,6 @@ import { sendWhatsAppOTP, normaliseToE164 } from '@/lib/whatsapp/whatsapp-otp';
 import { withErrorHandling } from '@/lib/security/route-guard';
 
 const Schema = z.object({
-  // Accept any international number: optional +, 1-4 digit country code, 4-14 digit subscriber
-  // Normalisation and deep validation handled by normaliseToE164
   phone: z.string().min(5).max(20).regex(/^[\+\d][\d\s\-\.\(\)]{3,18}$/, 'Invalid phone number'),
 });
 
@@ -39,8 +40,24 @@ export const POST = withErrorHandling(async (req: NextRequest) => {
 
   const phone = normaliseToE164(parsed.data.phone)!;
 
-  // Upsert user — create with referral code if new, no-op if existing
+  // ── Blacklist check — vague error, doesn't reveal reason ─────────────────
+  const blacklisted = await prisma.blacklist.findUnique({ where: { phone } });
+  if (blacklisted) {
+    return NextResponse.json(
+      { error: 'Unable to create an account with this number.' },
+      { status: 403 }
+    );
+  }
+
+  // ── Suspended check — frozen accounts cannot log in ──────────────────────
   const existingUser = await prisma.user.findUnique({ where: { phone } });
+  if (existingUser?.suspended) {
+    return NextResponse.json(
+      { error: 'This account has been suspended. Please contact support.' },
+      { status: 403 }
+    );
+  }
+
   const referralCode = existingUser?.referralCode ?? generateReferralCode();
 
   await prisma.user.upsert({
@@ -83,7 +100,6 @@ export const POST = withErrorHandling(async (req: NextRequest) => {
     update: { code: result.otp, expiresAt, attempts: 0 },
   });
 
-  // Generic success — never confirm whether phone is new or existing
   return NextResponse.json(
     { message: 'OTP sent via WhatsApp. Check your messages.' },
     { status: 200 }

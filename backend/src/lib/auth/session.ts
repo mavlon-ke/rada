@@ -1,5 +1,5 @@
 // src/lib/auth/session.ts
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 import { prisma } from "@/lib/db/prisma";
 
@@ -16,18 +16,26 @@ export async function requireAuth(req: NextRequest) {
     const userId = payload.sub as string;
 
     const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: {
-      id: true, name: true, phone: true,
-      balanceKes: true, bonusBalanceKes: true,
-      referralCode: true,
-      createdAt: true,
-    }
-  });
+      where: { id: userId },
+      select: {
+        id: true, name: true, phone: true,
+        balanceKes: true, bonusBalanceKes: true,
+        referralCode: true, suspended: true,
+        createdAt: true,
+      }
+    });
+
     if (!user) {
       console.warn('[Auth] User not found for id:', userId);
       return null;
     }
+
+    // Hard freeze — suspended users are fully blocked from all authenticated routes
+    if (user.suspended) {
+      console.warn('[Auth] Blocked suspended user:', user.phone);
+      return null;
+    }
+
     return user;
   } catch (err) {
     console.warn('[Auth] JWT verify failed:', (err as Error).message);

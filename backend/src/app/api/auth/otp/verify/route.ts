@@ -80,6 +80,14 @@ export const POST = withErrorHandling(async (req: NextRequest) => {
     return NextResponse.json({ error: 'User not found' }, { status: 404 });
   }
 
+  // Hard freeze — suspended users cannot log in even with valid OTP
+  if (user.suspended) {
+    return NextResponse.json(
+      { error: 'This account has been suspended. Please contact support.' },
+      { status: 403 }
+    );
+  }
+
   // ── Referral capture ────────────────────────────────────────────────────────
   if (referralCode && !user.referredBy) {
     const referrer = await prisma.user.findUnique({

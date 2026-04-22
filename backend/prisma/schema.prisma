@@ -85,8 +85,8 @@ model Market {
   category    Category
   imageUrl    String?
   sourceNote  String?
-  creatorId   String
-  creator     User         @relation("MarketCreator", fields: [creatorId], references: [id])
+  creatorId   String?      
+  creator     User?        @relation("MarketCreator", fields: [creatorId], references: [id], onDelete: SetNull)
   status      MarketStatus @default(OPEN)
   outcome     Outcome?
   yesPool     Decimal      @default(1000) @db.Decimal(15,2)
@@ -110,12 +110,12 @@ model MarketChallenge {
   id              String           @id @default(cuid())
   question        String
   accessCode      String           @unique
-  userAId         String
-  userA           User             @relation("ChallengeUserA", fields: [userAId], references: [id])
+  userAId         String?
+  userA           User?            @relation("ChallengeUserA", fields: [userAId], references: [id], onDelete: SetNull)
 userBId         String?
-  userB           User?            @relation("ChallengeUserB", fields: [userBId], references: [id])
+  userB           User?            @relation("ChallengeUserB", fields: [userBId], references: [id], onDelete: SetNull)
   refereeId       String?
-  referee         User?            @relation("ChallengeReferee", fields: [refereeId], references: [id])
+  referee         User?            @relation("ChallengeReferee", fields: [refereeId], references: [id], onDelete: SetNull)
   refereeAccepted Boolean          @default(false)
   stakePerPerson  Decimal          @db.Decimal(15,2)
   totalPool       Decimal          @default(0) @db.Decimal(15,2)
@@ -142,8 +142,8 @@ userBId         String?
 
 model MarketProposal {
   id               String         @id @default(cuid())
-  proposerId       String
-  proposer         User           @relation(fields: [proposerId], references: [id])
+  proposerId       String?
+  proposer         User?          @relation(fields: [proposerId], references: [id], onDelete: SetNull)
   question         String
   category         Category
   resolutionSource String
@@ -162,8 +162,8 @@ model CreatorBounty {
   id            String    @id @default(cuid())
   marketId      String    @unique
   market        Market    @relation(fields: [marketId], references: [id])
-  creatorId     String
-  creator       User      @relation(fields: [creatorId], references: [id])
+  creatorId     String?
+  creator       User?     @relation(fields: [creatorId], references: [id], onDelete: SetNull)
   tradeVolume   Decimal   @default(0) @db.Decimal(15,2)
   bountyEarned  Decimal   @default(0) @db.Decimal(15,2)
   paidOut       Decimal   @default(0) @db.Decimal(15,2)
@@ -176,8 +176,8 @@ model CreatorBounty {
 
 model Order {
   id                String      @id @default(cuid())
-  userId            String
-  user              User        @relation(fields: [userId], references: [id])
+  userId            String?
+  user              User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
   marketId          String
   market            Market      @relation(fields: [marketId], references: [id])
   side              Side
@@ -212,8 +212,8 @@ model Position {
 
 model Transaction {
   id          String          @id @default(cuid())
-  userId      String
-  user        User            @relation(fields: [userId], references: [id])
+  userId      String?
+  user        User?           @relation(fields: [userId], references: [id], onDelete: SetNull)
   challengeId String?
   challenge   MarketChallenge? @relation(fields: [challengeId], references: [id])
   type        TransactionType
@@ -326,10 +326,22 @@ model PlatformRevenue {
 }
 
 
+
+model Blacklist {
+  id             String   @id @default(cuid())
+  phone          String   @unique
+  reason         String
+  createdByAdminId String
+  createdAt      DateTime @default(now())
+
+  @@map("blacklist")
+}
+
 enum RevenueType {
   FORECASTING_FEE
   MARKET_SURPLUS
   CHALLENGE_FEE
+  USER_DELETION
 }
 
 enum KycStatus {
