@@ -1256,7 +1256,10 @@ fetch(API_BASE + '/api/config/referral').then(r => r.json()).then(d => {
 
   // Notification badge
   if (isLoggedIn) {
-    fetch(API_BASE + '/api/users/me/notifications').then(r => r.json()).then(d => {
+    var _notifToken = localStorage.getItem('rada_token') || '';
+    fetch(API_BASE + '/api/users/me/notifications', {
+      headers: _notifToken ? { 'Authorization': 'Bearer ' + _notifToken } : {}
+    }).then(r => r.json()).then(d => {
       var count = d.unreadCount || 0;
       document.querySelectorAll('.m-notif-badge').forEach(el => {
         el.textContent = count > 9 ? '9+' : count;
