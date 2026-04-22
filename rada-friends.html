@@ -2135,15 +2135,15 @@ function openMutualResolve(id) {
       <div style="font-weight:700;font-size:1rem;margin-bottom:6px">Submit Your Outcome</div>
       <div style="font-size:0.82rem;color:var(--text-mid);margin-bottom:20px;line-height:1.5">"${ch.q || 'The Challenge'}"<br>Pick the outcome you believe is correct. If the other party agrees, funds release instantly at 5% fee.</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
-        <button class="btn-resolve btn-resolve-a" onclick="submitMutual(${id},'a')">🏆 ${ch.a?.name?.split(' ')[0] || 'A'} Won</button>
-        <button class="btn-resolve btn-resolve-b" onclick="submitMutual(${id},'b')">🏆 ${ch.b?.name?.split(' ')[0] || 'B'} Won</button>
+        <button class="btn-resolve btn-resolve-a" onclick="submitMutual('${id}','a')">🏆 ${ch.a?.name?.split(' ')[0] || 'A'} Won</button>
+        <button class="btn-resolve btn-resolve-b" onclick="submitMutual('${id}','b')">🏆 ${ch.b?.name?.split(' ')[0] || 'B'} Won</button>
       </div>
-      <button class="btn-resolve btn-resolve-tie" onclick="submitMutual(${id},'tie')">🤝 It's a Tie</button>
+      <button class="btn-resolve btn-resolve-tie" onclick="submitMutual('${id}','tie')">🤝 It's a Tie</button>
     </div>`;
   document.getElementById('resParties').innerHTML = html;
   document.getElementById('resModalQ').textContent = ch.q || '';
   document.getElementById('resModalSub').textContent = 'Mutual agreement — both participants must confirm.';
-  openModal('resolveModal');
+  document.getElementById('resolveModal').classList.add('open');
 }
 function submitMutual(id, winner) {
   var outcome = winner === 'a' ? 'USER_A' : winner === 'b' ? 'USER_B' : 'TIE';
