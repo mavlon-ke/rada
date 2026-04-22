@@ -843,7 +843,10 @@ function loadNotifications() {
   var body = document.getElementById('notifTrayBody');
   if (!body) return;
   body.innerHTML = '<div class="notif-empty">Loading...</div>';
-  fetch('https://api.checkrada.co.ke/api/users/me/notifications').then(r => r.json()).then(d => {
+  var _lnTok = localStorage.getItem('rada_token') || '';
+  fetch('https://api.checkrada.co.ke/api/users/me/notifications', {
+    headers: _lnTok ? { 'Authorization': 'Bearer ' + _lnTok } : {}
+  }).then(r => r.json()).then(d => {
     var notifs = d.notifications || [];
     if (!notifs.length) {
       body.innerHTML = '<div class="notif-empty">🔔 No notifications yet</div>';
@@ -874,7 +877,11 @@ function tapNotif(id, link) {
   if (link) window.location.href = link;
 }
 function markAllRead() {
-  fetch('https://api.checkrada.co.ke/api/users/me/notifications/read', { method: 'PATCH' })
+  var _mrTok = localStorage.getItem('rada_token') || '';
+  fetch('https://api.checkrada.co.ke/api/users/me/notifications/read', {
+    method: 'PATCH',
+    headers: _mrTok ? { 'Authorization': 'Bearer ' + _mrTok } : {}
+  })
     .then(() => {
       document.querySelectorAll('.notif-item').forEach(el => el.classList.remove('unread'));
       document.querySelectorAll('.notif-unread-dot').forEach(el => el.remove());
