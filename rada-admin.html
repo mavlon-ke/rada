@@ -721,6 +721,9 @@ body::after {
       <span class="nav-icon">◈</span><span style="display:none;">KYC Queue</span>
       <span class="nav-badge" id="kycNavBadge">—</span>
     </button>
+    <button class="nav-item" onclick="showPanel('blacklist', this)">
+      <span class="nav-icon">🚫</span><span>Blacklist</span>
+    </button>
   </div>
 
   <div class="sidebar-section">
@@ -1231,6 +1234,46 @@ body::after {
       </div>
     </div>
 
+    <!-- PANEL: BLACKLIST -->
+    <div id="panel-blacklist" class="panel" style="display:none;">
+      <div class="page-head">
+        <div>
+          <div class="page-title">🚫 Blacklist</div>
+          <div class="page-sub">Phone numbers blocked from registering on CheckRada. Added automatically on user deletion or manually by admin.</div>
+        </div>
+      </div>
+
+      <!-- Add manually -->
+      <div class="stat-card" style="margin-bottom:20px;">
+        <div class="stat-label" style="margin-bottom:10px;">Add Number Manually</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+          <input class="form-input" id="blPhone" placeholder="Phone e.g. +254712345678" style="box-sizing:border-box;">
+          <input class="form-input" id="blReason" placeholder="Reason e.g. Fraud, abuse" style="box-sizing:border-box;">
+        </div>
+        <button class="topbar-btn primary" onclick="addToBlacklist()" style="width:100%;padding:10px;">+ Add to Blacklist</button>
+        <div id="blAddStatus" style="font-size:0.72rem;min-height:16px;margin-top:6px;"></div>
+      </div>
+
+      <!-- Blacklist table -->
+      <div class="table-wrap">
+        <div class="table-head">
+          <div class="table-title">🚫 Blacklisted Numbers</div>
+          <button class="topbar-btn" onclick="loadBlacklistPanel()">🔄 Refresh</button>
+        </div>
+        <table class="data-table">
+          <thead><tr>
+            <th>Phone</th>
+            <th>Reason</th>
+            <th>Date Added</th>
+            <th>Action</th>
+          </tr></thead>
+          <tbody id="blacklistBody">
+            <tr><td colspan="4" style="text-align:center;color:var(--text-dim);padding:20px;">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
     <!-- PANEL: DISPUTE DESK -->
     <div class="panel" id="panel-disputes">
       <div class="page-title">⚖️ Dispute Desk</div>
@@ -1537,12 +1580,23 @@ body::after {
       <div style="background:rgba(206,17,38,0.06);border:1px solid rgba(206,17,38,0.2);border-radius:10px;padding:14px;font-size:0.82rem;line-height:1.6;">
         <strong>This will permanently:</strong><br>
         • Delete the user account and login access<br>
-        • Collect their wallet balance as platform revenue<br>
-        • Cancel all open positions<br>
+        • Sweep wallet balance to platform revenue<br>
+        • Zero out all open positions<br>
+        • Markets they created remain active<br>
         • Transaction records are kept for compliance
       </div>
       <div id="deleteUserBalNotice" style="font-size:0.82rem;color:#ce1126;font-weight:600;"></div>
+      <!-- Blacklist option -->
+      <label style="display:flex;align-items:flex-start;gap:10px;background:rgba(109,40,217,0.04);border:1px solid rgba(109,40,217,0.12);border-radius:8px;padding:12px;cursor:pointer;">
+        <input type="checkbox" id="deleteUserBlacklist" checked style="margin-top:2px;accent-color:#6d28d9;cursor:pointer;">
+        <div>
+          <div style="font-size:0.8rem;font-weight:700;color:#1a1035;">Blacklist this phone number</div>
+          <div style="font-size:0.7rem;color:#9284b8;margin-top:2px;">Prevents this number from re-registering on CheckRada.</div>
+        </div>
+      </label>
       <div>
+        <div class="stat-label" style="margin-bottom:4px;">Reason (optional — for blacklist record)</div>
+        <input class="form-input" id="deleteUserReason" placeholder="e.g. Fraud, abuse, violation..." style="width:100%;box-sizing:border-box;margin-bottom:10px;">
         <div class="stat-label" style="margin-bottom:4px;">Type <strong>DELETE</strong> to confirm</div>
         <input class="form-input" id="deleteUserConfirmInput" placeholder="Type DELETE here" style="width:100%;box-sizing:border-box;">
       </div>
@@ -2312,7 +2366,7 @@ function exportDataApps() {
 var ALL_PANEL_IDS = [
   'dashboard','markets','create-market','resolve','users','kyc','transactions',
   'payouts','proposals','bounties','activity','revenue','disputes','suggestions','b2b',
-  'admin-log','carousel','referral','dataapps'
+  'admin-log','carousel','referral','dataapps','blacklist'
 ];
 
 function showPanel(id, btn) {
@@ -2362,6 +2416,7 @@ function showPanel(id, btn) {
   if (id === 'b2b')           { loadB2BAnalytics(); }
   if (id === 'bounties')      { loadBounties(); }
   if (id === 'revenue')      { loadRevenuePanel(); }
+  if (id === 'blacklist')    { loadBlacklistPanel(); }
   if (id === 'create-market') {
     var d = new Date(); d.setDate(d.getDate() + 30);
     var el = document.getElementById('mktClosesAt');
@@ -2966,19 +3021,25 @@ function executeDeleteUser() {
     return;
   }
 
+  var blacklist = document.getElementById('deleteUserBlacklist') ? document.getElementById('deleteUserBlacklist').checked : true;
+  var reason    = document.getElementById('deleteUserReason') ? document.getElementById('deleteUserReason').value.trim() : '';
+
   var btn = document.getElementById('deleteUserConfirmBtn');
   btn.disabled = true; btn.textContent = 'Deleting...';
 
   adminFetch('/api/admin/users/' + currentDeleteUserId, {
     method: 'DELETE',
-    body:   JSON.stringify({ confirm: 'DELETE' }),
+    body:   JSON.stringify({ confirm: 'DELETE', blacklist: blacklist, reason: reason || undefined }),
   })
   .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
   .then(function(res) {
     btn.disabled = false; btn.textContent = '🗑️ Delete Permanently';
     if (res.ok && res.d.success) {
       closeModal('deleteUserModal');
-      showToast('✓ User deleted. ' + (res.d.walletCollected > 0 ? 'KES ' + res.d.walletCollected + ' collected as platform revenue.' : ''));
+      var msg = '✓ User deleted.';
+      if (res.d.walletCollected > 0) msg += ' KES ' + res.d.walletCollected + ' swept to platform revenue.';
+      if (res.d.blacklisted) msg += ' Phone number blacklisted.';
+      showToast(msg);
       loadUsersTable();
     } else {
       document.getElementById('deleteUserStatus').textContent = '✗ ' + (res.d.error || 'Could not delete user.');
@@ -4085,6 +4146,81 @@ function loadRevenuePanel() {
       if (el) el.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--ke-red);padding:20px;">Failed to load revenue data.</td></tr>';
     });
   });
+}
+
+
+function loadBlacklistPanel() {
+  var body = document.getElementById('blacklistBody');
+  if (body) body.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-dim);padding:20px;">Loading...</td></tr>';
+
+  adminFetch('/api/admin/blacklist')
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    if (!body) return;
+    if (!d.entries || !d.entries.length) {
+      body.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-dim);padding:20px;">No blacklisted numbers yet.</td></tr>';
+      return;
+    }
+    body.innerHTML = d.entries.map(function(e) {
+      var date = new Date(e.createdAt).toLocaleDateString('en-KE', { day:'numeric', month:'short', year:'numeric' });
+      return '<tr>' +
+        '<td style="font-family:var(--mono);font-weight:700;">' + (e.phone || '—') + '</td>' +
+        '<td style="font-size:0.78rem;color:var(--text-dim);">' + (e.reason || '—') + '</td>' +
+        '<td style="font-size:0.75rem;color:var(--text-dim);">' + date + '</td>' +
+        '<td><button class="act-btn act-gray" style="font-size:0.7rem;padding:4px 10px;" onclick="removeFromBlacklist('' + e.phone + '')">Remove</button></td>' +
+      '</tr>';
+    }).join('');
+  })
+  .catch(function() {
+    if (body) body.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--ke-red);padding:20px;">Failed to load blacklist.</td></tr>';
+  });
+}
+
+function addToBlacklist() {
+  var phone  = document.getElementById('blPhone').value.trim();
+  var reason = document.getElementById('blReason').value.trim();
+  var status = document.getElementById('blAddStatus');
+
+  if (!phone) { if(status) status.textContent = 'Phone number is required.'; status.style.color='#ce1126'; return; }
+  if (!reason) { if(status) status.textContent = 'Reason is required.'; status.style.color='#ce1126'; return; }
+
+  adminFetch('/api/admin/blacklist', {
+    method: 'POST',
+    body: JSON.stringify({ phone: phone, reason: reason }),
+  })
+  .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
+  .then(function(res) {
+    if (res.ok && res.d.success) {
+      document.getElementById('blPhone').value = '';
+      document.getElementById('blReason').value = '';
+      if (status) { status.style.color = 'var(--green)'; status.textContent = '✓ ' + phone + ' blacklisted.'; }
+      loadBlacklistPanel();
+    } else {
+      if (status) { status.style.color = '#ce1126'; status.textContent = '✗ ' + (res.d.error || 'Could not add.'); }
+    }
+  })
+  .catch(function() {
+    if (status) { status.style.color = '#ce1126'; status.textContent = '✗ Network error.'; }
+  });
+}
+
+function removeFromBlacklist(phone) {
+  if (!confirm('Remove ' + phone + ' from blacklist? They will be able to register again.')) return;
+
+  adminFetch('/api/admin/blacklist', {
+    method: 'DELETE',
+    body: JSON.stringify({ phone: phone }),
+  })
+  .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
+  .then(function(res) {
+    if (res.ok && res.d.success) {
+      showToast('✓ ' + phone + ' removed from blacklist.');
+      loadBlacklistPanel();
+    } else {
+      alert('Could not remove: ' + (res.d.error || 'Unknown error'));
+    }
+  })
+  .catch(function() { alert('Network error.'); });
 }
 
 // showPanel handles all panel loads directly — no override needed
