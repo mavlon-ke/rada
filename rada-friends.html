@@ -1356,11 +1356,16 @@ function loadChallenges() {
       return {
         id:        c.id,
         q:         c.question,
+        aId:       c.userA ? c.userA.id : null,
+        bId:       c.userB ? c.userB.id : null,
         a:         { name: c.userA && c.userA.name ? c.userA.name : 'Player A', stake: Number(c.stakePerPerson) },
         b:         { name: c.userB && c.userB.name ? c.userB.name : 'Player B', stake: Number(c.stakePerPerson) },
         referee:   c.refereePhone ? { name: 'Referee', phone: '+' + c.refereePhone } : null,
         status:    c.status === 'ACTIVE' ? 'open' : c.status === 'PENDING_JOIN' ? 'pending'
+                 : c.status === 'PENDING_RESOLUTION' ? 'resolving'
                  : c.status === 'DISPUTED' ? 'disputed' : c.status === 'RESOLVED' ? 'resolved' : 'pending',
+        aConfirm:  c.userAConfirm || null,
+        bConfirm:  c.userBConfirm || null,
         resType:   c.validatorType ? c.validatorType.toLowerCase() : 'mutual',
         deadline:  c.eventExpiresAt ? new Date(c.eventExpiresAt).toLocaleDateString('en-KE', { day:'numeric', month:'short', year:'numeric' }) : '—',
         code:      c.accessCode,
@@ -1492,9 +1497,21 @@ function challengeCard(c, isMine, isRef = false) {
     : '';
 
   // Mutual resolution — visible to both participants during 48h window
-  const showMutual = isMine && c.resType === 'mutual' && hoursLeft !== null && hoursLeft <= 48 && hoursLeft > 0;
-  const mutualBtn = showMutual
-    ? `<button class="btn-mutual-resolve" onclick="openMutualResolve(${c.id})">🤝 Mutual Resolution — Agree on Winner Now <span style="font-size:0.72rem;opacity:0.85">(Save 10% in fees)</span></button>`
+  // Show mutual resolve button on any ACTIVE or PENDING_RESOLUTION mutual challenge
+  const showMutual = isMine && c.resType === 'mutual' && (c.status === 'open' || c.status === 'resolving');
+  // If already in resolving state, check if this user has already submitted
+  const myId = (JSON.parse(localStorage.getItem('rada_user') || '{}') || {}).id;
+  const iAmA = c.a && c.aId === myId;
+  const alreadySubmitted = c.status === 'resolving' && (iAmA ? !!c.aConfirm : !!c.bConfirm);
+  const mutualBtnLabel = c.status === 'resolving' && !alreadySubmitted
+    ? '🤝 Confirm Outcome — Your turn to agree'
+    : c.status === 'resolving' && alreadySubmitted
+    ? '⏳ Waiting for other party to confirm...'
+    : '🤝 Settle Now — Submit your outcome';
+  const mutualBtn = showMutual && !alreadySubmitted
+    ? `<button class="btn-mutual-resolve" onclick="openMutualResolve(${c.id})">${mutualBtnLabel}</button>`
+    : showMutual && alreadySubmitted
+    ? `<div class="resolution-alert" style="background:rgba(109,40,217,0.06);"><div class="resolution-alert-icon">⏳</div><div class="resolution-alert-body"><div class="resolution-alert-title">Waiting for other party</div><div class="resolution-alert-sub">You've submitted your outcome. Once they confirm, funds are released automatically at 5% fee.</div></div></div>`
     : '';
 
   // Admin intervention — visible only after first 24h of the 48h window
@@ -1513,13 +1530,14 @@ function challengeCard(c, isMine, isRef = false) {
     : '';
 
   // Resolution alert banner for 48h window
-  const resAlert = (isMine || isRef) && hoursLeft !== null && hoursLeft <= 48 && hoursLeft > 0
+  // Dispute window alert — only when deadline is close AND dispute window has started
+  const inDisputeWindow = hoursLeft !== null && hoursLeft <= 48 && hoursLeft > 0 && c.status === 'resolving';
+  const resAlert = (isMine || isRef) && inDisputeWindow
     ? `<div class="resolution-alert">
         <div class="resolution-alert-icon">⚠️</div>
         <div class="resolution-alert-body">
           <div class="resolution-alert-title">48-Hour Resolution Window</div>
-          <div class="resolution-alert-sub">Time is running out! Agree now — mutual resolution has a 5% forecasting fee. If unresolved after 48h, a 15% dispute fee applies.</div>
-          ${showMutual ? `<div class="resolution-alert-cta" onclick="openMutualResolve(${c.id})">Tap to resolve mutually →</div>` : ''}
+          <div class="resolution-alert-sub">Time is running out! Agree now — mutual resolution has a 5% fee. If unresolved after 48h, a 15% dispute fee applies.</div>
         </div>
       </div>`
     : '';
@@ -2114,8 +2132,8 @@ function openMutualResolve(id) {
   const html = `
     <div style="text-align:center;padding:20px 0 10px">
       <div style="font-size:2rem;margin-bottom:12px">🤝</div>
-      <div style="font-weight:700;font-size:1rem;margin-bottom:6px">Mutual Resolution</div>
-      <div style="font-size:0.82rem;color:var(--text-mid);margin-bottom:20px;line-height:1.5">"${ch.q || 'The Challenge'}"<br>Both parties must agree. Save 10% vs dispute fee.</div>
+      <div style="font-weight:700;font-size:1rem;margin-bottom:6px">Submit Your Outcome</div>
+      <div style="font-size:0.82rem;color:var(--text-mid);margin-bottom:20px;line-height:1.5">"${ch.q || 'The Challenge'}"<br>Pick the outcome you believe is correct. If the other party agrees, funds release instantly at 5% fee.</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
         <button class="btn-resolve btn-resolve-a" onclick="submitMutual(${id},'a')">🏆 ${ch.a?.name?.split(' ')[0] || 'A'} Won</button>
         <button class="btn-resolve btn-resolve-b" onclick="submitMutual(${id},'b')">🏆 ${ch.b?.name?.split(' ')[0] || 'B'} Won</button>
@@ -2128,7 +2146,7 @@ function openMutualResolve(id) {
   openModal('resolveModal');
 }
 function submitMutual(id, winner) {
-  var outcome = winner === 'A' ? 'USER_A' : winner === 'B' ? 'USER_B' : 'TIE';
+  var outcome = winner === 'a' ? 'USER_A' : winner === 'b' ? 'USER_B' : 'TIE';
   userFetch('/api/challenges/' + id + '/confirm', {
     method: 'POST',
     body:   JSON.stringify({ outcome: outcome }),
