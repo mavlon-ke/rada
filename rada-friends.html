@@ -1958,7 +1958,9 @@ function openResolveModal(challengeId) {
   if (refRow) refRow.style.display = 'flex';
   var titleEl = document.querySelector('#resolveModal .modal-title');
   if (titleEl) titleEl.textContent = '⚖️ Referee Decision';
-  document.getElementById('resolveModal').classList.add('open');tion submitRuling(side) {
+  document.getElementById('resolveModal').classList.add('open');
+}
+function submitRuling(side) {
   const labels = {A:'Challenger A wins', B:'Challenger B wins', TIE:'It\'s a Tie — both refunded'};
   const confirmMsg = side === 'TIE'
     ? 'Confirm Tie? Both parties will be refunded minus KES 10 processing fee each.'
