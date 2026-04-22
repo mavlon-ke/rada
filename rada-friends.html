@@ -1297,18 +1297,18 @@ nav{padding:14px 24px;display:flex;align-items:center;justify-content:space-betw
       <div class="modal-title">⚖️ Referee Decision</div>
       <div class="modal-sub" id="resModalSub">Settle the challenge fairly. Your ruling is final.</div>
     </div>
-    <div class="modal-body">
+    <div class="modal-body" style="padding-bottom:calc(env(safe-area-inset-bottom,0px) + 40px);">
       <div style="background:var(--bg3);border-radius:10px;padding:14px;margin-bottom:18px;">
         <div style="font-size:0.72rem;color:var(--text-dim);margin-bottom:5px;text-transform:uppercase;font-weight:700;letter-spacing:0.06em;">The Challenge</div>
         <div style="font-weight:600;font-size:0.9rem;line-height:1.4" id="resModalQ">Question here</div>
       </div>
-      <div style="margin-bottom:16px;display:grid;grid-template-columns:1fr 1fr;gap:12px;" id="resParties">
+      <div style="margin-bottom:16px;" id="resParties">
         <!-- populated by JS -->
       </div>
       <div style="background:rgba(167,139,250,0.06);border:1px solid rgba(167,139,250,0.15);border-radius:8px;padding:10px 12px;font-size:0.73rem;color:var(--text-mid);margin-bottom:18px;line-height:1.55;">
         ⚖️ Your ruling is irreversible. Winner takes the full pool minus 5% platform fee. If you select "Tie", both parties are refunded minus a KES 10 processing fee each. If dispute is escalated to admin, the dispute fee increases to 15%.
       </a>
-  <div style="display:flex;gap:8px;">
+  <div id="refereeBtnRow" style="display:flex;gap:8px;padding-bottom:calc(env(safe-area-inset-bottom,0px) + 20px);">
         <button class="btn-resolve btn-resolve-a" style="flex:1;padding:12px;font-size:0.85rem;" id="resBtn1" onclick="submitRuling('A')">A Won</button>
         <button class="btn-resolve btn-resolve-b" style="flex:1;padding:12px;font-size:0.85rem;" id="resBtn2" onclick="submitRuling('B')">B Won</button>
         <button class="btn-resolve btn-resolve-tie" style="flex:1;padding:12px;font-size:0.85rem;" onclick="submitRuling('TIE')">🤝 Tie</button>
@@ -1953,10 +1953,12 @@ function openResolveModal(challengeId) {
       <div style="font-weight:700">${c.b?.name || 'User B'}</div>
       <div style="font-family:var(--mono);font-size:0.75rem;color:var(--ke-green)">Staked KES ${c.b?.stake?.toLocaleString() || '—'}</div>
     </div>`;
-  document.getElementById('resolveModal').classList.add('open');
-}
-
-function submitRuling(side) {
+  // Restore referee buttons and title for referee mode
+  var refRow = document.getElementById('refereeBtnRow');
+  if (refRow) refRow.style.display = 'flex';
+  var titleEl = document.querySelector('#resolveModal .modal-title');
+  if (titleEl) titleEl.textContent = '⚖️ Referee Decision';
+  document.getElementById('resolveModal').classList.add('open');tion submitRuling(side) {
   const labels = {A:'Challenger A wins', B:'Challenger B wins', TIE:'It\'s a Tie — both refunded'};
   const confirmMsg = side === 'TIE'
     ? 'Confirm Tie? Both parties will be refunded minus KES 10 processing fee each.'
@@ -2142,7 +2144,13 @@ function openMutualResolve(id) {
     </div>`;
   document.getElementById('resParties').innerHTML = html;
   document.getElementById('resModalQ').textContent = ch.q || '';
-  document.getElementById('resModalSub').textContent = 'Mutual agreement — both participants must confirm.';
+  document.getElementById('resModalSub').textContent = 'Both parties must submit. If you agree, funds release instantly at 5% fee.';
+  // Hide referee buttons — not needed for mutual resolve
+  var refRow = document.getElementById('refereeBtnRow');
+  if (refRow) refRow.style.display = 'none';
+  // Update title for mutual context
+  var titleEl = document.querySelector('#resolveModal .modal-title');
+  if (titleEl) titleEl.textContent = '🤝 Mutual Resolution';
   document.getElementById('resolveModal').classList.add('open');
 }
 function submitMutual(id, winner) {
