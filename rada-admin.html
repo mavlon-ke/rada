@@ -4167,7 +4167,7 @@ function loadBlacklistPanel() {
         '<td style="font-family:var(--mono);font-weight:700;">' + (e.phone || '—') + '</td>' +
         '<td style="font-size:0.78rem;color:var(--text-dim);">' + (e.reason || '—') + '</td>' +
         '<td style="font-size:0.75rem;color:var(--text-dim);">' + date + '</td>' +
-        '<td><button class="act-btn act-gray" style="font-size:0.7rem;padding:4px 10px;" onclick="removeFromBlacklist('' + e.phone + '')">Remove</button></td>' +
+        '<td><button class="act-btn act-gray" style="font-size:0.7rem;padding:4px 10px;" onclick="removeFromBlacklist(\'' + e.phone + '\')">Remove</button></td>' +
       '</tr>';
     }).join('');
   })
