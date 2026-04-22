@@ -1469,9 +1469,9 @@ function challengeCard(c, isMine, isRef = false) {
     ? `<div class="cc-resolve show">
         <div class="cc-resolve-title">⚖️ Your Turn to Judge</div>
         <div class="resolve-btns">
-          <button class="btn-resolve btn-resolve-a" onclick="openResolveModal(${c.id})">${c.a.name.split(' ')[0]} Won</button>
-          <button class="btn-resolve btn-resolve-b" onclick="openResolveModal(${c.id})">${c.b.name.split(' ')[0]} Won</button>
-          <button class="btn-resolve btn-resolve-tie" onclick="openResolveModal(${c.id})">🤝 Tie</button>
+          <button class="btn-resolve btn-resolve-a" onclick="openResolveModal('${c.id}')">${c.a.name.split(' ')[0]} Won</button>
+          <button class="btn-resolve btn-resolve-b" onclick="openResolveModal('${c.id}')">${c.b.name.split(' ')[0]} Won</button>
+          <button class="btn-resolve btn-resolve-tie" onclick="openResolveModal('${c.id}')">🤝 Tie</button>
         </div>
         <div class="fee-note"><span>5% Social Challenge fee · KES 10 each if tie</span><span>Deadline: ${c.deadline}</span></div>
       </div>`
@@ -1509,7 +1509,7 @@ function challengeCard(c, isMine, isRef = false) {
     ? '⏳ Waiting for other party to confirm...'
     : '🤝 Settle Now — Submit your outcome';
   const mutualBtn = showMutual && !alreadySubmitted
-    ? `<button class="btn-mutual-resolve" onclick="openMutualResolve(${c.id})">${mutualBtnLabel}</button>`
+    ? `<button class="btn-mutual-resolve" onclick="openMutualResolve('${c.id}')">${mutualBtnLabel}</button>`
     : showMutual && alreadySubmitted
     ? `<div class="resolution-alert" style="background:rgba(109,40,217,0.06);"><div class="resolution-alert-icon">⏳</div><div class="resolution-alert-body"><div class="resolution-alert-title">Waiting for other party</div><div class="resolution-alert-sub">You've submitted your outcome. Once they confirm, funds are released automatically at 5% fee.</div></div></div>`
     : '';
@@ -1520,7 +1520,7 @@ function challengeCard(c, isMine, isRef = false) {
   const showAdminBtn = isMine && hoursLeft !== null && hoursLeft > 0
                        && windowOpenedHoursAgo !== null && windowOpenedHoursAgo >= 24;
   const adminBtn = showAdminBtn
-    ? `<button class="btn-admin-intervene" onclick="requestAdminIntervention(${c.id}, this)">
+    ? `<button class="btn-admin-intervene" onclick="requestAdminIntervention('${c.id}', this)">
         🚨 Request Admin Intervention
       </button>
       <div class="admin-intervene-note">
@@ -1556,7 +1556,7 @@ function challengeCard(c, isMine, isRef = false) {
       </div>`
     : `<div class="cc-actions">
         ${resAlert}
-        <button class="btn-sm btn-sm-purple" onclick="openResolveModal(${c.id})">⚖️ Resolve</button>
+        <button class="btn-sm btn-sm-purple" onclick="openResolveModal('${c.id}')">⚖️ Resolve</button>
         <button class="btn-sm btn-sm-ghost">View Details</button>
       </div>`;
 
