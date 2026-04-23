@@ -40,6 +40,8 @@ export async function GET(req: NextRequest) {
       referee:      c.referee ? (c.referee.name || c.referee.phone) : null,
       pool,
       fee15,
+      fee5,
+      totalPool: pool,
       stakeEach:    Number(c.stakePerPerson),
       validatorType: c.validatorType,
       userAConfirm: c.userAConfirm,

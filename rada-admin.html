@@ -3335,7 +3335,7 @@ function loadDisputes(status, btn) {
   .then(function(r) { return r.json(); })
   .then(function(d) {
     var all      = d.challenges || [];
-    var disputed = all.filter(function(c) { return c.status === 'DISPUTED'; });
+    var disputed = all.filter(function(c) { return c.status === 'DISPUTED' || c.status === 'PENDING_RESOLUTION'; });
     var resolved = all.filter(function(c) { return c.status === 'RESOLVED'; });
     var active   = all.filter(function(c) { return c.status === 'ACTIVE'; });
 
@@ -3348,7 +3348,9 @@ function loadDisputes(status, btn) {
     var nb = document.getElementById('disputeNavBadge');
     if (nb) { nb.textContent = disputed.length; nb.style.display = disputed.length > 0 ? '' : 'none'; }
 
-    var display = status === 'ALL' ? all : all.filter(function(c) { return c.status === status; });
+    var display = status === 'ALL' ? all
+      : status === 'DISPUTED' ? all.filter(function(c) { return c.status === 'DISPUTED' || c.status === 'PENDING_RESOLUTION'; })
+      : all.filter(function(c) { return c.status === status; });
     DISPUTES_DATA = display;
     renderDisputes();
   })
@@ -3368,23 +3370,42 @@ function renderDisputes() {
 
   el.innerHTML = DISPUTES_DATA.map(function(d) {
     var isDisputed = d.status === 'DISPUTED';
+    var isPendingRes = d.status === 'PENDING_RESOLUTION';
+    var canAdminAct = isDisputed || isPendingRes;
     var expiredTxt = d.expiredHoursAgo !== null
       ? (d.expiredHoursAgo < 24 ? d.expiredHoursAgo + 'h ago' : Math.round(d.expiredHoursAgo/24) + 'd ago')
       : '—';
     var userAFirst = (d.userA || 'User A').split(' ')[0];
     var userBFirst = (d.userB || 'User B').split(' ')[0];
+    // fee5, fee15, totalPool all come from the API
+    d.pool = d.pool || d.totalPool || 0;
 
+    var bothAgree = d.userAConfirm && d.userBConfirm && d.userAConfirm === d.userBConfirm;
     var confirmRow = (d.userAConfirm || d.userBConfirm)
-      ? '<div style="font-size:0.68rem;color:var(--text-dim);margin-bottom:10px;">' +
-          'A says: <strong>' + (d.userAConfirm || 'No response') + '</strong> &nbsp;·&nbsp; ' +
-          'B says: <strong>' + (d.userBConfirm || 'No response') + '</strong>' +
-        '</div>'
+      ? (bothAgree
+          ? '<div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.25);border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:0.72rem;">' +
+              '<span style="color:#059669;font-weight:700;">✅ Both parties agreed: ' + d.userAConfirm + '</span>' +
+              ' &nbsp;·&nbsp; <span style="color:#059669;">5% fee applies — use the green button below</span>' +
+            '</div>'
+          : '<div style="font-size:0.68rem;color:var(--text-dim);margin-bottom:10px;">' +
+              'A says: <strong>' + (d.userAConfirm || 'No response') + '</strong> &nbsp;·&nbsp; ' +
+              'B says: <strong>' + (d.userBConfirm || 'No response') + '</strong>' +
+            '</div>')
       : '';
 
-    var actionBtns = isDisputed
-      ? '<button class="act-btn act-green"  style="flex:1;" data-action="disp-award" data-id="' + d.id + '" data-side="A" data-name="' + userAFirst + '" data-pool="' + d.pool + '" data-fee="' + d.fee15 + '">Award ' + userAFirst + '</button>' +
-        '<button class="act-btn act-red"    style="flex:1;" data-action="disp-award" data-id="' + d.id + '" data-side="B" data-name="' + userBFirst + '" data-pool="' + d.pool + '" data-fee="' + d.fee15 + '">Award ' + userBFirst + '</button>' +
-        '<button class="act-btn act-amber"  style="flex:1;" data-action="disp-award" data-id="' + d.id + '" data-side="TIE" data-name="Tie"   data-pool="' + d.pool + '" data-fee="' + d.fee15 + '">&#129308; Tie</button>'
+    var actionBtns = canAdminAct
+      ? (function() {
+          if (bothAgree) {
+            var agreedSide = d.userAConfirm === 'USER_A' ? 'A' : d.userAConfirm === 'USER_B' ? 'B' : 'TIE';
+            var agreedName = agreedSide === 'A' ? userAFirst : agreedSide === 'B' ? userBFirst : 'Tie';
+            return '<button class="act-btn act-green" style="flex:1;" data-action="disp-award-5" data-id="' + d.id + '" data-side="' + agreedSide + '" data-name="' + agreedName + '" data-pool="' + d.pool + '" data-fee="' + d.fee5 + '">✅ Resolve at 5% — ' + agreedName + ' Won</button>' +
+                   '<button class="act-btn act-amber" style="flex:0 0 auto;padding:8px 12px;font-size:0.7rem;" data-action="disp-award" data-id="' + d.id + '" data-side="A" data-name="' + userAFirst + '" data-pool="' + d.pool + '" data-fee="' + d.fee15 + '">Override 15%</button>';
+          } else {
+            return '<button class="act-btn act-green"  style="flex:1;" data-action="disp-award" data-id="' + d.id + '" data-side="A" data-name="' + userAFirst + '" data-pool="' + d.pool + '" data-fee="' + d.fee15 + '">Award ' + userAFirst + '</button>' +
+                   '<button class="act-btn act-red"    style="flex:1;" data-action="disp-award" data-id="' + d.id + '" data-side="B" data-name="' + userBFirst + '" data-pool="' + d.pool + '" data-fee="' + d.fee15 + '">Award ' + userBFirst + '</button>' +
+                   '<button class="act-btn act-amber"  style="flex:1;" data-action="disp-award" data-id="' + d.id + '" data-side="TIE" data-name="Tie"   data-pool="' + d.pool + '" data-fee="' + d.fee15 + '">&#129308; Tie</button>';
+          }
+        })()
       : '<span style="font-size:0.72rem;color:var(--text-dim);padding:6px;">Status: ' + d.status + '</span>';
 
     return '<div style="background:#ffffff;border:1.5px solid rgba(245,158,11,0.2);border-radius:14px;padding:18px;margin-bottom:12px;">' +
@@ -3405,16 +3426,47 @@ function renderDisputes() {
         '<span style="color:var(--text-dim);">15% Fee</span><span style="font-family:var(--mono);font-weight:700;color:var(--amber);">KES ' + (d.fee15||0).toLocaleString() + '</span>' +
         '<span style="color:var(--text-dim);">Winner Gets</span><span style="font-family:var(--mono);font-weight:700;color:var(--green);">KES ' + ((d.pool||0) - (d.fee15||0)).toLocaleString() + '</span>' +
       '</div>' +
-      (isDisputed ? '<div style="font-size:0.72rem;font-weight:700;color:var(--amber);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;">Admin Ruling — 15% Fee Auto-Applied</div>' : '') +
+      (bothAgree
+        ? '<div style="font-size:0.72rem;font-weight:700;color:#059669;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;">Both Agreed — Use 5% Fee Resolution Below</div>'
+        : (canAdminAct ? '<div style="font-size:0.72rem;font-weight:700;color:var(--amber);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;">Admin Ruling — 15% Fee Auto-Applied</div>' : '')) +
       '<div style="display:flex;gap:8px;">' + actionBtns + '</div>' +
     '</div>';
   }).join('');
 
   el.onclick = function(e) {
-    var btn = e.target.closest('button[data-action="disp-award"]');
+    var btn = e.target.closest('button[data-action="disp-award"], button[data-action="disp-award-5"]');
     if (!btn) return;
-    resolveDispute(btn.dataset.id, btn.dataset.side, btn.dataset.name, parseFloat(btn.dataset.pool), parseFloat(btn.dataset.fee));
+    if (btn.dataset.action === 'disp-award-5') {
+      resolveDisputeMutual(btn.dataset.id, btn.dataset.side, btn.dataset.name, parseFloat(btn.dataset.pool), parseFloat(btn.dataset.fee));
+    } else {
+      resolveDispute(btn.dataset.id, btn.dataset.side, btn.dataset.name, parseFloat(btn.dataset.pool), parseFloat(btn.dataset.fee));
+    }
   };
+}
+
+function resolveDisputeMutual(id, side, name, pool, fee) {
+  var outcome = side === 'A' ? 'USER_A' : side === 'B' ? 'USER_B' : 'TIE';
+  var net = pool - fee;
+  var msg = 'Both parties agreed on ' + name + '.
+
+Resolve at 5% fee?
+Payout: KES ' + net + ' to ' + name + ' (5% fee = KES ' + fee + ').';
+  if (!confirm(msg)) return;
+
+  adminFetch('/api/admin/challenges/' + id + '/resolve', {
+    method: 'POST',
+    body:   JSON.stringify({ outcome: outcome, reason: 'Mutual agreement — resolved at 5% fee by admin' }),
+  })
+  .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
+  .then(function(res) {
+    if (res.ok) {
+      showToast('✓ Resolved at 5% fee. KES ' + net + ' credited to winner.');
+      loadDisputes('ALL');
+    } else {
+      alert('Error: ' + (res.d.error || 'Could not resolve.'));
+    }
+  })
+  .catch(function() { alert('Network error.'); });
 }
 
 function resolveDispute(id, side, name, pool, fee) {

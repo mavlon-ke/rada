@@ -9,7 +9,8 @@ import { z } from 'zod';
 import { prisma } from '@/lib/db/prisma';
 import { requireAdmin, adminUnauthorized, logAdminAction } from '@/lib/auth/admin';
 
-const FEE_ADMIN = 0.15; // 15% when admin must intervene
+const FEE_ADMIN    = 0.15; // 15% when admin must intervene
+const FEE_STANDARD = 0.05; // 5%  — when both parties already agreed
 
 const Schema = z.object({
   outcome: z.enum(['USER_A', 'USER_B', 'TIE']),
@@ -38,13 +39,22 @@ export async function POST(
   });
 
   if (!challenge) return NextResponse.json({ error: 'Challenge not found' }, { status: 404 });
+  if (!challenge.userA || !challenge.userB) {
+    return NextResponse.json({ error: 'Challenge participants no longer exist' }, { status: 400 });
+  }
   if (!['ACTIVE', 'PENDING_RESOLUTION', 'DISPUTED'].includes(challenge.status)) {
     return NextResponse.json({ error: 'Challenge is not in a disputable state' }, { status: 400 });
   }
 
+  // If both parties already submitted matching outcomes, apply 5% fee not 15%
+  const bothAgreed = challenge.userAConfirm && challenge.userBConfirm &&
+                     challenge.userAConfirm === challenge.userBConfirm;
+
   // Verify the 48h window has actually expired (or admin is force-resolving a DISPUTED one)
+  // Bypass for mutual agreements — both parties consented so no need to wait
   const now = new Date();
   if (
+    !bothAgreed &&
     challenge.status !== 'DISPUTED' &&
     challenge.disputeDeadline &&
     challenge.disputeDeadline > now
@@ -55,8 +65,11 @@ export async function POST(
     }, { status: 400 });
   }
 
+  const actualFeeRate = bothAgreed ? FEE_STANDARD : FEE_ADMIN;
+  const actualMethod  = bothAgreed ? 'MUTUAL' : 'ADMIN';
+
   const pool    = Number(challenge.totalPool);
-  const feeKes  = Math.floor(pool * FEE_ADMIN);
+  const feeKes  = Math.floor(pool * actualFeeRate);
   const netPool = pool - feeKes;
 
   // Calculate payouts
@@ -79,7 +92,7 @@ export async function POST(
       data: {
         status:         'RESOLVED',
         resolution:     outcome,
-        feePercent:     FEE_ADMIN * 100,
+        feePercent:     actualFeeRate * 100,
         platformFeeKes: feeKes,
         resolvedAt:     new Date(),
       },
@@ -98,15 +111,19 @@ export async function POST(
           amountKes:   p.amountKes,
           balAfter:    Number(updated.balanceKes),
           status:      'SUCCESS', // wallet credit is the completed payout
-          description: `Challenge payout (${outcome}) — admin dispute resolution. Fee: KES ${feeKes} (15%). Credited to CheckRada wallet.`,
+          description: `Challenge payout (${outcome}) — ${actualMethod} resolution via admin. Fee: KES ${feeKes} (${actualFeeRate * 100}%). Credited to CheckRada wallet.`,
         },
       });
     }
 
-    // Degrade integrity scores for both disputants
-    await tx.user.update({ where: { id: challenge.userAId }, data: { integrityScore: { decrement: 10 } } });
-    if (challenge.userBId) {
-      await tx.user.update({ where: { id: challenge.userBId }, data: { integrityScore: { decrement: 10 } } });
+    // Only degrade integrity scores for genuine disputes, not mutual agreements
+    if (!bothAgreed) {
+      if (challenge.userAId) {
+        await tx.user.update({ where: { id: challenge.userAId }, data: { integrityScore: { decrement: 10 } } });
+      }
+      if (challenge.userBId) {
+        await tx.user.update({ where: { id: challenge.userBId }, data: { integrityScore: { decrement: 10 } } });
+      }
     }
   });
 
@@ -120,7 +137,7 @@ export async function POST(
         challengeId: challenge.id,
         type:        'CHALLENGE_FEE',
         amountKes:   feeKes,
-        description: `Admin dispute fee (15%) — forced resolution. Question: "${challenge.question.slice(0, 60)}"`,
+        description: `Challenge fee (${actualFeeRate * 100}%) — ${actualMethod} resolution via admin. Question: "${challenge.question.slice(0, 60)}"`,
       },
     });
   }
@@ -133,7 +150,7 @@ export async function POST(
   return NextResponse.json({
     success:    true,
     outcome,
-    feePercent: FEE_ADMIN * 100,
+    feePercent: actualFeeRate * 100,
     feeKes,
     netPool,
     payouts: payouts.map(p => ({ userId: p.userId, amountKes: p.amountKes })),
