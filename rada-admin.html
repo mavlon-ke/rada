@@ -3447,10 +3447,7 @@ function renderDisputes() {
 function resolveDisputeMutual(id, side, name, pool, fee) {
   var outcome = side === 'A' ? 'USER_A' : side === 'B' ? 'USER_B' : 'TIE';
   var net = pool - fee;
-  var msg = 'Both parties agreed on ' + name + '.
-
-Resolve at 5% fee?
-Payout: KES ' + net + ' to ' + name + ' (5% fee = KES ' + fee + ').';
+  var msg = 'Both parties agreed on ' + name + '.\n\nResolve at 5% fee?\nPayout: KES ' + net + ' to ' + name + ' (5% fee = KES ' + fee + ').';
   if (!confirm(msg)) return;
 
   adminFetch('/api/admin/challenges/' + id + '/resolve', {
