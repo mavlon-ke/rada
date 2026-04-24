@@ -56,9 +56,13 @@ async function runCloseMarkets() {
 }
 
 function checkSecret(req: NextRequest): boolean {
+  // Vercel Cron sends: Authorization: Bearer <CRON_SECRET>
+  const authHeader   = req.headers.get('authorization');
+  const bearerSecret = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
+  // Backward compat: also accept x-cron-secret header or ?secret= query param
   const headerSecret = req.headers.get('x-cron-secret');
   const querySecret  = new URL(req.url).searchParams.get('secret');
-  const provided     = headerSecret || querySecret;
+  const provided     = bearerSecret ||  headerSecret  || querySecret;
   return !!provided && provided === process.env.CRON_SECRET;
 }
 
