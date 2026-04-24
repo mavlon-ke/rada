@@ -1302,7 +1302,7 @@ function submitWithdraw() {
       if (mTopBal) mTopBal.textContent = 'KES ' + newBal.toLocaleString();
       var accBal = document.getElementById('accUserBal');
       if (accBal) accBal.textContent = '● KES ' + newBal.toLocaleString() + ' available';
-      alert('✓ KES ' + amt.toLocaleString() + ' sent to your M-Pesa!' + '\n(KES ' + amt.toLocaleString() + ' deducted from wallet, includes KES ' + paystackFee + ' M-Pesa fee)' + '\nRef: ' + (res.d.reference || '—'));
+      alert('✓ KES ' + (res.d.transferAmount || (amt - paystackFee)).toLocaleString() + ' sent to your M-Pesa!' + '\n(KES ' + amt.toLocaleString() + ' deducted from wallet, includes KES ' + paystackFee + ' M-Pesa fee)' + '\nRef: ' + (res.d.reference || '—'));
     } else {
       alert('Withdrawal failed: ' + (res.d.error || 'Please try again.'));
     }
