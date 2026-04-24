@@ -1291,7 +1291,7 @@ function submitWithdraw() {
     if (res.ok) {
       // Use flat fee from response or recalculate
       var paystackFee = res.d.paystackFee || (amt <= 1500 ? 20 : amt <= 20000 ? 40 : 60);
-      var newBal = Math.max(0, balance - amt - paystackFee);
+      var newBal = Math.max(0, balance - amt);
       if (radaUser) {
         radaUser.balanceKes = newBal;
         try { localStorage.setItem('rada_user', JSON.stringify(radaUser)); } catch(e) {}
@@ -1302,7 +1302,7 @@ function submitWithdraw() {
       if (mTopBal) mTopBal.textContent = 'KES ' + newBal.toLocaleString();
       var accBal = document.getElementById('accUserBal');
       if (accBal) accBal.textContent = '● KES ' + newBal.toLocaleString() + ' available';
-      alert('✓ KES ' + amt.toLocaleString() + ' sent to your M-Pesa!' + '\n(KES ' + paystackFee + ' M-Pesa processing fee deducted from wallet)' + '\nRef: ' + (res.d.reference || '—'));
+      alert('✓ KES ' + amt.toLocaleString() + ' sent to your M-Pesa!' + '\n(KES ' + amt.toLocaleString() + ' deducted from wallet, includes KES ' + paystackFee + ' M-Pesa fee)' + '\nRef: ' + (res.d.reference || '—'));
     } else {
       alert('Withdrawal failed: ' + (res.d.error || 'Please try again.'));
     }
