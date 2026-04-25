@@ -33,10 +33,10 @@ export async function POST(req: NextRequest) {
   const proposal = await prisma.marketProposal.create({
     data: {
       proposerId:       user.id,
-      question:         parsed.data.question,
+      question:         sanitizeText(parsed.data.question),
       category:         parsed.data.category,
-      resolutionSource: parsed.data.resolutionSource,
-      whyCareNote:      parsed.data.whyCareNote,
+      resolutionSource: sanitizeText(parsed.data.resolutionSource),
+      whyCareNote:      parsed.data.whyCareNote ? sanitizeText(parsed.data.whyCareNote) : undefined,
     },
   });
 
