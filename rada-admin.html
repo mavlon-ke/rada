@@ -2825,7 +2825,7 @@ function renderProposals() {
     var stCol = statusColors[p.status] || '#b45309';
     var statusBadge = '<span style="background:' + stBg + ';color:' + stCol + ';border-radius:6px;padding:2px 9px;font-size:0.6rem;font-weight:800;">' + p.status + '</span>';
     var date  = p.createdAt ? new Date(p.createdAt).toLocaleDateString('en-KE',{day:'numeric',month:'short',year:'numeric'}) : '—';
-    var safeFrom = proposerName.replace(/"/g,'');
+    var safeFrom = esc(proposerName);
 
     var actionBtns = p.status === 'PENDING'
       ? '<button class="act-btn act-gray"  style="flex:1;" data-action="edit-prop"    data-id="' + p.id + '">&#9998; Edit</button>' +
@@ -2836,11 +2836,11 @@ function renderProposals() {
     return '<div style="background:#ffffff;border:1.5px solid rgba(167,139,250,0.18);border-radius:14px;padding:20px;margin-bottom:14px;">' +
       '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;">' +
         '<div style="flex:1;">' +
-          '<div style="font-weight:700;font-size:0.92rem;margin-bottom:5px;line-height:1.4;">' + p.question + '</div>' +
-          '<div style="font-size:0.7rem;color:var(--text-dim);">By ' + proposerName + ' · ' + proposerPhone + ' · ' + date + '</div>' +
+          '<div style="font-weight:700;font-size:0.92rem;margin-bottom:5px;line-height:1.4;">' + esc(p.question) + '</div>' +
+          '<div style="font-size:0.7rem;color:var(--text-dim);">By ' + esc(proposerName) + ' · ' + esc(proposerPhone) + ' · ' + date + '</div>' +
         '</div>' +
         '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;margin-left:12px;">' +
-          '<span style="background:rgba(167,139,250,0.1);border:1px solid rgba(167,139,250,0.2);border-radius:8px;padding:4px 10px;font-size:0.7rem;font-weight:700;color:#a78bfa;white-space:nowrap;">' + (p.category||'GENERAL') + '</span>' +
+          '<span style="background:rgba(167,139,250,0.1);border:1px solid rgba(167,139,250,0.2);border-radius:8px;padding:4px 10px;font-size:0.7rem;font-weight:700;color:#a78bfa;white-space:nowrap;">' + esc(p.category||'GENERAL') + '</span>' +
           statusBadge +
         '</div>' +
       '</div>' +
@@ -3392,12 +3392,12 @@ function renderDisputes() {
     var confirmRow = (d.userAConfirm || d.userBConfirm)
       ? (bothAgree
           ? '<div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.25);border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:0.72rem;">' +
-              '<span style="color:#059669;font-weight:700;">✅ Both parties agreed: ' + d.userAConfirm + '</span>' +
+              '<span style="color:#059669;font-weight:700;">✅ Both parties agreed: ' + esc(d.userAConfirm) + '</span>' +
               ' &nbsp;·&nbsp; <span style="color:#059669;">5% fee applies — use the green button below</span>' +
             '</div>'
           : '<div style="font-size:0.68rem;color:var(--text-dim);margin-bottom:10px;">' +
-              'A says: <strong>' + (d.userAConfirm || 'No response') + '</strong> &nbsp;·&nbsp; ' +
-              'B says: <strong>' + (d.userBConfirm || 'No response') + '</strong>' +
+              'A says: <strong>' + esc(d.userAConfirm || 'No response') + '</strong> &nbsp;·&nbsp; ' +
+              'B says: <strong>' + esc(d.userBConfirm || 'No response') + '</strong>' +
             '</div>')
       : '';
 
@@ -3406,7 +3406,7 @@ function renderDisputes() {
           if (bothAgree) {
             var agreedSide = d.userAConfirm === 'USER_A' ? 'A' : d.userAConfirm === 'USER_B' ? 'B' : 'TIE';
             var agreedName = agreedSide === 'A' ? userAFirst : agreedSide === 'B' ? userBFirst : 'Tie';
-            return '<button class="act-btn act-green" style="flex:1;" data-action="disp-award-5" data-id="' + d.id + '" data-side="' + agreedSide + '" data-name="' + agreedName + '" data-pool="' + d.pool + '" data-fee="' + d.fee5 + '">✅ Resolve at 5% — ' + agreedName + ' Won</button>' +
+            return '<button class="act-btn act-green" style="flex:1;" data-action="disp-award-5" data-id="' + d.id + '" data-side="' + agreedSide + '" data-name="' + esc(agreedName) + '" data-pool="' + d.pool + '" data-fee="' + d.fee5 + '">✅ Resolve at 5% — ' + agreedName + ' Won</button>' +
                    '<button class="act-btn act-amber" style="flex:0 0 auto;padding:8px 12px;font-size:0.7rem;" data-action="disp-award" data-id="' + d.id + '" data-side="A" data-name="' + userAFirst + '" data-pool="' + d.pool + '" data-fee="' + d.fee15 + '">Override 15%</button>';
           } else {
             return '<button class="act-btn act-green"  style="flex:1;" data-action="disp-award" data-id="' + d.id + '" data-side="A" data-name="' + userAFirst + '" data-pool="' + d.pool + '" data-fee="' + d.fee15 + '">Award ' + userAFirst + '</button>' +
@@ -3414,19 +3414,19 @@ function renderDisputes() {
                    '<button class="act-btn act-amber"  style="flex:1;" data-action="disp-award" data-id="' + d.id + '" data-side="TIE" data-name="Tie"   data-pool="' + d.pool + '" data-fee="' + d.fee15 + '">&#129308; Tie</button>';
           }
         })()
-      : '<span style="font-size:0.72rem;color:var(--text-dim);padding:6px;">Status: ' + d.status + '</span>';
+      : '<span style="font-size:0.72rem;color:var(--text-dim);padding:6px;">Status: ' + esc(d.status) + '</span>';
 
     return '<div style="background:#ffffff;border:1.5px solid rgba(245,158,11,0.2);border-radius:14px;padding:18px;margin-bottom:12px;">' +
       '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;">' +
         '<div style="flex:1;">' +
-          '<div style="font-weight:700;font-size:0.9rem;margin-bottom:4px;">' + d.question + '</div>' +
-          '<div style="font-size:0.7rem;color:var(--text-dim);">Deadline expired ' + expiredTxt + (d.referee ? ' · Referee: ' + d.referee : '') + '</div>' +
+          '<div style="font-weight:700;font-size:0.9rem;margin-bottom:4px;">' + esc(d.question) + '</div>' +
+          '<div style="font-size:0.7rem;color:var(--text-dim);">Deadline expired ' + expiredTxt + (d.referee ? ' · Referee: ' + esc(d.referee) : '') + '</div>' +
         '</div>' +
         '<div style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.2);border-radius:8px;padding:6px 10px;font-size:0.68rem;font-weight:700;color:var(--amber);margin-left:10px;white-space:nowrap;">' + (isDisputed ? '&#9888; Disputed' : d.status) + '</div>' +
       '</div>' +
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">' +
-        '<div style="background:var(--bg3);border-radius:8px;padding:10px;"><div style="font-size:0.6rem;color:var(--text-dim);text-transform:uppercase;font-weight:700;margin-bottom:3px;">User A</div><div style="font-weight:600;font-size:0.82rem;">' + (d.userA||'—') + '</div></div>' +
-        '<div style="background:var(--bg3);border-radius:8px;padding:10px;"><div style="font-size:0.6rem;color:var(--text-dim);text-transform:uppercase;font-weight:700;margin-bottom:3px;">User B</div><div style="font-weight:600;font-size:0.82rem;">' + (d.userB||'—') + '</div></div>' +
+        '<div style="background:var(--bg3);border-radius:8px;padding:10px;"><div style="font-size:0.6rem;color:var(--text-dim);text-transform:uppercase;font-weight:700;margin-bottom:3px;">User A</div><div style="font-weight:600;font-size:0.82rem;">' + esc(d.userA||'—') + '</div></div>' +
+        '<div style="background:var(--bg3);border-radius:8px;padding:10px;"><div style="font-size:0.6rem;color:var(--text-dim);text-transform:uppercase;font-weight:700;margin-bottom:3px;">User B</div><div style="font-weight:600;font-size:0.82rem;">' + esc(d.userB||'—') + '</div></div>' +
       '</div>' +
       confirmRow +
       '<div style="background:var(--bg3);border-radius:8px;padding:10px;margin-bottom:14px;display:flex;justify-content:space-between;font-size:0.78rem;">' +
@@ -3568,7 +3568,7 @@ function renderSuggestions() {
   el.innerHTML = SUGGESTIONS.map(function(s) {
     var statusBadge = '<span style="background:' + (s.status==='APPROVED'?'#dcfce7':s.status==='REJECTED'?'#fee2e2':'#fef9c3') + ';color:' + (statusColors[s.status]||'#b45309') + ';border-radius:6px;padding:2px 8px;font-size:0.6rem;font-weight:800;">' + s.status + '</span>';
     var actionBtns = s.status === 'PENDING'
-      ? '<button class="act-btn act-green" style="flex:1;" data-action="approve-sugg" data-id="' + s.id + '" data-from="' + (s.from||'').replace(/"/g,'') + '">✓ Approve + Credit KES 50</button>' +
+      ? '<button class="act-btn act-green" style="flex:1;" data-action="approve-sugg" data-id="' + s.id + '" data-from="' + esc(s.from||'') + '">✓ Approve + Credit KES 50</button>' +
         '<button class="act-btn act-red" style="flex:1;" data-action="reject-sugg" data-id="' + s.id + '">✗ Reject</button>'
       : '<span style="font-size:0.72rem;color:var(--text-dim);padding:6px;">No actions — already ' + s.status.toLowerCase() + '</span>';
 
@@ -3677,8 +3677,8 @@ function loadBounties() {
       var paid    = Number(b.paidOut);
       var balance = earned - paid;
       var canPay  = balance >= 100;
-      var creator = b.creator ? (b.creator.name || b.creator.phone) : '—';
-      var market  = b.market  ? b.market.title.slice(0, 50) + (b.market.title.length > 50 ? '…' : '') : '—';
+      var creator = esc(b.creator ? (b.creator.name || b.creator.phone) : '—');
+      var market  = b.market  ? esc(b.market.title.slice(0, 50)) + (b.market.title.length > 50 ? '…' : '') : '—';
       var lastPaid = b.lastPaidAt ? new Date(b.lastPaidAt).toLocaleDateString('en-KE',{day:'numeric',month:'short'}) : 'Never';
 
       return '<tr>' +
@@ -3892,11 +3892,11 @@ function renderAdminLog() {
   const el = document.getElementById('adminLogBody');
   if (!el) return;
   el.innerHTML = ADMIN_LOG_DATA.map(r => `<tr>
-    <td style="font-family:var(--mono);font-size:0.72rem;">${r.admin}</td>
-    <td>${r.action}</td>
-    <td style="font-size:0.78rem;color:var(--text-mid);">${r.target}</td>
-    <td style="font-family:var(--mono);font-size:0.72rem;color:var(--text-dim);">${r.ts}</td>
-    <td style="font-family:var(--mono);font-size:0.72rem;color:var(--text-dim);">${r.ip}</td>
+    <td style="font-family:var(--mono);font-size:0.72rem;">${esc(r.admin)}</td>
+    <td>${esc(r.action)}</td>
+    <td style="font-size:0.78rem;color:var(--text-mid);">${esc(r.target)}</td>
+    <td style="font-family:var(--mono);font-size:0.72rem;color:var(--text-dim);">${esc(r.ts)}</td>
+    <td style="font-family:var(--mono);font-size:0.72rem;color:var(--text-dim);">${esc(r.ip)}</td>
   </tr>`).join('');
 }
 
@@ -4167,8 +4167,8 @@ function loadRevenuePanel() {
       } else {
         topBody.innerHTML = d.topMarkets.map(function(m) {
           return '<tr>' +
-            '<td>' + (m.title || '—') + '</td>' +
-            '<td><span class="badge">' + (m.status || '—') + '</span></td>' +
+            '<td>' + esc(m.title || '—') + '</td>' +
+            '<td><span class="badge">' + esc(m.status || '—') + '</span></td>' +
             '<td style="font-family:var(--mono);color:var(--ke-green);font-weight:700">' + fmt(m.totalKes) + '</td>' +
           '</tr>';
         }).join('');
@@ -4184,10 +4184,10 @@ function loadRevenuePanel() {
         var typeLabel = { FORECASTING_FEE: '📊 Forecasting Fee', MARKET_SURPLUS: '💰 Market Surplus', CHALLENGE_FEE: '🤝 Challenge Fee' };
         recentBody.innerHTML = d.recent.map(function(r) {
           var when = new Date(r.createdAt).toLocaleDateString('en-KE', { day: 'numeric', month: 'short', year: 'numeric' });
-          var source = r.marketTitle || r.challengeQ || '—';
+          var source = esc(r.marketTitle || r.challengeQ || '—');
           return '<tr>' +
             '<td style="font-size:0.78rem;color:var(--text-dim)">' + when + '</td>' +
-            '<td>' + (typeLabel[r.type] || r.type) + '</td>' +
+            '<td>' + esc(typeLabel[r.type] || r.type) + '</td>' +
             '<td style="font-size:0.78rem">' + source + '</td>' +
             '<td style="font-family:var(--mono);color:var(--ke-green);font-weight:700">' + fmt(r.amountKes) + '</td>' +
           '</tr>';
@@ -4221,8 +4221,8 @@ function loadBlacklistPanel() {
     body.innerHTML = d.entries.map(function(e) {
       var date = new Date(e.createdAt).toLocaleDateString('en-KE', { day:'numeric', month:'short', year:'numeric' });
       return '<tr>' +
-        '<td style="font-family:var(--mono);font-weight:700;">' + (e.phone || '—') + '</td>' +
-        '<td style="font-size:0.78rem;color:var(--text-dim);">' + (e.reason || '—') + '</td>' +
+        '<td style="font-family:var(--mono);font-weight:700;">' + esc(e.phone || '—') + '</td>' +
+        '<td style="font-size:0.78rem;color:var(--text-dim);">' + esc(e.reason || '—') + '</td>' +
         '<td style="font-size:0.75rem;color:var(--text-dim);">' + date + '</td>' +
         '<td><button class="act-btn act-gray" style="font-size:0.7rem;padding:4px 10px;" onclick="removeFromBlacklist(\'' + e.phone + '\')">Remove</button></td>' +
       '</tr>';
