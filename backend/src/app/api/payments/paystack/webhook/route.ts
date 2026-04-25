@@ -158,11 +158,8 @@ async function handleTransferFailed(data: any) {
 
   if (!transaction) return;
 
-  // Refund the user
-  const refundAmount = Math.abs(Number(transaction.amountKes));
-  // Fee was also deducted — calculate total to refund
-  const fee = Math.ceil(refundAmount * 0.01);
-  const totalRefund = refundAmount + fee;
+  // FIX: refund exactly what was deducted from wallet (amountKes already = gross)
+  const totalRefund = Math.abs(Number(transaction.amountKes));
 
   await prisma.$transaction(async (tx: any) => {
     const freshUser = await tx.user.findUnique({ where: { id: transaction.userId } });
