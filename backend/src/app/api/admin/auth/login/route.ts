@@ -100,8 +100,9 @@ export const POST = withErrorHandling(async (req: NextRequest) => {
     await logAdminAction(admin.id, 'LOGIN', undefined, { ip }, req);
 
     // Set cookie for browser sessions
+    // FIX: token no longer returned in JSON — only set as httpOnly cookie below.
+    // Prevents XSS from reading the admin JWT.
     const res = NextResponse.json({
-      token,
       admin: { id: admin.id, email: admin.email, name: admin.name },
     });
     res.cookies.set('rada_admin_token', token, {

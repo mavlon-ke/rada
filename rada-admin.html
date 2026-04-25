@@ -1787,13 +1787,13 @@ body::after {
 // ── API CONFIG ─────────────────────────────────────────────────────────────────
 var API_BASE = 'https://api.checkrada.co.ke';
 
-// adminFetch: attaches admin JWT from sessionStorage to every request
+// adminFetch: relies on the httpOnly rada_admin_token cookie set at login.
+// The cookie is attached automatically via credentials:'include'. We no longer
+// read the token from sessionStorage — that would expose it to any XSS.
 function adminFetch(path, options) {
-  var token = sessionStorage.getItem('rada_admin_token') || '';
-  var opts  = Object.assign({}, options || {});
+  var opts = Object.assign({}, options || {});
   opts.credentials = 'include';
   opts.headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers || {});
-  if (token) opts.headers['Authorization'] = 'Bearer ' + token;
   return fetch(API_BASE + path, opts);
 }
 

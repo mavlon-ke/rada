@@ -254,8 +254,7 @@ function attemptAdminLogin() {
   })
   .then(function(r) {
     return r.json().then(function(d) {
-      if (r.ok && d.token && d.admin) {
-        sessionStorage.setItem('rada_admin_token', d.token);
+      if (r.ok && d.admin) {
         setAdminSession(d.admin);
       } else {
         throw new Error(d.error || 'Invalid credentials');
