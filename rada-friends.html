@@ -1795,8 +1795,8 @@ function createChallenge() {
   .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
   .then(function(res) {
     btn.disabled = false;
-    if (res.ok && res.d.challenge) {
-      var code = res.d.challenge.accessCode;
+    if (res.ok && res.d.success && res.d.accessCode) {
+      var code = res.d.accessCode;
       document.getElementById('generatedCode').textContent = code;
       if (document.getElementById('challengeCode2')) document.getElementById('challengeCode2').textContent = code;
       if (breakdown) breakdown.textContent = '';
