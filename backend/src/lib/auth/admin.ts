@@ -13,7 +13,9 @@ export async function requireAdmin(req: NextRequest) {
 
     if (!token) return null;
 
-    const secret  = new TextEncoder().encode(process.env.JWT_SECRET!);
+    // SECURITY FIX: admin tokens use a separate secret from user tokens
+    if (!process.env.ADMIN_JWT_SECRET) throw new Error('ADMIN_JWT_SECRET not set');
+    const secret = new TextEncoder().encode(process.env.ADMIN_JWT_SECRET);
     const { payload } = await jwtVerify(token, secret);
 
     if (payload.role !== 'ADMIN') return null;
