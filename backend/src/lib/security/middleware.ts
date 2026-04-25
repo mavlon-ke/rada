@@ -83,8 +83,26 @@ export async function checkRateLimit(req: NextRequest): Promise<NextResponse | n
     }
     return null;
   } catch (err) {
-    // If Redis is down, fail open (don't block legitimate traffic)
-    console.error('[RateLimit] Redis error, failing open:', err);
+    // SECURITY FIX: fail CLOSED for sensitive endpoints (auth, admin, payments).
+    // If Redis is down, allowing unlimited OTP / admin-login / withdrawal attempts
+    // is far worse than briefly 503'ing legitimate traffic until Redis recovers.
+    // For non-sensitive endpoints (markets, reads), fail open to keep the app usable.
+    console.error('[RateLimit] Redis error:', err);
+
+    const FAIL_CLOSED_PREFIXES = [
+      '/api/auth/',
+      '/api/admin/auth/',
+      '/api/payments/deposit',
+      '/api/payments/withdraw',
+    ];
+    const isSensitive = FAIL_CLOSED_PREFIXES.some(p => pathname.startsWith(p));
+
+    if (isSensitive) {
+      return NextResponse.json(
+        { error: 'Service temporarily unavailable. Please try again shortly.' },
+        { status: 503, headers: { 'Retry-After': '30' } }
+      );
+    }
     return null;
   }
 }
