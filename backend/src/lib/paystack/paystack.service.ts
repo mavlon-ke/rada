@@ -34,7 +34,16 @@ async function paystackRequest<T>(
   clearTimeout(timeout);
 
   const data = await res.json();
-  console.log('[Paystack]', method, path, 'status:', res.status, 'body:', JSON.stringify(data));
+
+  // Log status only — never the body. Body contains customer phone, email,
+  // recipient codes, and other PII that must not appear in Vercel logs.
+  const paystackOk = res.ok && data.status;
+  if (paystackOk) {
+    console.log(`[Paystack] ${method} ${path} \u2192 ${res.status} OK`);
+  } else {
+    const msg = String(data.message ?? 'unknown').slice(0, 120);
+    console.warn(`[Paystack] ${method} ${path} \u2192 ${res.status} FAIL: ${msg}`);
+  }
 
   if (!res.ok || !data.status) {
     throw new Error(data.message ?? 'Paystack API error');
