@@ -5,6 +5,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { requireAuth } from '@/lib/auth/session';
+import { createNotification } from '@/lib/notifications';
 
 
 export async function GET(
@@ -91,11 +92,14 @@ export async function POST(
     return ch;
   });
 
-  // Notify creator
-  await console.log(challenge.userA.phone,
-    `Rada: ${user.name ?? 'Someone'} accepted your challenge! ` +
-    `"${challenge.question.slice(0, 50)}..." is now ACTIVE. Pool: KES ${Number(updated.totalPool)}.`
-  );
+  // Notify creator (in-app notification — no SMS yet)
+  await createNotification({
+    userId:  challenge.userAId,
+    type:    'CHALLENGE_OPPONENT_STAKED',
+    title:   '🤝 Challenge accepted',
+    message: `${user.name ?? 'Someone'} accepted your challenge "${challenge.question.slice(0, 50)}..." Pool: KES ${Number(updated.totalPool).toLocaleString()}`,
+    link:    `/rada-friends.html`,
+  });
 
   return NextResponse.json({ success: true, challengeId: challenge.id, status: 'ACTIVE' });
 }

@@ -5,6 +5,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { requireAuth } from '@/lib/auth/session';
+import { createNotification } from '@/lib/notifications';
 
 
 export async function GET(req: NextRequest) {
@@ -47,9 +48,13 @@ export async function POST(req: NextRequest) {
       where: { id: challengeId },
       data:  { refereeAccepted: true, validatorType: 'REFEREE' },
     });
-    await console.log(challenge.userA.phone,
-      `CheckRada: Your referee accepted the nomination for "${challenge.question.slice(0, 50)}...". They will resolve the outcome after the event.`
-    );
+    await createNotification({
+      userId:  challenge.userAId,
+      type:    'REFEREE_NOMINATED',
+      title:   '✅ Referee accepted',
+      message: `Your referee accepted the nomination for "${challenge.question.slice(0, 50)}...". They will resolve after the event.`,
+      link:    `/rada-friends.html`,
+    });
     return NextResponse.json({ success: true, action: 'ACCEPTED' });
   }
 
@@ -58,8 +63,12 @@ export async function POST(req: NextRequest) {
     where: { id: challengeId },
     data:  { refereeId: null, refereeAccepted: false, validatorType: 'MUTUAL' },
   });
-  await console.log(challenge.userA.phone,
-    `CheckRada: Your referee declined the nomination for "${challenge.question.slice(0, 50)}...". The challenge will use mutual consent instead.`
-  );
+  await createNotification({
+    userId:  challenge.userAId,
+    type:    'REFEREE_NOMINATED',
+    title:   '❌ Referee declined',
+    message: `Your referee declined the nomination for "${challenge.question.slice(0, 50)}...". The challenge will use mutual consent instead.`,
+    link:    `/rada-friends.html`,
+  });
   return NextResponse.json({ success: true, action: 'DECLINED' });
 }

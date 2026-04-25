@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { requireAuth } from '@/lib/auth/session';
+import { createNotification } from '@/lib/notifications';
 
 
 const MIN_HOURS_BEFORE_INTERVENTION = 24; // must wait 24h into the 48h window
@@ -82,17 +83,24 @@ export async function POST(
     `A 15% dispute fee will apply. Admin will review within 12 hours. ` +
     `rada.co.ke`;
 
+  // Notify both participants in-app. Admin sees disputed challenges in /admin/disputes.
   await Promise.allSettled([
-    challenge.userA?.phone  ? console.log(challenge.userA.phone,  smsParticipants) : Promise.resolve(),
-    challenge.userB?.phone  ? console.log(challenge.userB.phone,  smsParticipants) : Promise.resolve(),
-    // Alert admin on-call phone
-    ADMIN_PHONE ? console.log(ADMIN_PHONE,
-      `🚨 Rada Admin Alert: ${requesterName} requested intervention on challenge ` +
-      `"${challenge.question.slice(0, 80)}" (ID: ${challenge.id}). ` +
-      `Pool: KES ${Number(challenge.totalPool).toLocaleString()}. ` +
-      `Review at rada.co.ke/admin`
-    ) : Promise.resolve(),
+    challenge.userA ? createNotification({
+      userId:  challenge.userA.id,
+      type:    'CHALLENGE_RESOLUTION_WARNING',
+      title:   '⚠️ Admin intervention requested',
+      message: smsParticipants,
+      link:    `/rada-friends.html`,
+    }) : Promise.resolve(),
+    challenge.userB ? createNotification({
+      userId:  challenge.userB.id,
+      type:    'CHALLENGE_RESOLUTION_WARNING',
+      title:   '⚠️ Admin intervention requested',
+      message: smsParticipants,
+      link:    `/rada-friends.html`,
+    }) : Promise.resolve(),
   ]);
+  console.info(`[Dispute] Admin intervention requested on challenge ${challenge.id} by ${requesterName}. Pool: KES ${Number(challenge.totalPool).toLocaleString()}.`);
 
   return NextResponse.json({
     success:     true,

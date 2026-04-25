@@ -11,6 +11,7 @@ import { prisma } from '@/lib/db/prisma';
 import { requireAuth } from '@/lib/auth/session';
 
 import { randomInt } from 'crypto';
+import { createNotification } from '@/lib/notifications';
 
 const MAX_STAKE = 20000;  // KES 20,000 per person (Social Challenge cap)
 const MIN_STAKE = 20;     // KES 20 minimum
@@ -198,19 +199,24 @@ export async function POST(req: NextRequest) {
   }
 
   // ── SMS notifications ─────────────────────────────────────────────────────
-  await console.log(challengerB.phone,
-    `CheckRada: ${user.name ?? 'Someone'} has challenged you! "${question.slice(0, 70)}..." ` +
-    `Stake: KES ${stakePerPerson.toLocaleString()} each. ` +
-    `Accept at rada.co.ke/join/${accessCode} or use code ${accessCode}`
-  );
+  await createNotification({
+    userId:  challengerB.id,
+    type:    'CHALLENGE_OPPONENT_STAKED',
+    title:   '⚡ You\'ve been challenged!',
+    message: `${user.name ?? 'Someone'} challenged you on "${question.slice(0, 70)}..." Stake: KES ${stakePerPerson.toLocaleString()}. Code: ${accessCode}`,
+    link:    `/join/${accessCode}`,
+  });
 
   if (refereeId) {
     const referee = await prisma.user.findUnique({ where: { id: refereeId } });
     if (referee) {
-      await console.log(referee.phone,
-        `CheckRada: ${user.name ?? 'Someone'} nominated you as referee for a Social Challenge: ` +
-        `"${question.slice(0, 60)}..." Challenge code: ${accessCode}`
-      );
+      await createNotification({
+        userId:  referee.id,
+        type:    'REFEREE_NOMINATED',
+        title:   '⚖ You\'ve been nominated as referee',
+        message: `${user.name ?? 'Someone'} nominated you to referee "${question.slice(0, 60)}..." Code: ${accessCode}`,
+        link:    `/rada-friends.html`,
+      });
     }
   }
 

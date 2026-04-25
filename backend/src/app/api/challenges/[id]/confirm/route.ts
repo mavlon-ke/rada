@@ -10,6 +10,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/db/prisma';
 import { requireAuth } from '@/lib/auth/session';
+import { createNotification } from '@/lib/notifications';
 
 const FEE_STANDARD = 0.05;  // 5%  — mutual/referee resolution
 const FEE_DISPUTE  = 0.15;  // 15% — admin intervention
@@ -87,13 +88,16 @@ export async function POST(
     });
   }
 
-  // Notify the other party
+  // Notify the other party (in-app)
   const otherUser = isUserA ? challenge.userB : challenge.userA;
   if (otherUser) {
-    await console.log(otherUser.phone,
-      `Rada: Your opponent submitted their result for "${challenge.question.slice(0, 50)}...". ` +
-      `Open CheckRada to confirm or dispute. Agree within 48h to keep the 5% Social Challenge fee.`
-    );
+    await createNotification({
+      userId:  otherUser.id,
+      type:    'CHALLENGE_RESOLUTION_WINDOW',
+      title:   '⏳ Opponent submitted a result',
+      message: `Your opponent submitted their result for "${challenge.question.slice(0, 50)}...". Confirm or dispute within 48h to keep the 5% fee.`,
+      link:    `/rada-friends.html`,
+    });
   }
 
   return NextResponse.json({
