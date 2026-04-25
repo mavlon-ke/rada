@@ -44,8 +44,12 @@ const RATE_LIMITS: Record<string, RateLimitConfig> = {
 
 export async function checkRateLimit(req: NextRequest): Promise<NextResponse | null> {
   const pathname = req.nextUrl.pathname;
-  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
-           ?? req.headers.get('x-real-ip')
+  // SECURITY FIX: prefer x-real-ip — set by Vercel edge to the actual
+  // connecting IP and not client-spoofable. x-forwarded-for is
+  // client-supplied and trivially rotated to bypass per-IP rate limits.
+  // x-forwarded-for is kept only as a fallback for non-Vercel environments.
+  const ip = req.headers.get('x-real-ip')?.trim()
+           ?? req.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
            ?? 'unknown';
 
   const config = RATE_LIMITS[pathname]
