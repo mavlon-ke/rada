@@ -47,11 +47,14 @@ export function checkCSRF(req: NextRequest): NextResponse | null {
     }
   }
 
+  // SECURITY FIX: always block on CSRF mismatch — never fail open.
+  // Bearer-token API clients are exempted on line 33; this only fires for
+  // cookie-based requests (admin panel) where CSRF protection is essential.
+  // NOTE: as of this commit, checkCSRF() is not yet wired into the request pipeline.
+  // See follow-up: issue csrf-token cookie on admin login and add x-csrf-token header in adminFetch.
   if (!tokensMatch) {
-    if (process.env.NODE_ENV === 'production') {
-      console.warn(`[Security] CSRF check failed: ${method} ${pathname}`);
-      return NextResponse.json({ error: 'CSRF validation failed' }, { status: 403 });
-    }
+    console.warn(`[Security] CSRF check failed: ${method} ${pathname}`);
+    return NextResponse.json({ error: 'CSRF validation failed' }, { status: 403 });
   }
 
   return null;
