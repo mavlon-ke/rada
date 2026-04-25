@@ -1787,6 +1787,14 @@ body::after {
 // ── API CONFIG ─────────────────────────────────────────────────────────────────
 var API_BASE = 'https://api.checkrada.co.ke';
 
+// XSS protection — escape any user-derived value before inserting via innerHTML
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) {
+    return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c];
+  });
+}
+
+
 // adminFetch: relies on the httpOnly rada_admin_token cookie set at login.
 // The cookie is attached automatically via credentials:'include'. We no longer
 // read the token from sessionStorage — that would expose it to any XSS.
@@ -1939,22 +1947,22 @@ function renderMarketsTable(data) {
       ? '<span class="badge badge-amber">CLOSED</span>'
       : m.status === 'RESOLVED'
       ? '<span class="badge badge-blue">RESOLVED</span>'
-      : '<span class="badge badge-gray">' + (m.status||'') + '</span>';
+      : '<span class="badge badge-gray">' + esc(m.status||'') + '</span>';
 
     var pauseBtn  = m.status === 'OPEN'
-      ? '<button class="act-btn act-amber" data-action="pause" data-id="' + m.id + '" data-title="' + (m.title||'').replace(/"/g,'&quot;').slice(0,40) + '">Pause</button> '
+      ? '<button class="act-btn act-amber" data-action="pause" data-id="' + m.id + '" data-title="' + esc((m.title||'').slice(0,40)) + '">Pause</button> '
       : '';
     var resolveBtn = m.status === 'CLOSED'
-      ? '<button class="act-btn act-green" data-action="resolve" data-id="' + m.id + '" data-title="' + (m.title||'').replace(/"/g,'&quot;').slice(0,60) + '" data-trades="' + (m.trades||0) + '">Resolve</button> '
+      ? '<button class="act-btn act-green" data-action="resolve" data-id="' + m.id + '" data-title="' + esc((m.title||'').slice(0,60)) + '" data-trades="' + (m.trades||0) + '">Resolve</button> '
       : '';
     var cancelBtn = (m.status !== 'RESOLVED' && m.status !== 'CANCELLED')
-      ? '<button class="act-btn act-red" data-action="cancel" data-id="' + m.id + '" data-title="' + (m.title||'').replace(/"/g,'&quot;').slice(0,40) + '">Cancel</button>'
+      ? '<button class="act-btn act-red" data-action="cancel" data-id="' + m.id + '" data-title="' + esc((m.title||'').slice(0,40)) + '">Cancel</button>'
       : '';
     var editBtn = '<button class="act-btn act-gray" data-action="edit" data-id="' + m.id + '">Edit</button>';
 
     return '<tr>' +
-      '<td style="max-width:260px"><div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (m.title||'—') + '</div></td>' +
-      '<td><span class="badge badge-gray" style="font-size:0.62rem">' + (m.cat||'—') + '</span></td>' +
+      '<td style="max-width:260px"><div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(m.title||'—') + '</div></td>' +
+      '<td><span class="badge badge-gray" style="font-size:0.62rem">' + esc(m.cat||'—') + '</span></td>' +
       '<td class="mono" style="color:' + ((m.yes||0) > 50 ? 'var(--green)' : 'var(--text-mid)') + '">' + (m.yes||'—') + '%</td>' +
       '<td class="mono">' + (m.volume||'—') + '</td>' +
       '<td class="mono">' + (m.trades||0) + '</td>' +
@@ -2539,11 +2547,11 @@ function loadDashResolveWidget() {
     tbody.innerHTML = markets.map(function(m) {
       var closedAgo = m.closesAt ? timeAgo(m.closesAt) : '—';
       return '<tr data-id="' + m.id + '">' +
-        '<td><div style="font-weight:600;max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (m.title||'—') + '</div>' +
+        '<td><div style="font-weight:600;max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(m.title||'—') + '</div>' +
           '<div style="color:var(--text-dim);font-size:0.7rem;margin-top:2px">' + (m.category||'') + '</div></td>' +
         '<td class="mono" style="color:var(--text-dim)">' + closedAgo + '</td>' +
         '<td class="mono">' + (m.tradeCount||0) + '</td>' +
-        '<td><button class="act-btn act-amber" data-action="dash-resolve" data-id="' + m.id + '" data-title="' + (m.title||'').replace(/"/g,'&quot;').slice(0,60) + '" data-trades="' + (m.tradeCount||0) + '" data-yes="' + (m.yesPool||0) + '" data-no="' + (m.noPool||0) + '" data-vol="' + (m.totalVolume||0) + '">Resolve →</button></td>' +
+        '<td><button class="act-btn act-amber" data-action="dash-resolve" data-id="' + m.id + '" data-title="' + esc((m.title||'').slice(0,60)) + '" data-trades="' + (m.tradeCount||0) + '" data-yes="' + (m.yesPool||0) + '" data-no="' + (m.noPool||0) + '" data-vol="' + (m.totalVolume||0) + '">Resolve →</button></td>' +
       '</tr>';
     }).join('');
 
