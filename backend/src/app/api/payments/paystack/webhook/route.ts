@@ -54,7 +54,6 @@ export const POST = withErrorHandling(async (req: NextRequest) => {
 
 async function handleChargeSuccess(data: any) {
   const reference = data.reference;
-  const amountKes = Math.round(data.amount / 100); // Convert from kobo to KES
 
   // Find the pending transaction by reference
   const transaction = await prisma.transaction.findFirst({
@@ -79,6 +78,26 @@ async function handleChargeSuccess(data: any) {
     console.warn('[Paystack Webhook] Verification failed for:', reference);
     return;
   }
+
+  // SECURITY: cross-check amounts in KOBO (smallest unit — integer math,
+  // no rounding errors). The webhook payload, Paystack API verification,
+  // and our own DB record must all agree before we credit the user.
+  // Defends against forged/replayed webhooks and Paystack-side amount bugs.
+  const expectedKobo = Math.round(Number(transaction.amountKes) * 100);
+  const webhookKobo  = data.amount;
+  const verifiedKobo = verified.amount;
+
+  if (webhookKobo !== expectedKobo || verifiedKobo !== expectedKobo) {
+    console.error(
+      `[Paystack Webhook] AMOUNT MISMATCH on ${reference}: ` +
+      `expected=${expectedKobo}kobo, webhook=${webhookKobo}kobo, verified=${verifiedKobo}kobo. ` +
+      `Refusing to credit. Transaction left PENDING for manual review.`
+    );
+    return;
+  }
+
+  // From here on, use the amount we recorded in our own DB — never the payload.
+  const amountKes = Number(transaction.amountKes);
 
   // Credit user balance atomically
   await prisma.$transaction(async (tx: any) => {

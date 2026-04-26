@@ -17,7 +17,7 @@ import {
 export const dynamic = 'force-dynamic';
 
 const DepositSchema = z.object({
-  amountKes: z.number().min(10).max(70000),
+  amountKes: z.number().int().min(10).max(70000),
   phone:     z.string().min(9).max(15),
   method:    z.enum(['mpesa', 'card']).default('mpesa'),
 });

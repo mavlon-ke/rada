@@ -1,39 +1,17 @@
 // src/app/api/auth/check/route.ts
-// GET /api/auth/check?phone=254712345678
-// Returns whether a phone number is already registered.
-// Used by the frontend for smart login/signup detection.
+// SECURITY FIX: this endpoint previously leaked whether a phone was registered
+// AND the registered user's first name, enabling user enumeration and targeted
+// phishing. It now always returns a constant response regardless of input.
+//
+// Kept (rather than deleted) for backward-compatibility with browser-cached
+// frontend builds that still call it. The frontend has been updated to skip
+// this call entirely; this endpoint may be deleted in a future cleanup pass.
 
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db/prisma';
 
-function normalisePhone(phone: string): string {
-  const digits = phone.replace(/\D/g, '');
-  // Kenyan local format: 07... or 01... → strip leading 0 and prepend 254
-  if ((digits.startsWith('07') || digits.startsWith('01')) && digits.length === 10) {
-    return '254' + digits.slice(1);
-  }
-  return digits;
-}
-
-export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url);
-  const raw = searchParams.get('phone') || '';
-
-  if (!raw || raw.length < 9) {
-    return NextResponse.json({ error: 'Phone number required' }, { status: 400 });
-  }
-
-  const phone = normalisePhone(raw);
-
-  const user = await prisma.user.findUnique({
-    where: { phone },
-    select: { id: true, name: true }, // Only return name — no sensitive data
-  });
-
+export function GET(_req: NextRequest) {
   return NextResponse.json({
-    exists: !!user,
-    // Return first name only for the "Welcome back" greeting
-    // Full identity confirmed only after OTP verification
-    firstName: user?.name ? user.name.split(' ')[0] : null,
+    exists:    false,
+    firstName: null,
   });
 }

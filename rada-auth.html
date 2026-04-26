@@ -453,8 +453,6 @@ function updatePhonePlaceholder(countryCode) {
 // v8: Full live API integration — no more demo/localStorage mock
 
 var API_BASE = 'https://api.checkrada.co.ke';
-var returningUser = false;
-var returningUserName = '';
 var currentFullPhone = '';
 
 function normalisePhone(countryCode, localNumber) {
@@ -488,20 +486,15 @@ function sendOTP() {
   btn.textContent = 'Checking…';
   btn.disabled = true;
 
-  // Smart detection — hit real /api/auth/check to detect returning user
-  fetch(API_BASE + '/api/auth/check?phone=' + encodeURIComponent(currentFullPhone))
-    .then(function(r) { return r.json(); })
-    .then(function(d) {
-      returningUser     = !!d.exists;
-      returningUserName = d.firstName || '';
-
-      // Now request the OTP
-      return fetch(API_BASE + '/api/auth/otp/request', {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ phone: currentFullPhone }),
-      });
-    })
+  // SECURITY: skip /api/auth/check — that endpoint leaked whether a phone was
+  // registered + the user's first name, enabling enumeration and targeted phishing.
+  // The OTP-verify response tells us if this is a returning user (user.name set)
+  // so a personalised greeting can be shown after identity is actually established.
+  fetch(API_BASE + '/api/auth/otp/request', {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify({ phone: currentFullPhone }),
+  })
     .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
     .then(function(res) {
       btn.textContent = 'Send OTP →';
@@ -516,12 +509,7 @@ function sendOTP() {
       document.getElementById('step1').style.display = 'none';
       document.getElementById('step2').style.display = '';
 
-      var otpSubEl = document.getElementById('otpSentTo');
-      if (returningUser && returningUserName) {
-        otpSubEl.textContent = 'Welcome back, ' + returningUserName + '. WhatsApp code sent to +' + currentFullPhone + '.';
-      } else {
-        otpSubEl.textContent = 'WhatsApp code sent to +' + currentFullPhone + '.';
-      }
+      document.getElementById('otpSentTo').textContent = 'WhatsApp code sent to +' + currentFullPhone + '.';
       document.getElementById('otp1').focus();
     })
     .catch(function(e) {
@@ -577,7 +565,7 @@ function verifyOTP() {
       document.getElementById('step2').style.display = 'none';
 
       // Detect new vs returning from API response (no name = new user)
-      const isExistingUser = returningUser && user && user.name;
+      const isExistingUser = user && user.name;
 
       if (isExistingUser) {
         document.getElementById('sv-title').textContent = 'Welcome back' + (user.name ? ', ' + user.name.split(' ')[0] + '!' : '!');
