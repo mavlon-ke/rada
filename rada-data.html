@@ -677,9 +677,11 @@ nav{padding:14px 24px;display:flex;align-items:center;justify-content:space-betw
 
 <!-- M-TOP-BAR -->
 <div class="m-top-bar" id="mTopBar">
-  <div class="m-top-badge">RADA</div>
-  <div class="m-top-name">CheckRada</div>
-  <div class="m-top-right" id="mTopLoggedOut">
+  <a class="m-top-logo" href="rada-markets.html" style="display:flex;align-items:center;gap:8px;text-decoration:none;color:inherit;">
+    <div class="m-top-badge">RADA</div>
+    <div class="m-top-name">CheckRada</div>
+  </a>
+  <div class="m-top-right" id="mTopLoggedOut" style="display:none;">
     <button class="m-btn-login" onclick="window.location.href='rada-auth.html'">Log In</button>
     <button class="m-btn-signup" onclick="window.location.href='rada-auth.html'">Sign Up</button>
   </div>
@@ -856,175 +858,54 @@ nav{padding:14px 24px;display:flex;align-items:center;justify-content:space-betw
     </div>
   </div>
 
-  <!-- CODE SNIPPET -->
-  <!-- API Quick Start — hidden, preserved for future use -->
-  <div style="display:none" id="apiQuickStartSection"><div id="apiQuickStartSection" style="display:none">
-  <div class="section-label">API Quick Start</div>
-  <div class="code-panel">
-    <div class="code-tabs">
-      <div class="code-tab active" onclick="switchTab(this,'js')">JavaScript</div>
-      <div class="code-tab" onclick="switchTab(this,'python')">Python</div>
-      <div class="code-tab" onclick="switchTab(this,'curl')">cURL</div>
-    </div>
-    <div class="code-body" id="codeBody">
-<span class="cmt">// CheckRada Sentiment API — Real-time probability feed</span>
+</div>
 
-<span class="kw">const</span> <span class="fn">getProbability</span> = <span class="kw">async</span> (marketId) => {
-  <span class="kw">const</span> response = <span class="kw">await</span> fetch(
-    <span class="str">`https://api.checkrada.co.ke/v1/markets/${marketId}/probability`</span>,
-    {
-      headers: {
-        <span class="str">'Authorization'</span>: <span class="str">`Bearer YOUR_API_KEY`</span>,
-        <span class="str">'Content-Type'</span>: <span class="str">'application/json'</span>
-      }
-    }
-  );
-
-  <span class="kw">const</span> data = <span class="kw">await</span> response.json();
-  <span class="cmt">// Returns: { yes_probability: 0.72, no_probability: 0.28,</span>
-  <span class="cmt">//   brier_score: 0.14, lead_time_hours: 3.5,</span>
-  <span class="cmt">//   total_volume_kes: 612000, unique_forecasters: 441 }</span>
-
-  console.log(<span class="str">`YES: </span><span class="num">${</span>data.yes_probability * <span class="num">100</span><span class="num">}</span><span class="str">%`</span>);
-  <span class="kw">return</span> data;
-};
-
-<span class="cmt">// Subscribe to real-time updates via WebSocket</span>
-<span class="kw">const</span> ws = <span class="kw">new</span> WebSocket(
-  <span class="str">'wss://api.checkrada.co.ke/v1/stream?token=YOUR_API_KEY'</span>
-);
-ws.onmessage = (e) => {
-  <span class="kw">const</span> { market_id, yes_prob, timestamp } = JSON.parse(e.data);
-  <span class="cmt">// Handle re
-  </div>er:0.21 },
-];
-
-const RESOLVED = [
-  { q:'Will CBK hold rates at 12.5% in Jan meeting?', cat:'UCHUMI', prob:'88%', outcome:'YES', lead:'4.2h', brier:0.06, fc:318 },
-  { q:'Will KES hit 140/USD by end of Q3 2024?', cat:'UCHUMI', prob:'22%', outcome:'NO', lead:'11h', brier:0.12, fc:589 },
-  { q:'Will Gor Mahia win the FKF Shield Cup?', cat:'MICHEZO', prob:'61%', outcome:'YES', lead:'1.5h', brier:0.18, fc:214 },
-  { q:'Will Nairobi receive rain every day in Jan?', cat:'HALI YA HEWA', prob:'34%', outcome:'NO', lead:'6.8h', brier:0.09, fc:87 },
-  { q:'Will Treasury CS resign before 2025?', cat:'SIASA', prob:'15%', outcome:'NO', lead:'0h', brier:0.22, fc:445 },
-  { q:'Will Super Petrol exceed KES 200 in 2024?', cat:'UCHUMI', prob:'74%', outcome:'YES', lead:'3.1h', brier:0.07, fc:671 },
-];
-
-const BRIER_COLORS = {
-  good: 'brier-good', ok: 'brier-ok', poor: 'brier-poor'
-};
-function brierClass(s) { return s <= 0.12 ? 'brier-good' : s <= 0.20 ? 'brier-ok' : 'brier-poor'; }
-function brierLabel(s) { return s <= 0.12 ? '● Excellent' : s <= 0.20 ? '◎ Good' : '△ Fair'; }
-
-// ── RENDER SENTIMENT ─────────────────────────────────────────────────────────
-function renderSentiment() {
-  const colors = ['fill-green','fill-blue','fill-gold'];
-  document.getElementById('sentimentGrid').innerHTML = SENTIMENT.map((m,i) => `
-    <div class="sentiment-card">
-      <div class="sc-cat">${m.cat}</div>
-      <div class="sc-q">${m.q}</div>
-      <div class="sc-bar-wrap">
-        <div class="sc-bar-labels">
-          <span style="color:var(--ke-green);font-weight:700">YES ${m.yes}%</span>
-          <span style="color:#CE1126;font-weight:700">NO ${100-m.yes}%</span>
-        </div>
-        <div class="sc-bar"><div class="sc-fill ${colors[i%3]}" style="width:0" data-w="${m.yes}%"></div></div>
-      </div>
-      <div class="sc-meta">
-        <span>${m.vol} · ${m.forecasters} forecasters</span>
-        <span class="sc-brier ${brierClass(m.brier)}">${brierLabel(m.brier)} ${m.brier}</span>
-      </div>
-    </div>
-  `).join('');
-
-  // Animate bars
-  setTimeout(() => {
-    document.querySelectorAll('.sc-fill').forEach(el => {
-      el.style.width = el.dataset.w;
-    });
-  }, 100);
-}
-
-// ── RENDER ACCURACY TABLE ────────────────────────────────────────────────────
-function renderAccuracy() {
-  document.getElementById('accuracyBody').innerHTML = RESOLVED.map(r => `
-    <tr>
-      <td style="max-width:240px;line-height:1.45;font-size:0.78rem">${r.q}</td>
-      <td style="font-size:0.72rem;color:var(--text-dim)">${r.cat}</td>
-      <td class="prob-val">${r.prob}</td>
-      <td class="${r.outcome === 'YES' ? 'outcome-yes' : 'outcome-no'}" style="font-weight:700;font-family:var(--mono)">${r.outcome}</td>
-      <td class="lead-time">${r.lead}</td>
-      <td><span class="sc-brier ${brierClass(r.brier)}">${r.brier}</span></td>
-      <td style="font-family:var(--mono);color:var(--text-mid)">${r.fc}</td>
-    </tr>
-  `).join('');
-}
-
-// ── CODE TABS ─────────────────────────────────────────────────────────────────
-const CODE = {
-  python: `<span class="cmt"># CheckRada Sentiment API — Python</span>
-
-<span class="kw">import</span> requests
-
-API_KEY = <span class="str">"YOUR_API_KEY"</span>
-BASE    = <span class="str">"https://api.checkrada.co.ke/v1"</span>
-
-<span class="kw">def</span> <span class="fn">get_probability</span>(market_id):
-    resp = requests.get(
-        f<span class="str">"{BASE}/markets/{market_id}/probability"</span>,
-        headers={<span class="str">"Authorization"</span>: f<span class="str">"Bearer {API_KEY}"</span>}
-    )
-    data = resp.json()
-    <span class="cmt"># { yes_probability, brier_score, lead_time_hours, ... }</span>
-    <span class="kw">return</span> data
-
-result = get_probability(<span class="str">"kes-usd-130"</span>)
-print(f<span class="str">"YES: {result['yes_probability']*100:.1f}%"</span>)
-print(f<span class="str">"Brier: {result['brier_score']}"</span>)`,
-
-  curl: `<span class="cmt"># CheckRada Sentiment API — cURL</span>
-
-<span class="cmt"># Get current probability for a market</span>
-curl -X GET \\
-  <span class="str">"https://api.checkrada.co.ke/v1/markets/kes-usd-130/probability"</span> \\
-  -H <span class="str">"Authorization: Bearer YOUR_API_KEY"</span> \\
-  -H <span class="str">"Content-Type: application/json"</span>
-
-<span class="cmt"># Response:</span>
-<span class="cmt"># {</span>
-<span class="cmt">#   "yes_probability": 0.54,</span>
-<span class="cmt">#   "no_probability":  0.46,</span>
-<span class="cmt">#   "brier_score":     0.11,</span>
-<span class="cmt">#   "lead_time_hours": 3.5,</span>
-<span class="cmt">#   "volume_kes":      612000,</span>
-<span class="cmt">#   "forecasters":     441</span>
-<span class="cmt"># }</span>
-
-<span class="cmt"># List all active markets</span>
-curl -X GET \\
-  <span class="str">"https://api.checkrada.co.ke/v1/markets?status=active"</span> \\
-  -H <span class="str">"Authorization: Bearer YOUR_API_KEY"</span>`,
-};
-
-function switchTab(btn, lang) {
-  document.querySelectorAll('.code-tab').forEach(t => t.classList.remove('active'));
-  btn.classList.add('active');
-  if (CODE[lang]) document.getElementById('codeBody').innerHTML = CODE[lang];
-}
-
-function getApiKey(tier)     { alert(`${tier.toUpperCase()} API key request — connect to your backend to handle signups.`); }
-function contactEnterprise() { alert('Enterprise sales form would open here.'); }
-function exportCSV() { window.location='rada-data-signup.html?ref=export&plan=pro'; }
-function viewFull() { window.location='rada-data-signup.html?ref=report&plan=pro'; }
-function downloadSample()    { alert('Sample PDF report would download here.'); }
-
-renderSentiment();
-renderAccuracy();
+<script>
+/* ────────────────────────────────────────────────────────────────
+   Accuracy Report — populates the resolved markets table
+   ──────────────────────────────────────────────────────────────── */
+(function() {
+  var RESOLVED = [
+    { q:'Will CBK hold rates at 12.5% in Jan meeting?',     cat:'UCHUMI',       prob:'88%', outcome:'YES', lead:'4.2h', brier:0.06, fc:318 },
+    { q:'Will KES hit 140/USD by end of Q3 2024?',          cat:'UCHUMI',       prob:'22%', outcome:'NO',  lead:'11h',  brier:0.12, fc:589 },
+    { q:'Will Gor Mahia win the FKF Shield Cup?',           cat:'MICHEZO',      prob:'61%', outcome:'YES', lead:'1.5h', brier:0.18, fc:214 },
+    { q:'Will Nairobi receive rain every day in Jan?',      cat:'HALI YA HEWA', prob:'34%', outcome:'NO',  lead:'6.8h', brier:0.09, fc:87  },
+    { q:'Will Treasury CS resign before 2025?',             cat:'SIASA',        prob:'15%', outcome:'NO',  lead:'0h',   brier:0.22, fc:445 },
+    { q:'Will Super Petrol exceed KES 200 in 2024?',        cat:'UCHUMI',       prob:'74%', outcome:'YES', lead:'3.1h', brier:0.07, fc:671 }
+  ];
+  function brierClass(s) { return s <= 0.12 ? 'brier-good' : s <= 0.20 ? 'brier-ok' : 'brier-poor'; }
+  function escapeHtml(s) { return String(s).replace(/[&<>"']/g, function(c){
+    return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];
+  }); }
+  function renderAccuracy() {
+    var tbody = document.getElementById('accuracyBody');
+    if (!tbody) return;
+    tbody.innerHTML = RESOLVED.map(function(r) {
+      var outcomeColor = r.outcome === 'YES' ? 'var(--ke-green)' : '#CE1126';
+      return '<tr>' +
+        '<td style="max-width:240px;line-height:1.4;font-weight:600;font-size:0.78rem;">' + escapeHtml(r.q) + '</td>' +
+        '<td style="font-size:0.62rem;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.06em;">' + escapeHtml(r.cat) + '</td>' +
+        '<td style="font-family:var(--mono);font-weight:700;">' + escapeHtml(r.prob) + '</td>' +
+        '<td style="font-weight:800;color:' + outcomeColor + ';">' + escapeHtml(r.outcome) + '</td>' +
+        '<td style="font-family:var(--mono);color:var(--text-mid);">' + escapeHtml(r.lead) + '</td>' +
+        '<td><span class="sc-brier ' + brierClass(r.brier) + '">' + r.brier.toFixed(2) + '</span></td>' +
+        '<td style="font-family:var(--mono);color:var(--text-mid);">' + r.fc + '</td>' +
+      '</tr>';
+    }).join('');
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', renderAccuracy);
+  } else {
+    renderAccuracy();
+  }
+})();
 </script>
 
 
 
 
 
-<script>function logOut(){localStorage.removeItem('rada_user');closeAccountTray();window.location.href='rada-auth.html';}</script>
+
 
 <div class="m-bot-nav" id="mBotNav"><button class="m-bot-item" id="botHomeBtn" onclick="botHomeClick()"><span class="mbi">🏠</span><span>Home</span></button><button class="m-bot-item" id="botSearchBtn" onclick="botSearchClick()"><span class="mbi">🔍</span><span>Search Events</span></button><button class="m-bot-fab" onclick="openPredictSheet()"><div class="m-fab-circle">✦<div class="m-fab-badge" id="mFabBadge">0</div></div><span>Predict</span></button><button class="m-bot-item" id="botLiveBtn" onclick="botLiveClick()"><span class="mbi">📡</span><span>Live</span></button><button class="m-bot-item" id="botAccountBtn" onclick="openAccountTray()"><span class="mbi">👤</span><span>Account</span></button></div>
 <div class="notif-overlay" id="notifOverlay" onclick="if(event.target===this)closeNotifTray()"><div class="notif-tray"><div class="notif-tray-head"><div class="notif-tray-title">🔔 Notifications</div><button class="notif-mark-read" onclick="markAllRead()">Mark all read</button></div><div class="notif-tray-body" id="notifTrayBody"><div class="notif-empty">Loading...</div></div></div></div>
