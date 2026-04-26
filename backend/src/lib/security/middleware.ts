@@ -4,7 +4,7 @@
 //   [HIGH] CSRF token comparison → timing-safe (timingSafeEqual)
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createHmac, timingSafeEqual } from 'crypto';
+import { timingSafeEqual } from 'crypto';
 import { getRedis } from '@/lib/db/redis';
 import sanitizeHtml from 'sanitize-html';
 
@@ -177,15 +177,6 @@ export function sanitizeObject(obj: Record<string, unknown>): Record<string, unk
     }
   }
   return result;
-}
-
-// ── Kopokopo / M-Pesa callback signature verification ────────────────────────
-
-export function verifyKopokopoCAllback(payload: string, signature: string, secret: string): boolean {
-  if (!signature || !secret) return false;
-  const expected = createHmac('sha256', secret).update(payload).digest('hex');
-  if (expected.length !== signature.length) return false;
-  return timingSafeEqual(Buffer.from(expected), Buffer.from(signature));
 }
 
 // ── Combined ──────────────────────────────────────────────────────────────────

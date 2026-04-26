@@ -9,11 +9,13 @@ const CSRF_COOKIE = 'csrf-token';
 const CSRF_HEADER = 'x-csrf-token';
 const PROTECTED_METHODS = ['POST', 'PUT', 'PATCH', 'DELETE'];
 
+// CSRF-exempt endpoints:
+// - OTP routes: pre-auth, no session cookie to validate against
+// - Paystack webhook: external POST signed with Paystack secret, no CSRF token possible
 const CSRF_EXEMPT = [
-  '/api/payments/kopokopo/callback',
-  '/api/payments/mpesa/callback',
   '/api/auth/otp/request',
   '/api/auth/otp/verify',
+  '/api/payments/paystack/webhook',
 ];
 
 export function generateCSRFToken(): string {

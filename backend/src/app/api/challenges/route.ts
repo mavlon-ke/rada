@@ -53,10 +53,16 @@ export async function POST(req: NextRequest) {
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
   const {
-    question, stakePerPerson, eventExpiresAt,
+    stakePerPerson, eventExpiresAt,
     refereePhone, challengerBPhone, isPublic, resolutionType,
     walletAmountKes, mpesaAmountKes,
   } = parsed.data;
+
+  // SECURITY: sanitize free-text question before storing — same class of
+  // stored XSS protection applied to market proposals (commit 71b3b59).
+  // Question is rendered with innerHTML in rada-dashboard.html, so any
+  // unsanitized HTML would execute in opponents' browsers.
+  const question = sanitizeText(parsed.data.question);
 
   // ── Validate event expiry ────────────────────────────────────────────────
   if (new Date(eventExpiresAt) <= new Date()) {

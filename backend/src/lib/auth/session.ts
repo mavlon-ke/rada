@@ -21,6 +21,7 @@ export async function requireAuth(req: NextRequest) {
         id: true, name: true, phone: true,
         balanceKes: true, bonusBalanceKes: true,
         referralCode: true, suspended: true,
+        kycStatus: true,
         createdAt: true,
       }
     });
