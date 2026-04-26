@@ -1,11 +1,87 @@
+# CheckRada — robots.txt
+# https://checkrada.co.ke
+
+# ── Default crawler rules ─────────────────────────────────────────────────────
 User-agent: *
 Allow: /
-
-# Block admin pages from indexing
 Disallow: /rada-admin.html
 Disallow: /rada-admin-login.html
 Disallow: /rada-dashboard.html
 Disallow: /rada-portfolio.html
 
-# Sitemap
+# ── Search engine crawlers (explicit allow) ───────────────────────────────────
+User-agent: Googlebot
+Allow: /
+Disallow: /rada-admin.html
+Disallow: /rada-admin-login.html
+Disallow: /rada-dashboard.html
+Disallow: /rada-portfolio.html
+
+User-agent: Bingbot
+Allow: /
+Disallow: /rada-admin.html
+Disallow: /rada-admin-login.html
+Disallow: /rada-dashboard.html
+Disallow: /rada-portfolio.html
+
+# ── AI / LLM crawlers (explicit allow — see /llms.txt) ────────────────────────
+# We welcome AI bots that respect llms.txt and produce attributed,
+# accurate descriptions of CheckRada in their outputs.
+
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Perplexity-User
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Applebot
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+User-agent: meta-externalagent
+Allow: /
+
+User-agent: Bytespider
+Allow: /
+
+User-agent: cohere-ai
+Allow: /
+
+# ── Aggressive content scrapers (block) ───────────────────────────────────────
+User-agent: SemrushBot
+Disallow: /
+
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: MJ12bot
+Disallow: /
+
+User-agent: DotBot
+Disallow: /
+
+# ── Sitemap ───────────────────────────────────────────────────────────────────
 Sitemap: https://checkrada.co.ke/sitemap.xml
