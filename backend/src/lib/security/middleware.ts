@@ -5,24 +5,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createHmac, timingSafeEqual } from 'crypto';
-import { Redis } from 'ioredis';
+import { getRedis } from '@/lib/db/redis';
 import sanitizeHtml from 'sanitize-html';
-
-// ── Redis singleton ───────────────────────────────────────────────────────────
-
-let _redis: Redis | null = null;
-
-function getRedis(): Redis {
-  if (!_redis) {
-    _redis = new Redis(process.env.REDIS_URL!, {
-      maxRetriesPerRequest: 1,
-      connectTimeout: 3000,
-      lazyConnect: false,
-    });
-    _redis.on('error', (e) => console.error('[RateLimit Redis]', e.message));
-  }
-  return _redis;
-}
 
 // ── Rate limit config ─────────────────────────────────────────────────────────
 
