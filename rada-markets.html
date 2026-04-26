@@ -1122,6 +1122,25 @@ document.addEventListener('DOMContentLoaded', function() {
     ]
   }
   </script>
+
+  <!-- WebSite + SearchAction JSON-LD: enables Google sitelinks search box for branded queries -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "CheckRada",
+    "alternateName": "ChekiRada",
+    "url": "https://checkrada.co.ke/",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": {
+        "@type": "EntryPoint",
+        "urlTemplate": "https://checkrada.co.ke/rada-markets.html?q={search_term_string}"
+      },
+      "query-input": "required name=search_term_string"
+    }
+  }
+  </script>
 </head>
 <body>
 
@@ -1418,6 +1437,19 @@ function loadMarkets(category) {
     } else {
       renderMarkets(MARKETS);
     }
+
+    // SEO: apply ?q=... search filter from URL if present (powers Google sitelinks
+    // search box: https://checkrada.co.ke/rada-markets.html?q=Finance+Bill).
+    // Wrapped in try/catch so any failure here can never break market rendering.
+    try {
+      var urlParams = new URLSearchParams(window.location.search);
+      var qParam    = urlParams.get('q');
+      if (qParam) {
+        var searchInput = document.querySelector('.search-box');
+        if (searchInput) searchInput.value = qParam;
+        if (typeof searchMarkets === 'function') searchMarkets(qParam);
+      }
+    } catch (e) { /* ignore — search-from-URL is best-effort only */ }
   })
   .catch(function(err) {
     console.error('loadMarkets error:', err);
