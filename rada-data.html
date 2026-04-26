@@ -132,6 +132,13 @@ nav{padding:14px 24px;display:flex;align-items:center;justify-content:space-betw
 .accuracy-table th{padding:10px 18px;text-align:left;font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-dim);border-bottom:1px solid rgba(109,40,217,0.12);}
 .accuracy-table td{padding:14px 18px;font-size:0.8rem;border-bottom:1px solid rgba(109,40,217,0.04);}
 .accuracy-table tr:last-child td{border-bottom:none;}
+.accuracy-table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+.accuracy-table{min-width:760px;}
+@media(max-width:767px){
+  .accuracy-table th{padding:10px 12px;font-size:0.58rem;white-space:nowrap;}
+  .accuracy-table td{padding:12px;font-size:0.72rem;}
+  .accuracy-table td:first-child{min-width:200px;line-height:1.3;}
+}
 .lead-time{font-family:var(--mono);color:var(--ke-green);font-weight:700;}
 .outcome-yes{color:var(--ke-green);}
 .outcome-no{color:#CE1126;}
@@ -790,6 +797,7 @@ nav{padding:14px 24px;display:flex;align-items:center;justify-content:space-betw
         <button class="btn-outline btn-blue" onclick="window.location='rada-data-signup.html?ref=report&plan=pro'">Full Report →</button>
       </div>
     </div>
+    <div class="accuracy-table-scroll">
     <table class="accuracy-table">
       <thead>
         <tr>
@@ -804,6 +812,7 @@ nav{padding:14px 24px;display:flex;align-items:center;justify-content:space-betw
       </thead>
       <tbody id="accuracyBody"></tbody>
     </table>
+    </div>
   </div>
 
   <!-- API TIERS -->
@@ -883,7 +892,7 @@ nav{padding:14px 24px;display:flex;align-items:center;justify-content:space-betw
     tbody.innerHTML = RESOLVED.map(function(r) {
       var outcomeColor = r.outcome === 'YES' ? 'var(--ke-green)' : '#CE1126';
       return '<tr>' +
-        '<td style="max-width:240px;line-height:1.4;font-weight:600;font-size:0.78rem;">' + escapeHtml(r.q) + '</td>' +
+        '<td style="line-height:1.4;font-weight:600;">' + escapeHtml(r.q) + '</td>' +
         '<td style="font-size:0.62rem;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.06em;">' + escapeHtml(r.cat) + '</td>' +
         '<td style="font-family:var(--mono);font-weight:700;">' + escapeHtml(r.prob) + '</td>' +
         '<td style="font-weight:800;color:' + outcomeColor + ';">' + escapeHtml(r.outcome) + '</td>' +
