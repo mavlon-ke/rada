@@ -104,6 +104,8 @@ model Market {
 
   platformRevenue PlatformRevenue[]
 
+  @@index([status, category, createdAt(sort: Desc)])
+  @@index([status, closesAt])
   @@map("markets")
 }
 
@@ -192,6 +194,7 @@ model Order {
   creatorAttribution String?
   createdAt         DateTime    @default(now())
 
+  @@index([marketId])
   @@map("orders")
 }
 
@@ -226,6 +229,8 @@ model Transaction {
   description String?
   createdAt   DateTime        @default(now())
 
+  @@index([userId, status, createdAt(sort: Desc)])
+  @@index([type, status, createdAt(sort: Desc)])
   @@map("transactions")
 }
 model Notification {
