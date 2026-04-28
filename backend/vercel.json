@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/close-markets",
       "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/cron/cleanup-notifications",
+      "schedule": "0 4 * * *"
     }
   ]
 }

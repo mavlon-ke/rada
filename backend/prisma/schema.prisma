@@ -75,6 +75,7 @@ model OtpCode {
   attempts  Int      @default(0)
   expiresAt DateTime
 
+@@index([phone, expiresAt(sort: Desc)])
   @@map("otp_codes")
 }
 
@@ -245,6 +246,7 @@ model Notification {
   createdAt DateTime         @default(now())
 
   @@index([userId, read])
+  @@index([createdAt])
   @@map("notifications")
 }
 
