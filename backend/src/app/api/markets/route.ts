@@ -28,19 +28,41 @@ export async function GET(req: NextRequest) {
   const systemUserId = systemUser?.id ?? null;
 
   // ── Fetch regular markets ────────────────────────────────────────────────
-  const markets = await prisma.market.findMany({
-    where: {
-      status: status as any,
-      ...(category ? { category: category as any } : {}),
-    },
-    include: {
-      creator: { select: { id: true, phone: true, name: true } },
-      _count:  { select: { orders: true } },
-    },
-    orderBy: { createdAt: 'desc' },
-    skip: (page - 1) * limit,
-    take: limit,
-  });
+  // Note: `description` is intentionally omitted from the list response.
+  // It's not displayed on market cards. The single-market endpoint returns it
+  // in full for the detail modal. Keeps response payload small for pagination.
+  const where = {
+    status: status as any,
+    ...(category ? { category: category as any } : {}),
+  };
+
+  const [markets, total] = await Promise.all([
+    prisma.market.findMany({
+      where,
+      select: {
+        id:           true,
+        slug:         true,
+        title:        true,
+        category:     true,
+        status:       true,
+        outcome:      true,
+        yesPool:      true,
+        noPool:       true,
+        totalVolume:  true,
+        closesAt:     true,
+        resolvedAt:   true,
+        createdAt:    true,
+        imageUrl:     true,
+        sourceNote:   true,
+        creator: { select: { id: true, phone: true, name: true } },
+        _count:  { select: { orders: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+      skip: (page - 1) * limit,
+      take: limit,
+    }),
+    prisma.market.count({ where }),
+  ]);
 
   const enriched = markets.map((m) => {
     const yesPool  = Number(m.yesPool);
@@ -101,10 +123,16 @@ export async function GET(req: NextRequest) {
     }));
   }
 
+  // hasMore tells the frontend whether to keep paginating regular markets.
+  // Social challenges (when fetched) are appended only on page 1 to avoid duplicates.
+  const hasMore = page * limit < total;
+
   return NextResponse.json({
-    markets: [...enriched, ...socialChallenges],
+    markets: page === 1 ? [...enriched, ...socialChallenges] : enriched,
     page,
     limit,
+    total,
+    hasMore,
   });
 }
 
