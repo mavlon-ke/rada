@@ -1268,6 +1268,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <!-- MARKET GRID -->
 <div class="market-grid" id="marketGrid"></div>
+<div id="paginationSentinel" style="height:1px;"></div>
+<div id="paginationStatus" style="text-align:center;padding:24px;color:var(--text-dim);font-size:0.78rem;display:none;"></div>
 
 <!-- FORECAST MODAL -->
 <div class="modal-overlay" id="forecastModal">
@@ -1419,8 +1421,35 @@ function normalizeMarket(m) {
   };
 }
 
+// ── Pagination state ─────────────────────────────────────────────────────
+// Uses a stable sentinel element below the grid (NOT the last card).
+// Sentinel survives all renderMarkets() rerenders, including search/filter clear,
+// so the observer is attached ONCE on page 1 and never needs reattachment.
+var _currentPage      = 1;
+var _currentCategory  = null;
+var _hasMore          = false;
+var _loadingMore      = false;
+var _consecutiveEmpty = 0;        // safety: break out of any infinite loop
+var _scrollObserver   = null;
+
+function _showPagStatus(msg) {
+  var el = document.getElementById('paginationStatus');
+  if (!el) return;
+  if (msg) { el.textContent = msg; el.style.display = 'block'; }
+  else     { el.style.display = 'none'; }
+}
+
 function loadMarkets(category) {
-  var url = '/api/markets?status=OPEN';
+  // Reset pagination state on any new load (initial load, category filter change)
+  _currentPage      = 1;
+  _currentCategory  = category;
+  _hasMore          = false;
+  _loadingMore      = false;
+  _consecutiveEmpty = 0;
+  MARKETS           = [];
+  _showPagStatus(null);
+
+  var url = '/api/markets?status=OPEN&page=1';
   if (category && category !== 'ALL' && category !== 'TRENDING' && category !== 'LIVE') {
     url += '&category=' + category;
   }
@@ -1431,12 +1460,18 @@ function loadMarkets(category) {
   fetch(API_BASE + url)
   .then(function(r) { return r.json(); })
   .then(function(data) {
-    MARKETS = (data.markets || []).map(normalizeMarket);
+    MARKETS  = (data.markets || []).map(normalizeMarket);
+    _hasMore = !!data.hasMore;
+
     if (category === 'TRENDING') {
       renderTrending();
     } else {
       renderMarkets(MARKETS);
     }
+
+    // Attach observer once. Sentinel is stable so reattachment is unneeded
+    // even when search/filter/clear paths call renderMarkets() with subsets.
+    _setupScrollObserver();
 
     // SEO: apply ?q=... search filter from URL if present (powers Google sitelinks
     // search box: https://checkrada.co.ke/rada-markets.html?q=Finance+Bill).
@@ -1455,6 +1490,104 @@ function loadMarkets(category) {
     console.error('loadMarkets error:', err);
     if (grid) grid.innerHTML = '<div style="text-align:center;padding:48px;color:var(--text-dim);">Could not load markets. Please refresh.</div>';
   });
+}
+
+// ── Infinite scroll: load next page when sentinel approaches viewport ───
+function loadMoreMarkets() {
+  if (_loadingMore || !_hasMore) return;
+  _loadingMore = true;
+  _showPagStatus('Loading more...');
+
+  var nextPage = _currentPage + 1;
+  var url = '/api/markets?status=OPEN&page=' + nextPage;
+  if (_currentCategory && _currentCategory !== 'ALL' && _currentCategory !== 'TRENDING' && _currentCategory !== 'LIVE') {
+    url += '&category=' + _currentCategory;
+  }
+
+  fetch(API_BASE + url)
+  .then(function(r) {
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.json();
+  })
+  .then(function(data) {
+    var newMarkets = (data.markets || []).map(normalizeMarket);
+
+    // Defensive: dedupe against existing markets (guards against backend race
+    // where market list changed between page fetches).
+    var existingIds = {};
+    MARKETS.forEach(function(m) { existingIds[m.id] = 1; });
+    newMarkets = newMarkets.filter(function(m) { return !existingIds[m.id]; });
+
+    // Safety: if backend keeps saying hasMore=true with empty results,
+    // stop after 3 consecutive empties. Prevents infinite loop on any bug.
+    if (newMarkets.length === 0) {
+      _consecutiveEmpty++;
+      if (_consecutiveEmpty >= 3) {
+        _hasMore = false;
+        _teardownScrollObserver();
+        _showPagStatus(null);
+        _loadingMore = false;
+        return;
+      }
+    } else {
+      _consecutiveEmpty = 0;
+    }
+
+    MARKETS      = MARKETS.concat(newMarkets);
+    _currentPage = nextPage;
+    _hasMore     = !!data.hasMore;
+    _loadingMore = false;
+
+    // Only re-render the grid if the user hasn't filtered/searched the view.
+    // If a search query is active or LIVE filter is on, leave the rendered subset
+    // alone — user's current view is preserved, MARKETS array silently grows
+    // so future searches/clears have access to the full paginated dataset.
+    var searchBox     = document.querySelector('.search-box');
+    var hasSearchTerm = searchBox && searchBox.value && searchBox.value.trim().length > 0;
+    var hasLiveFilter = (typeof liveFilterOn !== 'undefined' && liveFilterOn === true);
+
+    if (!hasSearchTerm && !hasLiveFilter) {
+      renderMarkets(MARKETS);
+    }
+
+    if (!_hasMore) {
+      _teardownScrollObserver();
+    }
+    _showPagStatus(null);
+  })
+  .catch(function(err) {
+    console.error('loadMoreMarkets error:', err);
+    _loadingMore = false;
+    // Observer stays attached; user scrolling up and back will retry.
+    _showPagStatus('⚠ Could not load more. Scroll up and try again.');
+  });
+}
+
+function _setupScrollObserver() {
+  if (_scrollObserver) return;                            // already attached
+  if (typeof IntersectionObserver === 'undefined') return; // graceful fallback for old browsers
+
+  var sentinel = document.getElementById('paginationSentinel');
+  if (!sentinel) return;
+
+  _scrollObserver = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting) loadMoreMarkets();
+    });
+  }, {
+    root: null,
+    rootMargin: '400px 0px 400px 0px', // pre-load 400px before sentinel hits viewport
+    threshold: 0,
+  });
+
+  _scrollObserver.observe(sentinel);
+}
+
+function _teardownScrollObserver() {
+  if (_scrollObserver) {
+    _scrollObserver.disconnect();
+    _scrollObserver = null;
+  }
 }
 
 
