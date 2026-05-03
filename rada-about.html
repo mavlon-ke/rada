@@ -82,33 +82,9 @@ body { background: var(--bg); color: var(--text); font-family: var(--font); min-
 /* ── PAGE ── */
 .page { max-width: 720px; margin: 0 auto; padding: 48px 24px 100px; }
 
-/* ── HERO ── */
-.hero-tag {
-  display: inline-flex; align-items: center; gap: 8px;
-  background: var(--primary-glow); border: 1px solid var(--border);
-  border-radius: 20px; padding: 6px 16px;
-  font-family: var(--mono); font-size: 0.72rem; font-weight: 600;
-  color: var(--primary); letter-spacing: 0.04em; text-transform: uppercase;
-  margin-bottom: 24px;
-}
-.hero-tag-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--primary); animation: pulse 2s ease infinite; }
-@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(1.4)} }
-
 .hero-title { font-size: 2.2rem; font-weight: 800; line-height: 1.15; letter-spacing: -0.02em; margin-bottom: 16px; }
 .hero-title em { font-style: normal; color: var(--primary); }
 .hero-sub { font-size: 1.05rem; color: var(--text-mid); line-height: 1.65; margin-bottom: 36px; }
-
-/* ── STATS ── */
-.stats-grid {
-  display: grid; grid-template-columns: 1fr 1fr;
-  gap: 16px; margin-bottom: 40px;
-}
-.stat-card {
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: 14px; padding: 20px 22px;
-}
-.stat-val { font-family: var(--mono); font-size: 1.8rem; font-weight: 700; color: var(--primary); letter-spacing: -0.02em; }
-.stat-lbl { font-size: 0.72rem; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.07em; margin-top: 4px; }
 
 /* ── DIVIDER ── */
 .section-divider { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
@@ -639,20 +615,12 @@ body { background: var(--bg); color: var(--text); font-family: var(--font); min-
 
   <!-- HERO -->
   <!-- HERO TAG — hidden until platform grows. Unhide April 2026 review. -->
-  <div class="hero-tag" style="display:none;">
-    <div class="hero-tag-dot"></div>
-    24 Active Markets · KES 2.4M Forecast Volume
-  </div>
+  
   <h1 class="hero-title" style="text-align:center;">Your Accuracy, <em>Rewarded.</em></h1>
   <p class="hero-sub" style="text-align:center;max-width:600px;margin-left:auto;margin-right:auto;">Why just watch the news when you can forecast it? CheckRada turns local knowledge into real-world value. By staking on your conviction via M-Pesa. Be right, get paid.</p>
 
   <!-- STATS — hidden until platform grows. Unhide April 2026 review. -->
-  <div class="stats-grid" style="display:none;">
-    <div class="stat-card"><div class="stat-val">1,840</div><div class="stat-lbl">Active Forecasters</div></div>
-    <div class="stat-card"><div class="stat-val">KES 2.4M</div><div class="stat-lbl">Total Volume</div></div>
-    <div class="stat-card"><div class="stat-val">24</div><div class="stat-lbl">Live Markets</div></div>
-    <div class="stat-card"><div class="stat-val">68%</div><div class="stat-lbl">Avg Accuracy Rate</div></div>
-  </div>
+  
 
   <hr class="section-divider">
 
