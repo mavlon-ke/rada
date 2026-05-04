@@ -26,9 +26,10 @@ export async function POST(
       return NextResponse.json({ error: 'Proposal already processed' }, { status: 400 });
     }
 
-    // Read suggestion reward from ReferralConfig (falls back to 50 if not configured)
-    const config = await prisma.referralConfig.findUnique({ where: { id: 'singleton' } });
-    const rewardKes = config ? Number(config.referrerRewardKes) : 50;
+    // Read suggestion reward from PlatformConfig (singleton).
+    // Falls back to 50 if the singleton row is missing for any reason.
+    const config = await prisma.platformConfig.findUnique({ where: { id: 'singleton' } });
+    const rewardKes = config ? Number(config.suggestionRewardKes) : 50;
 
     // Generate unique slug
     const slug = await generateUniqueSlug(proposal.question);
