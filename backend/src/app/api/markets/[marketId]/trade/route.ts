@@ -1,9 +1,17 @@
 // src/app/api/markets/[marketId]/trade/route.ts
 // Option B fee model: 5% forecasting fee deducted on every trade.
-// Creator royalty (0.5%) is carved from the 5% fee — only when market totalVolume >= KES 1,000.
+// Creator royalty (admin-tunable, default 0.5%) is carved from the 5% fee — only when
+// market totalVolume >= configured threshold (default KES 1,000) AND creator is not a system/admin user.
 // Net amount entering AMM = stake - 5% fee (always).
-// When royalty applies: platform keeps 4.5%, creator gets 0.5%.
+// When royalty applies: platform keeps fee minus royalty; creator gets royalty. Pool unaffected.
 // Wallet-first payment: real balance used first, then bonus balance.
+//
+// Referral programme:
+//   - Referee bonus is credited at deposit time (handled in webhook).
+//   - Referrer real-money reward is paid HERE on referee's first trade
+//     via payReferrerOnFirstTrade(). PENDING -> REWARDED in one transition (Option Y).
+//   - Referral business logic lives in @/lib/referrals/referral.service.ts;
+//     this route just detects "first trade" and delegates.
 
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
@@ -11,11 +19,12 @@ import { prisma } from '@/lib/db/prisma';
 import { requireAuth } from '@/lib/auth/session';
 import { sharesToReceive, newPools } from '@/lib/market/amm';
 import { createNotification } from '@/lib/notifications';
+import { payReferrerOnFirstTrade, notifyReferrerRewarded } from '@/lib/referrals/referral.service';
 
-const FORECASTING_FEE_RATE      = 0.05;   // 5% total fee
-const CREATOR_ROYALTY_RATE      = 0.005;  // 0.5% carved from the 5%
-const PLATFORM_NET_RATE         = 0.045;  // 4.5% platform keeps when royalty applies
-const CREATOR_ROYALTY_THRESHOLD = 1000;   // KES 1,000 real trading volume before royalty kicks in
+const FORECASTING_FEE_RATE      = 0.05;   // 5% total fee — kept as code constant per platform decision
+const MAX_CREATOR_ROYALTY_RATE  = 0.05;   // Hard cap: defence-in-depth. Even if DB tampered, never pay >5%.
+const DEFAULT_CREATOR_ROYALTY_RATE      = 0.005;
+const DEFAULT_CREATOR_ROYALTY_THRESHOLD = 1000;
 
 const TradeSchema = z.object({
   side:           z.enum(['YES', 'NO']),
@@ -37,6 +46,19 @@ export async function POST(
   }
 
   const { side, amountKes, bonusAmountKes } = parsed.data;
+
+  // ── Read PlatformConfig once before the transaction. One DB query per trade,
+  //    sub-millisecond with the singleton lookup.
+  //    Defence-in-depth: clamp royalty rate at hard cap regardless of stored value.
+  const platformConfig = await prisma.platformConfig.findUnique({ where: { id: 'singleton' } });
+  const creatorRoyaltyRate = Math.min(
+    platformConfig ? Number(platformConfig.creatorRoyaltyRate) : DEFAULT_CREATOR_ROYALTY_RATE,
+    MAX_CREATOR_ROYALTY_RATE
+  );
+  const creatorRoyaltyThreshold = platformConfig
+    ? Number(platformConfig.creatorRoyaltyThresholdKes)
+    : DEFAULT_CREATOR_ROYALTY_THRESHOLD;
+  const creatorProgrammeActive = platformConfig ? platformConfig.creatorProgrammeActive : true;
 
   // ── Fee calculation ───────────────────────────────────────────────────────
   const feeKes    = Math.floor(amountKes * FORECASTING_FEE_RATE);
@@ -63,6 +85,13 @@ export async function POST(
       throw new Error('Insufficient bonus balance');
     }
 
+    // ── First-trade detection — required for referrer payout below.
+    //    Counted BEFORE this trade's order is created, so a return value of 0 means
+    //    "this is the user's first trade." Order count is a fast lookup with the
+    //    orders(userId) index already in place.
+    const previousOrderCount = await tx.order.count({ where: { userId: user.id } });
+    const isFirstTrade = previousOrderCount === 0;
+
     // AMM calculation
     const yesPool = Number(market.yesPool);
     const noPool  = Number(market.noPool);
@@ -86,7 +115,9 @@ export async function POST(
       },
     });
 
-    // Order record
+    // Order record. creatorAttribution cookie is written for analytics/legacy
+    // attribution tracking — kept intact even though current royalty model uses
+    // Market.creatorId only.
     const attributionPhone = req.cookies.get(`rada_ref_${market.id}`)?.value ?? null;
     const order = await tx.order.create({
       data: {
@@ -134,26 +165,36 @@ export async function POST(
       },
     });
 
-    // Mark referral as REWARDED if bonus was used
-    if (clampedBonus > 0) {
-      await tx.referral.updateMany({
-        where: { refereeId: user.id, status: 'QUALIFIED' },
-        data:  { status: 'REWARDED', rewardPaidAt: new Date() },
-      });
-    }
-
-    // ── Creator royalty — carved from 5% fee, only when real volume >= KES 1,000 ──
-    // The 0.5% comes out of the 5% fee already collected.
-    // Platform keeps 4.5%, creator gets 0.5%. Pool is unaffected.
+    // ── Creator royalty — admin-tunable rate & threshold from PlatformConfig.
+    //    Skipped entirely when:
+    //      - creatorProgrammeActive toggle is off, OR
+    //      - market has no creator (orphaned), OR
+    //      - trader IS the creator (anti-self-dealing), OR
+    //      - market's creator is an ADMIN role user (admin-created markets), OR
+    //      - market's volume hasn't crossed the threshold yet.
+    //    Double-counting fix: when royalty fires, ALSO write a negative
+    //    PlatformRevenue row of type CREATOR_ROYALTY_PAID. The resolve flow
+    //    sums all forecastingFeeKes as FORECASTING_FEE revenue; without this
+    //    offset, the books overstate platform revenue by the royalty amount.
     const updatedMarket = await tx.market.findUnique({
       where:  { id: market.id },
-      select: { totalVolume: true, creatorId: true },
+      select: {
+        totalVolume: true,
+        creatorId:   true,
+        creator:     { select: { role: true } },
+      },
     });
     const marketVolume = Number(updatedMarket?.totalVolume ?? 0);
 
     let creatorRoyaltyKes = 0;
-    if (updatedMarket?.creatorId && updatedMarket.creatorId !== user.id && marketVolume >= CREATOR_ROYALTY_THRESHOLD) {
-      creatorRoyaltyKes = Math.floor(netAmount * CREATOR_ROYALTY_RATE);
+    if (
+      creatorProgrammeActive &&
+      updatedMarket?.creatorId &&
+      updatedMarket.creatorId !== user.id &&
+      updatedMarket.creator?.role !== 'ADMIN' &&
+      marketVolume >= creatorRoyaltyThreshold
+    ) {
+      creatorRoyaltyKes = Math.floor(netAmount * creatorRoyaltyRate);
       if (creatorRoyaltyKes >= 1) {
         // Credit creator from the fee — carved out of platform's 5% take
         await tx.user.update({
@@ -171,7 +212,23 @@ export async function POST(
             active:       true,
           },
         });
+        // Negative PlatformRevenue offset — accounting integrity.
+        await tx.platformRevenue.create({
+          data: {
+            marketId:    market.id,
+            type:        'CREATOR_ROYALTY_PAID',
+            amountKes:   -creatorRoyaltyKes,
+            description: `Creator royalty paid on "${market.title.slice(0,60)}" — offsets the FORECASTING_FEE recorded at resolve.`,
+          },
+        });
       }
+    }
+
+    // ── Referrer reward on referee's first trade — delegated to service.
+    //    Service handles config read, status check, payout, and PENDING -> REWARDED.
+    let referrerPayout = { paid: 0, referrerId: null as string | null };
+    if (isFirstTrade) {
+      referrerPayout = await payReferrerOnFirstTrade(tx, user.id);
     }
 
     return {
@@ -182,13 +239,15 @@ export async function POST(
       netAmountKes:      netAmount,
       bonusUsedKes:      clampedBonus,
       creatorRoyaltyKes,
+      referrerRewardPaid: referrerPayout.paid,
+      referrerId:         referrerPayout.referrerId,
       newYesPrice: parseFloat(
         (Math.exp(newYes/1000) / (Math.exp(newYes/1000) + Math.exp(newNo/1000))).toFixed(4)
       ),
     };
   });
 
-  // Notify user (fire-and-forget)
+  // Notify trader (fire-and-forget)
   createNotification({
     userId:  user.id,
     type:    'MARKET_CLOSING_SOON',
@@ -196,6 +255,11 @@ export async function POST(
     message: `Your ${result.order.side} forecast is live. ${result.shares} shares at KES ${result.pricePerShare.toFixed(2)}/share.`,
     link:    '/rada-portfolio.html',
   }).catch(() => {});
+
+  // Notify referrer (fire-and-forget) — only if reward fired this trade
+  if (result.referrerRewardPaid > 0 && result.referrerId) {
+    notifyReferrerRewarded(result.referrerId, result.referrerRewardPaid).catch(() => {});
+  }
 
   return NextResponse.json({ success: true, ...result });
 }
