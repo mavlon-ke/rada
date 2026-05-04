@@ -1,11 +1,17 @@
 // src/app/api/payments/paystack/webhook/route.ts
-// Paystack webhook — confirms deposits and withdrawals
-// SECURITY: Signature verified before any processing
+// Paystack webhook — confirms deposits and withdrawals.
+// SECURITY: Signature verified before any processing.
+//
+// Single responsibility: payment-flow infrastructure (verify, credit deposit,
+// process transfer success/failure). Business-logic side-effects (referral
+// programme, etc.) are delegated to dedicated service modules so this file
+// can be reused unchanged when a second payment provider is added.
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { verifyWebhookSignature, verifyTransaction } from '@/lib/paystack/paystack.service';
 import { withErrorHandling } from '@/lib/security/route-guard';
+import { creditRefereeBonusOnDeposit } from '@/lib/referrals/referral.service';
 
 export const dynamic = 'force-dynamic';
 
@@ -130,8 +136,9 @@ async function handleChargeSuccess(data: any) {
     });
   });
 
-  // Check if this qualifies a pending referral
-  await qualifyReferral(transaction.userId, amountKes);
+  // Delegate referral business logic to the service module — keeps this
+  // webhook focused on payment infrastructure only.
+  await creditRefereeBonusOnDeposit(transaction.userId, amountKes);
 
   console.log(`[Paystack Webhook] ✅ Deposit confirmed: KES ${amountKes} for user ${transaction.userId}`);
 }
@@ -206,61 +213,4 @@ async function handleTransferFailed(data: any) {
   });
 
   console.log(`[Paystack Webhook] ❌ Withdrawal failed — refunded KES ${totalRefund} to user ${transaction.userId}`);
-}
-
-// ─── Referral qualification ───────────────────────────────────────────────────
-
-async function qualifyReferral(userId: string, amountKes: number) {
-  const config = await prisma.referralConfig.findUnique({ where: { id: 'singleton' } });
-  if (!config?.active) return;
-
-  const minDeposit = Number(config.minDepositKes);
-  if (amountKes < minDeposit) return;
-
-  const referral = await prisma.referral.findUnique({
-    where:  { refereeId: userId },
-  });
-
-  if (!referral || referral.status !== 'PENDING') return;
-
-  const referrerReward = Number(config.referrerRewardKes);
-  const refereeBonus   = Number(config.refereeMatchKes);
-
-  await prisma.$transaction(async (tx: any) => {
-    // Credit referrer
-    await tx.user.update({
-      where: { id: referral.referrerId },
-      data:  { balanceKes: { increment: referrerReward } },
-    });
-
-    // Credit referee bonus balance (locked until first trade)
-    await tx.user.update({
-      where: { id: userId },
-      data:  { bonusBalanceKes: { increment: refereeBonus } },
-    });
-
-    // Mark referral as qualified
-    await tx.referral.update({
-      where: { refereeId: userId },
-      data:  {
-        status:           'QUALIFIED',
-        referrerRewardKes: referrerReward,
-        refereeRewardKes:  refereeBonus,
-        rewardPaidAt:     new Date(),
-      },
-    });
-
-    // Notify referrer
-    await tx.notification.create({
-      data: {
-        userId:  referral.referrerId,
-        type:    'REFERRAL_REWARD_CREDITED',
-        title:   '🎉 Referral reward earned!',
-        message: `KES ${referrerReward} has been credited to your wallet. Your referral made their first deposit!`,
-        link:    '/rada-friends.html',
-      },
-    });
-  });
-
-  console.log(`[Referral] ✅ Qualified: referrer ${referral.referrerId} earned KES ${referrerReward}`);
 }
