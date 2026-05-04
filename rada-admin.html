@@ -756,6 +756,9 @@ body::after {
     <button class="nav-item" onclick="showPanel('bounties', this)">
       <span class="nav-icon">💰</span><span>Bounty Ledger</span>
     </button>
+    <button class="nav-item" onclick="showPanel('creator-programme', this)">
+      <span class="nav-icon">⚙️</span><span>Creator Programme</span>
+    </button>
   </div>
   <div class="sidebar-section">
     <div class="sidebar-section-label">Intelligence</div>
@@ -1393,6 +1396,59 @@ body::after {
       </div>
       <div id="carouselSaveStatus" style="text-align:center;font-size:0.65rem;color:#9284b8;margin-top:8px;min-height:16px;"></div>
     </div>
+    <div class="panel" id="panel-creator-programme">
+      <div class="page-title">⚙️ Creator Programme</div>
+      <div class="page-sub">Tune the creator programme settings — royalty rate, volume threshold, suggestion reward, and bounty payout. The hard 5% cap on royalty rate is enforced server-side; you cannot exceed it from this panel.</div>
+
+      <!-- Status + Config -->
+      <div class="stat-card" style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+          <div class="stat-label">Programme Status</div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span id="cpStatusLabel" style="font-size:0.72rem;font-weight:700;color:#16a34a;">ACTIVE</span>
+            <label class="toggle-switch">
+              <input type="checkbox" id="cpMasterToggle" checked onchange="toggleCreatorProgrammeMaster(this)">
+              <span class="toggle-track"></span>
+            </label>
+          </div>
+        </div>
+        <div style="font-size:0.65rem;color:#9284b8;margin-bottom:14px;">When OFF: trade endpoint skips creator royalty accrual entirely. Proposal approvals and the suggestion reward continue to work — only trade-time royalty is paused.</div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+          <div>
+            <div class="stat-label" style="margin-bottom:5px;">Royalty Rate (% of net trade)</div>
+            <input class="table-input" type="number" id="cpRoyaltyRateInput" value="0.5" min="0" max="5" step="0.05">
+            <div style="font-size:0.6rem;color:#9284b8;margin-top:4px;">Default 0.5%. Carved from the existing 5% forecasting fee — pool is unaffected.</div>
+          </div>
+          <div>
+            <div class="stat-label" style="margin-bottom:5px;">Volume Threshold (KES)</div>
+            <input class="table-input" type="number" id="cpThresholdInput" value="1000" min="0" max="1000000" step="100">
+            <div style="font-size:0.6rem;color:#9284b8;margin-top:4px;">Royalty activates once a market's totalVolume crosses this.</div>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+          <div>
+            <div class="stat-label" style="margin-bottom:5px;">Suggestion Reward (KES)</div>
+            <input class="table-input" type="number" id="cpSuggestionRewardInput" value="50" min="0" max="10000" step="5">
+            <div style="font-size:0.6rem;color:#9284b8;margin-top:4px;">One-time wallet credit when a market suggestion is approved.</div>
+          </div>
+          <div>
+            <div class="stat-label" style="margin-bottom:5px;">Bounty Min Payout (KES)</div>
+            <input class="table-input" type="number" id="cpBountyMinInput" value="100" min="0" max="10000" step="10">
+            <div style="font-size:0.6rem;color:#9284b8;margin-top:4px;">Below this unpaid balance, manual bounty payout is disabled.</div>
+          </div>
+        </div>
+
+        <button onclick="saveCreatorProgrammeConfig()" style="padding:12px 24px;background:#6d28d9;color:#fff;border:none;border-radius:10px;font-size:0.78rem;font-weight:700;cursor:pointer;font-family:inherit;">💾 Save Configuration</button>
+        <div id="cpSaveStatus" style="font-size:0.65rem;color:#16a34a;margin-top:10px;min-height:16px;"></div>
+
+        <div id="cpAuditTrail" style="margin-top:18px;padding:10px 14px;background:#f0edff;border-radius:8px;font-size:0.62rem;color:#4c1d95;display:none;">
+          <span id="cpAuditText"></span>
+        </div>
+      </div>
+    </div>
+
     <div class="panel" id="panel-referral">
       <div class="page-title">🎁 Referral Programme</div>
       <div class="page-sub">Manage the refer-a-friend programme. When OFF, the Refer a Friend option, leaderboard badge, and reward logic all turn off simultaneously.</div>
@@ -2373,7 +2429,7 @@ function exportDataApps() {
 // All panel IDs — used to explicitly hide/show panels
 var ALL_PANEL_IDS = [
   'dashboard','markets','create-market','resolve','users','kyc','transactions',
-  'payouts','proposals','bounties','activity','revenue','disputes','suggestions','b2b',
+  'payouts','proposals','bounties','creator-programme','activity','revenue','disputes','suggestions','b2b',
   'admin-log','carousel','referral','dataapps','blacklist'
 ];
 
@@ -2419,6 +2475,7 @@ function showPanel(id, btn) {
   if (id === 'activity')      { loadActivityFeed(); }
   if (id === 'carousel')      { setTimeout(function() { initCarouselAdmin(); loadCarouselFromBackend(); }, 50); }
   if (id === 'referral')      { setTimeout(loadReferralConfig, 50); }
+  if (id === 'creator-programme') { loadCreatorProgrammeConfig(); }
   if (id === 'dataapps')      { setTimeout(loadDataApplications, 50); }
   if (id === 'admin-log')     { loadAdminLogStats(); loadActivityFeed('adminLogBody'); }
   if (id === 'b2b')           { loadB2BAnalytics(); }
@@ -4106,6 +4163,115 @@ function saveReferralConfig() {
     body: JSON.stringify({ active: active, referrerRewardKes: referrer, refereeMatchKes: referee, minDepositKes: minDep })
   }).then(function(){ if (statusEl) statusEl.textContent = '✅ Saved at ' + new Date().toLocaleTimeString(); })
     .catch(function(){ if (statusEl) statusEl.textContent = '✅ Config saved (connect backend to persist)'; });
+}
+
+// ─── Creator Programme config ──────────────────────────────────────────────
+
+function loadCreatorProgrammeConfig() {
+  adminFetch('/api/admin/config/platform').then(function(r) { return r.json(); }).then(function(d) {
+    var cfg = d.config || {};
+    var t   = document.getElementById('cpMasterToggle');
+    var rr  = document.getElementById('cpRoyaltyRateInput');
+    var th  = document.getElementById('cpThresholdInput');
+    var sg  = document.getElementById('cpSuggestionRewardInput');
+    var bm  = document.getElementById('cpBountyMinInput');
+    var lbl = document.getElementById('cpStatusLabel');
+
+    if (t) {
+      t.checked = cfg.creatorProgrammeActive !== false;
+      if (lbl) {
+        lbl.textContent = t.checked ? 'ACTIVE' : 'PAUSED';
+        lbl.style.color = t.checked ? '#16a34a' : '#ce1126';
+      }
+    }
+    // Royalty rate stored as decimal (0.005); display as percent (0.5).
+    if (rr) rr.value = ((cfg.creatorRoyaltyRate != null ? cfg.creatorRoyaltyRate : 0.005) * 100).toFixed(2);
+    if (th) th.value = cfg.creatorRoyaltyThresholdKes != null ? cfg.creatorRoyaltyThresholdKes : 1000;
+    if (sg) sg.value = cfg.suggestionRewardKes        != null ? cfg.suggestionRewardKes        : 50;
+    if (bm) bm.value = cfg.bountyMinPayoutKes         != null ? cfg.bountyMinPayoutKes         : 100;
+
+    // Audit trail display
+    var auditBox  = document.getElementById('cpAuditTrail');
+    var auditText = document.getElementById('cpAuditText');
+    if (auditBox && auditText && cfg.updatedAt) {
+      var who  = cfg.updatedByAdminName || 'system';
+      var when = new Date(cfg.updatedAt).toLocaleString();
+      auditText.textContent = 'Last updated by ' + who + ' on ' + when;
+      auditBox.style.display = 'block';
+    }
+  }).catch(function(err) {
+    console.error('loadCreatorProgrammeConfig:', err);
+  });
+}
+
+function toggleCreatorProgrammeMaster(checkbox) {
+  var lbl = document.getElementById('cpStatusLabel');
+
+  // Confirmation dialog when turning OFF — platform-wide effect
+  if (!checkbox.checked) {
+    var ok = confirm('Pause Creator Programme?\n\nThis stops creator royalty accrual on ALL trades platform-wide.\nProposal approvals and suggestion rewards continue to work.\n\nAre you sure?');
+    if (!ok) {
+      checkbox.checked = true;
+      return;
+    }
+  }
+
+  if (lbl) {
+    lbl.textContent = checkbox.checked ? 'ACTIVE' : 'PAUSED';
+    lbl.style.color = checkbox.checked ? '#16a34a' : '#ce1126';
+  }
+}
+
+function saveCreatorProgrammeConfig() {
+  var active     = document.getElementById('cpMasterToggle') ? document.getElementById('cpMasterToggle').checked : true;
+  var ratePct    = parseFloat((document.getElementById('cpRoyaltyRateInput')        || {value:0.5}).value);
+  var threshold  = parseFloat((document.getElementById('cpThresholdInput')          || {value:1000}).value);
+  var suggestion = parseFloat((document.getElementById('cpSuggestionRewardInput')   || {value:50}).value);
+  var bountyMin  = parseFloat((document.getElementById('cpBountyMinInput')          || {value:100}).value);
+  var statusEl   = document.getElementById('cpSaveStatus');
+
+  // Client-side validation matching server-side hard caps (server is source of truth)
+  if (isNaN(ratePct) || ratePct < 0 || ratePct > 5) {
+    if (statusEl) { statusEl.style.color = '#ce1126'; statusEl.textContent = '❌ Royalty rate must be between 0% and 5%'; }
+    return;
+  }
+  if (isNaN(threshold) || threshold < 0 || threshold > 1000000) {
+    if (statusEl) { statusEl.style.color = '#ce1126'; statusEl.textContent = '❌ Threshold must be between 0 and 1,000,000 KES'; }
+    return;
+  }
+  if (isNaN(suggestion) || suggestion < 0 || suggestion > 10000) {
+    if (statusEl) { statusEl.style.color = '#ce1126'; statusEl.textContent = '❌ Suggestion reward must be between 0 and 10,000 KES'; }
+    return;
+  }
+  if (isNaN(bountyMin) || bountyMin < 0 || bountyMin > 10000) {
+    if (statusEl) { statusEl.style.color = '#ce1126'; statusEl.textContent = '❌ Bounty min payout must be between 0 and 10,000 KES'; }
+    return;
+  }
+
+  if (statusEl) { statusEl.style.color = '#9284b8'; statusEl.textContent = 'Saving...'; }
+
+  // Convert percent (0.5) back to decimal (0.005) for the backend.
+  var rateDecimal = ratePct / 100;
+
+  adminFetch('/api/admin/config/platform', {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      creatorRoyaltyRate:         rateDecimal,
+      creatorRoyaltyThresholdKes: threshold,
+      creatorProgrammeActive:     active,
+      suggestionRewardKes:        suggestion,
+      bountyMinPayoutKes:         bountyMin,
+    }),
+  }).then(function(r) {
+    if (!r.ok) return r.json().then(function(j) { throw new Error(j.error || 'Save failed'); });
+    return r.json();
+  }).then(function() {
+    if (statusEl) { statusEl.style.color = '#16a34a'; statusEl.textContent = '✅ Saved at ' + new Date().toLocaleTimeString(); }
+    loadCreatorProgrammeConfig();  // refresh audit trail
+  }).catch(function(err) {
+    if (statusEl) { statusEl.style.color = '#ce1126'; statusEl.textContent = '❌ ' + (err.message || 'Save failed — please retry'); }
+  });
 }
 
 // Input event listeners
