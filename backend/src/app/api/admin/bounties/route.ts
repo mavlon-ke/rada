@@ -9,7 +9,9 @@ import { requireAdmin, adminUnauthorized, logAdminAction } from '@/lib/auth/admi
 
 import { initiateTransfer, createTransferRecipient, normalisePhone as formatPhone } from '@/lib/paystack/paystack.service';
 
-const BOUNTY_MIN_PAYOUT = 100; // Only pay out when balance ≥ KES 100
+// Fallback minimum payout if PlatformConfig.bountyMinPayoutKes is missing (singleton row deleted).
+// The admin-tunable value lives in platform_config; this constant is just a safety net.
+const BOUNTY_MIN_PAYOUT_FALLBACK = 100;
 
 export async function GET(req: NextRequest) {
   const admin = await requireAdmin(req);
@@ -41,10 +43,16 @@ export async function POST(req: NextRequest) {
 
   if (!bounty) return NextResponse.json({ error: 'Bounty not found' }, { status: 404 });
 
+  // Read tunable minimum payout from PlatformConfig.
+  const platformConfig = await prisma.platformConfig.findUnique({ where: { id: 'singleton' } });
+  const bountyMinPayout = platformConfig
+    ? Number(platformConfig.bountyMinPayoutKes)
+    : BOUNTY_MIN_PAYOUT_FALLBACK;
+
   const unpaid = Number(bounty.bountyEarned) - Number(bounty.paidOut);
-  if (unpaid < BOUNTY_MIN_PAYOUT) {
+  if (unpaid < bountyMinPayout) {
     return NextResponse.json({
-      error: `Unpaid balance KES ${unpaid.toFixed(2)} is below minimum payout threshold of KES ${BOUNTY_MIN_PAYOUT}`,
+      error: `Unpaid balance KES ${unpaid.toFixed(2)} is below minimum payout threshold of KES ${bountyMinPayout}`,
     }, { status: 400 });
   }
 
