@@ -1044,7 +1044,7 @@ body::after {
     ═══════════════════════════════════════════════════════════════════════ -->
     <div class="panel" id="panel-users">
       <div class="page-title">User Management</div>
-      <div class="page-sub">1,840 registered users</div>
+      <div class="page-sub" id="usersPanelSub">— registered users</div>
       <div class="filter-row">
         <input class="search-input" placeholder="🔍  Search by name, phone, or ID...">
         <select class="filter-select">
@@ -1066,7 +1066,7 @@ body::after {
     ═══════════════════════════════════════════════════════════════════════ -->
     <div class="panel" id="panel-kyc">
       <div class="page-title">KYC Review Queue</div>
-      <div class="page-sub">7 users awaiting identity verification</div>
+      <div class="page-sub" id="kycPanelSub">— users awaiting identity verification</div>
       <div class="table-card" style="box-shadow:0 2px 12px rgba(0,0,0,0.05);">
         <table class="tbl">
           <thead><tr><th>User</th><th>Phone</th><th>Submitted</th><th>ID Type</th><th>Actions</th></tr></thead>
@@ -1899,6 +1899,14 @@ function loadUsersTable(q) {
         suspended: u.suspended || false,
       };
     });
+    // Update the User Management subtitle with the actual total count from
+    // the backend (response includes `total` for pagination — same number we
+    // need for "X registered users"). Defensive optional element check.
+    var subEl = document.getElementById('usersPanelSub');
+    if (subEl) {
+      var total = (typeof d.total === 'number') ? d.total : USERS_DATA.length;
+      subEl.textContent = total.toLocaleString() + ' registered user' + (total === 1 ? '' : 's');
+    }
     renderUsersTable();
   })
   .catch(function() {
@@ -1922,6 +1930,12 @@ function loadKYCTable() {
     renderKYCTable();
     var el = document.getElementById('dashPendingKYC');
     if (el) el.textContent = KYC_DATA.length;
+    // Update the KYC panel subtitle with the actual pending count.
+    var kycSubEl = document.getElementById('kycPanelSub');
+    if (kycSubEl) {
+      var n = KYC_DATA.length;
+      kycSubEl.textContent = n.toLocaleString() + ' user' + (n === 1 ? '' : 's') + ' awaiting identity verification';
+    }
   })
   .catch(function() {
     if (tbody) tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#ce1126;padding:20px;">Failed to load KYC queue.</td></tr>';
