@@ -157,6 +157,7 @@ model MarketProposal {
   slug             String?        @unique
   rewardPaidAt     DateTime?
   rejectionReason  String?
+  closesAt         DateTime?
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
 
