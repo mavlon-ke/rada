@@ -175,6 +175,51 @@ td{padding:14px 16px;font-size:0.8rem;border-bottom:1px solid rgba(109,40,217,0.
 .copy-link-btn:hover{border-color:var(--border-bright);color:var(--ke-green);}
 .empty-row{padding:40px;text-align:center;color:var(--text-dim);font-size:0.82rem;}
 
+/* MY CREATOR MARKETS — responsive: table on tablet+desktop, card-stack on mobile.
+   Card-stack uses data-th attributes set in JS to label each cell. */
+@media(max-width:640px){
+  #myMarketsTable thead { display:none; }
+  #myMarketsTable, #myMarketsTable tbody, #myMarketsTable tr, #myMarketsTable td { display:block; width:100%; }
+  #myMarketsTable tr {
+    border-bottom: 1px solid rgba(109,40,217,0.12);
+    padding: 14px 16px;
+  }
+  #myMarketsTable tr:last-child { border-bottom: none; }
+  #myMarketsTable td {
+    padding: 6px 0;
+    border: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    font-size: 0.78rem;
+  }
+  #myMarketsTable td::before {
+    content: attr(data-th);
+    font-size: 0.62rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--text-dim);
+    flex-shrink: 0;
+    min-width: 70px;
+    padding-top: 2px;
+  }
+  #myMarketsTable td[data-th="Market"] {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  #myMarketsTable td[data-th="Market"]::before {
+    margin-bottom: 4px;
+  }
+  #myMarketsTable td[data-th="Status"],
+  #myMarketsTable td[data-th="Volume"],
+  #myMarketsTable td[data-th="Earned"],
+  #myMarketsTable td[data-th="Action"] {
+    text-align: right;
+  }
+}
+
 @media(max-width:640px){
   .form-row{grid-template-columns:1fr;}
   .nav-links{display:none;}
@@ -748,7 +793,7 @@ td{padding:14px 16px;font-size:0.8rem;border-bottom:1px solid rgba(109,40,217,0.
   <!-- HERO -->
   <div class="hero-tag"><div class="hero-dot"></div>Creator Bounty Programme · Active</div>
   <h1 class="page-title" style="text-align:center;">Create. Share. Earn.<br><em>Get Paid for Every Trade.</em></h1>
-  <p class="page-sub" style="text-align:center;max-width:600px;margin-left:auto;margin-right:auto;">Got a prediction? Submit a YES/NO question. When others trade on your idea, you earn <strong style="color:var(--gold)">0.5% of the fees</strong>. Submit your question, get approved, share the link to your question and watch your royalties grow as the crowd weighs in.</p>
+  <p class="page-sub" style="text-align:center;max-width:600px;margin-left:auto;margin-right:auto;">Got a prediction? Submit a YES/NO question. When others trade on your idea, you earn <strong style="color:var(--gold)"><span id="cfgRatePctHero">0.5%</span> of the fees</strong>. Submit your question, get approved, share the link to your question and watch your royalties grow as the crowd weighs in.</p>
 
   <!-- HOW IT WORKS -->
   <div class="how-grid">
@@ -770,27 +815,23 @@ td{padding:14px 16px;font-size:0.8rem;border-bottom:1px solid rgba(109,40,217,0.
     <div class="how-card" data-n="4">
       <div class="how-icon">💰</div>
       <div class="how-title">Earn Royalties</div>
-      <div class="how-body">0.5% of every trade's net amount on your market is credited to your CheckRada wallet while the market is active. Once the market resolves, royalties stop. You can withdraw your balance to M-Pesa at any time.</div>
+      <div class="how-body"><span id="cfgRatePctHowItWorks">0.5%</span> of every trade's net amount on your market is credited to your CheckRada wallet while the market is active. Once the market resolves, royalties stop. You can withdraw your balance to M-Pesa at any time.</div>
     </div>
   </div>
 
-  <!-- BOUNTY STATS -->
+  <!-- BOUNTY STATS — populated from /api/users/me/creator-stats on page load -->
   <div class="bounty-stats">
     <div>
-      <div class="b-stat-val">KES 12,440</div>
-      <div class="b-stat-lbl">Paid to Creators This Month</div>
+      <div class="b-stat-val" id="bsThisMonth">KES —</div>
+      <div class="b-stat-lbl">Your Earnings This Month</div>
     </div>
     <div>
-      <div class="b-stat-val">48</div>
-      <div class="b-stat-lbl">Creator Markets Active</div>
+      <div class="b-stat-val" id="bsLiveMarkets">—</div>
+      <div class="b-stat-lbl">Your Live Markets</div>
     </div>
     <div>
-      <div class="b-stat-val">0.5%</div>
-      <div class="b-stat-lbl">Royalty Rate Per Trade</div>
-    </div>
-    <div>
-      <div class="b-stat-val">KES 1K+</div>
-      <div class="b-stat-lbl">Min Volume to Activate Payout</div>
+      <div class="b-stat-val" id="bsTotalEarned">KES —</div>
+      <div class="b-stat-lbl">Your Total Earned</div>
     </div>
   </div>
 
@@ -834,9 +875,9 @@ td{padding:14px 16px;font-size:0.8rem;border-bottom:1px solid rgba(109,40,217,0.
           </select>
         </div>
         <div class="form-field">
-          <label class="field-label">Resolution Date</label>
+          <label class="field-label">Suggested Resolution Date</label>
           <input class="field-input" id="resDate" type="date">
-          <span class="field-hint">When can this be definitively answered?</span>
+          <span class="field-hint">When can this be definitively answered? Admin will confirm or adjust.</span>
         </div>
       </div>
 
@@ -860,23 +901,12 @@ td{padding:14px 16px;font-size:0.8rem;border-bottom:1px solid rgba(109,40,217,0.
         </div>
       </div>
 
-      <!-- Phone / Wallet -->
-      <div class="form-row">
+      <!-- Phone (used for share link attribution + wallet/M-Pesa default) -->
+      <div class="form-row single">
         <div class="form-field">
           <label class="field-label">M-Pesa Number (Bounty Destination)</label>
-          <div class="wallet-field">
-            <input class="field-input" id="phoneInput" placeholder="07XX XXX XXX" type="tel">
-            <div class="wallet-method">
-              <button class="wm-btn active" id="wm-mpesa" onclick="setWalletMethod('mpesa')">M-Pesa</button>
-              <button class="wm-btn" id="wm-wallet" onclick="setWalletMethod('wallet')">Wallet</button>
-            </div>
-          </div>
+          <input class="field-input" id="phoneInput" placeholder="07XX XXX XXX" type="tel">
           <span class="field-hint">Royalties are credited to your CheckRada wallet when your market trades. You can withdraw to this M-Pesa number anytime.</span>
-        </div>
-        <div class="form-field">
-          <label class="field-label">Your Creator Handle (Optional)</label>
-          <input class="field-input" id="handleInput" placeholder="@your_handle or leave blank">
-          <span class="field-hint">Displayed on the market card as creator attribution.</span>
         </div>
       </div>
 
@@ -895,7 +925,8 @@ td{padding:14px 16px;font-size:0.8rem;border-bottom:1px solid rgba(109,40,217,0.
       <div class="agreement-box">
         <input type="checkbox" class="agreement-checkbox" id="agreeCheck">
         <div class="agreement-text">
-          I agree to the <a href="#">Rada Creator Agreement</a>. By submitting, I grant Rada the exclusive right to host this market. I confirm the resolution source is publicly accessible and the question has a clear YES/NO answer. A 5% forecasting fee is applied to every position taken. Creator royalties (0.5% of net trade volume) are credited to your CheckRada wallet once your market exceeds KES 1,000 in total volume. Royalties are earned only while the market is active and stop when the market resolves. Wallet balances can be withdrawn to M-Pesa at any time. Amounts may be subject to withholding tax.
+          I agree to the <a href="#">Rada Creator Agreement</a>. By submitting, I grant Rada the exclusive right to host this market. I confirm the resolution source is publicly accessible and the question has a clear YES/NO answer. A 5% forecasting fee is applied to every position taken. Creator royalties (from 0.1% to 4% of net trade volume) are credited to your CheckRada wallet once your market exceeds KES 1,000* in total volume. Royalties are earned only while the market is active and stop when the market resolves. Wallet balances can be withdrawn to M-Pesa at any time. Amounts may be subject to withholding tax.
+          <div style="font-size:0.65rem;color:var(--text-dim);margin-top:8px;">*subject to change</div>
         </div>
       </div>
 
@@ -912,12 +943,11 @@ td{padding:14px 16px;font-size:0.8rem;border-bottom:1px solid rgba(109,40,217,0.
     <div class="success-sub">
       We'll review your market within 48 hours. If approved, you'll receive an SMS confirmation and your unique creator link. Start building your audience now — the more people you bring to the market, the more you earn.
     </div>
-    <div class="share-link-label">Your Provisional Creator Link</div>
-    <div class="share-link-box" id="shareLink" onclick="copyLink()">
-      checkrada.co.ke/m/pending-review?c=<span id="shareLinkPhone"></span>
-      <div style="font-size:0.62rem;color:var(--text-dim);margin-top:4px;">Click to copy</div>
+    <div class="share-link-label">Pending Review</div>
+    <div class="share-link-box" id="shareLink" style="cursor:default;">
+      Your unique creator link will be sent via SMS once approved.
+      <div style="font-size:0.62rem;color:var(--text-dim);margin-top:4px;">Typical review: within 48h</div>
     </div>
-    <button class="btn-smart-share" onclick="smartCreatorShare()">⤴ Share</button>
     <div class="copy-toast-c" id="creatorCopyToast">✓ Link copied!</div>
     <button class="btn-another" onclick="resetForm()">Propose Another Market</button>
   </div>
@@ -968,72 +998,129 @@ function userFetch(path, options) {
   });
 }
 
-// ── SAMPLE DATA ───────────────────────────────────────────────────────────────
-var MY_MARKETS = [];
+// ── Creator stats: drives BOUNTY_STATS panel + My Creator Markets table ────
+//   GET /api/users/me/creator-stats returns { summary, items[] }
+//   - summary: thisMonthEarnedKes, liveMarketsCount, totalEarnedKes
+//   - items: unified array of {kind:approved|pending|rejected, ...}
+//     sorted newest-first across all kinds (single table, mixed states).
+var MY_CREATOR_ITEMS = [];
+
+function fmtKes(n) {
+  var v = Number(n) || 0;
+  if (v === 0) return 'KES 0';
+  if (v >= 1000000) return 'KES ' + (v/1000000).toFixed(1) + 'M';
+  if (v >= 1000)    return 'KES ' + Math.round(v/1000) + 'K';
+  return 'KES ' + Math.round(v).toLocaleString();
+}
+function fmtVol(n) {
+  var v = Number(n) || 0;
+  if (v === 0) return '—';
+  return fmtKes(v);
+}
+function fmtEarned(n) {
+  var v = Number(n) || 0;
+  if (v === 0) return '—';
+  return 'KES ' + v.toFixed(2);
+}
 
 function loadMyMarkets() {
   var body = document.getElementById('myMarketsBody');
   if (body) body.innerHTML = '<tr><td colspan="5" class="empty-row">Loading your markets...</td></tr>';
 
-  // Fetch markets where creator is the current user
-  // We use the public markets endpoint filtered by creator, then show proposal status
-  userFetch('/api/markets?status=OPEN')
-  .then(function(r) { return r.json(); })
+  userFetch('/api/users/me/creator-stats')
+  .then(function(r) {
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.json();
+  })
   .then(function(d) {
-    var myPhone = radaUser && radaUser.phone ? String(radaUser.phone).replace(/^\+/, '') : null;
-    var allMarkets = (d.markets || []).filter(function(m) {
-      return m.creator && m.creator.phone && String(m.creator.phone).replace(/^\+/, '') === myPhone;
-    });
-    MY_MARKETS = allMarkets.map(function(m) {
-      var vol = Number(m.totalVolume || 0);
-      var volStr = vol >= 1000000 ? 'KES ' + (vol/1000000).toFixed(1) + 'M'
-                 : vol >= 1000    ? 'KES ' + Math.round(vol/1000) + 'K'
-                 : vol > 0        ? 'KES ' + vol : '—';
-      // Creator earns 0.5% of volume
-      var earned = vol > 0 ? 'KES ' + Math.round(vol * 0.005).toLocaleString() : '—';
-      return { q: m.title, status: 'live', vol: volStr, earned: earned, slug: m.slug, id: m.id };
-    });
+    var summary = (d && d.summary) || {};
+
+    // Update BOUNTY_STATS panel
+    var bsThis  = document.getElementById('bsThisMonth');
+    var bsLive  = document.getElementById('bsLiveMarkets');
+    var bsTotal = document.getElementById('bsTotalEarned');
+    if (bsThis)  bsThis.textContent  = fmtKes(summary.thisMonthEarnedKes || 0);
+    if (bsLive)  bsLive.textContent  = String(summary.liveMarketsCount || 0);
+    if (bsTotal) bsTotal.textContent = fmtKes(summary.totalEarnedKes || 0);
+
+    MY_CREATOR_ITEMS = (d && d.items) || [];
     renderMyMarkets();
   })
   .catch(function() {
-    if (body) body.innerHTML = '<tr><td colspan="5" class="empty-row">Could not load markets. Please refresh.</td></tr>';
+    if (body) body.innerHTML = '<tr><td colspan="5" class="empty-row">Could not load your markets. Please refresh.</td></tr>';
+    var bsThis  = document.getElementById('bsThisMonth');
+    var bsLive  = document.getElementById('bsLiveMarkets');
+    var bsTotal = document.getElementById('bsTotalEarned');
+    if (bsThis)  bsThis.textContent  = 'KES —';
+    if (bsLive)  bsLive.textContent  = '—';
+    if (bsTotal) bsTotal.textContent = 'KES —';
   });
 }
 
 function renderMyMarkets() {
   var body = document.getElementById('myMarketsBody');
   if (!body) return;
-  if (!MY_MARKETS.length) {
-    body.innerHTML = '<tr><td colspan="5" class="empty-row">No creator markets yet. Propose one above to start earning!</td></tr>';
+  if (!MY_CREATOR_ITEMS.length) {
+    body.innerHTML = '<tr><td colspan="5" class="empty-row">No proposals yet. Submit one above to start earning!</td></tr>';
     return;
   }
-  body.innerHTML = MY_MARKETS.map(function(m) {
-    var badge = m.status === 'live'
-      ? '<span class="status-badge status-live">● Live</span>'
-      : m.status === 'pending'
-      ? '<span class="status-badge status-pending">◎ Pending</span>'
-      : '<span class="status-badge status-review">↻ In Review</span>';
-    var action = m.status === 'live'
-      ? '<button class="copy-link-btn" data-slug="' + m.slug + '">Copy Link</button>'
-      : '<span style="font-size:0.7rem;color:var(--text-dim)">Awaiting approval</span>';
-    return '<tr>' +
-      '<td style="max-width:240px;line-height:1.45">' + m.q + '</td>' +
-      '<td>' + badge + '</td>' +
-      '<td style="font-family:var(--mono);font-size:0.78rem">' + m.vol + '</td>' +
-      '<td class="earn-val">' + m.earned + '</td>' +
-      '<td>' + action + '</td>' +
-    '</tr>';
+
+  body.innerHTML = MY_CREATOR_ITEMS.map(function(it) {
+    var kind = it.kind;
+    var titleHtml = escapeHtml(it.title || '');
+
+    if (kind === 'approved') {
+      var statusLabel = (it.status === 'OPEN')      ? '<span class="status-badge status-live">● Live</span>'
+                      : (it.status === 'CLOSED')    ? '<span class="status-badge status-pending">⊙ Closed</span>'
+                      : (it.status === 'RESOLVED')  ? '<span class="status-badge status-review">✓ Resolved</span>'
+                      : (it.status === 'CANCELLED') ? '<span class="status-badge status-pending">✕ Cancelled</span>'
+                      : '<span class="status-badge status-pending">' + escapeHtml(it.status) + '</span>';
+      var action = (it.status === 'OPEN' && it.slug)
+        ? '<button class="copy-link-btn" data-slug="' + escapeHtml(it.slug) + '">Copy Link</button>'
+        : '<span style="font-size:0.7rem;color:var(--text-dim)">—</span>';
+      return '<tr>' +
+        '<td data-th="Market" style="max-width:240px;line-height:1.45">' + titleHtml + '</td>' +
+        '<td data-th="Status">' + statusLabel + '</td>' +
+        '<td data-th="Volume" style="font-family:var(--mono);font-size:0.78rem">' + fmtVol(it.totalVolumeKes) + '</td>' +
+        '<td data-th="Earned" class="earn-val">' + fmtEarned(it.bountyEarnedKes) + '</td>' +
+        '<td data-th="Action">' + action + '</td>' +
+      '</tr>';
+    }
+
+    if (kind === 'pending') {
+      return '<tr>' +
+        '<td data-th="Market" style="max-width:240px;line-height:1.45">' + titleHtml + '</td>' +
+        '<td data-th="Status"><span class="status-badge status-pending">◎ Pending Review</span></td>' +
+        '<td data-th="Volume" style="font-size:0.78rem;color:var(--text-dim)">—</td>' +
+        '<td data-th="Earned" style="font-size:0.78rem;color:var(--text-dim)">—</td>' +
+        '<td data-th="Action"><span style="font-size:0.7rem;color:var(--text-dim)">Awaiting approval</span></td>' +
+      '</tr>';
+    }
+
+    if (kind === 'rejected') {
+      var reasonHtml = it.rejectionReason
+        ? '<div style="font-size:0.65rem;color:var(--text-dim);margin-top:4px;font-style:italic;">Reason: ' + escapeHtml(it.rejectionReason) + '</div>'
+        : '';
+      return '<tr>' +
+        '<td data-th="Market" style="max-width:240px;line-height:1.45">' + titleHtml + reasonHtml + '</td>' +
+        '<td data-th="Status"><span class="status-badge status-review" style="background:rgba(206,17,38,0.1);color:#ce1126;">✕ Not Approved</span></td>' +
+        '<td data-th="Volume" style="font-size:0.78rem;color:var(--text-dim)">—</td>' +
+        '<td data-th="Earned" style="font-size:0.78rem;color:var(--text-dim)">—</td>' +
+        '<td data-th="Action"><span style="font-size:0.7rem;color:var(--text-dim)">—</span></td>' +
+      '</tr>';
+    }
+
+    return '';
   }).join('');
 }
 
-// ── FORM LOGIC ────────────────────────────────────────────────────────────────
-let walletMethod = 'mpesa';
-
-function setWalletMethod(m) {
-  walletMethod = m;
-  document.getElementById('wm-mpesa').classList.toggle('active', m === 'mpesa');
-  document.getElementById('wm-wallet').classList.toggle('active', m === 'wallet');
+function escapeHtml(s) {
+  return String(s || '').replace(/[&<>"']/g, function(c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+  });
 }
+
+// ── FORM LOGIC ────────────────────────────────────────────────────────────────
 
 function updateQCount(val) {
   const count = document.getElementById('qCount');
@@ -1080,6 +1167,7 @@ function submitProposal() {
       category:         cat,
       resolutionSource: truth,
       whyCareNote:      why || undefined,
+      closesAt:         date || undefined,
     }),
   })
   .then(function(r) {
@@ -1128,8 +1216,16 @@ function shake(id) {
 
 
 function copySlug(slug) {
-  const link = `https://checkrada.co.ke/m/${slug}?c=MY_PHONE`;
-  navigator.clipboard.writeText(link).catch(()=>{});
+  // Use the authenticated user's phone for attribution. If absent (rare —
+  // user not logged in but has creator markets), omit the ?c= param entirely
+  // rather than emit a broken literal.
+  var phone = (typeof radaUser !== 'undefined' && radaUser && radaUser.phone)
+    ? String(radaUser.phone).replace(/^\+/, '')
+    : null;
+  var link = phone
+    ? 'https://checkrada.co.ke/m/' + slug + '?c=' + encodeURIComponent(phone)
+    : 'https://checkrada.co.ke/m/' + slug;
+  navigator.clipboard.writeText(link).catch(function(){});
   alert('Creator link copied! Share it to earn on every trade.');
 }
 
@@ -1146,6 +1242,26 @@ function resetForm() {
   document.getElementById('agreeCheck').checked = false;
   document.getElementById('qCount').textContent = '0 / 120';
 }
+
+// ── Load public platform config and substitute dynamic copy ────────────────
+//   Single fetch at page load. On failure, the placeholder text remains as
+//   default (0.5%) which keeps the page functional even if config endpoint
+//   is down.
+(function loadPublicConfig() {
+  fetch(API_BASE + '/api/config/public', { credentials: 'omit' })
+    .then(function(r) { return r.ok ? r.json() : null; })
+    .then(function(cfg) {
+      if (!cfg) return;
+      var rate = Number(cfg.creatorRoyaltyRate);
+      if (isNaN(rate)) return;
+      var ratePct = (rate * 100).toFixed(rate < 0.01 ? 2 : 1).replace(/\.0$/, '') + '%';
+      var heroEl = document.getElementById('cfgRatePctHero');
+      var howEl  = document.getElementById('cfgRatePctHowItWorks');
+      if (heroEl) heroEl.textContent = ratePct;
+      if (howEl)  howEl.textContent  = ratePct;
+    })
+    .catch(function() { /* leave placeholder defaults in place */ });
+})();
 
 loadMyMarkets();
 </script>
@@ -1170,9 +1286,18 @@ function legacyCopyC(text, onSuccess) {
 }
 
 function getCreatorLink() {
-  const phone = document.getElementById('phoneInput')?.value || '07XXXXXXXX';
-  const slug  = document.getElementById('urlSlug')?.textContent || 'pending-review';
-  return `https://checkrada.co.ke/m/${slug}?c=${encodeURIComponent(phone)}`;
+  // Defensive default: returns a placeholder marker the user can recognise as
+  // "not yet a real link" rather than a fake URL that looks legitimate.
+  // This function is currently only called from share/copy helpers that are
+  // not wired to UI in the success panel (kept for potential future use).
+  const phone = document.getElementById('phoneInput')?.value || '';
+  const slug  = document.getElementById('urlSlug')?.textContent;
+  if (!slug || slug === 'your-market-slug') {
+    return 'https://checkrada.co.ke/rada-creator.html';
+  }
+  return phone
+    ? `https://checkrada.co.ke/m/${slug}?c=${encodeURIComponent(phone)}`
+    : `https://checkrada.co.ke/m/${slug}`;
 }
 
 function showCreatorToast() {
@@ -1195,11 +1320,14 @@ function radaShare(title, text, url, onFallback) {
 // ── SHARE BUTTONS ────────────────────────────────────────────────────────────
 
 function smartCreatorShare() {
-  const phone = document.getElementById('shareLinkPhone').textContent || '0000000000';
-  const link  = 'https://checkrada.co.ke/m/pending-review?c=' + phone;
+  // Currently orphaned (the success panel no longer wires a share button while
+  // proposals are pending review — they get their real link via SMS on approval).
+  // Kept for potential future use. Falls back to the creator hub URL when no
+  // approved slug is available.
+  const link = 'https://checkrada.co.ke/rada-creator.html';
   radaShare(
-    'CheckRada — Forecast Market',
-    '🇰🇪 I just proposed a market on CheckRada — Kenyass forecasting platform. Join and forecast: ' + link,
+    'CheckRada — Creator Hub',
+    '🇰🇪 Propose a market on CheckRada — Kenya\'s forecasting platform. Earn royalties on every trade.',
     link
   );
 }

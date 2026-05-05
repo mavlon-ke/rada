@@ -883,7 +883,7 @@ nav{padding:14px 24px;display:flex;align-items:center;justify-content:space-betw
 
 <!-- SUGGEST A MARKET FAB -->
 <div class="fab-wrap">
-  <div class="fab-tooltip">🎁 KES 50 credited to your CheckRada wallet when approved!</div>
+  <div class="fab-tooltip">🎁 <span id="cfgSuggestionRewardFab">KES 50</span> credited to your CheckRada wallet when approved!</div>
   <button class="fab-suggest" onclick="openModal('suggestModal')">💡 Suggest a Market</button>
 </div>
 
@@ -900,7 +900,7 @@ nav{padding:14px 24px;display:flex;align-items:center;justify-content:space-betw
     </div>
     <div class="modal-body">
       <div class="reward-note">
-        🎁 <strong>Earn KES 50 when your suggestion goes live.</strong> Admin approval credits KES 50 to your wallet instantly. Once your market exceeds KES 1,000 in volume, you earn 0.5% of every trade as creator royalty.
+        🎁 <strong>Earn <span id="cfgSuggestionRewardBanner1">KES 50</span> when your suggestion goes live.</strong> Admin approval credits <span id="cfgSuggestionRewardBanner2">KES 50</span> to your wallet instantly. Once your market exceeds <span id="cfgThresholdBanner">KES 1,000</span> in volume, you earn <span id="cfgRatePctBanner">0.5%</span> of every trade as creator royalty.
       </div>
 
       <label class="mf-label">Your Market Question</label>
@@ -1144,7 +1144,7 @@ function submitSuggestion() {
       document.getElementById('suggestCat').value = '';
       if (document.getElementById('charLeft')) document.getElementById('charLeft').textContent = '120';
       setStatus('');
-      showToastDash('✓ Suggestion submitted! KES 50 credited if approved.');
+      showToastDash('✓ Suggestion submitted! ' + (window.__publicCfgSuggestionStr || 'KES 50') + ' credited if approved.');
     } else {
       var err = res.d && res.d.error;
       var msg = 'Could not submit. Please try again.';
@@ -2399,6 +2399,40 @@ function openGetHelp() {
       window.location.href = 'rada-faq.html';
     });
 }
+
+// ── Public config loader: substitutes dynamic platform values into copy.
+//    On failure, placeholder defaults remain in the DOM, so the page is
+//    fully functional even if the config endpoint is down.
+(function loadPublicConfigDashboard() {
+  if (typeof API_BASE === 'undefined') return;
+  fetch(API_BASE + '/api/config/public', { credentials: 'omit' })
+    .then(function(r) { return r.ok ? r.json() : null; })
+    .then(function(cfg) {
+      if (!cfg) return;
+      var rate = Number(cfg.creatorRoyaltyRate);
+      var threshold = Number(cfg.creatorRoyaltyThresholdKes);
+      var reward = Number(cfg.suggestionRewardKes);
+      if (!isNaN(rate)) {
+        var ratePct = (rate * 100).toFixed(rate < 0.01 ? 2 : 1).replace(/\.0$/, '') + '%';
+        var rpEl = document.getElementById('cfgRatePctBanner');
+        if (rpEl) rpEl.textContent = ratePct;
+      }
+      if (!isNaN(threshold)) {
+        var thStr = 'KES ' + threshold.toLocaleString();
+        var thEl = document.getElementById('cfgThresholdBanner');
+        if (thEl) thEl.textContent = thStr;
+      }
+      if (!isNaN(reward)) {
+        var rwStr = 'KES ' + reward.toLocaleString();
+        window.__publicCfgSuggestionStr = rwStr;
+        ['cfgSuggestionRewardFab','cfgSuggestionRewardBanner1','cfgSuggestionRewardBanner2'].forEach(function(id) {
+          var el = document.getElementById(id);
+          if (el) el.textContent = rwStr;
+        });
+      }
+    })
+    .catch(function() { /* silent fallback to placeholder defaults */ });
+})();
 </script>
 </body>
 </html>
