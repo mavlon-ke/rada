@@ -1,6 +1,6 @@
 import { sanitizeText } from '@/lib/security/middleware';
 // src/app/api/markets/propose/route.ts
-// Users submit market ideas — approved ones earn KES 50 wallet reward
+// Users submit market ideas — approved ones earn the configured suggestion reward (PlatformConfig)
 
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
@@ -12,6 +12,9 @@ const Schema = z.object({
   category:         z.enum(['GENERAL','POLITICS','ECONOMY','ENTERTAINMENT','WEATHER','TECH']),
   resolutionSource: z.string().min(5).max(300),
   whyCareNote:      z.string().max(500).optional(),
+  // Suggested resolution date — admin can override during approval.
+  // Accepts ISO 8601 datetime strings or YYYY-MM-DD date strings; either way Prisma stores as DateTime.
+  closesAt:         z.string().datetime().optional().or(z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional()),
 });
 
 export async function POST(req: NextRequest) {
@@ -30,6 +33,21 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'You have 3 proposals pending review. Wait for them to be processed.' }, { status: 429 });
   }
 
+  // Parse closesAt: accept either YYYY-MM-DD (treat as midnight UTC end-of-day) or full ISO datetime.
+  // Reject dates in the past — must be at least tomorrow.
+  let closesAt: Date | undefined = undefined;
+  if (parsed.data.closesAt) {
+    const raw = parsed.data.closesAt;
+    // YYYY-MM-DD → end of day in UTC. ISO datetime → as-is.
+    closesAt = raw.length === 10 ? new Date(raw + 'T23:59:59.000Z') : new Date(raw);
+    if (isNaN(closesAt.getTime())) {
+      return NextResponse.json({ error: 'Invalid resolution date' }, { status: 400 });
+    }
+    if (closesAt.getTime() < Date.now()) {
+      return NextResponse.json({ error: 'Resolution date must be in the future' }, { status: 400 });
+    }
+  }
+
   const proposal = await prisma.marketProposal.create({
     data: {
       proposerId:       user.id,
@@ -37,6 +55,7 @@ export async function POST(req: NextRequest) {
       category:         parsed.data.category,
       resolutionSource: sanitizeText(parsed.data.resolutionSource),
       whyCareNote:      parsed.data.whyCareNote ? sanitizeText(parsed.data.whyCareNote) : undefined,
+      closesAt,
     },
   });
 

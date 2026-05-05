@@ -6,6 +6,8 @@ import { prisma } from '@/lib/db/prisma';
 import { requireAdmin, adminUnauthorized, logAdminAction } from '@/lib/auth/admin';
 import { generateUniqueSlug, buildMarketShareUrl } from '@/lib/market/slug';
 
+const NINETY_DAYS_MS = 90 * 24 * 60 * 60 * 1000;
+
 export async function POST(
   req: NextRequest,
   { params }: { params: { id: string } }
@@ -34,8 +36,15 @@ export async function POST(
     // Generate unique slug
     const slug = await generateUniqueSlug(proposal.question);
 
-    // Default closesAt: 90 days from approval — admin can edit afterwards
-    const closesAt = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000);
+    // Honor user-suggested closesAt if present and still in the future.
+    // Otherwise fall back to default 90 days from approval.
+    // Admin retains override capability via the Edit Market panel after approval.
+    let closesAt: Date;
+    if (proposal.closesAt && proposal.closesAt.getTime() > Date.now()) {
+      closesAt = proposal.closesAt;
+    } else {
+      closesAt = new Date(Date.now() + NINETY_DAYS_MS);
+    }
 
     const { market } = await prisma.$transaction(async (tx) => {
       // 1. Create the live Market
@@ -52,7 +61,7 @@ export async function POST(
         },
       });
 
-      // 2. Create CreatorBounty so 0.5% royalties accrue from first trade
+      // 2. Create CreatorBounty so creator royalties accrue from first trade
       await tx.creatorBounty.create({
         data: {
           marketId:  market.id,
@@ -93,6 +102,8 @@ export async function POST(
       marketId:  market.id,
       proposer:  proposal.proposer.phone,
       rewardKes,
+      closesAt:  closesAt.toISOString(),
+      usedSuggestedClosesAt: !!(proposal.closesAt && proposal.closesAt.getTime() > Date.now()),
     }, req);
 
     return NextResponse.json({
@@ -103,6 +114,7 @@ export async function POST(
       shareUrl:       buildMarketShareUrl(slug, proposal.proposer.phone),
       rewardCredited: rewardKes,
       proposerPhone:  proposal.proposer.phone,
+      closesAt:       closesAt.toISOString(),
     });
 
   } catch (err) {
