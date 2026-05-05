@@ -901,25 +901,7 @@ td{padding:14px 16px;font-size:0.8rem;border-bottom:1px solid rgba(109,40,217,0.
         </div>
       </div>
 
-      <!-- Phone (used for share link attribution + wallet/M-Pesa default) -->
-      <div class="form-row single">
-        <div class="form-field">
-          <label class="field-label">M-Pesa Number (Bounty Destination)</label>
-          <input class="field-input" id="phoneInput" placeholder="07XX XXX XXX" type="tel">
-          <span class="field-hint">Royalties are credited to your CheckRada wallet when your market trades. You can withdraw to this M-Pesa number anytime.</span>
-        </div>
-      </div>
 
-      <!-- URL Preview -->
-      <div class="form-row single" style="margin-bottom:20px;">
-        <div class="form-field">
-          <label class="field-label">Your Creator Link (Auto-generated on Approval)</label>
-          <div class="url-preview" id="urlPreview">
-            checkrada.co.ke/m/<span id="urlSlug">your-market-slug</span>?c=<span id="urlPhone">07XXXXXXXX</span>
-          </div>
-          <span class="field-hint">Share this link. Every trade from it credits your CheckRada wallet for as long as the market is open.</span>
-        </div>
-      </div>
 
       <!-- Agreement -->
       <div class="agreement-box">
@@ -1126,15 +1108,9 @@ function updateQCount(val) {
   const count = document.getElementById('qCount');
   count.textContent = `${val.length} / 120`;
   count.classList.toggle('warn', val.length > 100);
-  // live slug preview
-  const slug = val.toLowerCase().replace(/[^a-z0-9\s]/g,'').replace(/\s+/g,'-').slice(0,40) || 'your-market-slug';
-  document.getElementById('urlSlug').textContent = slug;
+  // (Live slug preview removed alongside the URL Preview block — slug is
+  //  generated server-side by the approve route now.)
 }
-
-document.getElementById('phoneInput').addEventListener('input', function() {
-  const phone = this.value.replace(/\s+/g,'') || '07XXXXXXXX';
-  document.getElementById('urlPhone').textContent = phone;
-});
 
 // Min date = tomorrow
 const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate()+1);
@@ -1146,14 +1122,12 @@ function submitProposal() {
   var date   = document.getElementById('resDate').value;
   var truth  = document.getElementById('truthSource').value.trim();
   var why    = document.getElementById('whyCare').value.trim();
-  var phone  = document.getElementById('phoneInput').value.trim();
   var agreed = document.getElementById('agreeCheck').checked;
 
   if (!q || q.length < 20)       { shake('qInput');      alert('Please enter a more detailed question (min 20 chars)'); return; }
   if (!cat)                       { shake('catSelect');   alert('Please select a category'); return; }
   if (!date)                      { shake('resDate');     alert('Please set a resolution date'); return; }
   if (!truth || truth.length < 5) { shake('truthSource'); alert('Please provide a resolution source (min 5 chars)'); return; }
-  if (!phone || phone.length < 9) { shake('phoneInput');  alert('Please enter your M-Pesa number'); return; }
   if (!agreed)                    { shake('agreeCheck');  alert('Please agree to the Creator Agreement'); return; }
 
   var btn = document.getElementById('submitBtn');
@@ -1182,7 +1156,6 @@ function submitProposal() {
     btn.textContent = 'Submit Market Proposal → Start Earning';
     if (res.ok) {
       document.getElementById('proposalForm').style.display = 'none';
-      document.getElementById('shareLinkPhone').textContent = phone;
       document.getElementById('successPanel').classList.add('show');
       loadMyMarkets();
     } else {
@@ -1216,17 +1189,45 @@ function shake(id) {
 
 
 function copySlug(slug) {
-  // Use the authenticated user's phone for attribution. If absent (rare —
-  // user not logged in but has creator markets), omit the ?c= param entirely
-  // rather than emit a broken literal.
+  // Build the share URL using the authenticated user's phone for attribution.
+  // If radaUser/phone is missing (rare), fall back to a no-attribution URL
+  // rather than emitting a broken literal placeholder.
+  if (!slug) return;
   var phone = (typeof radaUser !== 'undefined' && radaUser && radaUser.phone)
     ? String(radaUser.phone).replace(/^\+/, '')
     : null;
   var link = phone
     ? 'https://checkrada.co.ke/m/' + slug + '?c=' + encodeURIComponent(phone)
     : 'https://checkrada.co.ke/m/' + slug;
-  navigator.clipboard.writeText(link).catch(function(){});
-  alert('Creator link copied! Share it to earn on every trade.');
+
+  // Try modern clipboard API first; fall back to a textarea trick for older
+  // browsers (uncommon on Android Chrome but free defence-in-depth).
+  function showToast() {
+    var t = document.getElementById('creatorCopyToast');
+    if (t) { t.classList.add('show'); setTimeout(function(){ t.classList.remove('show'); }, 2200); }
+  }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(link).then(showToast).catch(function() {
+      // Silent fall-through to legacy method
+      legacyCopy(link);
+      showToast();
+    });
+  } else {
+    legacyCopy(link);
+    showToast();
+  }
+
+  function legacyCopy(text) {
+    try {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    } catch (e) { /* best-effort */ }
+  }
 }
 
 
@@ -1238,10 +1239,23 @@ function resetForm() {
   document.getElementById('submitBtn').textContent = 'Submit Market Proposal → Start Earning';
   document.getElementById('qInput').value = '';
   document.getElementById('whyCare').value = '';
-  document.getElementById('phoneInput').value = '';
   document.getElementById('agreeCheck').checked = false;
   document.getElementById('qCount').textContent = '0 / 120';
 }
+
+// ── Wire Copy Link button (event delegation — buttons are dynamically
+//    rendered in renderMyMarkets, so individual onclick attributes can't be
+//    safely set on each row). One delegated listener handles all rows.
+(function wireCopyLinkDelegation() {
+  var body = document.getElementById('myMarketsBody');
+  if (!body) return;
+  body.addEventListener('click', function(e) {
+    var btn = e.target && e.target.closest && e.target.closest('.copy-link-btn');
+    if (!btn) return;
+    var slug = btn.getAttribute('data-slug');
+    if (slug) copySlug(slug);
+  });
+})();
 
 // ── Load public platform config and substitute dynamic copy ────────────────
 //   Single fetch at page load. On failure, the placeholder text remains as
@@ -1286,18 +1300,12 @@ function legacyCopyC(text, onSuccess) {
 }
 
 function getCreatorLink() {
-  // Defensive default: returns a placeholder marker the user can recognise as
-  // "not yet a real link" rather than a fake URL that looks legitimate.
-  // This function is currently only called from share/copy helpers that are
-  // not wired to UI in the success panel (kept for potential future use).
-  const phone = document.getElementById('phoneInput')?.value || '';
-  const slug  = document.getElementById('urlSlug')?.textContent;
-  if (!slug || slug === 'your-market-slug') {
-    return 'https://checkrada.co.ke/rada-creator.html';
-  }
-  return phone
-    ? `https://checkrada.co.ke/m/${slug}?c=${encodeURIComponent(phone)}`
-    : `https://checkrada.co.ke/m/${slug}`;
+  // Defensive fallback for orphan share helpers. The phoneInput / urlSlug
+  // elements no longer exist on this page — they were removed when the
+  // M-Pesa Number field and URL Preview block were dropped. We default to
+  // the creator-hub URL so the orphan share flows still produce a working
+  // (if generic) link.
+  return 'https://checkrada.co.ke/rada-creator.html';
 }
 
 function showCreatorToast() {
@@ -1366,11 +1374,6 @@ function creatorCopyLink(btn) {
 function shareToWhatsApp()   { copyLink(); }
 function creatorShareSMS()   { copyLink(); }
 function creatorNativeShare(){ copyLink(); }
-
-function copySlug(slug) {
-  const link = `https://checkrada.co.ke/m/${slug}`;
-  radaShare('Rada Market', 'Check out this forecast market on Rada 🇰🇪', link);
-}
 
 </script>
 
