@@ -1104,7 +1104,7 @@ nav{padding:14px 24px;display:flex;align-items:center;justify-content:space-betw
   <!-- TABS -->
   <div class="tab-row">
     <button class="tab active" onclick="switchTab(this,'my-challenges')">My Challenges</button>
-    <button class="tab" onclick="switchTab(this,'referee')">⚖️ Referee Queue <span id="refBadge" style="background:var(--purple);color:#000;border-radius:4px;font-size:0.6rem;padding:1px 6px;font-weight:700;">2</span></button>
+    <button class="tab" onclick="switchTab(this,'referee')">⚖️ Referee Queue <span id="refBadge" style="background:var(--purple);color:#000;border-radius:4px;font-size:0.6rem;padding:1px 6px;font-weight:700;display:none;">0</span></button>
     <button class="tab" onclick="switchTab(this,'history')">Settled History</button>
   </div>
 
@@ -1482,6 +1482,20 @@ function renderMyChallenges() {
 }
 
 function renderRefQueue() {
+  // Sync the tab badge with the live queue count. Hidden when zero (matches
+  // the platform's notification-badge idiom). Capped at "9+" for >9 to keep
+  // the badge from ballooning visually.
+  var badge = document.getElementById('refBadge');
+  if (badge) {
+    var n = REF_QUEUE.length;
+    if (n > 0) {
+      badge.textContent = n > 9 ? '9+' : String(n);
+      badge.style.display = 'inline';
+    } else {
+      badge.style.display = 'none';
+    }
+  }
+
   var grid = document.getElementById('refGrid');
   if (!grid) return;
   if (REF_QUEUE.length === 0) {
