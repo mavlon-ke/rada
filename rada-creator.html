@@ -1031,9 +1031,16 @@ function loadMyMarkets() {
 
   // Guest visitors are reading marketing copy on this page, not tracking
   // earnings. Render a sign-in prompt instead of firing an auth'd request.
-  // (`isLoggedIn` is set in the shared-nav script that runs after this
-  // function is defined; defensive `typeof` check covers any load-order edge.)
-  if (typeof isLoggedIn !== 'undefined' && !isLoggedIn) {
+  //
+  // IMPORTANT: read auth state directly from localStorage rather than the
+  // `isLoggedIn` global. isLoggedIn is defined in the shared-nav <script>
+  // block that runs AFTER this function is called on init (line ~1280
+  // calls this; isLoggedIn is set at line ~1402). Using `typeof isLoggedIn`
+  // here would always see `undefined` and fall through to the authenticated
+  // path, defeating the guard. localStorage is available the moment any
+  // script runs.
+  var __hasToken = !!(window.localStorage && localStorage.getItem('rada_token'));
+  if (!__hasToken) {
     var bsThis  = document.getElementById('bsThisMonth');
     var bsLive  = document.getElementById('bsLiveMarkets');
     var bsTotal = document.getElementById('bsTotalEarned');
@@ -1179,7 +1186,11 @@ function submitProposal() {
   // ask them to sign in. Form data is not preserved across the redirect —
   // acceptable trade-off for a 5-field form, avoids security headaches of
   // stashing draft proposals in sessionStorage.
-  if (typeof isLoggedIn !== 'undefined' && !isLoggedIn) {
+  //
+  // Read localStorage directly (matches loadMyMarkets) so auth detection
+  // is consistent regardless of <script> load order.
+  var __hasToken = !!(window.localStorage && localStorage.getItem('rada_token'));
+  if (!__hasToken) {
     var ok = confirm("You need a free CheckRada account to submit a market suggestion. Sign in or create one — it takes 30 seconds. Continue?");
     if (ok) {
       window.location.href = 'rada-auth.html?next=rada-creator.html';
