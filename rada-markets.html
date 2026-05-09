@@ -2438,7 +2438,7 @@ function modalFallbackShare(url, shareText) {
 
 
 
-<script>function logOut(){localStorage.removeItem('rada_user');closeAccountTray();window.location.href='rada-auth.html';}</script>
+<script>function logOut(){localStorage.removeItem('rada_user');localStorage.removeItem('rada_token');closeAccountTray();window.location.href='rada-auth.html';}</script>
 
 <div class="m-bot-nav" id="mBotNav"><button class="m-bot-item" id="botHomeBtn" onclick="botHomeClick()"><span class="mbi">🏠</span><span>Home</span></button><button class="m-bot-item" id="botSearchBtn" onclick="botSearchClick()"><span class="mbi">🔍</span><span>Search Events</span></button><button class="m-bot-fab" onclick="openPredictSheet()"><div class="m-fab-circle">✦<div class="m-fab-badge" id="mFabBadge">0</div></div><span>Predict</span></button><button class="m-bot-item" id="botLiveBtn" onclick="botLiveClick()"><span class="mbi">📡</span><span>Live</span></button><button class="m-bot-item" id="botAccountBtn" onclick="openAccountTray()"><span class="mbi">👤</span><span>Account</span></button></div>
 <div class="notif-overlay" id="notifOverlay" onclick="if(event.target===this)closeNotifTray()"><div class="notif-tray"><div class="notif-tray-head"><div class="notif-tray-title">🔔 Notifications</div><button class="notif-mark-read" onclick="markAllRead()">Mark all read</button></div><div class="notif-tray-body" id="notifTrayBody"><div class="notif-empty">Loading...</div></div></div></div>
