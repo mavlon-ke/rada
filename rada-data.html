@@ -1027,7 +1027,7 @@ function loadNotifications() {
       REFEREE_NOMINATED:'⚖️', PROMO:'📢', MARKET_PROBABILITY_SHIFT:'📈'
     };
     body.innerHTML = notifs.map(n => `
-      <div class="notif-item ${n.read ? '' : 'unread'}" onclick="tapNotif('${n.id}','${n.link||''}')">
+      <div class="notif-item ${n.read ? '' : 'unread'}" data-notif-id="${n.id}" onclick="tapNotif(event, '${n.id}','${n.link||''}')">
         <div class="notif-icon">${icons[n.type] || '🔔'}</div>
         <div class="notif-content">
           <div class="notif-title-txt">${n.title}</div>
@@ -1040,8 +1040,38 @@ function loadNotifications() {
     body.innerHTML = '<div class="notif-empty">Could not load notifications</div>';
   });
 }
-function tapNotif(id, link) {
+function tapNotif(event, id, link) {
   closeNotifTray();
+
+  // Mark this single notification as read on the backend.
+  // We use event.currentTarget to find the row that was tapped — robust
+  // against ID collisions and quoting quirks. Falls back to data attribute
+  // selector if currentTarget is unavailable (e.g. called programmatically).
+  if (id) {
+    var row = (event && event.currentTarget) ||
+              document.querySelector('.notif-item[data-notif-id="' + id + '"]');
+    var _tnTok = localStorage.getItem('rada_token') || '';
+    fetch(API_BASE + '/api/users/me/notifications/' + encodeURIComponent(id) + '/read', {
+      method: 'PATCH',
+      headers: _tnTok ? { 'Authorization': 'Bearer ' + _tnTok } : {}
+    }).then(function(r) { return r.ok ? r.json() : null; }).then(function(d) {
+      if (!d) return;
+      // Update the badge from authoritative server response.
+      var count = d.unreadCount || 0;
+      document.querySelectorAll('.m-notif-badge').forEach(function(el) {
+        el.textContent = count > 9 ? '9+' : String(count);
+        el.classList.toggle('show', count > 0);
+      });
+      // Strip unread styling from this row so re-opening the tray
+      // (without full reload) shows the correct state.
+      if (row) {
+        row.classList.remove('unread');
+        var dot = row.querySelector('.notif-unread-dot');
+        if (dot) dot.remove();
+      }
+    }).catch(function() { /* best-effort — don't block navigation */ });
+  }
+
   if (link) window.location.href = link;
 }
 function markAllRead() {
