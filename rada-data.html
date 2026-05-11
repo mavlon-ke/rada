@@ -930,6 +930,9 @@ nav{padding:14px 24px;display:flex;align-items:center;justify-content:space-betw
    RADA SHARED NAV JS v3
    ════════════════════════════════════════════════════════════════════ */
 
+// ── API base ──────────────────────────────────────────────────────────────────
+var API_BASE = 'https://api.checkrada.co.ke';
+
 // ── Auth state ────────────────────────────────────────────────────────────────
 var radaUser = null;
 try { radaUser = JSON.parse(localStorage.getItem('rada_user') || 'null'); } catch(e) {}
