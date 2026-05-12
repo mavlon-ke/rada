@@ -884,9 +884,13 @@ td{padding:14px 16px;font-size:0.8rem;border-bottom:1px solid rgba(109,40,217,0.
       <!-- Truth Source -->
       <div class="form-row single">
         <div class="form-field">
-          <label class="field-label">Truth Source (Resolution Source)</label>
-          <input class="field-input" id="truthSource"
-            placeholder="https://www.epra.go.ke/petroleum-prices  (official source URL or description)">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;">
+            <label class="field-label" style="margin-bottom:0;">Truth Source (Resolution Source)</label>
+            <span class="char-count" id="truthCount">0 / 300</span>
+          </div>
+          <input class="field-input" id="truthSource" maxlength="300"
+            placeholder="https://www.epra.go.ke/petroleum-prices  (official source URL or description)"
+            oninput="updateTruthCount(this.value)">
           <span class="field-hint">Link to the official website, database, or public record that will determine the outcome. No social media.</span>
         </div>
       </div>
@@ -894,9 +898,13 @@ td{padding:14px 16px;font-size:0.8rem;border-bottom:1px solid rgba(109,40,217,0.
       <!-- Why will people care -->
       <div class="form-row single">
         <div class="form-field">
-          <label class="field-label">Iko CheckRada? — Why will Kenyans care about this?</label>
-          <textarea class="field-textarea" id="whyCare"
-            placeholder="EPRA reviews fuel prices every 2 weeks. With inflation still high, every matatu operator and driver is watching this. It's one of the most-discussed topics on Kenyan Twitter right now..."></textarea>
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;">
+            <label class="field-label" style="margin-bottom:0;">Iko CheckRada? — Why will Kenyans care about this?</label>
+            <span class="char-count" id="whyCount">0 / 5,000</span>
+          </div>
+          <textarea class="field-textarea" id="whyCare" maxlength="5000"
+            placeholder="EPRA reviews fuel prices every 2 weeks. With inflation still high, every matatu operator and driver is watching this. It's one of the most-discussed topics on Kenyan Twitter right now..."
+            oninput="updateWhyCount(this.value)"></textarea>
           <span class="field-hint">Convince us this market will attract both YES and NO forecasters. Markets that attract both sides generate the most accurate data.</span>
         </div>
       </div>
@@ -1163,6 +1171,24 @@ function updateQCount(val) {
   //  generated server-side by the approve route now.)
 }
 
+// Truth Source counter (resolution source URL or description, max 300 per backend Zod).
+// Warn (red) when within 10% of the cap so users know to wrap up.
+function updateTruthCount(val) {
+  const count = document.getElementById('truthCount');
+  if (!count) return;
+  count.textContent = `${val.length} / 300`;
+  count.classList.toggle('warn', val.length > 270);
+}
+
+// Why-Care counter — the field that needed raising from 500 to 5,000.
+// Format with thousands separator so large counts read naturally.
+function updateWhyCount(val) {
+  const count = document.getElementById('whyCount');
+  if (!count) return;
+  count.textContent = `${val.length.toLocaleString()} / 5,000`;
+  count.classList.toggle('warn', val.length > 4500);
+}
+
 // Min date = tomorrow
 const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate()+1);
 document.getElementById('resDate').min = tomorrow.toISOString().split('T')[0];
@@ -1176,9 +1202,12 @@ function submitProposal() {
   var agreed = document.getElementById('agreeCheck').checked;
 
   if (!q || q.length < 20)       { shake('qInput');      alert('Please enter a more detailed question (min 20 chars)'); return; }
+  if (q.length > 120)             { shake('qInput');      alert('Question is too long. Please keep it under 120 characters.'); return; }
   if (!cat)                       { shake('catSelect');   alert('Please select a category'); return; }
   if (!date)                      { shake('resDate');     alert('Please set a resolution date'); return; }
   if (!truth || truth.length < 5) { shake('truthSource'); alert('Please provide a resolution source (min 5 chars)'); return; }
+  if (truth.length > 300)         { shake('truthSource'); alert('Truth source is too long. Please keep it under 300 characters.'); return; }
+  if (why.length > 5000)          { shake('whyCare');     alert('Your "Why does this matter?" note is too long. Please keep it under 5,000 characters (currently ' + why.length.toLocaleString() + ').'); return; }
   if (!agreed)                    { shake('agreeCheck');  alert('Please agree to the Creator Agreement'); return; }
 
   // Auth gate at submit time, not on page load. A logged-out visitor can
@@ -1237,7 +1266,21 @@ function submitProposal() {
           msg = firstField + ': ' + err.fieldErrors[firstField][0];
         }
       }
-      alert('Error: ' + msg);
+      // Translate common backend Zod errors into human language. Falls
+      // through to the raw message for anything we don't recognise.
+      var humanMsg = msg;
+      if (/whyCareNote.*at most/i.test(msg)) {
+        humanMsg = 'Your "Why does this matter?" note is too long. Please keep it under 5,000 characters.';
+      } else if (/question.*at most/i.test(msg)) {
+        humanMsg = 'Your question is too long. Please keep it under 120 characters.';
+      } else if (/resolutionSource.*at most/i.test(msg)) {
+        humanMsg = 'The resolution source URL is too long. Please keep it under 300 characters.';
+      } else if (/at most.*character/i.test(msg)) {
+        humanMsg = 'One of your fields is too long. Please shorten it and try again.';
+      } else if (/Resolution date must be in the future/i.test(msg)) {
+        humanMsg = 'Resolution date must be in the future.';
+      }
+      alert(humanMsg);
     }
   })
   .catch(function() {
@@ -1308,6 +1351,10 @@ function resetForm() {
   document.getElementById('qInput').value = '';
   document.getElementById('whyCare').value = '';
   document.getElementById('agreeCheck').checked = false;
+  // Reset visual counters (no values left in fields)
+  updateQCount('');
+  updateTruthCount('');
+  updateWhyCount('');
   document.getElementById('qCount').textContent = '0 / 120';
 }
 
