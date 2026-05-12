@@ -11,7 +11,7 @@ const Schema = z.object({
   question:         z.string().min(10).max(200),
   category:         z.enum(['GENERAL','POLITICS','ECONOMY','ENTERTAINMENT','WEATHER','TECH']),
   resolutionSource: z.string().min(5).max(300),
-  whyCareNote:      z.string().max(500).optional(),
+  whyCareNote:      z.string().max(5000).optional(),
   // Suggested resolution date — admin can override during approval.
   // Accepts ISO 8601 datetime strings or YYYY-MM-DD date strings; either way Prisma stores as DateTime.
   closesAt:         z.string().datetime().optional().or(z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional()),

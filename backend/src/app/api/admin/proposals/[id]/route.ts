@@ -10,7 +10,7 @@ const Schema = z.object({
   question:         z.string().min(10).max(300).optional(),
   category:         z.enum(['GENERAL','POLITICS','ECONOMY','ENTERTAINMENT','WEATHER','TECH','FRIENDS']).optional(),
   resolutionSource: z.string().min(5).max(300).optional(),
-  whyCareNote:      z.string().max(500).optional(),
+  whyCareNote:      z.string().max(5000).optional(),
 });
 
 export async function PATCH(
