@@ -161,6 +161,10 @@ export async function notifyReferrerRewarded(
       title:   '🎉 Referral reward earned!',
       message: `KES ${amountKes} credited to your wallet — your referral made their first forecast.`,
       link:    '/rada-friends.html',
+      whatsapp: {
+        template:   'REFERRAL_REWARD_CREDITED',
+        parameters: [String(amountKes)],
+      },
     });
   } catch {
     /* notifications are best-effort */

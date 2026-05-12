@@ -211,6 +211,10 @@ export async function POST(req: NextRequest) {
     title:   '⚡ You\'ve been challenged!',
     message: `${user.name ?? 'Someone'} challenged you on "${question.slice(0, 70)}..." Stake: KES ${stakePerPerson.toLocaleString()}. Code: ${accessCode}`,
     link:    `/join/${accessCode}`,
+    whatsapp: {
+      template:   'CHALLENGE_OPPONENT_STAKED',
+      parameters: [user.name ?? 'Someone', question.slice(0, 70), stakePerPerson.toLocaleString()],
+    },
   });
 
   if (refereeId) {
@@ -222,6 +226,10 @@ export async function POST(req: NextRequest) {
         title:   '⚖ You\'ve been nominated as referee',
         message: `${user.name ?? 'Someone'} nominated you to referee "${question.slice(0, 60)}..." Code: ${accessCode}`,
         link:    `/rada-friends.html`,
+        whatsapp: {
+          template:   'REFEREE_NOMINATED',
+          parameters: [user.name ?? 'Someone', question.slice(0, 60)],
+        },
       });
     }
   }

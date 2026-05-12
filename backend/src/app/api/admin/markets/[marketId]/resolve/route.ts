@@ -5,11 +5,18 @@
 // Resolution is fee-free: each winning share redeems for KES 1 in full.
 // Platform revenue = forecasting fees collected + market surplus (losers' residual).
 // DEFAULT_B seed (KES 1000) is virtual and excluded from revenue calculations.
+//
+// Notifications (added in Stage 2):
+// After the transaction commits, fire-and-forget notifications are created
+// for every winner and every loser. Notifications are deliberately created
+// OUTSIDE the transaction — they aren't critical state and a failure to
+// notify must not block the financial side of resolution.
 
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/db/prisma';
 import { requireAdmin, adminUnauthorized } from '@/lib/auth/admin';
+import { createNotification } from '@/lib/notifications';
 
 const DEFAULT_B = 1000; // Virtual LMSR seed — excluded from revenue
 
@@ -30,14 +37,18 @@ export async function POST(
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
   const { outcome, sourceNote } = parsed.data;
+  const losingSide = outcome === 'YES' ? 'NO' : 'YES';
 
-  // ── Validate market ──────────────────────────────────────────────────────
+  // ── Validate market AND fetch both winner + loser positions ───────────────
+  // The original query fetched only the winning side. We now also fetch the
+  // losing side so we can notify those users that the market resolved against
+  // their position.
   const market = await prisma.market.findUnique({
     where: { id: params.marketId },
     include: {
       positions: {
-        where: { side: outcome, shares: { gt: 0 } },
-        include: { user: true },
+        where: { shares: { gt: 0 } },          // both sides
+        include: { user: { select: { id: true, phone: true } } },
       },
     },
   });
@@ -51,12 +62,15 @@ export async function POST(
   const totalNo     = Number(market.noPool)  - DEFAULT_B;
   const isUnanimous = (outcome === 'YES' && totalNo <= 0) || (outcome === 'NO' && totalYes <= 0);
 
+  // ── Split positions into winners and losers ──────────────────────────────
+  const winningPositions = market.positions.filter(p => p.side === outcome);
+  const losingPositions  = market.positions.filter(p => p.side === losingSide);
+
   // ── Calculate winner payouts ──────────────────────────────────────────────
-  const payouts = market.positions.map(p => {
+  const payouts = winningPositions.map(p => {
     const netKes = Math.floor(Number(p.shares));
     return {
       userId:     p.userId,
-      phone:      p.user.phone,
       netKes,
       shares:     Number(p.shares),
       positionId: p.id,
@@ -144,18 +158,63 @@ export async function POST(
   const totalRevenue = totalFeesCollected + marketSurplus;
   console.log(`[RESOLVE] Market ${market.id} resolved as ${outcome}. Winners: ${payouts.length}, Payouts: KES ${totalPayouts}, Fees: KES ${totalFeesCollected}, Surplus: KES ${marketSurplus}, Total Revenue: KES ${totalRevenue}.`);
 
+  // ── Post-transaction: create notifications (fire-and-forget) ──────────────
+  // These run AFTER the financial transaction has committed. If any
+  // individual notification creation fails, the resolution itself is not
+  // rolled back — the user can still see the outcome via the market page.
+  //
+  // WhatsApp mirror is included; createNotification calls sendWhatsAppNotification
+  // internally, which is itself fail-closed (logs but never throws).
+  //
+  // Use a short title slice in the param payloads so they fit within Meta's
+  // template body limits (a body parameter caps around 1024 chars; market
+  // titles are typically <100 but we trim defensively).
+  const titleShort = market.title.length > 80 ? market.title.slice(0, 77) + '...' : market.title;
+  const outcomeLabel = outcome === 'YES' ? 'YES' : 'NO';
+
+  // Winner notifications
+  for (const p of payouts) {
+    void createNotification({
+      userId:  p.userId,
+      type:    'MARKET_RESOLVED',
+      title:   `🎉 You won KES ${p.netKes.toLocaleString()}`,
+      message: `Market resolved ${outcomeLabel}: "${titleShort}". Your winnings have been credited to your CheckRada wallet.`,
+      link:    '/rada-portfolio.html',
+      whatsapp: {
+        template:   'MARKET_RESOLVED_WON',
+        parameters: [p.netKes.toLocaleString(), titleShort],
+      },
+    });
+  }
+
+  // Loser notifications — only for users with shares > 0 on the losing side
+  for (const p of losingPositions) {
+    void createNotification({
+      userId:  p.userId,
+      type:    'MARKET_RESOLVED',
+      title:   `Market resolved ${outcomeLabel}`,
+      message: `"${titleShort}" resolved ${outcomeLabel}. Your shares did not win this time.`,
+      link:    '/rada-portfolio.html',
+      whatsapp: {
+        template:   'MARKET_RESOLVED_LOST',
+        parameters: [titleShort, outcomeLabel],
+      },
+    });
+  }
+
   return NextResponse.json({
     success:            true,
     outcome,
     marketId:           market.id,
     isUnanimous,
     winnersCount:       payouts.length,
+    losersCount:        losingPositions.length,
     totalPayoutKes:     totalPayouts,
     platformRevenue: {
       forecastingFees: totalFeesCollected,
       marketSurplus,
       total:           totalRevenue,
     },
-    note: 'Winnings credited to CheckRada wallets. Platform revenue recorded separately.',
+    note: 'Winnings credited to CheckRada wallets. Platform revenue recorded separately. Notifications dispatched.',
   });
 }

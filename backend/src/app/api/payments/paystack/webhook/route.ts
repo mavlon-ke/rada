@@ -12,6 +12,7 @@ import { prisma } from '@/lib/db/prisma';
 import { verifyWebhookSignature, verifyTransaction } from '@/lib/paystack/paystack.service';
 import { withErrorHandling } from '@/lib/security/route-guard';
 import { creditRefereeBonusOnDeposit } from '@/lib/referrals/referral.service';
+import { sendWhatsAppNotification } from '@/lib/whatsapp/whatsapp-notifications';
 
 export const dynamic = 'force-dynamic';
 
@@ -136,6 +137,15 @@ async function handleChargeSuccess(data: any) {
     });
   });
 
+  // Fire-and-forget WhatsApp mirror of the in-app notification just created.
+  // Placed AFTER the prisma.$transaction commits — if transaction rolled
+  // back, no WhatsApp send fires. Library is fail-closed (never throws).
+  void sendWhatsAppNotification(
+    transaction.userId,
+    'DEPOSIT_CONFIRMED',
+    [amountKes.toLocaleString()],
+  );
+
   // Delegate referral business logic to the service module — keeps this
   // webhook focused on payment infrastructure only.
   await creditRefereeBonusOnDeposit(transaction.userId, amountKes);
@@ -168,6 +178,13 @@ async function handleTransferSuccess(data: any) {
       link:    '/rada-portfolio.html',
     },
   });
+
+  // Fire-and-forget WhatsApp mirror.
+  void sendWhatsAppNotification(
+    transaction.userId,
+    'WITHDRAWAL_PROCESSED',
+    [Math.abs(Number(transaction.amountKes)).toLocaleString()],
+  );
 
   console.log(`[Paystack Webhook] ✅ Withdrawal confirmed for transaction ${transaction.id}`);
 }

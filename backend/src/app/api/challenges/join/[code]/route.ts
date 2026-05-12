@@ -99,6 +99,10 @@ export async function POST(
     title:   '🤝 Challenge accepted',
     message: `${user.name ?? 'Someone'} accepted your challenge "${challenge.question.slice(0, 50)}..." Pool: KES ${Number(updated.totalPool).toLocaleString()}`,
     link:    `/rada-friends.html`,
+    whatsapp: {
+      template:   'CHALLENGE_OPPONENT_STAKED',
+      parameters: [user.name ?? 'Someone', challenge.question.slice(0, 50), Number(updated.totalPool).toLocaleString()],
+    },
   });
 
   return NextResponse.json({ success: true, challengeId: challenge.id, status: 'ACTIVE' });

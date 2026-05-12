@@ -91,6 +91,10 @@ export async function POST(
       title:   '⚠️ Admin intervention requested',
       message: smsParticipants,
       link:    `/rada-friends.html`,
+      whatsapp: {
+        template:   'CHALLENGE_RESOLUTION_WARNING',
+        parameters: [challenge.question.slice(0, 50)],
+      },
     }) : Promise.resolve(),
     challenge.userB ? createNotification({
       userId:  challenge.userB.id,
@@ -98,6 +102,10 @@ export async function POST(
       title:   '⚠️ Admin intervention requested',
       message: smsParticipants,
       link:    `/rada-friends.html`,
+      whatsapp: {
+        template:   'CHALLENGE_RESOLUTION_WARNING',
+        parameters: [challenge.question.slice(0, 50)],
+      },
     }) : Promise.resolve(),
   ]);
   console.info(`[Dispute] Admin intervention requested on challenge ${challenge.id} by ${requesterName}. Pool: KES ${Number(challenge.totalPool).toLocaleString()}.`);

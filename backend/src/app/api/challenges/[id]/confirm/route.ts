@@ -97,6 +97,10 @@ export async function POST(
       title:   '⏳ Opponent submitted a result',
       message: `Your opponent submitted their result for "${challenge.question.slice(0, 50)}...". Confirm or dispute within 48h to keep the 5% fee.`,
       link:    `/rada-friends.html`,
+      whatsapp: {
+        template:   'CHALLENGE_RESOLUTION_WINDOW',
+        parameters: [challenge.question.slice(0, 50)],
+      },
     });
   }
 

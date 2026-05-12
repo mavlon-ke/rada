@@ -755,10 +755,13 @@ body::after {
     </button>
     <button class="nav-item" onclick="showPanel('bounties', this)">
       <span class="nav-icon">💰</span><span>Bounty Ledger</span>
-    </button>
-    <button class="nav-item" onclick="showPanel('creator-programme', this)">
+      <button class="nav-item" onclick="showPanel('creator-programme', this)">
       <span class="nav-icon">⚙️</span><span>Creator Programme</span>
     </button>
+    <button class="nav-item" onclick="showPanel('whatsapp-config', this)">
+      <span class="nav-icon">💬</span><span>WhatsApp Notifications</span>
+    </button></button>
+    
   </div>
   <div class="sidebar-section">
     <div class="sidebar-section-label">Intelligence</div>
@@ -1446,6 +1449,94 @@ body::after {
         <div id="cpAuditTrail" style="margin-top:18px;padding:10px 14px;background:#f0edff;border-radius:8px;font-size:0.62rem;color:#4c1d95;display:none;">
           <span id="cpAuditText"></span>
         </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- WhatsApp Notifications Panel                                         -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <div class="panel" id="panel-whatsapp-config">
+      <div class="page-title">💬 WhatsApp Notifications</div>
+      <div class="page-sub">Control which transactional notification types are mirrored to WhatsApp. The Meta WhatsApp Business account is the same one used for OTP — keep templates clean to protect that critical login channel. Defaults to LOG-ONLY mode until WHATSAPP_NOTIFS_ENABLED env var is set to true in Vercel.</div>
+
+      <div class="stat-card" style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+          <div>
+            <div class="stat-label">Global Switch</div>
+            <div style="font-size:0.6rem;color:#9284b8;margin-top:4px;">Emergency kill — disables ALL WhatsApp notifications regardless of per-type toggles. OTP is unaffected.</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span id="waStatusLabel" style="font-size:0.72rem;font-weight:700;color:#16a34a;">ON</span>
+            <label class="toggle-switch">
+              <input type="checkbox" id="waGlobalToggle" checked>
+              <span class="toggle-track"></span>
+            </label>
+          </div>
+        </div>
+
+        <div style="border-top:1px solid rgba(109,40,217,0.18);padding-top:18px;">
+          <div class="stat-label" style="margin-bottom:12px;">Per-Type Toggles</div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+            <label style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:#f0edff;border-radius:8px;cursor:pointer;">
+              <span style="font-size:0.7rem;font-weight:600;color:#1a1035;">💰 Deposit confirmed</span>
+              <input type="checkbox" id="waToggleDepositConfirmed" checked>
+            </label>
+            <label style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:#f0edff;border-radius:8px;cursor:pointer;">
+              <span style="font-size:0.7rem;font-weight:600;color:#1a1035;">📤 Withdrawal processed</span>
+              <input type="checkbox" id="waToggleWithdrawalProcessed" checked>
+            </label>
+            <label style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:#f0edff;border-radius:8px;cursor:pointer;">
+              <span style="font-size:0.7rem;font-weight:600;color:#1a1035;">🎉 Market resolved (won)</span>
+              <input type="checkbox" id="waToggleMarketResolvedWon" checked>
+            </label>
+            <label style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:#f0edff;border-radius:8px;cursor:pointer;">
+              <span style="font-size:0.7rem;font-weight:600;color:#1a1035;">📉 Market resolved (lost)</span>
+              <input type="checkbox" id="waToggleMarketResolvedLost" checked>
+            </label>
+            <label style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:#f0edff;border-radius:8px;cursor:pointer;">
+              <span style="font-size:0.7rem;font-weight:600;color:#1a1035;">🎁 Referral reward credited</span>
+              <input type="checkbox" id="waToggleReferralRewardCredited" checked>
+            </label>
+            <label style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:#f0edff;border-radius:8px;cursor:pointer;">
+              <span style="font-size:0.7rem;font-weight:600;color:#1a1035;">⚖ Referee nominated</span>
+              <input type="checkbox" id="waToggleRefereeNominated" checked>
+            </label>
+            <label style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:#f0edff;border-radius:8px;cursor:pointer;">
+              <span style="font-size:0.7rem;font-weight:600;color:#1a1035;">⚡ Challenge opponent staked</span>
+              <input type="checkbox" id="waToggleChallengeOpponentStaked" checked>
+            </label>
+            <label style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:#f0edff;border-radius:8px;cursor:pointer;">
+              <span style="font-size:0.7rem;font-weight:600;color:#1a1035;">⏳ Challenge resolution window</span>
+              <input type="checkbox" id="waToggleChallengeResolutionWindow" checked>
+            </label>
+            <label style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:#f0edff;border-radius:8px;cursor:pointer;">
+              <span style="font-size:0.7rem;font-weight:600;color:#1a1035;">⚠️ Challenge resolution warning</span>
+              <input type="checkbox" id="waToggleChallengeResolutionWarning" checked>
+            </label>
+          </div>
+        </div>
+
+        <div style="margin-top:18px;">
+          <button onclick="saveWhatsappConfig()" style="padding:12px 24px;background:#6d28d9;color:#fff;border:none;border-radius:10px;font-size:0.78rem;font-weight:700;cursor:pointer;font-family:inherit;">💾 Save Configuration</button>
+          <div id="waSaveStatus" style="font-size:0.65rem;color:#16a34a;margin-top:10px;min-height:16px;"></div>
+        </div>
+
+        <div id="waAuditTrail" style="margin-top:18px;padding:10px 14px;background:#f0edff;border-radius:8px;font-size:0.62rem;color:#4c1d95;display:none;">
+          <span id="waAuditText"></span>
+        </div>
+      </div>
+
+      <!-- Opt-out section -->
+      <div class="stat-card">
+        <div class="stat-label" style="margin-bottom:12px;">Opt-out a user (STOP reply handler)</div>
+        <div style="font-size:0.62rem;color:#9284b8;margin-bottom:10px;">When a user replies STOP to a WhatsApp message, set them as opted-out here. They will continue to receive in-app notifications.</div>
+        <div style="display:flex;gap:10px;align-items:center;">
+          <input class="table-input" type="text" id="waOptoutUserId" placeholder="User ID (cuid) or phone (07XXXXXXXX)" style="flex:1;">
+          <button onclick="setUserWhatsappOptout(true)"  style="padding:10px 14px;background:#ce1126;color:#fff;border:none;border-radius:8px;font-size:0.7rem;font-weight:700;cursor:pointer;font-family:inherit;">Set OPTED-OUT</button>
+          <button onclick="setUserWhatsappOptout(false)" style="padding:10px 14px;background:#16a34a;color:#fff;border:none;border-radius:8px;font-size:0.7rem;font-weight:700;cursor:pointer;font-family:inherit;">Clear opt-out</button>
+        </div>
+        <div id="waOptoutStatus" style="font-size:0.65rem;margin-top:10px;min-height:16px;"></div>
       </div>
     </div>
 
@@ -2443,7 +2534,7 @@ function exportDataApps() {
 // All panel IDs — used to explicitly hide/show panels
 var ALL_PANEL_IDS = [
   'dashboard','markets','create-market','resolve','users','kyc','transactions',
-  'payouts','proposals','bounties','creator-programme','activity','revenue','disputes','suggestions','b2b',
+  'payouts','proposals','bounties','creator-programme','whatsapp-config','activity','revenue','disputes','suggestions','b2b',
   'admin-log','carousel','referral','dataapps','blacklist'
 ];
 
@@ -2490,6 +2581,7 @@ function showPanel(id, btn) {
   if (id === 'carousel')      { setTimeout(function() { initCarouselAdmin(); loadCarouselFromBackend(); }, 50); }
   if (id === 'referral')      { setTimeout(loadReferralConfig, 50); }
   if (id === 'creator-programme') { loadCreatorProgrammeConfig(); }
+  if (id === 'whatsapp-config')   { loadWhatsappConfig(); }
   if (id === 'dataapps')      { setTimeout(loadDataApplications, 50); }
   if (id === 'admin-log')     { loadAdminLogStats(); loadActivityFeed('adminLogBody'); }
   if (id === 'b2b')           { loadB2BAnalytics(); }
@@ -4243,6 +4335,131 @@ function saveCreatorProgrammeConfig() {
   var suggestion = parseFloat((document.getElementById('cpSuggestionRewardInput')   || {value:50}).value);
   var bountyMin  = parseFloat((document.getElementById('cpBountyMinInput')          || {value:100}).value);
   var statusEl   = document.getElementById('cpSaveStatus');
+
+// ─── WhatsApp Notifications config ────────────────────────────────────────
+
+var WA_TOGGLE_FIELDS = [
+  ['waToggleDepositConfirmed',             'depositConfirmedEnabled'],
+  ['waToggleWithdrawalProcessed',          'withdrawalProcessedEnabled'],
+  ['waToggleMarketResolvedWon',            'marketResolvedWonEnabled'],
+  ['waToggleMarketResolvedLost',           'marketResolvedLostEnabled'],
+  ['waToggleReferralRewardCredited',       'referralRewardCreditedEnabled'],
+  ['waToggleRefereeNominated',             'refereeNominatedEnabled'],
+  ['waToggleChallengeOpponentStaked',      'challengeOpponentStakedEnabled'],
+  ['waToggleChallengeResolutionWindow',    'challengeResolutionWindowEnabled'],
+  ['waToggleChallengeResolutionWarning',   'challengeResolutionWarningEnabled'],
+];
+
+function loadWhatsappConfig() {
+  adminFetch('/api/admin/config/whatsapp').then(function(r) { return r.json(); }).then(function(cfg) {
+    if (!cfg || cfg.error) {
+      console.error('loadWhatsappConfig:', cfg && cfg.error);
+      return;
+    }
+
+    var gt  = document.getElementById('waGlobalToggle');
+    var lbl = document.getElementById('waStatusLabel');
+    if (gt) {
+      gt.checked = cfg.globalEnabled !== false;
+      if (lbl) {
+        lbl.textContent = gt.checked ? 'ON' : 'OFF';
+        lbl.style.color = gt.checked ? '#16a34a' : '#ce1126';
+      }
+    }
+
+    WA_TOGGLE_FIELDS.forEach(function(pair) {
+      var el = document.getElementById(pair[0]);
+      if (el) el.checked = cfg[pair[1]] !== false;
+    });
+
+    // Audit trail
+    var auditBox  = document.getElementById('waAuditTrail');
+    var auditText = document.getElementById('waAuditText');
+    if (auditBox && auditText && cfg.updatedAt) {
+      var when = new Date(cfg.updatedAt).toLocaleString();
+      var who  = (cfg.updatedByAdmin && cfg.updatedByAdmin.name) || (cfg.updatedByAdmin && cfg.updatedByAdmin.email) || 'system';
+      auditText.textContent = 'Last updated ' + when + ' by ' + who + '.';
+      auditBox.style.display = 'block';
+    }
+  }).catch(function(err) {
+    console.error('loadWhatsappConfig:', err);
+  });
+}
+
+function saveWhatsappConfig() {
+  var statusEl = document.getElementById('waSaveStatus');
+  if (statusEl) { statusEl.textContent = 'Saving...'; statusEl.style.color = '#9284b8'; }
+
+  var body = {};
+  var gt = document.getElementById('waGlobalToggle');
+  if (gt) body.globalEnabled = !!gt.checked;
+
+  WA_TOGGLE_FIELDS.forEach(function(pair) {
+    var el = document.getElementById(pair[0]);
+    if (el) body[pair[1]] = !!el.checked;
+  });
+
+  adminFetch('/api/admin/config/whatsapp', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  }).then(function(r) { return r.json(); }).then(function(d) {
+    if (d.success) {
+      if (statusEl) { statusEl.textContent = '✓ Saved'; statusEl.style.color = '#16a34a'; }
+      loadWhatsappConfig();  // refresh audit trail
+    } else {
+      if (statusEl) { statusEl.textContent = 'Error: ' + JSON.stringify(d.error || d); statusEl.style.color = '#ce1126'; }
+    }
+  }).catch(function(err) {
+    if (statusEl) { statusEl.textContent = 'Network error'; statusEl.style.color = '#ce1126'; }
+    console.error('saveWhatsappConfig:', err);
+  });
+}
+
+function setUserWhatsappOptout(optedOut) {
+  var statusEl = document.getElementById('waOptoutStatus');
+  var raw      = (document.getElementById('waOptoutUserId') || {value:''}).value.trim();
+  if (!raw) {
+    if (statusEl) { statusEl.textContent = 'Please enter a user ID or phone number'; statusEl.style.color = '#ce1126'; }
+    return;
+  }
+
+  // If input looks like a phone (digits with optional +/254/0 prefix), look up the user first.
+  var looksLikePhone = /^[+0-9]/.test(raw) && /\d{6,}/.test(raw);
+  var resolveUserId  = looksLikePhone
+    ? adminFetch('/api/admin/users?search=' + encodeURIComponent(raw)).then(function(r) { return r.json(); }).then(function(d) {
+        var match = (d.users || []).find(function(u) { return u.phone && u.phone.replace(/\D/g, '').endsWith(raw.replace(/\D/g, '').slice(-9)); });
+        return match ? match.id : null;
+      })
+    : Promise.resolve(raw);
+
+  if (statusEl) { statusEl.textContent = 'Working...'; statusEl.style.color = '#9284b8'; }
+
+  resolveUserId.then(function(userId) {
+    if (!userId) {
+      if (statusEl) { statusEl.textContent = 'User not found'; statusEl.style.color = '#ce1126'; }
+      return null;
+    }
+    return adminFetch('/api/admin/users/' + encodeURIComponent(userId) + '/whatsapp-optout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ optedOut: !!optedOut }),
+    }).then(function(r) { return r.json(); });
+  }).then(function(d) {
+    if (!d) return;
+    if (d.success) {
+      if (statusEl) {
+        statusEl.textContent = optedOut ? '✓ User marked OPTED-OUT' : '✓ Opt-out cleared';
+        statusEl.style.color = '#16a34a';
+      }
+    } else {
+      if (statusEl) { statusEl.textContent = 'Error: ' + (d.error || 'unknown'); statusEl.style.color = '#ce1126'; }
+    }
+  }).catch(function(err) {
+    if (statusEl) { statusEl.textContent = 'Network error'; statusEl.style.color = '#ce1126'; }
+    console.error('setUserWhatsappOptout:', err);
+  });
+}
 
   // Client-side validation matching server-side hard caps (server is source of truth)
   if (isNaN(ratePct) || ratePct < 0 || ratePct > 5) {
