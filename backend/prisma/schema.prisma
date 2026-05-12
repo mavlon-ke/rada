@@ -21,6 +21,7 @@ model User {
   agreedToTerms   Boolean   @default(false)
   confirmedAge    Boolean   @default(false)
   integrityScore  Int       @default(100)
+  whatsappOptedOut Boolean   @default(false)
   referralCode    String?   @unique
   referredBy      String?
   createdAt       DateTime  @default(now())
@@ -52,7 +53,8 @@ model AdminAccount {
   createdAt    DateTime  @default(now())
 
   activityLogs        AdminActivityLog[]
-  platformConfigEdits PlatformConfig[]
+  platformConfigEdits PlatformConfig[]   @relation("PlatformConfigUpdatedBy")
+  whatsappConfigEdits WhatsappConfig[]   @relation("WhatsappConfigUpdatedBy")
 
   @@map("admin_accounts")
 }
@@ -302,13 +304,30 @@ model PlatformConfig {
 
   
   updatedByAdminId            String?
-  updatedByAdmin              AdminAccount? @relation(fields: [updatedByAdminId], references: [id], onDelete: SetNull)
+  updatedByAdmin              AdminAccount? @relation("PlatformConfigUpdatedBy", fields: [updatedByAdminId], references: [id], onDelete: SetNull)
 
   updatedAt                   DateTime  @updatedAt
 
   @@map("platform_config")
 }
+model WhatsappConfig {
+  id                                  String   @id @default("singleton")
+  globalEnabled                       Boolean  @default(true)
+  depositConfirmedEnabled             Boolean  @default(true)
+  withdrawalProcessedEnabled          Boolean  @default(true)
+  marketResolvedWonEnabled            Boolean  @default(true)
+  marketResolvedLostEnabled           Boolean  @default(true)
+  referralRewardCreditedEnabled       Boolean  @default(true)
+  refereeNominatedEnabled             Boolean  @default(true)
+  challengeOpponentStakedEnabled      Boolean  @default(true)
+  challengeResolutionWindowEnabled    Boolean  @default(true)
+  challengeResolutionWarningEnabled   Boolean  @default(true)
+  updatedByAdminId                    String?
+  updatedByAdmin                      AdminAccount? @relation("WhatsappConfigUpdatedBy", fields: [updatedByAdminId], references: [id], onDelete: SetNull)
+  updatedAt                           DateTime  @updatedAt
 
+  @@map("whatsapp_config")
+}
 model Referral {
   id                String         @id @default(cuid())
   referrerId        String
