@@ -104,7 +104,7 @@ export const POST = withErrorHandling(async (req: NextRequest) => {
     });
 
     // Send transferAmount (amountKes minus fee) to M-Pesa
-    cconst transfer = await initiateTransfer({
+    const transfer = await initiateTransfer({
       amountKes:     transferAmount,
       recipientCode: recipient.recipient_code,
       reference,
