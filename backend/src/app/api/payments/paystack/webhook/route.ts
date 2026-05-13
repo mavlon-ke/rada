@@ -138,7 +138,7 @@ async function handleChargeSuccess(data: any) {
   });
 
 // Diagnostic — confirm we reach this point
-  console.log([Webhook DIAG] About to call sendWhatsAppNotification for user ${transaction.userId});
+  console.log('[Webhook DIAG] About to call sendWhatsAppNotification for user ${transaction.userId}');
 
   // Fire-and-forget WhatsApp mirror of the in-app notification just created.
   // Placed AFTER the prisma.$transaction commits — if transaction rolled
