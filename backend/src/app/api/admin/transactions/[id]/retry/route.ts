@@ -56,12 +56,13 @@ export async function POST(
       reason: `Retry payout — original txn ${txn.id}`,
     });
 
-    // Update original transaction to SUCCESS
+    // Update original transaction to SUCCESS.
+    // mpesaRef intentionally NOT updated — keep the original CKR-... reference
+    // so any webhook flow or audit trail referencing it remains valid.
     await prisma.transaction.update({
       where: { id: params.id },
       data: {
-        status:   'SUCCESS',
-        mpesaRef: transfer.transfer_code || reference,
+        status: 'SUCCESS',
       },
     });
 

@@ -182,8 +182,6 @@ async function handleTransferSuccess(data: any) {
     },
   });
 
-// Diagnostic — confirm we reach this point
-  console.log('[Webhook DIAG] About to call sendWhatsAppNotification for user ${transaction.userId}');
 
   // Fire-and-forget WhatsApp mirror.
   void sendWhatsAppNotification(

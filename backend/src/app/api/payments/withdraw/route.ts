@@ -104,17 +104,22 @@ export const POST = withErrorHandling(async (req: NextRequest) => {
     });
 
     // Send transferAmount (amountKes minus fee) to M-Pesa
-    const transfer = await initiateTransfer({
+    cconst transfer = await initiateTransfer({
       amountKes:     transferAmount,
       recipientCode: recipient.recipient_code,
       reference,
       reason: 'CheckRada Withdrawal',
     });
 
-    await prisma.transaction.update({
-      where: { id: result.transaction.id },
-      data:  { mpesaRef: transfer.transfer_code },
-    });
+    // NOTE: We deliberately do NOT overwrite mpesaRef with transfer.transfer_code.
+    // Paystack's transfer.success webhook sends data.reference = our CKR-WIT-...
+    // reference. The webhook handler looks up the DB row by that field. If we
+    // overwrite mpesaRef with the TRF_... transfer_code, the webhook lookup
+    // silently fails and the row stays PENDING forever (which is what caused
+    // the May 2026 withdrawal-notification bug).
+    //
+    // If you ever need the Paystack transfer_code for reconciliation, query
+    // Paystack's transferList API with the CKR-WIT-... reference.
 
     return NextResponse.json({
       success:        true,
