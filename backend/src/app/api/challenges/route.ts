@@ -213,7 +213,7 @@ export async function POST(req: NextRequest) {
     link:    `/join/${accessCode}`,
     whatsapp: {
       template:   'CHALLENGE_OPPONENT_STAKED',
-      parameters: [user.name ?? 'Someone', question.slice(0, 70), stakePerPerson.toLocaleString()],
+      parameters: [user.name ?? 'Someone', stakePerPerson.toLocaleString()],
     },
   });
 
@@ -228,7 +228,7 @@ export async function POST(req: NextRequest) {
         link:    `/rada-friends.html`,
         whatsapp: {
           template:   'REFEREE_NOMINATED',
-          parameters: [user.name ?? 'Someone', question.slice(0, 60)],
+          parameters: [user.name ?? 'Someone'],
         },
       });
     }

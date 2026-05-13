@@ -101,7 +101,7 @@ export async function POST(
     link:    `/rada-friends.html`,
     whatsapp: {
       template:   'CHALLENGE_OPPONENT_STAKED',
-      parameters: [user.name ?? 'Someone', challenge.question.slice(0, 50), Number(updated.totalPool).toLocaleString()],
+      parameters: [user.name ?? 'Someone', Number(updated.totalPool).toLocaleString()],
     },
   });
 

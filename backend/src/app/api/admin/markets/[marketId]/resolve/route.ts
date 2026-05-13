@@ -182,7 +182,7 @@ export async function POST(
       link:    '/rada-portfolio.html',
       whatsapp: {
         template:   'MARKET_RESOLVED_WON',
-        parameters: [p.netKes.toLocaleString(), titleShort],
+        parameters: [p.netKes.toLocaleString()],
       },
     });
   }
@@ -197,7 +197,7 @@ export async function POST(
       link:    '/rada-portfolio.html',
       whatsapp: {
         template:   'MARKET_RESOLVED_LOST',
-        parameters: [titleShort, outcomeLabel],
+        parameters: [],
       },
     });
   }
