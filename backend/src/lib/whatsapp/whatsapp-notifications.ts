@@ -24,6 +24,12 @@
 // Phone numbers are redacted in logs (last 4 digits only) to prevent PII
 // disclosure via Vercel log access. Bearer tokens and access_token values
 // are scrubbed from any Meta error body before logging.
+//
+// IMAGE HEADERS:
+// Templates that were approved at Meta with image headers MUST receive an
+// image URL in every send request — Meta uses the upload-during-submission
+// only for review, not for runtime delivery. Templates with image headers
+// are listed in TEMPLATE_IMAGE_URLS below. All other templates send body-only.
 
 import { prisma } from '@/lib/db/prisma';
 import { normaliseToE164 } from './whatsapp-otp';
@@ -81,6 +87,34 @@ const TEMPLATE_NAMES: Record<WhatsAppTemplateKey, string> = {
   CHALLENGE_OPPONENT_STAKED:   'checkrada_challenge_staked',
   CHALLENGE_RESOLUTION_WINDOW: 'checkrada_challenge_window',
   CHALLENGE_RESOLUTION_WARNING:'checkrada_challenge_warning',
+};
+
+// ─── Image header configuration ───────────────────────────────────────────────
+// Templates that were approved with image headers must receive an image URL
+// in every send. The image you uploaded to Meta during submission is ONLY
+// used for their review — at runtime, the image you specify here is what
+// users actually receive.
+//
+// Image URL requirements (per Meta documentation):
+//   - Must be publicly accessible HTTPS URL
+//   - PNG or JPEG format
+//   - Under 5 MB
+//   - Reachable from Meta's servers (not behind auth, not Cloudflare-blocked)
+//
+// To add image header support to another template:
+//   1. Edit the template at Meta to include an image header
+//   2. Add an entry to this map: TEMPLATE_KEY: 'https://...'
+//
+// To remove image header from a template:
+//   1. Edit the template at Meta to remove the image header
+//   2. Wait for Meta re-approval
+//   3. Delete the entry from this map
+//
+// Partial map is intentional — only listed templates send image headers.
+// Templates not listed here send body-only payloads (no header component).
+
+const TEMPLATE_IMAGE_URLS: Partial<Record<WhatsAppTemplateKey, string>> = {
+  MARKET_RESOLVED_WON: 'https://checkrada.co.ke/assets/og/profile-checkrada.png',
 };
 
 // ─── In-memory config cache (60s TTL) ─────────────────────────────────────────
@@ -219,9 +253,25 @@ export async function sendWhatsAppNotification(
       return;
     }
 
-    // ─── Build payload ───────────────────────────────────────────────────────
+    // ─── Build payload components ────────────────────────────────────────────
+    // Order matters: Meta expects components in [header, body] order when both
+    // are present. We assemble conditionally so templates without image headers
+    // continue sending body-only payloads (unchanged from prior behaviour).
     const templateName = TEMPLATE_NAMES[templateKey];
     const components: any[] = [];
+
+    // Header component — only for templates that were approved with an image.
+    const imageUrl = TEMPLATE_IMAGE_URLS[templateKey];
+    if (imageUrl) {
+      components.push({
+        type: 'header',
+        parameters: [
+          { type: 'image', image: { link: imageUrl } },
+        ],
+      });
+    }
+
+    // Body component — only if the template has body parameters.
     if (parameters.length > 0) {
       components.push({
         type: 'body',
