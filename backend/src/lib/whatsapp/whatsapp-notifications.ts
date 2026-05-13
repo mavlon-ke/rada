@@ -114,7 +114,12 @@ const TEMPLATE_NAMES: Record<WhatsAppTemplateKey, string> = {
 // Templates not listed here send body-only payloads (no header component).
 
 const TEMPLATE_IMAGE_URLS: Partial<Record<WhatsAppTemplateKey, string>> = {
-  MARKET_RESOLVED_WON: 'https://checkrada.co.ke/assets/og/profile-checkrada.png',
+  MARKET_RESOLVED_WON:         'https://checkrada.co.ke/assets/og/profile-checkrada.png',
+  CHALLENGE_OPPONENT_STAKED:   'https://checkrada.co.ke/assets/og/profile-checkrada.png',
+  REFERRAL_REWARD_CREDITED:    'https://checkrada.co.ke/assets/og/profile-checkrada.png',
+  REFEREE_NOMINATED:           'https://checkrada.co.ke/assets/og/profile-checkrada-white.png',
+  CHALLENGE_RESOLUTION_WARNING:'https://checkrada.co.ke/assets/og/profile-checkrada-white.png',
+  CHALLENGE_RESOLUTION_WINDOW: 'https://checkrada.co.ke/assets/og/profile-checkrada.png',
 };
 
 // ─── In-memory config cache (60s TTL) ─────────────────────────────────────────
