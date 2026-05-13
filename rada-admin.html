@@ -2664,7 +2664,7 @@ function saveMarketEdits() {
 
   var body = { title: title, description: desc, category: cat, sourceNote: source };
   if (closesAt) body.closesAt = new Date(closesAt).toISOString();
-  if (image)    body.imageUrl = image;
+  body.imageUrl = image;  // always send — backend converts '' to null to clear
 
   adminFetch('/api/admin/markets/' + currentEditMarketId, {
     method: 'PATCH',
