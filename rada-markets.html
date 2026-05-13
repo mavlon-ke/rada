@@ -194,6 +194,18 @@ nav {
   
 }
 .market-card:hover { border-color: var(--border-bright); transform: translateY(-2px); box-shadow: 0 8px 32px rgba(109,40,217,0.06); }
+.market-card.has-hero { padding: 0; overflow: hidden; }
+.market-card.has-hero .card-hero {
+  width: 100%; aspect-ratio: 16 / 9; overflow: hidden;
+  background: #f3f0ff; position: relative;
+  border-bottom: 1px solid rgba(109,40,217,0.08);
+}
+.market-card.has-hero .card-hero img {
+  width: 100%; height: 100%; object-fit: cover; display: block;
+}
+.market-card.has-hero .card-body {
+  padding: 20px; display: flex; flex-direction: column; gap: 0;
+}
 @keyframes cardIn { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
 
 .card-category {
@@ -1418,6 +1430,7 @@ function normalizeMarket(m) {
     shift:       0,
     velocity:    Math.min(Math.floor((m.tradeCount || 0) / 5), 30),
     isSocialChallenge: m.isSocialChallenge || false,
+    imageUrl:    m.imageUrl || null,
   };
 }
 
@@ -1623,28 +1636,31 @@ function renderMarkets(data) {
   }
 
   grid.innerHTML = data.map((m, i) => `
-    <div class="market-card" id="mcard_${m.id}" style="opacity:1!important;visibility:visible!important;" onclick="openForecast('${m.id}')">
-      <div class="card-category"><div class="cat-dot"></div>${m.cat}</div>
-      ${m.creator ? `<div class="creator-badge">💡 ${m.creator} · Creator</div>` : ''}
-      <div class="card-question">${m.q}</div>
-      <div class="prob-bar-wrap">
-        <div class="prob-labels">
-          <span class="prob-yes">YES ${m.yes}%</span>
-          <span class="prob-no">NO ${100 - m.yes}%</span>
+    <div class="market-card${m.imageUrl ? ' has-hero' : ''}" id="mcard_${m.id}" style="opacity:1!important;visibility:visible!important;" onclick="openForecast('${m.id}')">
+      ${m.imageUrl ? `<div class="card-hero"><img src="${m.imageUrl}" alt="" loading="lazy" onerror="this.parentElement.style.display='none'"></div>` : ''}
+      <div class="${m.imageUrl ? 'card-body' : ''}">
+        <div class="card-category"><div class="cat-dot"></div>${m.cat}</div>
+        ${m.creator ? `<div class="creator-badge">💡 ${m.creator} · Creator</div>` : ''}
+        <div class="card-question">${m.q}</div>
+        <div class="prob-bar-wrap">
+          <div class="prob-labels">
+            <span class="prob-yes">YES ${m.yes}%</span>
+            <span class="prob-no">NO ${100 - m.yes}%</span>
+          </div>
+          <div class="prob-bar"><div class="prob-fill-yes" style="width:${m.yes}%"></div></div>
         </div>
-        <div class="prob-bar"><div class="prob-fill-yes" style="width:${m.yes}%"></div></div>
+        <div class="card-meta">
+          <div class="card-meta-item">📊 ${m.vol}</div>
+          <div class="card-meta-item">👥 ${m.traders}</div>
+          <div class="card-meta-item">⏰ ${m.closes}</div>
+        </div>
+        <div class="card-actions">
+          <button class="btn-yes" onclick="event.stopPropagation();openForecast('${m.id}','YES')">YES</button>
+          <button class="btn-no"  onclick="event.stopPropagation();openForecast('${m.id}','NO')">NO</button>
+          <button class="card-multi-btn" id="multibtn_${m.id}" data-q="${m.q.slice(0,80)}" onclick="event.stopPropagation();toggleMultiAdd('${m.id}',this.dataset.q,${m.yes})">+ Multi</button>
+        </div>
+        <button class="card-share-btn" onclick="event.stopPropagation();smartShare('${m.id}','${m.slug}',this)">⤴ Share</button>
       </div>
-      <div class="card-meta">
-        <div class="card-meta-item">📊 ${m.vol}</div>
-        <div class="card-meta-item">👥 ${m.traders}</div>
-        <div class="card-meta-item">⏰ ${m.closes}</div>
-      </div>
-      <div class="card-actions">
-        <button class="btn-yes" onclick="event.stopPropagation();openForecast('${m.id}','YES')">YES</button>
-        <button class="btn-no"  onclick="event.stopPropagation();openForecast('${m.id}','NO')">NO</button>
-        <button class="card-multi-btn" id="multibtn_${m.id}" data-q="${m.q.slice(0,80)}" onclick="event.stopPropagation();toggleMultiAdd('${m.id}',this.dataset.q,${m.yes})">+ Multi</button>
-      </div>
-      <button class="card-share-btn" onclick="event.stopPropagation();smartShare('${m.id}','${m.slug}',this)">⤴ Share</button>
     </div>
   `).join('');
 }
@@ -1683,32 +1699,35 @@ function renderTrending() {
       </div>
     </div>
   ` + ranked.map((m, i) => `
-    <div class="market-card" id="mcard_${m.id}" onclick="openForecast('${m.id}')">
-      <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
-        <span class="trend-rank">#${i+1}</span>
-        <div class="card-category" style="margin-bottom:0"><div class="cat-dot"></div>${m.cat}</div>
-      </div>
-      <div style="margin-bottom:6px;">${trendBadges(m)}</div>
-      ${m.creator ? `<div class="creator-badge">💡 ${m.creator} · Creator</div>` : ''}
-      <div class="card-question">${m.q}</div>
-      <div class="prob-bar-wrap">
-        <div class="prob-labels">
-          <span class="prob-yes">YES ${m.yes}%</span>
-          <span class="prob-no">NO ${100 - m.yes}%</span>
+    <div class="market-card${m.imageUrl ? ' has-hero' : ''}" id="mcard_${m.id}" onclick="openForecast('${m.id}')">
+      ${m.imageUrl ? `<div class="card-hero"><img src="${m.imageUrl}" alt="" loading="lazy" onerror="this.parentElement.style.display='none'"></div>` : ''}
+      <div class="${m.imageUrl ? 'card-body' : ''}">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+          <span class="trend-rank">#${i+1}</span>
+          <div class="card-category" style="margin-bottom:0"><div class="cat-dot"></div>${m.cat}</div>
         </div>
-        <div class="prob-bar"><div class="prob-fill-yes" style="width:${m.yes}%"></div></div>
+        <div style="margin-bottom:6px;">${trendBadges(m)}</div>
+        ${m.creator ? `<div class="creator-badge">💡 ${m.creator} · Creator</div>` : ''}
+        <div class="card-question">${m.q}</div>
+        <div class="prob-bar-wrap">
+          <div class="prob-labels">
+            <span class="prob-yes">YES ${m.yes}%</span>
+            <span class="prob-no">NO ${100 - m.yes}%</span>
+          </div>
+          <div class="prob-bar"><div class="prob-fill-yes" style="width:${m.yes}%"></div></div>
+        </div>
+        <div class="card-meta">
+          <div class="card-meta-item">📊 ${m.vol}</div>
+          <div class="card-meta-item">👥 ${m.traders}</div>
+          <div class="card-meta-item">⏰ ${m.closes}</div>
+        </div>
+        <div class="card-actions">
+          <button class="btn-yes" onclick="event.stopPropagation();openForecast('${m.id}','YES')">YES</button>
+          <button class="btn-no"  onclick="event.stopPropagation();openForecast('${m.id}','NO')">NO</button>
+          <button class="card-multi-btn" id="multibtn_${m.id}" data-q="${m.q.slice(0,80)}" onclick="event.stopPropagation();toggleMultiAdd('${m.id}',this.dataset.q,${m.yes})">+ Multi</button>
+        </div>
+        <button class="card-share-btn" onclick="event.stopPropagation();smartShare('${m.id}','${m.slug}',this)">⤴ Share</button>
       </div>
-      <div class="card-meta">
-        <div class="card-meta-item">📊 ${m.vol}</div>
-        <div class="card-meta-item">👥 ${m.traders}</div>
-        <div class="card-meta-item">⏰ ${m.closes}</div>
-      </div>
-      <div class="card-actions">
-        <button class="btn-yes" onclick="event.stopPropagation();openForecast('${m.id}','YES')">YES</button>
-        <button class="btn-no"  onclick="event.stopPropagation();openForecast('${m.id}','NO')">NO</button>
-        <button class="card-multi-btn" id="multibtn_${m.id}" data-q="${m.q.slice(0,80)}" onclick="event.stopPropagation();toggleMultiAdd('${m.id}',this.dataset.q,${m.yes})">+ Multi</button>
-      </div>
-      <button class="card-share-btn" onclick="event.stopPropagation();smartShare('${m.id}','${m.slug}',this)">⤴ Share</button>
     </div>
   `).join('');
 }
