@@ -195,18 +195,23 @@ nav {
   
 }
 .market-card:hover { border-color: var(--border-bright); transform: translateY(-2px); box-shadow: 0 8px 32px rgba(109,40,217,0.06); }
-.market-card.has-hero { padding: 0; overflow: hidden; }
-.market-card.has-hero .card-hero {
-  width: 100%; aspect-ratio: 16 / 9; overflow: hidden;
-  background: #f3f0ff; position: relative;
-  border-bottom: 1px solid rgba(109,40,217,0.08);
+.card-title-row {
+  display: flex; align-items: flex-start; gap: 12px; margin-bottom: 8px;
 }
-.market-card.has-hero .card-hero img {
+.card-thumb {
+  flex-shrink: 0;
+  width: 56px; height: 56px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #f3f0ff;
+  border: 1px solid rgba(109,40,217,0.08);
+}
+.card-thumb img {
   width: 100%; height: 100%; object-fit: cover; display: block;
 }
-.market-card.has-hero .card-body {
-  padding: 20px; display: flex; flex-direction: column; gap: 0;
-}
+.card-title-content { flex: 1; min-width: 0; }
+.card-title-content .card-category { margin-bottom: 4px; }
+.card-title-content .card-question { margin: 0; }
 @keyframes cardIn { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
 
 .card-category {
@@ -1637,12 +1642,15 @@ function renderMarkets(data) {
   }
 
   grid.innerHTML = data.map((m, i) => `
-    <div class="market-card${m.imageUrl ? ' has-hero' : ''}" id="mcard_${m.id}" style="opacity:1!important;visibility:visible!important;" onclick="openForecast('${m.id}')">
-      ${m.imageUrl ? `<div class="card-hero"><img src="${m.imageUrl}" alt="" loading="lazy" onerror="this.parentElement.style.display='none'"></div>` : ''}
-      <div class="${m.imageUrl ? 'card-body' : ''}">
-        <div class="card-category"><div class="cat-dot"></div>${m.cat}</div>
-        ${m.creator ? `<div class="creator-badge">💡 ${m.creator} · Creator</div>` : ''}
-        <div class="card-question">${m.q}</div>
+    <div class="market-card" id="mcard_${m.id}" style="opacity:1!important;visibility:visible!important;" onclick="openForecast('${m.id}')">
+      <div class="card-title-row">
+        ${m.imageUrl ? `<div class="card-thumb"><img src="${m.imageUrl}" alt="" loading="lazy" onerror="this.parentElement.style.display='none'"></div>` : ''}
+        <div class="card-title-content">
+          <div class="card-category"><div class="cat-dot"></div>${m.cat}</div>
+          ${m.creator ? `<div class="creator-badge">💡 ${m.creator} · Creator</div>` : ''}
+          <div class="card-question">${m.q}</div>
+        </div>
+      </div>
         <div class="prob-bar-wrap">
           <div class="prob-labels">
             <span class="prob-yes">YES ${m.yes}%</span>
@@ -1700,16 +1708,19 @@ function renderTrending() {
       </div>
     </div>
   ` + ranked.map((m, i) => `
-    <div class="market-card${m.imageUrl ? ' has-hero' : ''}" id="mcard_${m.id}" onclick="openForecast('${m.id}')">
-      ${m.imageUrl ? `<div class="card-hero"><img src="${m.imageUrl}" alt="" loading="lazy" onerror="this.parentElement.style.display='none'"></div>` : ''}
-      <div class="${m.imageUrl ? 'card-body' : ''}">
-        <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
-          <span class="trend-rank">#${i+1}</span>
-          <div class="card-category" style="margin-bottom:0"><div class="cat-dot"></div>${m.cat}</div>
+    <div class="market-card" id="mcard_${m.id}" onclick="openForecast('${m.id}')">
+      <div class="card-title-row">
+        ${m.imageUrl ? `<div class="card-thumb"><img src="${m.imageUrl}" alt="" loading="lazy" onerror="this.parentElement.style.display='none'"></div>` : ''}
+        <div class="card-title-content">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+            <span class="trend-rank">#${i+1}</span>
+            <div class="card-category" style="margin-bottom:0"><div class="cat-dot"></div>${m.cat}</div>
+          </div>
+          <div style="margin-bottom:6px;">${trendBadges(m)}</div>
+          ${m.creator ? `<div class="creator-badge">💡 ${m.creator} · Creator</div>` : ''}
+          <div class="card-question">${m.q}</div>
         </div>
-        <div style="margin-bottom:6px;">${trendBadges(m)}</div>
-        ${m.creator ? `<div class="creator-badge">💡 ${m.creator} · Creator</div>` : ''}
-        <div class="card-question">${m.q}</div>
+      </div>
         <div class="prob-bar-wrap">
           <div class="prob-labels">
             <span class="prob-yes">YES ${m.yes}%</span>
