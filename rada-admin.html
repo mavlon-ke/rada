@@ -263,7 +263,7 @@ body::after {
 .act-red   { background: var(--red-glow);   color: var(--red);   border-color: rgba(239,68,68,0.3); }
 .act-red:hover { background: var(--red); color: #fff; }
 .act-amber { background: var(--amber-glow); color: var(--amber); border-color: var(--amber-border); }
-.act-amber:hover { background: #7c3aed; color: #000; }
+.act-amber:hover { background: var(--amber); color: #000; }
 .act-gray  { background: #f0edff; color: var(--text-dim); border-color: var(--border); }
 .act-gray:hover { color: var(--text); border-color: rgba(255,255,255,0.15); }
 
@@ -1624,7 +1624,7 @@ body::after {
       <div style="font-size:0.82rem;font-weight:600;margin-bottom:14px;color:var(--text-mid)" id="resolveMarketTitle">Market title</div>
 
       <div class="confirm-banner">
-        ⚠ This action is irreversible. Payouts will be triggered automatically via M-Pesa B2C.
+        ⚠ Payouts will be credited to winners' CheckRada wallets automatically. If resolved incorrectly, use the ↩ Unresolve button in the Markets table to reverse.
       </div>
 
       <div style="font-size:0.72rem;color:var(--text-dim);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.07em;font-weight:600">Select Outcome</div>
@@ -2116,6 +2116,9 @@ function renderMarketsTable(data) {
     var resolveBtn = m.status === 'CLOSED'
       ? '<button class="act-btn act-green" data-action="resolve" data-id="' + m.id + '" data-title="' + esc((m.title||'').slice(0,60)) + '" data-trades="' + (m.trades||0) + '">Resolve</button> '
       : '';
+    var unresolveBtn = m.status === 'RESOLVED'
+      ? '<button class="act-btn act-amber" data-action="unresolve" data-id="' + m.id + '" data-title="' + esc((m.title||'').slice(0,60)) + '" data-outcome="' + (m.outcome||'') + '">↩ Unresolve</button> '
+      : '';
     var cancelBtn = (m.status !== 'RESOLVED' && m.status !== 'CANCELLED')
       ? '<button class="act-btn act-red" data-action="cancel" data-id="' + m.id + '" data-title="' + esc((m.title||'').slice(0,40)) + '">Cancel</button>'
       : '';
@@ -2129,7 +2132,7 @@ function renderMarketsTable(data) {
       '<td class="mono">' + (m.trades||0) + '</td>' +
       '<td class="mono" style="color:var(--text-dim)">' + (m.closes||'—') + '</td>' +
       '<td>' + statusBadge + '</td>' +
-      '<td style="display:flex;gap:5px">' + editBtn + ' ' + pauseBtn + resolveBtn + cancelBtn + '</td>' +
+      '<td style="display:flex;gap:5px">' + editBtn + ' ' + pauseBtn + resolveBtn + unresolveBtn + cancelBtn + '</td>' +
     '</tr>';
   }).join('');
 
@@ -2141,10 +2144,11 @@ function renderMarketsTable(data) {
     var id     = btn.dataset.id;
     var title  = btn.dataset.title || '';
     var trades = parseInt(btn.dataset.trades || 0);
-    if (action === 'edit')    openEditMarketModal(id);
-    if (action === 'pause')   pauseMarket(id, title);
-    if (action === 'resolve') openResolveModal(id, title, trades);
-    if (action === 'cancel')  cancelMarket(id, title);
+    if (action === 'edit')      openEditMarketModal(id);
+    if (action === 'pause')     pauseMarket(id, title);
+    if (action === 'resolve')   openResolveModal(id, title, trades);
+    if (action === 'unresolve') unresolveMarket(id, title, btn.dataset.outcome || '');
+    if (action === 'cancel')    cancelMarket(id, title);
   };
 }
 
@@ -2889,6 +2893,47 @@ function confirmResolve() {
   });
 }
 
+// Unresolve (reverse) a wrongly-resolved market — claws back payouts, resets to CLOSED
+function unresolveMarket(marketId, title, originalOutcome) {
+  var msg = '⚠ REVERSE RESOLUTION\n\n'
+    + 'Market: ' + title + '\n'
+    + 'Original outcome: ' + (originalOutcome || '—') + '\n\n'
+    + 'This will:\n'
+    + '  • Claw back payouts from winners\' wallets\n'
+    + '  • Reset the market to CLOSED for re-resolution\n'
+    + '  • Remove platform revenue records for this market\n\n'
+    + 'If a winner has already withdrawn their payout, the shortfall\n'
+    + 'will be flagged but cannot be recovered.\n\n'
+    + 'Type YES to confirm:';
+
+  var input = prompt(msg);
+  if (!input || input.trim().toUpperCase() !== 'YES') return;
+
+  adminFetch('/api/admin/markets/' + marketId + '/unresolve', { method: 'POST' })
+  .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
+  .then(function(res) {
+    if (res.ok) {
+      var summary = '✓ Market reversed to CLOSED.\n'
+        + res.d.clawbackSummary.count + ' payout(s) clawed back.\n'
+        + 'KES ' + (res.d.clawbackSummary.totalClawed || 0).toLocaleString() + ' recovered.';
+      if (res.d.warning) {
+        summary += '\n\n⚠ ' + res.d.warning;
+        if (res.d.partialClawbacks && res.d.partialClawbacks.length) {
+          summary += '\n\nAffected users:\n' + res.d.partialClawbacks.map(function(u) {
+            return '  ' + u.phone + ': paid KES ' + u.paidKes + ', recovered KES ' + u.clawedKes + ', shortfall KES ' + u.shortfall;
+          }).join('\n');
+        }
+      }
+      summary += '\n\nMarket is now CLOSED — resolve it again with the correct outcome.';
+      alert(summary);
+      loadMarketsTable();
+    } else {
+      alert('Failed: ' + (res.d.error || 'Could not reverse resolution.'));
+    }
+  })
+  .catch(function() { alert('Network error. Please try again.'); });
+}
+
 // Pause (CLOSE) a market — backend moves it to CLOSED status
 function pauseMarket(marketId, title) {
   if (!confirm('Pause market: ' + title + '?\n\nThis closes it to new trades. You can then resolve it.')) return;
@@ -3467,7 +3512,8 @@ function loadMarketsTable() {
         volume: 'KES ' + Math.round((m.totalVolume || 0) / 1000) + 'K',
         trades: m.tradeCount || 0,
         closes: m.closesAt ? new Date(m.closesAt).toLocaleDateString('en-KE', { day:'numeric', month:'short', year:'numeric' }) : '—',
-        status: m.status,
+        status:  m.status,
+        outcome: m.outcome || null,
         marketId: m.id,
       };
     });

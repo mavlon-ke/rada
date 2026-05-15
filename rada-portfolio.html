@@ -1323,12 +1323,12 @@ function loadPortfolioData() {
   .then(function(r) { return r.json(); })
   .then(function(d) {
     var winRate = d.winRate || 0;
-    var wins    = d.wins    || 0;
-    var losses  = d.losses  || 0;
-    var total   = d.totalTrades || 0;
-    var vol     = d.totalVolume || 0;
-    var pnl     = d.totalRealizedPnl || 0;
-    var best    = d.bestTrade || 0;
+    var wins    = d.totalWins    || 0;
+    var losses  = d.totalLosses  || 0;
+    var total   = d.totalTrades  || (wins + losses);
+    var vol     = d.totalVolume  || 0;
+    var pnl     = d.totalPnl     || 0;
+    var best    = d.bestTrade    || 0;
 
     var s = function(id, v) { var el = document.getElementById(id); if (el) el.textContent = v; };
     s('ovWinRate',    Math.round(winRate * 100) + '%');
@@ -1356,31 +1356,42 @@ function loadPortfolioData() {
   })
   .catch(function() {});
 
-  // 3. Transaction history
+  // 3. Transaction history + chart data
   userFetch('/api/users/me/portfolio-history?period=30d')
   .then(function(r) { return r.json(); })
   .then(function(d) {
+    // ── Transactions ──────────────────────────────────────────────────────
     var txns = d.transactions || [];
     TRANSACTIONS = txns.map(function(t) {
       var mins = Math.round((Date.now() - new Date(t.createdAt).getTime()) / 60000);
       var ago  = mins < 60 ? mins + 'm ago' : mins < 1440 ? Math.round(mins/60) + 'h ago' : Math.round(mins/1440) + 'd ago';
-      var isIn  = ['DEPOSIT','PAYOUT','REFUND'].includes(t.type);
-      var icons = { DEPOSIT:'📥', PAYOUT:'🏆', TRADE_BUY:'🔄', WITHDRAWAL:'📤', REFUND:'↩️', FEE:'💸' };
+      var isIn  = ['DEPOSIT','PAYOUT'].includes(t.type);
+      var isRef = t.type === 'REFUND';
+      var icons  = { DEPOSIT:'📥', PAYOUT:'🏆', TRADE_BUY:'🔄', WITHDRAWAL:'📤', REFUND:'↩️', FEE:'💸' };
+      // REFUND: amountKes is negative for clawbacks (money out), positive for legacy refunds (money in)
+      var amount;
+      if (isRef) {
+        amount = Number(t.amountKes); // keep raw sign — negative renders as red deduction
+      } else {
+        amount = isIn ? Number(t.amountKes) : -Math.abs(Number(t.amountKes));
+      }
       return {
         type:   t.type.toLowerCase(),
         icon:   icons[t.type] || '💳',
         desc:   t.description || t.type,
-        amount: isIn ? Number(t.amountKes) : -Number(t.amountKes),
+        amount,
         ref:    t.mpesaRef || t.id.slice(0,8).toUpperCase(),
         date:   ago,
       };
     });
     renderTransactions();
 
-    // Build chart data from transaction history
-    if (d.chartData) {
-      CHART_DATA = d.chartData;
-      drawChart(currentPeriod);
+    // ── Chart data ────────────────────────────────────────────────────────
+    // Endpoint returns { history: [{date, portfolioValue, deposited},...] }
+    // Reshape into the format drawChart expects: { portfolio:[], deposited:[] }
+    if (d.chartData && d.chartData.portfolio && d.chartData.portfolio.length >= 2) {
+      CHART_DATA['30d'] = { portfolio: d.chartData.portfolio, deposited: d.chartData.deposited };
+      drawChart('30d');
     }
   })
   .catch(function() { renderTransactions(); });

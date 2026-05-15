@@ -62,7 +62,10 @@ export async function GET(req: NextRequest) {
       text = `<strong>${user}</strong> received payout <strong>${amount}</strong>`;
     } else if (t.type === 'REFUND') {
       icon = '↩'; color = 'ai-amber';
-      text = `<strong>${user}</strong> refunded <strong>${amount}</strong>`;
+      const absAmount = 'KES ' + Math.abs(Number(t.amountKes)).toLocaleString();
+      text = Number(t.amountKes) < 0
+        ? `<strong>${user}</strong> payout reversed — <strong>${absAmount}</strong> clawed back`
+        : `<strong>${user}</strong> refunded <strong>${absAmount}</strong>`;
     }
 
     if (text) activities.push({ type: t.type, icon, color, text, createdAt: t.createdAt });

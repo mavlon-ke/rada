@@ -61,5 +61,27 @@ export async function GET(req: NextRequest) {
     });
   }
 
-  return NextResponse.json({ history });
+  // ── chartData: reshape history into the format the portfolio chart expects ──
+  // Portfolio page reads: CHART_DATA[period].portfolio[] and .deposited[]
+  const chartData = {
+    portfolio: history.map(h => h.portfolioValue),
+    deposited: history.map(h => h.deposited),
+    labels:    history.map(h => h.date),
+  };
+
+  // ── transactions: return recent txns for the portfolio transaction list ────
+  // Returned newest-first so the list renders in reverse-chronological order.
+  // Serialise Decimal fields to numbers so the frontend doesn't get objects.
+  const recentTxns = [...txns].reverse().map(t => ({
+    id:          t.id,
+    type:        t.type,
+    amountKes:   Number(t.amountKes),
+    balAfter:    Number(t.balAfter),
+    status:      t.status,
+    description: t.description,
+    mpesaRef:    t.mpesaRef,
+    createdAt:   t.createdAt,
+  }));
+
+  return NextResponse.json({ history, chartData, transactions: recentTxns });
 }
