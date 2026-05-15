@@ -1508,8 +1508,11 @@ function drawChart(period) {
     ctx.fillText('No trade history yet — make your first prediction!', W / 2, H / 2);
     return;
   }
-  const minV = Math.min(...vals, ...deps) * 0.97;
-  const maxV = Math.max(...vals, ...deps) * 1.02;
+  let minV = Math.min(...vals, ...deps) * 0.97;
+  let maxV = Math.max(...vals, ...deps) * 1.02;
+  // Guard: if all values are identical, maxV === minV → division by zero → NaN.
+  // Force a small artificial spread so the line renders flat at mid-chart.
+  if (maxV === minV) { minV = minV - 1; maxV = maxV + 1; }
 
   const padL = 0, padR = 0, padT = 12, padB = 28;
   const chartW = W - padL - padR;
