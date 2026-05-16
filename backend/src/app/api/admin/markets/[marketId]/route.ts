@@ -7,7 +7,7 @@ import { prisma } from '@/lib/db/prisma';
 import { requireAdmin, adminUnauthorized, logAdminAction } from '@/lib/auth/admin';
 
 const EditSchema = z.object({
-  title:       z.string().min(5).max(200).optional(),
+  title:       z.string().min(5).max(500).optional(),
   description: z.string().min(10).max(2000).optional(),
   category:    z.enum(['GENERAL','POLITICS','ECONOMY','ENTERTAINMENT','WEATHER','TECH','FRIENDS']).optional(),
   closesAt:    z.string().datetime().optional(),
