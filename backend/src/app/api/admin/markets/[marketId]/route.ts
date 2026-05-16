@@ -7,15 +7,12 @@ import { prisma } from '@/lib/db/prisma';
 import { requireAdmin, adminUnauthorized, logAdminAction } from '@/lib/auth/admin';
 
 const EditSchema = z.object({
-  title:       z.string().min(5).max(500).optional(),
+  title:       z.string().min(5).max(200).optional(),
   description: z.string().min(10).max(2000).optional(),
   category:    z.enum(['GENERAL','POLITICS','ECONOMY','ENTERTAINMENT','WEATHER','TECH','FRIENDS']).optional(),
   closesAt:    z.string().datetime().optional(),
   sourceNote:  z.string().max(300).optional(),
-  imageUrl:    z.string().max(500).refine(
-    val => val === '' || val.startsWith('https://') || val.startsWith('http://'),
-    { message: 'Image URL must start with https:// or http://' }
-  ).optional(),
+  imageUrl:    z.string().url().optional().or(z.literal('')),
 });
 
 export async function PATCH(
