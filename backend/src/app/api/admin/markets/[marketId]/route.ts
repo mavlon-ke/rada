@@ -12,7 +12,10 @@ const EditSchema = z.object({
   category:    z.enum(['GENERAL','POLITICS','ECONOMY','ENTERTAINMENT','WEATHER','TECH','FRIENDS']).optional(),
   closesAt:    z.string().datetime().optional(),
   sourceNote:  z.string().max(300).optional(),
-  imageUrl:    z.string().url().optional().or(z.literal('')),
+  imageUrl:    z.string().max(500).refine(
+    val => val === '' || val.startsWith('https://') || val.startsWith('http://'),
+    { message: 'Image URL must start with https:// or http://' }
+  ).optional(),
 });
 
 export async function PATCH(
