@@ -2710,7 +2710,7 @@ function showPanel(id, btn) {
   if (id === 'carousel')      { setTimeout(function() { initCarouselAdmin(); loadCarouselFromBackend(); }, 50); }
   if (id === 'referral')      { setTimeout(loadReferralConfig, 50); }
   if (id === 'creator-programme') { loadCreatorProgrammeConfig(); }
-  if (id === 'whatsapp-config')   { loadWhatsappConfig(); }
+  if (id === 'whatsapp-config')   { setTimeout(loadWhatsappConfig, 50); }
   if (id === 'dataapps')      { setTimeout(loadDataApplications, 50); }
   if (id === 'admin-log')     { loadAdminLogStats(); loadActivityFeed('adminLogBody'); }
   if (id === 'b2b')           { loadB2BAnalytics(); }
