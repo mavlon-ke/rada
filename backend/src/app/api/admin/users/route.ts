@@ -9,64 +9,59 @@ export async function GET(req: NextRequest) {
 
   try {
     const { searchParams } = new URL(req.url);
-    const q     = searchParams.get('q') ?? '';
-    const kyc   = searchParams.get('kyc');
-    const page  = parseInt(searchParams.get('page') ?? '1');
-    const limit = 50;
+    const q         = searchParams.get('q') ?? '';
+    const kyc       = searchParams.get('kyc');
+    const suspended = searchParams.get('suspended'); // 'true' | 'false' | null
+    const page      = Math.max(1, parseInt(searchParams.get('page')  ?? '1') || 1);
+    const limit     = Math.min(200, Math.max(1, parseInt(searchParams.get('limit') ?? '50') || 50));
 
-    // 1. Fetch users — explicit select avoids schema-drift errors on
-    //    columns that exist in schema.prisma but not yet in the production DB.
-    const users = await prisma.user.findMany({
-      where: {
-        AND: [
-          q ? {
-            OR: [
-              { phone: { contains: q } },
-              { name:  { contains: q, mode: 'insensitive' } },
-            ]
-          } : {},
-          kyc ? { kycStatus: kyc as any } : {},
-        ],
-      },
-      select: {
-        id:              true,
-        phone:           true,
-        name:            true,
-        kycStatus:       true,
-        role:            true,
-        balanceKes:      true,
-        bonusBalanceKes: true,
-        suspended:       true,
-        agreedToTerms:   true,
-        integrityScore:  true,
-        referralCode:    true,
-        createdAt:       true,
-        _count: { select: { orders: true, transactions: true } },
-      },
-      orderBy: { createdAt: 'desc' },
-      skip:    (page - 1) * limit,
-      take:    limit,
-    });
+    const where: any = {
+      AND: [
+        q ? {
+          OR: [
+            { phone: { contains: q } },
+            { name:  { contains: q, mode: 'insensitive' } },
+          ]
+        } : {},
+        kyc       ? { kycStatus: kyc as any }   : {},
+        suspended === 'true'  ? { suspended: true  } :
+        suspended === 'false' ? { suspended: false } : {},
+      ],
+    };
 
-    const [total, volumeRows] = await Promise.all([
-      // 2. Total count — single query
-      prisma.user.count(),
-
-      // 3. Trade volumes — ONE grouped query instead of N individual aggregates.
-      //    Previously this was Promise.all(users.map(...aggregate...)) which fired
-      //    up to 50 concurrent DB connections, exhausting Supabase's connection
-      //    pool and causing intermittent 500s.
-      prisma.order.groupBy({
-        by:     ['userId'],
-        where:  {
-          userId: { in: users.map(u => u.id) },
-          status: 'FILLED',
+    // findMany and count share the same where — run in parallel
+    const [users, total] = await Promise.all([
+      prisma.user.findMany({
+        where,
+        select: {
+          id:              true,
+          phone:           true,
+          name:            true,
+          kycStatus:       true,
+          role:            true,
+          balanceKes:      true,
+          bonusBalanceKes: true,
+          suspended:       true,
+          agreedToTerms:   true,
+          integrityScore:  true,
+          referralCode:    true,
+          createdAt:       true,
+          _count: { select: { orders: true, transactions: true } },
         },
-        _sum:   { amountKes: true },
+        orderBy: { createdAt: 'desc' },
+        skip:    (page - 1) * limit,
+        take:    limit,
       }),
+      prisma.user.count({ where }),
     ]);
 
-    // Build a userId → volume lookup map
+    // Single groupBy for trade volumes — one query not N
+    const volumeRows = await prisma.order.groupBy({
+      by:    ['userId'],
+      where: { userId: { in: users.map(u => u.id) }, status: 'FILLED' },
+      _sum:  { amountKes: true },
+    });
+
     const volMap = new Map<string, number>();
     for (const row of volumeRows) {
       volMap.set(row.userId, Math.abs(Number(row._sum.amountKes ?? 0)));

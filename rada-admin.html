@@ -1051,9 +1051,9 @@ body::after {
       <div class="page-title">User Management</div>
       <div class="page-sub" id="usersPanelSub">— registered users</div>
       <div class="filter-row">
-        <input class="search-input" placeholder="🔍  Search by name, phone, or ID...">
-        <select class="filter-select">
-          <option>All Account Status</option>
+        <input class="search-input" id="userSearchInput" placeholder="🔍  Search by name, phone, or ID..." oninput="debounceUserSearch(this.value)">
+        <select class="filter-select" id="userStatusFilter" onchange="loadUsersTable(1)">
+          <option value="">All Account Status</option>
           <option value="active">Active</option>
           <option value="frozen">Frozen</option>
         </select>
@@ -1064,6 +1064,7 @@ body::after {
           <tbody id="usersTableBody"></tbody>
         </table>
       </div>
+      <div id="usersPagination" style="display:flex;align-items:center;justify-content:space-between;padding:12px 4px 0;font-size:0.82rem;color:var(--text-dim);"></div>
     </div>
 
     <!-- ═══════════════════════════════════════════════════════════════════════
@@ -1973,11 +1974,31 @@ var _MARKETS_PLACEHOLDER = [
 ];
 
 var USERS_DATA = []; // populated by loadUsersTable()
+var USERS_CURRENT_PAGE = 1;
+var USERS_LIMIT        = 50;
+var _userSearchTimer   = null;
 
-function loadUsersTable(q) {
-  var url = '/api/admin/users' + (q ? '?q=' + encodeURIComponent(q) : '');
+// Debounce search so we don't fire on every keystroke
+function debounceUserSearch(val) {
+  clearTimeout(_userSearchTimer);
+  _userSearchTimer = setTimeout(function() { loadUsersTable(1); }, 350);
+}
+
+function loadUsersTable(page) {
+  page = page || USERS_CURRENT_PAGE;
+  USERS_CURRENT_PAGE = page;
+
   var tbody = document.getElementById('usersTableBody');
   if (tbody) tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--text-dim);">Loading...</td></tr>';
+
+  var q        = ((document.getElementById('userSearchInput')   || {}).value || '').trim();
+  var status   = ((document.getElementById('userStatusFilter')  || {}).value || '');
+
+  var url = '/api/admin/users?page=' + page + '&limit=' + USERS_LIMIT;
+  if (q)                     url += '&q='         + encodeURIComponent(q);
+  if (status === 'active')   url += '&suspended=false';
+  if (status === 'frozen')   url += '&suspended=true';
+
   adminFetch(url)
   .then(function(r) { return r.json(); })
   .then(function(d) {
@@ -1993,19 +2014,38 @@ function loadUsersTable(q) {
         suspended: u.suspended || false,
       };
     });
-    // Update the User Management subtitle with the actual total count from
-    // the backend (response includes `total` for pagination — same number we
-    // need for "X registered users"). Defensive optional element check.
-    var subEl = document.getElementById('usersPanelSub');
+
+    var total  = typeof d.total === 'number' ? d.total : USERS_DATA.length;
+    var subEl  = document.getElementById('usersPanelSub');
     if (subEl) {
-      var total = (typeof d.total === 'number') ? d.total : USERS_DATA.length;
-      subEl.textContent = total.toLocaleString() + ' registered user' + (total === 1 ? '' : 's');
+      var q2      = ((document.getElementById('userSearchInput')  || {}).value || '').trim();
+      var status2 = ((document.getElementById('userStatusFilter') || {}).value || '');
+      var isFiltered = q2 || status2;
+      subEl.textContent = isFiltered
+        ? total.toLocaleString() + ' user' + (total === 1 ? '' : 's') + ' matching filter'
+        : total.toLocaleString() + ' registered user' + (total === 1 ? '' : 's');
     }
+
     renderUsersTable();
+    renderUsersPagination(page, total, d.limit || USERS_LIMIT);
   })
   .catch(function() {
     if (tbody) tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#ce1126;padding:20px;">Failed to load users.</td></tr>';
   });
+}
+
+function renderUsersPagination(page, total, limit) {
+  var el = document.getElementById('usersPagination');
+  if (!el) return;
+  var totalPages = Math.max(1, Math.ceil(total / limit));
+  var start = total === 0 ? 0 : (page - 1) * limit + 1;
+  var end   = Math.min(page * limit, total);
+  var info  = 'Showing <strong>' + start + '–' + end + '</strong> of <strong>' + total + '</strong> users';
+  var prevBtn = '<button onclick="loadUsersTable(' + (page-1) + ')" ' + (page <= 1 ? 'disabled' : '') +
+    ' style="padding:4px 12px;border-radius:6px;border:1px solid var(--border);background:var(--bg-card);cursor:pointer;font-size:0.8rem;">&larr; Prev</button>';
+  var nextBtn = '<button onclick="loadUsersTable(' + (page+1) + ')" ' + (page >= totalPages ? 'disabled' : '') +
+    ' style="padding:4px 12px;border-radius:6px;border:1px solid var(--border);background:var(--bg-card);cursor:pointer;font-size:0.8rem;">Next &rarr;</button>';
+  el.innerHTML = '<span>' + info + '</span><div style="display:flex;align-items:center;gap:8px;">' + prevBtn + '<span>Page ' + page + ' of ' + totalPages + '</span>' + nextBtn + '</div>';
 }
 
 var KYC_DATA = []; // populated by loadKYCTable()
@@ -4541,7 +4581,7 @@ function setUserWhatsappOptout(optedOut) {
   // If input looks like a phone (digits with optional +/254/0 prefix), look up the user first.
   var looksLikePhone = /^[+0-9]/.test(raw) && /\d{6,}/.test(raw);
   var resolveUserId  = looksLikePhone
-    ? adminFetch('/api/admin/users?search=' + encodeURIComponent(raw)).then(function(r) { return r.json(); }).then(function(d) {
+    ? adminFetch('/api/admin/users?q=' + encodeURIComponent(raw)).then(function(r) { return r.json(); }).then(function(d) {
         var match = (d.users || []).find(function(u) { return u.phone && u.phone.replace(/\D/g, '').endsWith(raw.replace(/\D/g, '').slice(-9)); });
         return match ? match.id : null;
       })
