@@ -929,22 +929,23 @@ body::after {
       <div class="page-title">All Markets</div>
       <div class="page-sub">Manage, pause, or cancel prediction markets</div>
       <div class="filter-row">
-        <input class="search-input" placeholder="🔍  Search markets..." oninput="filterMarkets(this.value)">
-        <select class="filter-select" onchange="filterMarketStatus(this.value)">
-          <option>All Status</option>
-          <option>OPEN</option>
-          <option>CLOSED</option>
-          <option>RESOLVED</option>
+        <input class="search-input" id="mktSearchInput" placeholder="🔍  Search markets..." oninput="filterMarkets(this.value)">
+        <select class="filter-select" id="mktStatusFilter" onchange="loadMarketsTable(1)">
+          <option value="">All Status</option>
+          <option value="OPEN">OPEN</option>
+          <option value="CLOSED">CLOSED</option>
+          <option value="RESOLVED">RESOLVED</option>
+          <option value="CANCELLED">CANCELLED</option>
         </select>
-        <select class="filter-select">
-          <option>All Categories</option>
-          <option>GENERAL</option>
-          <option>POLITICS</option>
-          <option>ECONOMY</option>
-          <option>ENTERTAINMENT</option>
-          <option>WEATHER</option>
-          <option>TECH</option>
-          <option>FRIENDS</option>
+        <select class="filter-select" id="mktCategoryFilter" onchange="loadMarketsTable(1)">
+          <option value="">All Categories</option>
+          <option value="GENERAL">GENERAL</option>
+          <option value="POLITICS">POLITICS</option>
+          <option value="ECONOMY">ECONOMY</option>
+          <option value="ENTERTAINMENT">ENTERTAINMENT</option>
+          <option value="WEATHER">WEATHER</option>
+          <option value="TECH">TECH</option>
+          <option value="FRIENDS">FRIENDS</option>
         </select>
         <button class="topbar-btn primary" onclick="showPanel('create-market', document.querySelectorAll('.nav-item')[3])">+ Create Market</button>
       </div>
@@ -954,6 +955,7 @@ body::after {
           <tbody id="marketsTableBody"></tbody>
         </table>
       </div>
+      <div id="marketsPagination" style="display:flex;align-items:center;justify-content:space-between;padding:12px 4px 0;font-size:0.82rem;color:var(--text-dim);"></div>
     </div>
 
     <!-- ═══════════════════════════════════════════════════════════════════════
@@ -1809,7 +1811,8 @@ body::after {
     <div class="modal-body" style="display:flex;flex-direction:column;gap:14px;">
       <div>
         <div class="stat-label" style="margin-bottom:4px;">Title</div>
-        <input class="form-input" id="editMktTitle" placeholder="Market question" style="width:100%;box-sizing:border-box;">
+        <input class="form-input" id="editMktTitle" placeholder="Market question" maxlength="200" style="width:100%;box-sizing:border-box;" oninput="var c=document.getElementById('editMktTitleCount');if(c)c.textContent=this.value.length+'/200';">
+        <div id="editMktTitleCount" style="font-size:0.68rem;color:var(--text-dim);text-align:right;margin-top:2px;">0/200</div>
       </div>
       <div>
         <div class="stat-label" style="margin-bottom:4px;">Description</div>
@@ -2125,7 +2128,7 @@ function renderMarketsTable(data) {
     var editBtn = '<button class="act-btn act-gray" data-action="edit" data-id="' + m.id + '">Edit</button>';
 
     return '<tr>' +
-      '<td style="max-width:260px"><div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(m.title||'—') + '</div></td>' +
+      '<td style="max-width:280px"><div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="' + esc(m.title||'') + '">' + esc(m.title||'—') + '</div></td>' +
       '<td><span class="badge badge-gray" style="font-size:0.62rem">' + esc(m.cat||'—') + '</span></td>' +
       '<td class="mono" style="color:' + ((m.yes||0) > 50 ? 'var(--green)' : 'var(--text-mid)') + '">' + (m.yes||'—') + '%</td>' +
       '<td class="mono">' + (m.volume||'—') + '</td>' +
@@ -2152,9 +2155,91 @@ function renderMarketsTable(data) {
   };
 }
 
+// Markets pagination state
+var MARKETS_CURRENT_PAGE = 1;
+var MARKETS_TOTAL        = 0;
+var MARKETS_LIMIT        = 100;
+
+function loadMarketsTable(page) {
+  page = page || MARKETS_CURRENT_PAGE;
+  MARKETS_CURRENT_PAGE = page;
+
+  var tbody = document.getElementById('marketsTableBody');
+  if (tbody) tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-dim);padding:24px;">Loading markets...</td></tr>';
+
+  var status   = (document.getElementById('mktStatusFilter')   || {}).value || '';
+  var category = (document.getElementById('mktCategoryFilter') || {}).value || '';
+  var q        = ((document.getElementById('mktSearchInput')   || {}).value || '').trim();
+
+  var url = '/api/admin/markets?page=' + page + '&limit=' + MARKETS_LIMIT;
+  if (status)   url += '&status='   + encodeURIComponent(status);
+  if (category) url += '&category=' + encodeURIComponent(category);
+
+  adminFetch(url)
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    var markets = data.markets || [];
+    MARKETS_TOTAL = data.total || 0;
+
+    MARKETS_DATA = markets.map(function(m) {
+      return {
+        id:          m.id,
+        title:       m.title,
+        description: m.description || '',
+        category:    m.category,
+        cat:         m.category,
+        sourceNote:  m.sourceNote  || '',
+        imageUrl:    m.imageUrl    || '',
+        closesAt:    m.closesAt,
+        yes:    Math.round((m.yesPrice || 0.5) * 100),
+        volume: 'KES ' + Math.round((m.totalVolume || 0) / 1000) + 'K',
+        trades: m.tradeCount || 0,
+        closes: m.closesAt ? new Date(m.closesAt).toLocaleDateString('en-KE', { day:'numeric', month:'short', year:'numeric' }) : '—',
+        status:  m.status,
+        outcome: m.outcome || null,
+        marketId: m.id,
+      };
+    });
+
+    // Client-side title search (filter within current page results)
+    var display = q ? MARKETS_DATA.filter(function(m) {
+      return m.title.toLowerCase().includes(q.toLowerCase());
+    }) : MARKETS_DATA;
+
+    renderMarketsTable(display);
+    renderMarketsPagination(page, data.total, data.limit);
+  })
+  .catch(function(err) {
+    console.error('loadMarketsTable error:', err);
+    if (tbody) tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#ce1126;padding:24px;">Failed to load markets. Check connection.</td></tr>';
+  });
+}
+
+function renderMarketsPagination(page, total, limit) {
+  var el = document.getElementById('marketsPagination');
+  if (!el) return;
+  var totalPages = Math.max(1, Math.ceil(total / limit));
+  var start = total === 0 ? 0 : (page - 1) * limit + 1;
+  var end   = Math.min(page * limit, total);
+  var info  = 'Showing <strong>' + start + '–' + end + '</strong> of <strong>' + total + '</strong> markets';
+
+  var prevBtn = '<button onclick="loadMarketsTable(' + (page - 1) + ')" ' +
+    (page <= 1 ? 'disabled' : '') +
+    ' style="padding:4px 12px;border-radius:6px;border:1px solid var(--border);background:var(--bg-card);cursor:pointer;font-size:0.8rem;">&larr; Prev</button>';
+  var nextBtn = '<button onclick="loadMarketsTable(' + (page + 1) + ')" ' +
+    (page >= totalPages ? 'disabled' : '') +
+    ' style="padding:4px 12px;border-radius:6px;border:1px solid var(--border);background:var(--bg-card);cursor:pointer;font-size:0.8rem;">Next &rarr;</button>';
+  var pageInfo = '<span>Page ' + page + ' of ' + totalPages + '</span>';
+
+  el.innerHTML = '<span>' + info + '</span><div style="display:flex;align-items:center;gap:8px;">' + prevBtn + pageInfo + nextBtn + '</div>';
+}
+
 function filterMarkets(q) {
-  const filtered = MARKETS_DATA.filter(m => m.title.toLowerCase().includes(q.toLowerCase()));
-  renderMarketsTable(filtered);
+  // Search within the currently loaded page results
+  var display = q ? MARKETS_DATA.filter(function(m) {
+    return m.title.toLowerCase().includes(q.toLowerCase());
+  }) : MARKETS_DATA;
+  renderMarketsTable(display);
 }
 
 function renderUsersTable() {
@@ -2622,6 +2707,8 @@ function _populateEditModal(marketId, m) {
 
   document.getElementById('editMarketSubtitle').textContent = 'ID: ' + marketId;
   document.getElementById('editMktTitle').value      = m.title      || '';
+  var _tc = document.getElementById('editMktTitleCount');
+  if (_tc) _tc.textContent = (m.title || '').length + '/200';
   document.getElementById('editMktDesc').value       = m.description|| m.desc || '';
   document.getElementById('editMktSourceNote').value = m.sourceNote || '';
   document.getElementById('editMktImageUrl').value   = m.imageUrl   || '';
@@ -2686,7 +2773,21 @@ function saveMarketEdits() {
       setTimeout(function() { closeModal('editMarketModal'); }, 1200);
     } else {
       status.style.color  = '#ce1126';
-      status.textContent  = '✗ ' + (res.d.error || 'Could not save changes.');
+      var errMsg = 'Could not save changes.';
+      if (res.d.error) {
+        if (typeof res.d.error === 'string') {
+          errMsg = res.d.error;
+        } else if (res.d.error.fieldErrors) {
+          // Zod flatten() object — extract first field error
+          var fieldErrs = Object.entries(res.d.error.fieldErrors);
+          if (fieldErrs.length) {
+            errMsg = fieldErrs[0][0] + ': ' + fieldErrs[0][1][0];
+          } else if (res.d.error.formErrors && res.d.error.formErrors[0]) {
+            errMsg = res.d.error.formErrors[0];
+          }
+        }
+      }
+      status.textContent  = '✗ ' + errMsg;
     }
   })
   .catch(function() {
@@ -2746,11 +2847,12 @@ function loadResolvePanel() {
   .then(function(r) { return r.json(); })
   .then(function(d) {
     var markets = d.markets || [];
+    var resolveTotal = d.total || markets.length;
     RESOLVE_DATA = markets;
 
-    if (subtitle) subtitle.textContent = markets.length + ' market' + (markets.length !== 1 ? 's' : '') + ' closed and awaiting resolution';
+    if (subtitle) subtitle.textContent = resolveTotal + ' market' + (resolveTotal !== 1 ? 's' : '') + ' closed and awaiting resolution';
     var rb = document.getElementById('resolveBadge');
-    if (rb) { rb.textContent = markets.length; rb.style.display = markets.length > 0 ? '' : 'none'; }
+    if (rb) { rb.textContent = resolveTotal; rb.style.display = resolveTotal > 0 ? '' : 'none'; }
 
     if (!tbody) return;
     if (markets.length === 0) {
@@ -3490,40 +3592,6 @@ function submitCreateMarket() {
 }
 
 // Load markets table from backend
-function loadMarketsTable() {
-  var tbody = document.getElementById('marketsTableBody');
-  if (tbody) tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-dim);padding:24px;">Loading markets...</td></tr>';
-
-  adminFetch('/api/admin/markets')
-  .then(function(r) { return r.json(); })
-  .then(function(data) {
-    var markets = data.markets || [];
-    MARKETS_DATA = markets.map(function(m) {
-      return {
-        id:          m.id,
-        title:       m.title,
-        description: m.description || '',
-        category:    m.category,
-        cat:         m.category,
-        sourceNote:  m.sourceNote  || '',
-        imageUrl:    m.imageUrl    || '',
-        closesAt:    m.closesAt,
-        yes:    Math.round((m.yesPrice || 0.5) * 100),
-        volume: 'KES ' + Math.round((m.totalVolume || 0) / 1000) + 'K',
-        trades: m.tradeCount || 0,
-        closes: m.closesAt ? new Date(m.closesAt).toLocaleDateString('en-KE', { day:'numeric', month:'short', year:'numeric' }) : '—',
-        status:  m.status,
-        outcome: m.outcome || null,
-        marketId: m.id,
-      };
-    });
-    renderMarketsTable(MARKETS_DATA);
-  })
-  .catch(function(err) {
-    console.error('loadMarketsTable error:', err);
-    if (tbody) tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#ce1126;padding:24px;">Failed to load markets. Check connection.</td></tr>';
-  });
-}
 
 // ── MODAL UTILS ───────────────────────────────────────────────────────────────
 

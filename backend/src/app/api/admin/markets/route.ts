@@ -26,10 +26,10 @@ export async function GET(req: NextRequest) {
   } catch { /* non-fatal */ }
 
   const { searchParams } = new URL(req.url);
-  const status   = searchParams.get('status');   // optional filter
-  const category = searchParams.get('category'); // optional filter
-  const page     = parseInt(searchParams.get('page') ?? '1');
-  const limit    = 50;
+  const status   = searchParams.get('status');
+  const category = searchParams.get('category');
+  const page     = Math.max(1, parseInt(searchParams.get('page')  ?? '1') || 1);
+  const limit    = Math.min(200, Math.max(1, parseInt(searchParams.get('limit') ?? '100') || 100));
 
   const markets = await prisma.market.findMany({
     where: {
