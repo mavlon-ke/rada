@@ -2710,7 +2710,7 @@ function showPanel(id, btn) {
   if (id === 'carousel')      { setTimeout(function() { initCarouselAdmin(); loadCarouselFromBackend(); }, 50); }
   if (id === 'referral')      { setTimeout(loadReferralConfig, 50); }
   if (id === 'creator-programme') { loadCreatorProgrammeConfig(); }
-  if (id === 'whatsapp-config')   { setTimeout(loadWhatsappConfig, 50); }
+  if (id === 'whatsapp-config')   { loadWhatsappConfig(); }
   if (id === 'dataapps')      { setTimeout(loadDataApplications, 50); }
   if (id === 'admin-log')     { loadAdminLogStats(); loadActivityFeed('adminLogBody'); }
   if (id === 'b2b')           { loadB2BAnalytics(); }
@@ -4217,6 +4217,80 @@ function renderAdminLog() {
   </tr>`).join('');
 }
 
+// ── WHATSAPP CONFIG ───────────────────────────────────────────────────────────
+// Defined in Block 4 so showPanel() can reference loadWhatsappConfig directly.
+// Function declarations in a different <script> block are NOT hoisted into this
+// block — keeping them here eliminates the cross-block ReferenceError.
+
+var WA_TOGGLE_FIELDS = [
+  ['waToggleDepositConfirmed',             'depositConfirmedEnabled'],
+  ['waToggleWithdrawalProcessed',          'withdrawalProcessedEnabled'],
+  ['waToggleMarketResolvedWon',            'marketResolvedWonEnabled'],
+  ['waToggleMarketResolvedLost',           'marketResolvedLostEnabled'],
+  ['waToggleReferralRewardCredited',       'referralRewardCreditedEnabled'],
+  ['waToggleRefereeNominated',             'refereeNominatedEnabled'],
+  ['waToggleChallengeOpponentStaked',      'challengeOpponentStakedEnabled'],
+  ['waToggleChallengeResolutionWindow',    'challengeResolutionWindowEnabled'],
+  ['waToggleChallengeResolutionWarning',   'challengeResolutionWarningEnabled'],
+];
+
+function loadWhatsappConfig() {
+  adminFetch('/api/admin/config/whatsapp').then(function(r) { return r.json(); }).then(function(cfg) {
+    if (!cfg || cfg.error) {
+      console.error('loadWhatsappConfig:', cfg && cfg.error);
+      return;
+    }
+    var gt  = document.getElementById('waGlobalToggle');
+    var lbl = document.getElementById('waStatusLabel');
+    if (gt) {
+      gt.checked = cfg.globalEnabled !== false;
+      if (lbl) {
+        lbl.textContent = gt.checked ? 'ON' : 'OFF';
+        lbl.style.color = gt.checked ? '#16a34a' : '#ce1126';
+      }
+    }
+    WA_TOGGLE_FIELDS.forEach(function(pair) {
+      var el = document.getElementById(pair[0]);
+      if (el) el.checked = cfg[pair[1]] !== false;
+    });
+    var auditBox  = document.getElementById('waAuditTrail');
+    var auditText = document.getElementById('waAuditText');
+    if (auditBox && auditText && cfg.updatedAt) {
+      var when = new Date(cfg.updatedAt).toLocaleString();
+      var who  = (cfg.updatedByAdmin && cfg.updatedByAdmin.name) || (cfg.updatedByAdmin && cfg.updatedByAdmin.email) || 'system';
+      auditText.textContent = 'Last updated ' + when + ' by ' + who + '.';
+      auditBox.style.display = 'block';
+    }
+  }).catch(function(err) { console.error('loadWhatsappConfig:', err); });
+}
+
+function saveWhatsappConfig() {
+  var statusEl = document.getElementById('waSaveStatus');
+  if (statusEl) { statusEl.textContent = 'Saving...'; statusEl.style.color = '#9284b8'; }
+  var body = {};
+  var gt = document.getElementById('waGlobalToggle');
+  if (gt) body.globalEnabled = !!gt.checked;
+  WA_TOGGLE_FIELDS.forEach(function(pair) {
+    var el = document.getElementById(pair[0]);
+    if (el) body[pair[1]] = !!el.checked;
+  });
+  adminFetch('/api/admin/config/whatsapp', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  }).then(function(r) { return r.json(); }).then(function(d) {
+    if (d.success) {
+      if (statusEl) { statusEl.textContent = '✓ Saved'; statusEl.style.color = '#16a34a'; }
+      loadWhatsappConfig();
+    } else {
+      if (statusEl) { statusEl.textContent = 'Error: ' + JSON.stringify(d.error || d); statusEl.style.color = '#ce1126'; }
+    }
+  }).catch(function(err) {
+    if (statusEl) { statusEl.textContent = 'Network error'; statusEl.style.color = '#ce1126'; }
+    console.error('saveWhatsappConfig:', err);
+  });
+}
+
 // ── INIT ──────────────────────────────────────────────────────────────────────
 
 renderRecentTxns();
@@ -4491,84 +4565,6 @@ function saveCreatorProgrammeConfig() {
   var statusEl   = document.getElementById('cpSaveStatus');
 
 // ─── WhatsApp Notifications config ────────────────────────────────────────
-
-var WA_TOGGLE_FIELDS = [
-  ['waToggleDepositConfirmed',             'depositConfirmedEnabled'],
-  ['waToggleWithdrawalProcessed',          'withdrawalProcessedEnabled'],
-  ['waToggleMarketResolvedWon',            'marketResolvedWonEnabled'],
-  ['waToggleMarketResolvedLost',           'marketResolvedLostEnabled'],
-  ['waToggleReferralRewardCredited',       'referralRewardCreditedEnabled'],
-  ['waToggleRefereeNominated',             'refereeNominatedEnabled'],
-  ['waToggleChallengeOpponentStaked',      'challengeOpponentStakedEnabled'],
-  ['waToggleChallengeResolutionWindow',    'challengeResolutionWindowEnabled'],
-  ['waToggleChallengeResolutionWarning',   'challengeResolutionWarningEnabled'],
-];
-
-function loadWhatsappConfig() {
-  adminFetch('/api/admin/config/whatsapp').then(function(r) { return r.json(); }).then(function(cfg) {
-    if (!cfg || cfg.error) {
-      console.error('loadWhatsappConfig:', cfg && cfg.error);
-      return;
-    }
-
-    var gt  = document.getElementById('waGlobalToggle');
-    var lbl = document.getElementById('waStatusLabel');
-    if (gt) {
-      gt.checked = cfg.globalEnabled !== false;
-      if (lbl) {
-        lbl.textContent = gt.checked ? 'ON' : 'OFF';
-        lbl.style.color = gt.checked ? '#16a34a' : '#ce1126';
-      }
-    }
-
-    WA_TOGGLE_FIELDS.forEach(function(pair) {
-      var el = document.getElementById(pair[0]);
-      if (el) el.checked = cfg[pair[1]] !== false;
-    });
-
-    // Audit trail
-    var auditBox  = document.getElementById('waAuditTrail');
-    var auditText = document.getElementById('waAuditText');
-    if (auditBox && auditText && cfg.updatedAt) {
-      var when = new Date(cfg.updatedAt).toLocaleString();
-      var who  = (cfg.updatedByAdmin && cfg.updatedByAdmin.name) || (cfg.updatedByAdmin && cfg.updatedByAdmin.email) || 'system';
-      auditText.textContent = 'Last updated ' + when + ' by ' + who + '.';
-      auditBox.style.display = 'block';
-    }
-  }).catch(function(err) {
-    console.error('loadWhatsappConfig:', err);
-  });
-}
-
-function saveWhatsappConfig() {
-  var statusEl = document.getElementById('waSaveStatus');
-  if (statusEl) { statusEl.textContent = 'Saving...'; statusEl.style.color = '#9284b8'; }
-
-  var body = {};
-  var gt = document.getElementById('waGlobalToggle');
-  if (gt) body.globalEnabled = !!gt.checked;
-
-  WA_TOGGLE_FIELDS.forEach(function(pair) {
-    var el = document.getElementById(pair[0]);
-    if (el) body[pair[1]] = !!el.checked;
-  });
-
-  adminFetch('/api/admin/config/whatsapp', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  }).then(function(r) { return r.json(); }).then(function(d) {
-    if (d.success) {
-      if (statusEl) { statusEl.textContent = '✓ Saved'; statusEl.style.color = '#16a34a'; }
-      loadWhatsappConfig();  // refresh audit trail
-    } else {
-      if (statusEl) { statusEl.textContent = 'Error: ' + JSON.stringify(d.error || d); statusEl.style.color = '#ce1126'; }
-    }
-  }).catch(function(err) {
-    if (statusEl) { statusEl.textContent = 'Network error'; statusEl.style.color = '#ce1126'; }
-    console.error('saveWhatsappConfig:', err);
-  });
-}
 
 function setUserWhatsappOptout(optedOut) {
   var statusEl = document.getElementById('waOptoutStatus');
