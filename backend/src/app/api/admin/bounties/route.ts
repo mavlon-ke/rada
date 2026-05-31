@@ -18,10 +18,12 @@ export async function GET(req: NextRequest) {
   if (!admin) return adminUnauthorized();
 
   const bounties = await prisma.creatorBounty.findMany({
-    where:   { active: true },
+    // No active filter — show all bounties including those on resolved/cancelled
+    // markets. The active flag is set to false at resolution, which was causing
+    // earned royalties to disappear from the ledger.
     include: {
       creator: { select: { phone: true, name: true } },
-      market:  { select: { title: true } },
+      market:  { select: { title: true, totalVolume: true, status: true } },
     },
     orderBy: { bountyEarned: 'desc' },
   });
