@@ -1177,7 +1177,7 @@ body::after {
         <div class="stat-card"><div class="stat-label">Total Earned</div><div class="stat-val green" id="bntyTotalEarned">—</div></div>
         <div class="stat-card"><div class="stat-label">Total Paid Out</div><div class="stat-val" id="bntyTotalPaid">—</div></div>
         <div class="stat-card"><div class="stat-label">Unpaid Balance</div><div class="stat-val amber" id="bntyUnpaid">—</div></div>
-        <div class="stat-card"><div class="stat-label">Active Creators</div><div class="stat-val" id="bntyCreators">—</div></div>
+        <div class="stat-card"><div class="stat-label">Total Creators</div><div class="stat-val" id="bntyCreators">—</div></div>
       </div>
       <div class="table-card" style="box-shadow:0 2px 12px rgba(0,0,0,0.05);">
         <div class="table-header">
@@ -3998,10 +3998,16 @@ function loadBounties() {
       var market  = b.market  ? esc(b.market.title.slice(0, 50)) + (b.market.title.length > 50 ? '…' : '') : '—';
       var lastPaid = b.lastPaidAt ? new Date(b.lastPaidAt).toLocaleDateString('en-KE',{day:'numeric',month:'short'}) : 'Never';
 
+      var marketVol = b.market ? Math.round(Number(b.market.totalVolume || 0)) : 0;
+      var mktStatus = b.market ? b.market.status : '';
+      var statusBadge = mktStatus ? '<span style="font-size:0.6rem;padding:1px 5px;border-radius:4px;margin-left:4px;background:' +
+        (mktStatus==='OPEN'?'#dcfce7;color:#166534':mktStatus==='CLOSED'?'#fef9c3;color:#854d0e':mktStatus==='RESOLVED'?'#ede9fe;color:#6d28d9':'#fee2e2;color:#991b1b') +
+        '">' + mktStatus + '</span>' : '';
+
       return '<tr>' +
         '<td style="font-weight:600">' + creator + '</td>' +
-        '<td style="font-size:0.72rem;max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + market + '</td>' +
-        '<td class="mono">KES ' + Math.round(Number(b.tradeVolume)).toLocaleString() + '</td>' +
+        '<td style="font-size:0.72rem;max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="' + esc(b.market ? b.market.title : '') + '">' + market + statusBadge + '</td>' +
+        '<td class="mono">KES ' + marketVol.toLocaleString() + '</td>' +
         '<td class="mono" style="color:var(--green)">KES ' + earned.toFixed(2) + '</td>' +
         '<td class="mono" style="color:var(--text-dim)">KES ' + paid.toFixed(2) + ' <span style="font-size:0.65rem;">· ' + lastPaid + '</span></td>' +
         '<td class="mono" style="color:' + (canPay ? 'var(--amber)' : 'var(--text-dim)') + ';font-weight:' + (canPay ? '700' : '400') + '">KES ' + balance.toFixed(2) + '</td>' +
