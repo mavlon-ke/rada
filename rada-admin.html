@@ -1211,33 +1211,132 @@ body::after {
       <div class="page-head">
         <div>
           <div class="page-title">Platform Revenue</div>
-          <div class="page-sub">Forecasting fees, market surplus, and challenge fees collected by CheckRada</div>
+          <div class="page-sub" id="revRateNote">Loading...</div>
+        </div>
+        <button class="topbar-btn" onclick="loadRevenuePanel()">&#x1F504; Refresh</button>
+      </div>
+
+      <!-- GROSS REVENUE -->
+      <div style="font-size:0.7rem;font-weight:700;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;margin-bottom:8px;">Gross Revenue &#x2014; All Time</div>
+      <div class="stats-grid" style="margin-bottom:8px;">
+        <div class="stat-card"><div class="stat-label">Forecasting Fees</div><div class="stat-val green" id="revFees">&#x2014;</div><div class="stat-change" id="revFeesCount" style="color:var(--text-dim);">&#x2014; trades</div></div>
+        <div class="stat-card"><div class="stat-label">Market Surplus</div><div class="stat-val green" id="revSurplus">&#x2014;</div><div class="stat-change" id="revSurplusCount" style="color:var(--text-dim);">&#x2014; markets</div></div>
+        <div class="stat-card"><div class="stat-label">Challenge Fees</div><div class="stat-val green" id="revChallenge">&#x2014;</div><div class="stat-change" id="revChallengeCount" style="color:var(--text-dim);">&#x2014; challenges</div></div>
+        <div class="stat-card"><div class="stat-label">Gross Total</div><div class="stat-val green" id="revTotal">&#x2014;</div><div class="stat-change" style="color:var(--ke-green);">All time</div></div>
+      </div>
+
+      <!-- COSTS -->
+      <div style="font-size:0.7rem;font-weight:700;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;margin:20px 0 8px;">Platform Costs &#x2014; All Time</div>
+      <div class="table-card" style="margin-bottom:8px;padding:16px 20px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;">
+          <div style="display:flex;justify-content:space-between;padding:9px 8px 9px 0;border-bottom:1px solid var(--border);"><span style="font-size:0.82rem;color:var(--text-dim);">&#x1F4A1; Suggestion Rewards</span><span style="font-family:var(--mono);font-size:0.82rem;color:#ce1126;" id="revCostSuggestion">&#x2014;</span></div>
+          <div style="display:flex;justify-content:space-between;padding:9px 0 9px 8px;border-bottom:1px solid var(--border);"><span style="font-size:0.82rem;color:var(--text-dim);">&#x1F381; Referral Rewards</span><span style="font-family:var(--mono);font-size:0.82rem;color:#ce1126;" id="revCostReferral">&#x2014;</span></div>
+          <div style="display:flex;justify-content:space-between;padding:9px 8px 9px 0;border-bottom:1px solid var(--border);"><span style="font-size:0.82rem;color:var(--text-dim);">&#x1F3C5; Creator Bounty Paid</span><span style="font-family:var(--mono);font-size:0.82rem;color:#ce1126;" id="revCostBounty">&#x2014;</span></div>
+          <div style="display:flex;justify-content:space-between;padding:9px 0 9px 8px;border-bottom:1px solid var(--border);"><span style="font-size:0.82rem;color:var(--text-dim);">&#x1F451; Creator Royalty Paid</span><span style="font-family:var(--mono);font-size:0.82rem;color:#ce1126;" id="revCostRoyalty">&#x2014;</span></div>
+          <div style="display:flex;justify-content:space-between;padding:10px 8px 4px 0;grid-column:1/-1;border-top:2px solid var(--border);"><span style="font-size:0.85rem;font-weight:700;">Total Costs</span><span style="font-family:var(--mono);font-size:0.85rem;font-weight:700;color:#ce1126;" id="revCostTotal">&#x2014;</span></div>
         </div>
       </div>
-      <div class="stats-grid" style="margin-bottom:24px;">
-        <div class="stat-card"><div class="stat-label">Forecasting Fees</div><div class="stat-val green" id="revFees">—</div><div class="stat-change" id="revFeesCount" style="color:var(--text-dim);">— markets</div></div>
-        <div class="stat-card"><div class="stat-label">Market Surplus</div><div class="stat-val green" id="revSurplus">—</div><div class="stat-change" id="revSurplusCount" style="color:var(--text-dim);">— markets</div></div>
-        <div class="stat-card"><div class="stat-label">Challenge Fees</div><div class="stat-val green" id="revChallenge">—</div><div class="stat-change" id="revChallengeCount" style="color:var(--text-dim);">— challenges</div></div>
-        <div class="stat-card"><div class="stat-label">Grand Total</div><div class="stat-val green" id="revTotal">—</div><div class="stat-change" style="color:var(--ke-green);">All time</div></div>
+
+      <!-- NET REVENUE -->
+      <div class="table-card" style="margin-bottom:24px;padding:16px 20px;background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1px solid #86efac;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <div style="font-size:0.72rem;font-weight:700;color:#166534;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Net Revenue (Gross &#x2212; Costs)</div>
+            <div style="font-size:0.72rem;color:#166534;opacity:0.8;" id="revNetBreakdown">&#x2014;</div>
+          </div>
+          <div style="font-size:1.8rem;font-weight:800;" id="revNetRevenue">&#x2014;</div>
+        </div>
       </div>
+
+      <!-- TRADE VOLUME -->
+      <div style="font-size:0.7rem;font-weight:700;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;margin-bottom:8px;">Trade Volume</div>
+      <div class="table-card" style="margin-bottom:24px;padding:16px 20px;">
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap;">
+          <input type="date" id="revVolumeFrom" class="search-input" style="width:140px;font-size:0.8rem;" onchange="loadRevenuePanel()">
+          <span style="font-size:0.8rem;color:var(--text-dim);">to</span>
+          <input type="date" id="revVolumeTo" class="search-input" style="width:140px;font-size:0.8rem;" onchange="loadRevenuePanel()">
+          <button class="topbar-btn" onclick="clearRevFilter('revVolumeFrom','revVolumeTo',loadRevenuePanel)">Clear</button>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+          <div style="text-align:center;"><div style="font-size:0.72rem;color:var(--text-dim);margin-bottom:4px;">Total Staked</div><div style="font-family:var(--mono);font-weight:700;color:var(--primary);" id="revVolTotal">&#x2014;</div></div>
+          <div style="text-align:center;"><div style="font-size:0.72rem;color:var(--text-dim);margin-bottom:4px;">Trade Count</div><div style="font-family:var(--mono);font-weight:700;" id="revVolCount">&#x2014;</div></div>
+          <div style="text-align:center;"><div style="font-size:0.72rem;color:var(--text-dim);margin-bottom:4px;">Avg Stake</div><div style="font-family:var(--mono);font-weight:700;" id="revVolAvg">&#x2014;</div></div>
+        </div>
+      </div>
+
+      <!-- LIQUIDITY ALL TIME -->
+      <div style="font-size:0.7rem;font-weight:700;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;margin-bottom:8px;">Liquidity &#x2014; All Time</div>
+      <div class="stats-grid" style="margin-bottom:8px;">
+        <div class="stat-card"><div class="stat-label">Total Deposits Ever</div><div class="stat-val" id="revDepTotal">&#x2014;</div><div class="stat-change" id="revDepTotalCount" style="color:var(--text-dim);">&#x2014; transactions</div></div>
+        <div class="stat-card"><div class="stat-label">Total Withdrawals Ever</div><div class="stat-val" id="revWdTotal">&#x2014;</div><div class="stat-change" id="revWdTotalCount" style="color:var(--text-dim);">&#x2014; transactions</div></div>
+        <div class="stat-card"><div class="stat-label">Net Cash Position</div><div class="stat-val" id="revNetCash">&#x2014;</div><div class="stat-change" style="color:var(--text-dim);">Deposits &#x2212; Withdrawals</div></div>
+        <div class="stat-card"><div class="stat-label">Paystack Fees Absorbed</div><div class="stat-val" id="revPaystackFees">&#x2014;</div><div class="stat-change" style="color:var(--text-dim);">All-time withdrawal cost</div></div>
+      </div>
+
+      <!-- LIQUIDITY CURRENT SNAPSHOT -->
+      <div style="font-size:0.7rem;font-weight:700;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;margin:20px 0 8px;">Liquidity &#x2014; Current Snapshot</div>
+      <div class="table-card" style="margin-bottom:8px;padding:16px 20px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 8px 10px 0;border-bottom:1px solid var(--border);"><div><div style="font-size:0.82rem;color:var(--text-dim);">Wallet Liability</div><div style="font-size:0.68rem;color:var(--text-dim);">if everyone withdraws now</div></div><span style="font-family:var(--mono);font-size:0.9rem;font-weight:700;color:#ce1126;" id="revWalletLiability">&#x2014;</span></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0 10px 8px;border-bottom:1px solid var(--border);"><div><div style="font-size:0.82rem;color:var(--text-dim);">Bonus Balances</div><div style="font-size:0.68rem;color:var(--text-dim);">promotional credits, not real KES</div></div><span style="font-family:var(--mono);font-size:0.9rem;font-weight:700;color:var(--amber);" id="revBonusBalances">&#x2014;</span></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 8px 10px 0;border-bottom:1px solid var(--border);"><div><div style="font-size:0.82rem;color:var(--text-dim);">Pending Deposits</div><div style="font-size:0.68rem;color:var(--text-dim);">M-Pesa initiated, not confirmed</div></div><span style="font-family:var(--mono);font-size:0.9rem;font-weight:700;color:var(--primary);" id="revPendingDep">&#x2014;</span></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0 10px 8px;border-bottom:1px solid var(--border);"><div><div style="font-size:0.82rem;color:var(--text-dim);">Pending Withdrawals</div><div style="font-size:0.68rem;color:var(--text-dim);">deducted from wallets, not sent</div></div><span style="font-family:var(--mono);font-size:0.9rem;font-weight:700;color:#ce1126;" id="revPendingWd">&#x2014;</span></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0 4px;margin-top:8px;border-top:2px solid var(--border);">
+          <div><div style="font-size:0.85rem;font-weight:700;">Liquidity Gap</div><div style="font-size:0.68rem;color:var(--text-dim);">Net Cash &#x2212; Wallet Liability. Negative = cannot cover all withdrawals from Paystack receipts alone.</div></div>
+          <div style="font-family:var(--mono);font-size:1.2rem;font-weight:800;" id="revLiquidityGap">&#x2014;</div>
+        </div>
+      </div>
+
+      <!-- DEPOSITS AND WITHDRAWALS PERIOD -->
+      <div style="font-size:0.7rem;font-weight:700;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;margin:20px 0 8px;">Deposits &amp; Withdrawals &#x2014; Period</div>
+      <div class="table-card" style="margin-bottom:24px;padding:16px 20px;">
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:16px;flex-wrap:wrap;">
+          <input type="date" id="revPeriodFrom" class="search-input" style="width:140px;font-size:0.8rem;" onchange="loadRevenueLiquidity()">
+          <span style="font-size:0.8rem;color:var(--text-dim);">to</span>
+          <input type="date" id="revPeriodTo" class="search-input" style="width:140px;font-size:0.8rem;" onchange="loadRevenueLiquidity()">
+          <button class="topbar-btn" onclick="clearRevFilter('revPeriodFrom','revPeriodTo',loadRevenueLiquidity)">Clear</button>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;">
+          <div style="display:flex;justify-content:space-between;padding:9px 8px 9px 0;border-bottom:1px solid var(--border);"><span style="font-size:0.82rem;color:var(--text-dim);">Deposits</span><div style="text-align:right;"><div style="font-family:var(--mono);font-weight:700;color:#166534;" id="revPeriodDep">&#x2014;</div><div style="font-size:0.68rem;color:var(--text-dim);" id="revPeriodDepCount">&#x2014;</div></div></div>
+          <div style="display:flex;justify-content:space-between;padding:9px 0 9px 8px;border-bottom:1px solid var(--border);"><span style="font-size:0.82rem;color:var(--text-dim);">Withdrawals</span><div style="text-align:right;"><div style="font-family:var(--mono);font-weight:700;color:#ce1126;" id="revPeriodWd">&#x2014;</div><div style="font-size:0.68rem;color:var(--text-dim);" id="revPeriodWdCount">&#x2014;</div></div></div>
+          <div style="display:flex;justify-content:space-between;padding:9px 8px 9px 0;border-bottom:1px solid var(--border);"><span style="font-size:0.82rem;color:var(--text-dim);">Net Flow</span><span style="font-family:var(--mono);font-weight:700;" id="revPeriodNet">&#x2014;</span></div>
+          <div style="display:flex;justify-content:space-between;padding:9px 0 9px 8px;border-bottom:1px solid var(--border);"><span style="font-size:0.82rem;color:var(--text-dim);">Paystack Fees</span><span style="font-family:var(--mono);font-weight:700;color:#9284b8;" id="revPeriodFees">&#x2014;</span></div>
+        </div>
+        <div style="font-size:0.68rem;color:var(--text-dim);margin-top:10px;">* Paystack fees: &#x2264;KES 1,500 = KES 20 &#x2044; &#x2264;KES 20,000 = KES 40 &#x2044; &gt;KES 20,000 = KES 60 per withdrawal</div>
+      </div>
+
+      <!-- MONTHLY BREAKDOWN -->
       <div class="table-wrap" style="margin-bottom:24px;">
-        <div class="table-head"><div class="table-title">📅 Monthly Revenue (Last 6 Months)</div></div>
+        <div class="table-head">
+          <div class="table-title">Revenue Breakdown</div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <input type="date" id="revMonthFrom" class="search-input" style="width:130px;font-size:0.78rem;" onchange="loadRevenueMonthly()">
+            <span style="font-size:0.78rem;color:var(--text-dim);">to</span>
+            <input type="date" id="revMonthTo" class="search-input" style="width:130px;font-size:0.78rem;" onchange="loadRevenueMonthly()">
+            <button class="topbar-btn" onclick="clearRevFilter('revMonthFrom','revMonthTo',loadRevenueMonthly)">Clear</button>
+          </div>
+        </div>
         <table class="data-table">
-          <thead><tr><th>Month</th><th>Forecasting Fees</th><th>Market Surplus</th><th>Challenge Fees</th><th>Total</th></tr></thead>
+          <thead><tr><th id="revMonthPeriodHead">Period</th><th>Forecasting Fees</th><th>Market Surplus</th><th>Challenge Fees</th><th>Total</th></tr></thead>
           <tbody id="revMonthlyBody"><tr><td colspan="5" style="text-align:center;color:var(--text-dim);padding:20px;">Loading...</td></tr></tbody>
         </table>
       </div>
+
+      <!-- TOP MARKETS -->
       <div class="table-wrap" style="margin-bottom:24px;">
-        <div class="table-head"><div class="table-title">🏆 Top Markets by Revenue</div></div>
+        <div class="table-head"><div class="table-title">Top Markets by Revenue</div></div>
         <table class="data-table">
           <thead><tr><th>Market</th><th>Status</th><th>Revenue</th></tr></thead>
           <tbody id="revTopMarketsBody"><tr><td colspan="3" style="text-align:center;color:var(--text-dim);padding:20px;">Loading...</td></tr></tbody>
         </table>
       </div>
+
+      <!-- RECENT RECORDS -->
       <div class="table-wrap">
-        <div class="table-head"><div class="table-title">🕒 Recent Revenue Records</div><button class="topbar-btn" onclick="loadRevenuePanel()">🔄 Refresh</button></div>
+        <div class="table-head"><div class="table-title">Recent Revenue Records</div></div>
         <table class="data-table">
-          <thead><tr><th>Date</th><th>Type</th><th>Market / Challenge</th><th>Amount</th></tr></thead>
+          <thead><tr><th>Date</th><th>Type</th><th>Market</th><th>Amount</th></tr></thead>
           <tbody id="revRecentBody"><tr><td colspan="4" style="text-align:center;color:var(--text-dim);padding:20px;">Loading...</td></tr></tbody>
         </table>
       </div>
@@ -4701,85 +4800,179 @@ document.addEventListener('DOMContentLoaded', function() {
   initCarouselAdmin();
 });
 
+function clearRevFilter(fromId, toId, reloadFn) {
+  var f = document.getElementById(fromId);
+  var t = document.getElementById(toId);
+  if (f) f.value = '';
+  if (t) t.value = '';
+  if (reloadFn) reloadFn();
+}
+
 function loadRevenuePanel() {
-  var fmt = function(n) { return 'KES ' + Number(n).toLocaleString(); };
+  var fmt = function(n) { return 'KES ' + Math.round(Number(n)).toLocaleString(); };
+  var s   = function(id, v) { var el=document.getElementById(id); if(el) el.textContent=v; };
 
-  adminFetch('/api/admin/revenue')
-  .then(function(r) { return r.json(); })
-  .then(function(d) {
-    // Summary cards
-    var s = function(id, v) { var el = document.getElementById(id); if (el) el.textContent = v; };
-    s('revFees',           fmt(d.totals.forecastingFees));
-    s('revFeesCount',      d.counts.forecastingFees + ' markets resolved');
-    s('revSurplus',        fmt(d.totals.marketSurplus));
-    s('revSurplusCount',   d.counts.marketSurplus + ' markets with surplus');
-    s('revChallenge',      fmt(d.totals.challengeFees));
-    s('revChallengeCount', d.counts.challengeFees + ' challenges resolved');
-    s('revTotal',          fmt(d.totals.grandTotal));
+  var url = '/api/admin/revenue';
+  var vf  = (document.getElementById('revVolumeFrom')||{}).value||'';
+  var vt  = (document.getElementById('revVolumeTo')  ||{}).value||'';
+  if (vf) url += (url.includes('?')?'&':'?') + 'volumeFrom=' + vf;
+  if (vt) url += (url.includes('?')?'&':'?') + 'volumeTo='   + vt;
 
-    // Monthly breakdown
-    var monthlyBody = document.getElementById('revMonthlyBody');
-    if (monthlyBody) {
-      if (!d.monthly || !d.monthly.length) {
-        monthlyBody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-dim);padding:20px;">No revenue recorded yet.</td></tr>';
-      } else {
-        monthlyBody.innerHTML = d.monthly.map(function(m) {
-          return '<tr>' +
-            '<td>' + m.month + '</td>' +
-            '<td style="font-family:var(--mono);color:var(--ke-green)">' + fmt(m.fees) + '</td>' +
-            '<td style="font-family:var(--mono);color:var(--ke-green)">' + fmt(m.surplus) + '</td>' +
-            '<td style="font-family:var(--mono);color:var(--ke-green)">' + fmt(m.challenge) + '</td>' +
-            '<td style="font-family:var(--mono);font-weight:700;color:var(--ke-green)">' + fmt(m.total) + '</td>' +
-          '</tr>';
-        }).join('');
-      }
+  adminFetch(url)
+  .then(function(r){return r.json();})
+  .then(function(d){
+    // Gross revenue
+    s('revFees',           fmt(d.totalFees));
+    s('revFeesCount',      (d.feesCount||0).toLocaleString() + ' trades');
+    s('revSurplus',        fmt(d.totalSurplus));
+    s('revSurplusCount',   (d.surplusCount||0).toLocaleString() + ' markets');
+    s('revChallenge',      fmt(d.totalChallenge));
+    s('revChallengeCount', (d.challengeCount||0).toLocaleString() + ' challenges');
+    s('revTotal',          fmt(d.grossTotal));
+
+    // Costs
+    s('revCostSuggestion', '- ' + fmt(d.costSuggestion));
+    s('revCostReferral',   '- ' + fmt(d.costReferral));
+    s('revCostBounty',     '- ' + fmt(d.costBounty));
+    s('revCostRoyalty',    '- ' + fmt(d.costRoyalty));
+    s('revCostTotal',      '- ' + fmt(d.totalCosts));
+
+    // Net revenue
+    var net   = d.netRevenue || 0;
+    var netEl = document.getElementById('revNetRevenue');
+    if (netEl) {
+      netEl.textContent = fmt(net);
+      netEl.style.color = net >= 0 ? '#166534' : '#ce1126';
     }
+    s('revNetBreakdown',
+      fmt(d.grossTotal) + ' gross'
+      + ' \u2212 ' + fmt(d.costSuggestion) + ' suggestion'
+      + ' \u2212 ' + fmt(d.costReferral)   + ' referral'
+      + ' \u2212 ' + fmt(d.costBounty)     + ' bounties'
+      + ' \u2212 ' + fmt(d.costRoyalty)    + ' royalties'
+    );
+
+    // Rate note
+    s('revRateNote',
+      'Fee: ' + ((d.feeRate||0.05)*100).toFixed(1) + '% per trade  \u00B7  '
+      + 'Resolution cut: ' + ((d.cutRate||0.20)*100).toFixed(1) + '% of pool'
+    );
+
+    // Trade volume
+    s('revVolTotal', fmt(d.tradeTotal));
+    s('revVolCount', (d.tradeCount||0).toLocaleString() + ' trades');
+    s('revVolAvg',   'KES ' + Math.round(d.tradeAvg||0).toLocaleString() + ' avg');
+
+    // Liquidity all-time
+    s('revDepTotal',      fmt(d.totalDeposits));
+    s('revDepTotalCount', (d.depCount||0).toLocaleString() + ' transactions');
+    s('revWdTotal',       fmt(d.totalWithdrawals));
+    s('revWdTotalCount',  (d.wdCount||0).toLocaleString() + ' transactions');
+    s('revPaystackFees',  fmt(d.totalPaystackFees));
+    var ncEl = document.getElementById('revNetCash');
+    if (ncEl) { ncEl.textContent=fmt(d.netCash); ncEl.style.color=d.netCash>=0?'#166534':'#ce1126'; }
+
+    // Liquidity snapshot
+    s('revWalletLiability', fmt(d.walletLiability));
+    s('revBonusBalances',   fmt(d.bonusBalances));
+    s('revPendingDep',      fmt(d.pendingDeposits)    + ' (' + (d.pendingDepCount||0) + ')');
+    s('revPendingWd',       fmt(d.pendingWithdrawals) + ' (' + (d.pendingWdCount||0)  + ')');
+    var gap   = d.liquidityGap || 0;
+    var gapEl = document.getElementById('revLiquidityGap');
+    if (gapEl) { gapEl.textContent=fmt(gap); gapEl.style.color=gap>=0?'#166534':'#ce1126'; }
 
     // Top markets
-    var topBody = document.getElementById('revTopMarketsBody');
-    if (topBody) {
-      if (!d.topMarkets || !d.topMarkets.length) {
-        topBody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--text-dim);padding:20px;">No market revenue yet.</td></tr>';
-      } else {
-        topBody.innerHTML = d.topMarkets.map(function(m) {
-          return '<tr>' +
-            '<td>' + esc(m.title || '—') + '</td>' +
-            '<td><span class="badge">' + esc(m.status || '—') + '</span></td>' +
-            '<td style="font-family:var(--mono);color:var(--ke-green);font-weight:700">' + fmt(m.totalKes) + '</td>' +
-          '</tr>';
-        }).join('');
-      }
+    var tb = document.getElementById('revTopMarketsBody');
+    if (tb) {
+      tb.innerHTML = !d.topMarkets||!d.topMarkets.length
+        ? '<tr><td colspan="3" style="text-align:center;color:var(--text-dim);padding:16px;">No market revenue yet</td></tr>'
+        : d.topMarkets.map(function(m){
+            return '<tr><td style="font-size:0.78rem;max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="'+esc(m.title)+'">'+esc(m.title||'—')+'</td>'
+              +'<td><span class="badge">'+esc(m.status||'—')+'</span></td>'
+              +'<td style="font-family:var(--mono);color:var(--ke-green);font-weight:700">'+fmt(m.revenue)+'</td></tr>';
+          }).join('');
     }
 
     // Recent records
-    var recentBody = document.getElementById('revRecentBody');
-    if (recentBody) {
-      if (!d.recent || !d.recent.length) {
-        recentBody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-dim);padding:20px;">No revenue records yet.</td></tr>';
-      } else {
-        var typeLabel = { FORECASTING_FEE: '📊 Forecasting Fee', MARKET_SURPLUS: '💰 Market Surplus', CHALLENGE_FEE: '🤝 Challenge Fee' };
-        recentBody.innerHTML = d.recent.map(function(r) {
-          var when = new Date(r.createdAt).toLocaleDateString('en-KE', { day: 'numeric', month: 'short', year: 'numeric' });
-          var source = esc(r.marketTitle || r.challengeQ || '—');
-          return '<tr>' +
-            '<td style="font-size:0.78rem;color:var(--text-dim)">' + when + '</td>' +
-            '<td>' + esc(typeLabel[r.type] || r.type) + '</td>' +
-            '<td style="font-size:0.78rem">' + source + '</td>' +
-            '<td style="font-family:var(--mono);color:var(--ke-green);font-weight:700">' + fmt(r.amountKes) + '</td>' +
-          '</tr>';
-        }).join('');
-      }
+    var rb = document.getElementById('revRecentBody');
+    if (rb) {
+      var lbl = {FORECASTING_FEE:'Forecasting Fee',MARKET_SURPLUS:'Market Surplus',CHALLENGE_FEE:'Challenge Fee'};
+      rb.innerHTML = !d.recent||!d.recent.length
+        ? '<tr><td colspan="4" style="text-align:center;color:var(--text-dim);padding:16px;">No records yet</td></tr>'
+        : d.recent.map(function(r){
+            var when=new Date(r.createdAt).toLocaleDateString('en-KE',{day:'numeric',month:'short',year:'numeric'});
+            return '<tr>'
+              +'<td style="font-size:0.78rem;color:var(--text-dim)">'+when+'</td>'
+              +'<td>'+esc(lbl[r.type]||r.type)+'</td>'
+              +'<td style="font-size:0.78rem">'+esc(r.marketTitle||'—')+'</td>'
+              +'<td style="font-family:var(--mono);color:var(--ke-green);font-weight:700">'+fmt(r.amountKes)+'</td>'
+              +'</tr>';
+          }).join('');
     }
+
+    loadRevenueLiquidity();
+    loadRevenueMonthly();
   })
-  .catch(function(err) {
-    console.error('loadRevenuePanel:', err);
-    var els = ['revMonthlyBody','revTopMarketsBody','revRecentBody'];
-    els.forEach(function(id) {
-      var el = document.getElementById(id);
-      if (el) el.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--ke-red);padding:20px;">Failed to load revenue data.</td></tr>';
-    });
+  .catch(function(err){
+    console.error('loadRevenuePanel:',err);
   });
 }
+
+function loadRevenueLiquidity() {
+  var fmt = function(n) { return 'KES ' + Math.round(Number(n)).toLocaleString(); };
+  var s   = function(id, v) { var el=document.getElementById(id); if(el) el.textContent=v; };
+  var pf  = (document.getElementById('revPeriodFrom')||{}).value||'';
+  var pt  = (document.getElementById('revPeriodTo')  ||{}).value||'';
+  var url = '/api/admin/revenue';
+  if (pf) url += '?periodFrom=' + pf;
+  if (pt) url += (url.includes('?')?'&':'?') + 'periodTo=' + pt;
+
+  adminFetch(url)
+  .then(function(r){return r.json();})
+  .then(function(d){
+    s('revPeriodDep',      fmt(d.periodDepTotal));
+    s('revPeriodDepCount', (d.periodDepCount||0).toLocaleString() + ' deposits');
+    s('revPeriodWd',       fmt(d.periodWdTotal));
+    s('revPeriodWdCount',  (d.periodWdCount||0).toLocaleString()  + ' withdrawals');
+    var net   = d.periodNetFlow || 0;
+    var netEl = document.getElementById('revPeriodNet');
+    if (netEl) { netEl.textContent=(net>=0?'+':'')+fmt(net); netEl.style.color=net>=0?'#166534':'#ce1126'; }
+    s('revPeriodFees', 'KES ' + (d.periodPaystackFees||0).toLocaleString());
+  })
+  .catch(function(err){console.error('loadRevenueLiquidity:',err);});
+}
+
+function loadRevenueMonthly() {
+  var fmt = function(n) { return 'KES ' + Math.round(Number(n)).toLocaleString(); };
+  var s   = function(id, v) { var el=document.getElementById(id); if(el) el.textContent=v; };
+  var mf  = (document.getElementById('revMonthFrom')||{}).value||'';
+  var mt  = (document.getElementById('revMonthTo')  ||{}).value||'';
+  var url = '/api/admin/revenue';
+  if (mf) url += '?monthFrom=' + mf;
+  if (mt) url += (url.includes('?')?'&':'?') + 'monthTo=' + mt;
+
+  adminFetch(url)
+  .then(function(r){return r.json();})
+  .then(function(d){
+    var hd = document.getElementById('revMonthPeriodHead');
+    if (hd) hd.textContent = d.groupBy==='day'?'Day':d.groupBy==='week'?'Week':'Month';
+    var body = document.getElementById('revMonthlyBody');
+    if (!body) return;
+    body.innerHTML = !d.monthly||!d.monthly.length
+      ? '<tr><td colspan="5" style="text-align:center;color:var(--text-dim);padding:16px;">No revenue in this period</td></tr>'
+      : d.monthly.map(function(m){
+          return '<tr>'
+            +'<td style="font-family:var(--mono);font-size:0.8rem">'+esc(m.period)+'</td>'
+            +'<td style="font-family:var(--mono);color:var(--ke-green)">'+fmt(m.fees)+'</td>'
+            +'<td style="font-family:var(--mono);color:var(--ke-green)">'+fmt(m.surplus)+'</td>'
+            +'<td style="font-family:var(--mono);color:var(--ke-green)">'+fmt(m.challenge)+'</td>'
+            +'<td style="font-family:var(--mono);font-weight:700;color:var(--ke-green)">'+fmt(m.total)+'</td>'
+            +'</tr>';
+        }).join('');
+  })
+  .catch(function(err){console.error('loadRevenueMonthly:',err);});
+}
+
 
 
 function loadBlacklistPanel() {
