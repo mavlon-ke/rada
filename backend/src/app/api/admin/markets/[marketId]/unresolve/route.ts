@@ -52,16 +52,29 @@ export async function POST(
 
   const originalOutcome = market.outcome;
 
-  // ── Identify winning positions (same logic as /resolve) ─────────────────
-  const winningPositions = market.positions.filter(p => p.side === originalOutcome);
+  // ── Dynamic rate — must match resolve route exactly ─────────────────────
+  const platformConfig    = await prisma.platformConfig.findUnique({ where: { id: 'singleton' } });
+  const resolutionCutRate = platformConfig ? Number(platformConfig.resolutionCutRate) : 0.20;
 
-  // Payouts to claw back: Math.floor(shares) — identical to /resolve payout logic
+  // ── Identify winning positions (same logic as /resolve) ─────────────────
+  const winningPositions   = market.positions.filter(p => p.side === originalOutcome);
+
+  // ── Recompute payoutPerShare using same formula as /resolve ───────────────
+  // realPoolBalance = totalVolume (actual KES net of fees)
+  // distributable   = realPoolBalance × (1 − resolutionCutRate)
+  // payoutPerShare  = distributable / totalWinningShares
+  const realPoolBalance    = Number(market.totalVolume);
+  const platformCut        = Math.floor(realPoolBalance * resolutionCutRate);
+  const distributable      = realPoolBalance - platformCut;
+  const totalWinningShares = winningPositions.reduce((s, p) => s + Number(p.shares), 0);
+  const payoutPerShare     = totalWinningShares > 0 ? distributable / totalWinningShares : 0;
+
   const clawbacks = winningPositions
     .map(p => ({
       userId:     p.userId,
       phone:      p.user?.phone ?? '',
       name:       p.user?.name ?? 'User',
-      paidKes:    Math.floor(Number(p.shares)),
+      paidKes:    Math.floor(Number(p.shares) * payoutPerShare),
       positionId: p.id,
     }))
     .filter(c => c.paidKes >= 1);

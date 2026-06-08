@@ -1,16 +1,15 @@
 // src/app/api/admin/markets/[marketId]/resolve/route.ts
-// Resolves a market, credits winners' wallets, and records platform revenue.
 //
-// Fee model (Option B): 5% forecasting fee collected at trade time.
-// Resolution is fee-free: each winning share redeems for KES 1 in full.
-// Platform revenue = forecasting fees collected + market surplus (losers' residual).
-// DEFAULT_B seed (KES 1000) is virtual and excluded from revenue calculations.
+// Payout model:
+//   realPoolBalance   = market.totalVolume  (actual KES collected net of fees)
+//   platformCut       = floor(realPoolBalance × resolutionCutRate)  [from PlatformConfig]
+//   distributable     = realPoolBalance − platformCut
+//   payoutPerShare    = distributable / totalWinningShares
+//   each winner gets  = floor(shares × payoutPerShare)
+//   marketSurplus     = realPoolBalance − totalPayouts  (includes cut + floor dust)
 //
-// Notifications (added in Stage 2):
-// After the transaction commits, fire-and-forget notifications are created
-// for every winner and every loser. Notifications are deliberately created
-// OUTSIDE the transaction — they aren't critical state and a failure to
-// notify must not block the financial side of resolution.
+// This guarantees: totalPayouts < realPoolBalance < grossDeposits — always solvent.
+// Works correctly for balanced, unbalanced, and unanimous (all one side) markets.
 
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
@@ -18,7 +17,8 @@ import { prisma } from '@/lib/db/prisma';
 import { requireAdmin, adminUnauthorized } from '@/lib/auth/admin';
 import { createNotification } from '@/lib/notifications';
 
-const DEFAULT_B = 1000; // Virtual LMSR seed — excluded from revenue
+const DEFAULT_RESOLUTION_CUT_RATE   = 0.20;  // fallback if PlatformConfig missing
+const DEFAULT_FORECASTING_FEE_RATE  = 0.05;
 
 const Schema = z.object({
   outcome:    z.enum(['YES', 'NO']),
@@ -34,66 +34,79 @@ export async function POST(
 
   const body   = await req.json();
   const parsed = Schema.safeParse(body);
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+  if (!parsed.success)
+    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
   const { outcome, sourceNote } = parsed.data;
   const losingSide = outcome === 'YES' ? 'NO' : 'YES';
 
-  // ── Validate market AND fetch both winner + loser positions ───────────────
-  // The original query fetched only the winning side. We now also fetch the
-  // losing side so we can notify those users that the market resolved against
-  // their position.
+  // ── Dynamic rates from PlatformConfig ────────────────────────────────────
+  const platformConfig = await prisma.platformConfig.findUnique({ where: { id: 'singleton' } });
+  const resolutionCutRate = platformConfig
+    ? Number(platformConfig.resolutionCutRate)
+    : DEFAULT_RESOLUTION_CUT_RATE;
+  const forecastingFeeRate = platformConfig
+    ? Number(platformConfig.forecastingFeeRate)
+    : DEFAULT_FORECASTING_FEE_RATE;
+
+  // ── Fetch market with all positions ──────────────────────────────────────
   const market = await prisma.market.findUnique({
-    where: { id: params.marketId },
+    where:   { id: params.marketId },
     include: {
       positions: {
-        where: { shares: { gt: 0 } },          // both sides
+        where:   { shares: { gt: 0 } },
         include: { user: { select: { id: true, phone: true } } },
       },
     },
   });
 
-  if (!market)                    return NextResponse.json({ error: 'Market not found' }, { status: 404 });
-  if (market.status !== 'CLOSED') return NextResponse.json({ error: 'Market must be CLOSED to resolve' }, { status: 400 });
-  if (market.outcome)             return NextResponse.json({ error: 'Market already resolved' }, { status: 400 });
+  if (!market)
+    return NextResponse.json({ error: 'Market not found' }, { status: 404 });
+  if (market.status !== 'CLOSED')
+    return NextResponse.json({ error: 'Market must be CLOSED to resolve' }, { status: 400 });
+  if (market.outcome)
+    return NextResponse.json({ error: 'Market already resolved' }, { status: 400 });
 
-  // ── Unanimous consensus check ────────────────────────────────────────────
-  const totalYes    = Number(market.yesPool) - DEFAULT_B;
-  const totalNo     = Number(market.noPool)  - DEFAULT_B;
-  const isUnanimous = (outcome === 'YES' && totalNo <= 0) || (outcome === 'NO' && totalYes <= 0);
-
-  // ── Split positions into winners and losers ──────────────────────────────
   const winningPositions = market.positions.filter(p => p.side === outcome);
   const losingPositions  = market.positions.filter(p => p.side === losingSide);
 
-  // ── Calculate winner payouts ──────────────────────────────────────────────
-  const payouts = winningPositions.map(p => {
-    const netKes = Math.floor(Number(p.shares));
-    return {
-      userId:     p.userId,
-      netKes,
-      shares:     Number(p.shares),
-      positionId: p.id,
-    };
-  }).filter(p => p.netKes >= 1);
+  // ── Pool and payout calculation ───────────────────────────────────────────
+  // realPoolBalance = actual KES collected net of fees (stored in totalVolume)
+  const realPoolBalance     = Number(market.totalVolume);
+  const platformCut         = Math.floor(realPoolBalance * resolutionCutRate);
+  const distributable       = realPoolBalance - platformCut;
+  const totalWinningShares  = winningPositions.reduce((s, p) => s + Number(p.shares), 0);
+
+  // payoutPerShare: distributable divided across all winning shares
+  // If no winning positions (impossible if market is valid, but guard anyway):
+  const payoutPerShare = totalWinningShares > 0 ? distributable / totalWinningShares : 0;
+
+  // isUnanimous: true when only one side has any bettors
+  const hasYesBettors = market.positions.some(p => p.side === 'YES');
+  const hasNoBettors  = market.positions.some(p => p.side === 'NO');
+  const isUnanimous   = !hasYesBettors || !hasNoBettors;
+
+  const payouts = winningPositions.map(p => ({
+    userId:     p.userId,
+    netKes:     Math.floor(Number(p.shares) * payoutPerShare),
+    shares:     Number(p.shares),
+    positionId: p.id,
+  })).filter(p => p.netKes >= 1);
 
   const totalPayouts = payouts.reduce((s, p) => s + p.netKes, 0);
 
-  // ── Calculate platform revenue ────────────────────────────────────────────
-  // 1. Forecasting fees: sum of forecastingFeeKes from all orders on this market
+  // Platform revenue breakdown:
+  // - Forecasting fees: recorded from Order.forecastingFeeKes (collected at trade time)
+  // - Market surplus:   realPoolBalance − totalPayouts (includes cut + floor dust)
+  //   Note: do NOT subtract fees here — totalVolume is already net of fees.
   const ordersAgg = await prisma.order.aggregate({
-    where:  { marketId: market.id },
-    _sum:   { forecastingFeeKes: true },
+    where: { marketId: market.id },
+    _sum:  { forecastingFeeKes: true },
   });
   const totalFeesCollected = Math.floor(Number(ordersAgg._sum.forecastingFeeKes ?? 0));
+  const marketSurplus      = Math.max(0, realPoolBalance - totalPayouts);
 
-  // 2. Pool balance: yesPool + noPool minus the virtual seed (DEFAULT_B each side)
-  const realPoolBalance = Number(market.yesPool) + Number(market.noPool) - (DEFAULT_B * 2);
-
-  // 3. Market surplus: real pool minus winner payouts minus fees already counted
-  const marketSurplus = Math.max(0, realPoolBalance - totalPayouts - totalFeesCollected);
-
-  // ── Atomic DB resolution ──────────────────────────────────────────────────
+  // ── Atomic resolution transaction ────────────────────────────────────────
   await prisma.$transaction(async (tx) => {
     // 1. Mark market resolved
     await tx.market.update({
@@ -106,9 +119,9 @@ export async function POST(
       },
     });
 
-    // 2. Credit winners' wallets
+    // 2. Credit winners
     for (const p of payouts) {
-      const updatedUser = await tx.user.update({
+      const updated = await tx.user.update({
         where: { id: p.userId },
         data:  { balanceKes: { increment: p.netKes } },
       });
@@ -117,33 +130,37 @@ export async function POST(
           userId:      p.userId,
           type:        'PAYOUT',
           amountKes:   p.netKes,
-          balAfter:    Number(updatedUser.balanceKes),
+          balAfter:    Number(updated.balanceKes),
           status:      'SUCCESS',
-          description: `Market payout (${outcome}) — ${market.title.slice(0, 80)}. Credited to CheckRada wallet.`,
+          description: `Market payout (${outcome}) — ${market.title.slice(0, 80)}. `
+            + `${p.shares.toFixed(4)} shares × KES ${payoutPerShare.toFixed(4)}/share. `
+            + `Resolution cut: ${(resolutionCutRate * 100).toFixed(1)}%.`,
         },
       });
     }
 
-    // 3. Record platform revenue — forecasting fees
+    // 3. Forecasting fees revenue record
     if (totalFeesCollected > 0) {
       await tx.platformRevenue.create({
         data: {
           marketId:    market.id,
           type:        'FORECASTING_FEE',
           amountKes:   totalFeesCollected,
-          description: `Forecasting fees (5%) from ${market.title.slice(0, 80)}. ${payouts.length} winner(s), total stakes recovered.`,
+          description: `Forecasting fees (${(forecastingFeeRate * 100).toFixed(1)}%) — ${market.title.slice(0, 80)}.`,
         },
       });
     }
 
-    // 4. Record platform revenue — market surplus (losers' residual)
+    // 4. Market surplus revenue record (resolution cut + floor dust)
     if (marketSurplus > 0) {
       await tx.platformRevenue.create({
         data: {
           marketId:    market.id,
           type:        'MARKET_SURPLUS',
           amountKes:   marketSurplus,
-          description: `Market surplus from losers' stakes — ${market.title.slice(0, 80)}. Pool residual after winner payouts.`,
+          description: `Market surplus — ${market.title.slice(0, 80)}. `
+            + `Resolution cut (${(resolutionCutRate * 100).toFixed(1)}%): KES ${platformCut}. `
+            + `Floor dust: KES ${marketSurplus - platformCut}.`,
         },
       });
     }
@@ -155,66 +172,53 @@ export async function POST(
     });
   });
 
-  const totalRevenue = totalFeesCollected + marketSurplus;
-  console.log(`[RESOLVE] Market ${market.id} resolved as ${outcome}. Winners: ${payouts.length}, Payouts: KES ${totalPayouts}, Fees: KES ${totalFeesCollected}, Surplus: KES ${marketSurplus}, Total Revenue: KES ${totalRevenue}.`);
+  console.log(
+    `[RESOLVE] ${market.id} → ${outcome}. ` +
+    `Pool: KES ${realPoolBalance}, Cut: KES ${platformCut} (${(resolutionCutRate*100).toFixed(1)}%), ` +
+    `Distributable: KES ${distributable}, Payouts: KES ${totalPayouts}, Surplus: KES ${marketSurplus}. ` +
+    `Winners: ${payouts.length}, Losers: ${losingPositions.length}.`
+  );
 
-  // ── Post-transaction: create notifications (fire-and-forget) ──────────────
-  // These run AFTER the financial transaction has committed. If any
-  // individual notification creation fails, the resolution itself is not
-  // rolled back — the user can still see the outcome via the market page.
-  //
-  // WhatsApp mirror is included; createNotification calls sendWhatsAppNotification
-  // internally, which is itself fail-closed (logs but never throws).
-  //
-  // Use a short title slice in the param payloads so they fit within Meta's
-  // template body limits (a body parameter caps around 1024 chars; market
-  // titles are typically <100 but we trim defensively).
-  const titleShort = market.title.length > 80 ? market.title.slice(0, 77) + '...' : market.title;
-  const outcomeLabel = outcome === 'YES' ? 'YES' : 'NO';
+  // ── Notifications (fire-and-forget, outside transaction) ─────────────────
+  const titleShort   = market.title.length > 80 ? market.title.slice(0, 77) + '...' : market.title;
+  const outcomeLabel = outcome;
 
-  // Winner notifications
   for (const p of payouts) {
     void createNotification({
       userId:  p.userId,
       type:    'MARKET_RESOLVED',
       title:   `🎉 You won KES ${p.netKes.toLocaleString()}`,
-      message: `Market resolved ${outcomeLabel}: "${titleShort}". Your winnings have been credited to your CheckRada wallet.`,
-      link:    '/rada-portfolio.html',
-      whatsapp: {
-        template:   'MARKET_RESOLVED_WON',
-        parameters: [p.netKes.toLocaleString()],
-      },
+      message: `Market resolved ${outcomeLabel}: "${titleShort}". Winnings credited to your wallet.`,
+      link:    '/rada-dashboard.html',
+      whatsapp: { template: 'MARKET_RESOLVED_WON', parameters: [p.netKes.toLocaleString()] },
     });
   }
-
-  // Loser notifications — only for users with shares > 0 on the losing side
   for (const p of losingPositions) {
     void createNotification({
       userId:  p.userId,
       type:    'MARKET_RESOLVED',
       title:   `Market resolved ${outcomeLabel}`,
-      message: `"${titleShort}" resolved ${outcomeLabel}. Your shares did not win this time.`,
-      link:    '/rada-portfolio.html',
-      whatsapp: {
-        template:   'MARKET_RESOLVED_LOST',
-        parameters: [],
-      },
+      message: `"${titleShort}" resolved ${outcomeLabel}. Better luck next time.`,
+      link:    '/rada-markets.html',
+      whatsapp: { template: 'MARKET_RESOLVED_LOST', parameters: [] },
     });
   }
 
   return NextResponse.json({
-    success:            true,
+    success:        true,
     outcome,
-    marketId:           market.id,
+    marketId:       market.id,
     isUnanimous,
-    winnersCount:       payouts.length,
-    losersCount:        losingPositions.length,
-    totalPayoutKes:     totalPayouts,
+    poolKes:        realPoolBalance,
+    platformCutKes: platformCut,
+    distributedKes: distributable,
+    payoutPerShare: parseFloat(payoutPerShare.toFixed(6)),
+    winnersCount:   payouts.length,
+    totalPayoutKes: totalPayouts,
     platformRevenue: {
       forecastingFees: totalFeesCollected,
       marketSurplus,
-      total:           totalRevenue,
+      total:           totalFeesCollected + marketSurplus,
     },
-    note: 'Winnings credited to CheckRada wallets. Platform revenue recorded separately. Notifications dispatched.',
   });
 }

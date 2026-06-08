@@ -21,8 +21,8 @@ import { sharesToReceive, newPools } from '@/lib/market/amm';
 import { createNotification } from '@/lib/notifications';
 import { payReferrerOnFirstTrade, notifyReferrerRewarded } from '@/lib/referrals/referral.service';
 
-const FORECASTING_FEE_RATE      = 0.05;   // 5% total fee — kept as code constant per platform decision
-const MAX_CREATOR_ROYALTY_RATE  = 0.05;   // Hard cap: defence-in-depth. Even if DB tampered, never pay >5%.
+const DEFAULT_FORECASTING_FEE_RATE      = 0.05;   // fallback if PlatformConfig row missing
+const MAX_CREATOR_ROYALTY_RATE          = 0.05;   // Hard cap: defence-in-depth. Even if DB tampered, never pay >5%.
 const DEFAULT_CREATOR_ROYALTY_RATE      = 0.005;
 const DEFAULT_CREATOR_ROYALTY_THRESHOLD = 1000;
 
@@ -61,7 +61,11 @@ export async function POST(
   const creatorProgrammeActive = platformConfig ? platformConfig.creatorProgrammeActive : true;
 
   // ── Fee calculation ───────────────────────────────────────────────────────
-  const feeKes    = Math.floor(amountKes * FORECASTING_FEE_RATE);
+  // Dynamic forecasting fee — read from PlatformConfig, fallback to 5%
+  const forecastingFeeRate = platformConfig
+    ? Number(platformConfig.forecastingFeeRate)
+    : DEFAULT_FORECASTING_FEE_RATE;
+  const feeKes    = Math.floor(amountKes * forecastingFeeRate);
   const netAmount = amountKes - feeKes;
 
   // ── Wallet-first payment split ────────────────────────────────────────────

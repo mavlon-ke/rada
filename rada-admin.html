@@ -1177,7 +1177,7 @@ body::after {
         <div class="stat-card"><div class="stat-label">Total Earned</div><div class="stat-val green" id="bntyTotalEarned">—</div></div>
         <div class="stat-card"><div class="stat-label">Total Paid Out</div><div class="stat-val" id="bntyTotalPaid">—</div></div>
         <div class="stat-card"><div class="stat-label">Unpaid Balance</div><div class="stat-val amber" id="bntyUnpaid">—</div></div>
-        <div class="stat-card"><div class="stat-label">Total Creators</div><div class="stat-val" id="bntyCreators">—</div></div>
+        <div class="stat-card"><div class="stat-label">Active Creators</div><div class="stat-val" id="bntyCreators">—</div></div>
       </div>
       <div class="table-card" style="box-shadow:0 2px 12px rgba(0,0,0,0.05);">
         <div class="table-header">
@@ -1404,7 +1404,7 @@ body::after {
     </div>
     <div class="panel" id="panel-creator-programme">
       <div class="page-title">⚙️ Creator Programme</div>
-      <div class="page-sub">Tune the creator programme settings — royalty rate, volume threshold, suggestion reward, and bounty payout. The hard 5% cap on royalty rate is enforced server-side; you cannot exceed it from this panel.</div>
+      <div class="page-sub">Tune platform-wide fee rates and creator programme settings. All rates are dynamic — changes take effect on the next trade or market resolution. No caps are enforced server-side; changes are your responsibility.</div>
 
       <!-- Status + Config -->
       <div class="stat-card" style="margin-bottom:16px;">
@@ -1420,6 +1420,23 @@ body::after {
         </div>
         <div style="font-size:0.65rem;color:#9284b8;margin-bottom:14px;">When OFF: trade endpoint skips creator royalty accrual entirely. Proposal approvals and the suggestion reward continue to work — only trade-time royalty is paused.</div>
 
+        <!-- Fee Rates -->
+        <div style="font-size:0.7rem;font-weight:700;letter-spacing:1px;color:var(--text-dim);text-transform:uppercase;margin-bottom:10px;">Platform Fee Rates</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+          <div>
+            <div class="stat-label" style="margin-bottom:5px;">Forecasting Fee (% of gross stake)</div>
+            <input class="table-input" type="number" id="cpForecastingFeeInput" value="5" min="0" step="0.1">
+            <div style="font-size:0.6rem;color:#9284b8;margin-top:4px;">Deducted at trade time. Net amount enters the AMM pool. Default 5%.</div>
+          </div>
+          <div>
+            <div class="stat-label" style="margin-bottom:5px;">Resolution Cut (% of net pool)</div>
+            <input class="table-input" type="number" id="cpResolutionCutInput" value="20" min="0" step="0.5">
+            <div style="font-size:0.6rem;color:#9284b8;margin-top:4px;">Platform share taken from the pool at resolution. Remainder distributed to winners. Default 20%.</div>
+          </div>
+        </div>
+
+        <!-- Creator Programme -->
+        <div style="font-size:0.7rem;font-weight:700;letter-spacing:1px;color:var(--text-dim);text-transform:uppercase;margin-bottom:10px;margin-top:4px;">Creator Programme</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
           <div>
             <div class="stat-label" style="margin-bottom:5px;">Royalty Rate (% of net trade)</div>
@@ -2710,7 +2727,7 @@ function showPanel(id, btn) {
   if (id === 'carousel')      { setTimeout(function() { initCarouselAdmin(); loadCarouselFromBackend(); }, 50); }
   if (id === 'referral')      { setTimeout(loadReferralConfig, 50); }
   if (id === 'creator-programme') { loadCreatorProgrammeConfig(); }
-  if (id === 'whatsapp-config')   { loadWhatsappConfig(); }
+  if (id === 'whatsapp-config')   { setTimeout(loadWhatsappConfig, 50); }
   if (id === 'dataapps')      { setTimeout(loadDataApplications, 50); }
   if (id === 'admin-log')     { loadAdminLogStats(); loadActivityFeed('adminLogBody'); }
   if (id === 'b2b')           { loadB2BAnalytics(); }
@@ -3998,16 +4015,10 @@ function loadBounties() {
       var market  = b.market  ? esc(b.market.title.slice(0, 50)) + (b.market.title.length > 50 ? '…' : '') : '—';
       var lastPaid = b.lastPaidAt ? new Date(b.lastPaidAt).toLocaleDateString('en-KE',{day:'numeric',month:'short'}) : 'Never';
 
-      var marketVol = b.market ? Math.round(Number(b.market.totalVolume || 0)) : 0;
-      var mktStatus = b.market ? b.market.status : '';
-      var statusBadge = mktStatus ? '<span style="font-size:0.6rem;padding:1px 5px;border-radius:4px;margin-left:4px;background:' +
-        (mktStatus==='OPEN'?'#dcfce7;color:#166534':mktStatus==='CLOSED'?'#fef9c3;color:#854d0e':mktStatus==='RESOLVED'?'#ede9fe;color:#6d28d9':'#fee2e2;color:#991b1b') +
-        '">' + mktStatus + '</span>' : '';
-
       return '<tr>' +
         '<td style="font-weight:600">' + creator + '</td>' +
-        '<td style="font-size:0.72rem;max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="' + esc(b.market ? b.market.title : '') + '">' + market + statusBadge + '</td>' +
-        '<td class="mono">KES ' + marketVol.toLocaleString() + '</td>' +
+        '<td style="font-size:0.72rem;max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + market + '</td>' +
+        '<td class="mono">KES ' + Math.round(Number(b.tradeVolume)).toLocaleString() + '</td>' +
         '<td class="mono" style="color:var(--green)">KES ' + earned.toFixed(2) + '</td>' +
         '<td class="mono" style="color:var(--text-dim)">KES ' + paid.toFixed(2) + ' <span style="font-size:0.65rem;">· ' + lastPaid + '</span></td>' +
         '<td class="mono" style="color:' + (canPay ? 'var(--amber)' : 'var(--text-dim)') + ';font-weight:' + (canPay ? '700' : '400') + '">KES ' + balance.toFixed(2) + '</td>' +
@@ -4221,80 +4232,6 @@ function renderAdminLog() {
     <td style="font-family:var(--mono);font-size:0.72rem;color:var(--text-dim);">${esc(r.ts)}</td>
     <td style="font-family:var(--mono);font-size:0.72rem;color:var(--text-dim);">${esc(r.ip)}</td>
   </tr>`).join('');
-}
-
-// ── WHATSAPP CONFIG ───────────────────────────────────────────────────────────
-// Defined in Block 4 so showPanel() can reference loadWhatsappConfig directly.
-// Function declarations in a different <script> block are NOT hoisted into this
-// block — keeping them here eliminates the cross-block ReferenceError.
-
-var WA_TOGGLE_FIELDS = [
-  ['waToggleDepositConfirmed',             'depositConfirmedEnabled'],
-  ['waToggleWithdrawalProcessed',          'withdrawalProcessedEnabled'],
-  ['waToggleMarketResolvedWon',            'marketResolvedWonEnabled'],
-  ['waToggleMarketResolvedLost',           'marketResolvedLostEnabled'],
-  ['waToggleReferralRewardCredited',       'referralRewardCreditedEnabled'],
-  ['waToggleRefereeNominated',             'refereeNominatedEnabled'],
-  ['waToggleChallengeOpponentStaked',      'challengeOpponentStakedEnabled'],
-  ['waToggleChallengeResolutionWindow',    'challengeResolutionWindowEnabled'],
-  ['waToggleChallengeResolutionWarning',   'challengeResolutionWarningEnabled'],
-];
-
-function loadWhatsappConfig() {
-  adminFetch('/api/admin/config/whatsapp').then(function(r) { return r.json(); }).then(function(cfg) {
-    if (!cfg || cfg.error) {
-      console.error('loadWhatsappConfig:', cfg && cfg.error);
-      return;
-    }
-    var gt  = document.getElementById('waGlobalToggle');
-    var lbl = document.getElementById('waStatusLabel');
-    if (gt) {
-      gt.checked = cfg.globalEnabled !== false;
-      if (lbl) {
-        lbl.textContent = gt.checked ? 'ON' : 'OFF';
-        lbl.style.color = gt.checked ? '#16a34a' : '#ce1126';
-      }
-    }
-    WA_TOGGLE_FIELDS.forEach(function(pair) {
-      var el = document.getElementById(pair[0]);
-      if (el) el.checked = cfg[pair[1]] !== false;
-    });
-    var auditBox  = document.getElementById('waAuditTrail');
-    var auditText = document.getElementById('waAuditText');
-    if (auditBox && auditText && cfg.updatedAt) {
-      var when = new Date(cfg.updatedAt).toLocaleString();
-      var who  = (cfg.updatedByAdmin && cfg.updatedByAdmin.name) || (cfg.updatedByAdmin && cfg.updatedByAdmin.email) || 'system';
-      auditText.textContent = 'Last updated ' + when + ' by ' + who + '.';
-      auditBox.style.display = 'block';
-    }
-  }).catch(function(err) { console.error('loadWhatsappConfig:', err); });
-}
-
-function saveWhatsappConfig() {
-  var statusEl = document.getElementById('waSaveStatus');
-  if (statusEl) { statusEl.textContent = 'Saving...'; statusEl.style.color = '#9284b8'; }
-  var body = {};
-  var gt = document.getElementById('waGlobalToggle');
-  if (gt) body.globalEnabled = !!gt.checked;
-  WA_TOGGLE_FIELDS.forEach(function(pair) {
-    var el = document.getElementById(pair[0]);
-    if (el) body[pair[1]] = !!el.checked;
-  });
-  adminFetch('/api/admin/config/whatsapp', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  }).then(function(r) { return r.json(); }).then(function(d) {
-    if (d.success) {
-      if (statusEl) { statusEl.textContent = '✓ Saved'; statusEl.style.color = '#16a34a'; }
-      loadWhatsappConfig();
-    } else {
-      if (statusEl) { statusEl.textContent = 'Error: ' + JSON.stringify(d.error || d); statusEl.style.color = '#ce1126'; }
-    }
-  }).catch(function(err) {
-    if (statusEl) { statusEl.textContent = 'Network error'; statusEl.style.color = '#ce1126'; }
-    console.error('saveWhatsappConfig:', err);
-  });
 }
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
@@ -4525,6 +4462,10 @@ function loadCreatorProgrammeConfig() {
       }
     }
     // Royalty rate stored as decimal (0.005); display as percent (0.5).
+    var ff = document.getElementById('cpForecastingFeeInput');
+    var rc = document.getElementById('cpResolutionCutInput');
+    if (ff) ff.value = ((cfg.forecastingFeeRate != null ? cfg.forecastingFeeRate : 0.05) * 100).toFixed(1);
+    if (rc) rc.value = ((cfg.resolutionCutRate  != null ? cfg.resolutionCutRate  : 0.20) * 100).toFixed(1);
     if (rr) rr.value = ((cfg.creatorRoyaltyRate != null ? cfg.creatorRoyaltyRate : 0.005) * 100).toFixed(2);
     if (th) th.value = cfg.creatorRoyaltyThresholdKes != null ? cfg.creatorRoyaltyThresholdKes : 1000;
     if (sg) sg.value = cfg.suggestionRewardKes        != null ? cfg.suggestionRewardKes        : 50;
@@ -4563,14 +4504,94 @@ function toggleCreatorProgrammeMaster(checkbox) {
 }
 
 function saveCreatorProgrammeConfig() {
-  var active     = document.getElementById('cpMasterToggle') ? document.getElementById('cpMasterToggle').checked : true;
-  var ratePct    = parseFloat((document.getElementById('cpRoyaltyRateInput')        || {value:0.5}).value);
-  var threshold  = parseFloat((document.getElementById('cpThresholdInput')          || {value:1000}).value);
-  var suggestion = parseFloat((document.getElementById('cpSuggestionRewardInput')   || {value:50}).value);
-  var bountyMin  = parseFloat((document.getElementById('cpBountyMinInput')          || {value:100}).value);
-  var statusEl   = document.getElementById('cpSaveStatus');
+  var active           = document.getElementById('cpMasterToggle') ? document.getElementById('cpMasterToggle').checked : true;
+  var forecastingFeePct = parseFloat((document.getElementById('cpForecastingFeeInput') || {value:5}).value);
+  var resolutionCutPct  = parseFloat((document.getElementById('cpResolutionCutInput')  || {value:20}).value);
+  var ratePct          = parseFloat((document.getElementById('cpRoyaltyRateInput')      || {value:0.5}).value);
+  var threshold        = parseFloat((document.getElementById('cpThresholdInput')        || {value:1000}).value);
+  var suggestion       = parseFloat((document.getElementById('cpSuggestionRewardInput') || {value:50}).value);
+  var bountyMin        = parseFloat((document.getElementById('cpBountyMinInput')        || {value:100}).value);
+  var statusEl         = document.getElementById('cpSaveStatus');
 
 // ─── WhatsApp Notifications config ────────────────────────────────────────
+
+var WA_TOGGLE_FIELDS = [
+  ['waToggleDepositConfirmed',             'depositConfirmedEnabled'],
+  ['waToggleWithdrawalProcessed',          'withdrawalProcessedEnabled'],
+  ['waToggleMarketResolvedWon',            'marketResolvedWonEnabled'],
+  ['waToggleMarketResolvedLost',           'marketResolvedLostEnabled'],
+  ['waToggleReferralRewardCredited',       'referralRewardCreditedEnabled'],
+  ['waToggleRefereeNominated',             'refereeNominatedEnabled'],
+  ['waToggleChallengeOpponentStaked',      'challengeOpponentStakedEnabled'],
+  ['waToggleChallengeResolutionWindow',    'challengeResolutionWindowEnabled'],
+  ['waToggleChallengeResolutionWarning',   'challengeResolutionWarningEnabled'],
+];
+
+function loadWhatsappConfig() {
+  adminFetch('/api/admin/config/whatsapp').then(function(r) { return r.json(); }).then(function(cfg) {
+    if (!cfg || cfg.error) {
+      console.error('loadWhatsappConfig:', cfg && cfg.error);
+      return;
+    }
+
+    var gt  = document.getElementById('waGlobalToggle');
+    var lbl = document.getElementById('waStatusLabel');
+    if (gt) {
+      gt.checked = cfg.globalEnabled !== false;
+      if (lbl) {
+        lbl.textContent = gt.checked ? 'ON' : 'OFF';
+        lbl.style.color = gt.checked ? '#16a34a' : '#ce1126';
+      }
+    }
+
+    WA_TOGGLE_FIELDS.forEach(function(pair) {
+      var el = document.getElementById(pair[0]);
+      if (el) el.checked = cfg[pair[1]] !== false;
+    });
+
+    // Audit trail
+    var auditBox  = document.getElementById('waAuditTrail');
+    var auditText = document.getElementById('waAuditText');
+    if (auditBox && auditText && cfg.updatedAt) {
+      var when = new Date(cfg.updatedAt).toLocaleString();
+      var who  = (cfg.updatedByAdmin && cfg.updatedByAdmin.name) || (cfg.updatedByAdmin && cfg.updatedByAdmin.email) || 'system';
+      auditText.textContent = 'Last updated ' + when + ' by ' + who + '.';
+      auditBox.style.display = 'block';
+    }
+  }).catch(function(err) {
+    console.error('loadWhatsappConfig:', err);
+  });
+}
+
+function saveWhatsappConfig() {
+  var statusEl = document.getElementById('waSaveStatus');
+  if (statusEl) { statusEl.textContent = 'Saving...'; statusEl.style.color = '#9284b8'; }
+
+  var body = {};
+  var gt = document.getElementById('waGlobalToggle');
+  if (gt) body.globalEnabled = !!gt.checked;
+
+  WA_TOGGLE_FIELDS.forEach(function(pair) {
+    var el = document.getElementById(pair[0]);
+    if (el) body[pair[1]] = !!el.checked;
+  });
+
+  adminFetch('/api/admin/config/whatsapp', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  }).then(function(r) { return r.json(); }).then(function(d) {
+    if (d.success) {
+      if (statusEl) { statusEl.textContent = '✓ Saved'; statusEl.style.color = '#16a34a'; }
+      loadWhatsappConfig();  // refresh audit trail
+    } else {
+      if (statusEl) { statusEl.textContent = 'Error: ' + JSON.stringify(d.error || d); statusEl.style.color = '#ce1126'; }
+    }
+  }).catch(function(err) {
+    if (statusEl) { statusEl.textContent = 'Network error'; statusEl.style.color = '#ce1126'; }
+    console.error('saveWhatsappConfig:', err);
+  });
+}
 
 function setUserWhatsappOptout(optedOut) {
   var statusEl = document.getElementById('waOptoutStatus');
@@ -4644,6 +4665,8 @@ function setUserWhatsappOptout(optedOut) {
     method:  'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
+      forecastingFeeRate:         forecastingFeePct / 100,
+      resolutionCutRate:          resolutionCutPct  / 100,
       creatorRoyaltyRate:         rateDecimal,
       creatorRoyaltyThresholdKes: threshold,
       creatorProgrammeActive:     active,

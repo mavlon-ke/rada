@@ -17,6 +17,8 @@ import { prisma } from '@/lib/db/prisma';
 import { requireAdmin, adminUnauthorized, logAdminAction } from '@/lib/auth/admin';
 
 const ConfigSchema = z.object({
+  forecastingFeeRate:         z.number().min(0),
+  resolutionCutRate:          z.number().min(0),
   creatorRoyaltyRate:         z.number().min(0).max(0.05),
   creatorRoyaltyThresholdKes: z.number().min(0).max(1_000_000),
   creatorProgrammeActive:     z.boolean(),
@@ -43,6 +45,8 @@ export async function GET(req: NextRequest) {
 
   return NextResponse.json({
     config: {
+      forecastingFeeRate:         Number(config.forecastingFeeRate),
+      resolutionCutRate:          Number(config.resolutionCutRate),
       creatorRoyaltyRate:         Number(config.creatorRoyaltyRate),
       creatorRoyaltyThresholdKes: Number(config.creatorRoyaltyThresholdKes),
       creatorProgrammeActive:     config.creatorProgrammeActive,
@@ -83,6 +87,8 @@ export async function POST(req: NextRequest) {
   });
 
   await logAdminAction(admin.id, 'PLATFORM_CONFIG_UPDATED', 'platform_config:singleton', {
+    forecastingFeeRate:         data.forecastingFeeRate,
+    resolutionCutRate:          data.resolutionCutRate,
     creatorRoyaltyRate:         data.creatorRoyaltyRate,
     creatorRoyaltyThresholdKes: data.creatorRoyaltyThresholdKes,
     creatorProgrammeActive:     data.creatorProgrammeActive,
@@ -92,6 +98,8 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({
     config: {
+      forecastingFeeRate:         Number(config.forecastingFeeRate),
+      resolutionCutRate:          Number(config.resolutionCutRate),
       creatorRoyaltyRate:         Number(config.creatorRoyaltyRate),
       creatorRoyaltyThresholdKes: Number(config.creatorRoyaltyThresholdKes),
       creatorProgrammeActive:     config.creatorProgrammeActive,
