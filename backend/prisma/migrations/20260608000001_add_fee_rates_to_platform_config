@@ -1,0 +1,5 @@
+-- AlterTable: add forecastingFeeRate and resolutionCutRate to platform_config
+-- Both columns use safe defaults matching schema.prisma definitions.
+
+ALTER TABLE "platform_config" ADD COLUMN IF NOT EXISTS "forecastingFeeRate" DECIMAL(5,4) NOT NULL DEFAULT 0.05;
+ALTER TABLE "platform_config" ADD COLUMN IF NOT EXISTS "resolutionCutRate" DECIMAL(5,4) NOT NULL DEFAULT 0.20;
