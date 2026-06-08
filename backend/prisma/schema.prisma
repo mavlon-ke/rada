@@ -287,7 +287,13 @@ model ReferralConfig {
 model PlatformConfig {
   id                          String    @id @default("singleton")
 
-  
+  // Forecasting fee charged on every trade (dynamic, default 5%)
+  forecastingFeeRate          Decimal   @default(0.05)   @db.Decimal(5,4)
+
+  // Platform cut taken from the pool at market resolution (dynamic, default 20%)
+  // Remainder is distributed proportionally to winners by share count.
+  resolutionCutRate           Decimal   @default(0.20)   @db.Decimal(5,4)
+
   creatorRoyaltyRate          Decimal   @default(0.0050) @db.Decimal(5,4)
 
   
