@@ -652,6 +652,80 @@ body::after {
   .sidebar-overlay { display: none !important; }
 }
 
+
+/* ── User Profile Modal ──────────────────────────────────────────────────── */
+.up-overlay {
+  position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:600;
+  display:flex;align-items:flex-end;justify-content:center;
+  backdrop-filter:blur(2px);
+}
+.up-container {
+  background:var(--bg-card);width:100%;max-width:980px;
+  height:95vh;border-radius:16px 16px 0 0;
+  display:flex;flex-direction:column;overflow:hidden;
+  box-shadow:0 -8px 40px rgba(0,0,0,0.18);
+}
+@media(min-width:641px){
+  .up-overlay{align-items:center;padding:16px;}
+  .up-container{height:92vh;border-radius:16px;}
+}
+.up-header {
+  padding:16px 20px 0;border-bottom:1px solid var(--border);flex-shrink:0;
+}
+.up-header-top {
+  display:flex;align-items:flex-start;gap:12px;margin-bottom:12px;flex-wrap:wrap;
+}
+.up-user-info{flex:1;min-width:0;}
+.up-user-name{font-size:1.05rem;font-weight:800;color:var(--text);margin-bottom:2px;}
+.up-user-meta{font-size:0.72rem;color:var(--text-dim);}
+.up-actions{display:flex;gap:6px;flex-shrink:0;flex-wrap:wrap;}
+.up-date-row{display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap;}
+.up-tabs{display:flex;gap:0;overflow-x:auto;scrollbar-width:none;border-bottom:none;}
+.up-tabs::-webkit-scrollbar{display:none;}
+.up-tab{
+  padding:8px 14px;font-size:0.75rem;font-weight:700;
+  border:none;background:none;cursor:pointer;
+  color:var(--text-dim);border-bottom:2px solid transparent;
+  white-space:nowrap;font-family:inherit;flex-shrink:0;
+  transition:color 0.15s;
+}
+.up-tab:hover{color:var(--primary);}
+.up-tab.active{color:var(--primary);border-bottom-color:var(--primary);}
+.up-tab.dim{color:var(--text-dim);opacity:0.5;}
+.up-body{flex:1;overflow-y:auto;padding:20px;}
+.up-tab-pane{display:none;}
+.up-tab-pane.active{display:block;}
+.up-stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;}
+@media(max-width:640px){
+  .up-stat-grid{grid-template-columns:1fr 1fr;}
+  .up-header{padding:12px 14px 0;}
+  .up-body{padding:14px;}
+}
+@media(max-width:380px){.up-stat-grid{grid-template-columns:1fr;}}
+.up-stat{background:var(--bg3);border-radius:10px;padding:12px 14px;}
+.up-stat-label{font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim);margin-bottom:4px;}
+.up-stat-val{font-size:1.05rem;font-weight:800;color:var(--text);}
+.up-section-title{font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-dim);margin:18px 0 8px;}
+.up-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:10px;border:1px solid var(--border);}
+.up-table{width:100%;border-collapse:collapse;font-size:0.78rem;}
+.up-table th{padding:8px 12px;text-align:left;font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim);background:var(--bg3);white-space:nowrap;}
+.up-table td{padding:9px 12px;border-top:1px solid var(--border);vertical-align:middle;}
+.up-table tr:hover td{background:var(--bg3);}
+.up-pagination{display:flex;align-items:center;justify-content:space-between;padding:10px 0;font-size:0.78rem;color:var(--text-dim);}
+.up-outcome-won{color:#16a34a;font-weight:700;}
+.up-outcome-lost{color:#ce1126;font-weight:700;}
+.up-outcome-open{color:var(--primary);font-weight:700;}
+.up-info-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+@media(max-width:500px){.up-info-grid{grid-template-columns:1fr;}}
+.up-info-row{display:flex;flex-direction:column;padding:8px 0;border-bottom:1px solid var(--border);}
+.up-info-key{font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim);margin-bottom:2px;}
+.up-info-val{font-size:0.82rem;color:var(--text);}
+.up-empty{text-align:center;color:var(--text-dim);padding:32px;font-size:0.82rem;}
+.up-loading{text-align:center;color:var(--text-dim);padding:24px;font-size:0.82rem;}
+/* fix existing tables on mobile */
+.table-card{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+.tbl,.data-table{min-width:600px;}
+
 </style>
 <!-- Google Analytics GA4 -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-C7QXV6BHCN"></script>
@@ -1211,132 +1285,33 @@ body::after {
       <div class="page-head">
         <div>
           <div class="page-title">Platform Revenue</div>
-          <div class="page-sub" id="revRateNote">Loading...</div>
-        </div>
-        <button class="topbar-btn" onclick="loadRevenuePanel()">&#x1F504; Refresh</button>
-      </div>
-
-      <!-- GROSS REVENUE -->
-      <div style="font-size:0.7rem;font-weight:700;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;margin-bottom:8px;">Gross Revenue &#x2014; All Time</div>
-      <div class="stats-grid" style="margin-bottom:8px;">
-        <div class="stat-card"><div class="stat-label">Forecasting Fees</div><div class="stat-val green" id="revFees">&#x2014;</div><div class="stat-change" id="revFeesCount" style="color:var(--text-dim);">&#x2014; trades</div></div>
-        <div class="stat-card"><div class="stat-label">Market Surplus</div><div class="stat-val green" id="revSurplus">&#x2014;</div><div class="stat-change" id="revSurplusCount" style="color:var(--text-dim);">&#x2014; markets</div></div>
-        <div class="stat-card"><div class="stat-label">Challenge Fees</div><div class="stat-val green" id="revChallenge">&#x2014;</div><div class="stat-change" id="revChallengeCount" style="color:var(--text-dim);">&#x2014; challenges</div></div>
-        <div class="stat-card"><div class="stat-label">Gross Total</div><div class="stat-val green" id="revTotal">&#x2014;</div><div class="stat-change" style="color:var(--ke-green);">All time</div></div>
-      </div>
-
-      <!-- COSTS -->
-      <div style="font-size:0.7rem;font-weight:700;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;margin:20px 0 8px;">Platform Costs &#x2014; All Time</div>
-      <div class="table-card" style="margin-bottom:8px;padding:16px 20px;">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;">
-          <div style="display:flex;justify-content:space-between;padding:9px 8px 9px 0;border-bottom:1px solid var(--border);"><span style="font-size:0.82rem;color:var(--text-dim);">&#x1F4A1; Suggestion Rewards</span><span style="font-family:var(--mono);font-size:0.82rem;color:#ce1126;" id="revCostSuggestion">&#x2014;</span></div>
-          <div style="display:flex;justify-content:space-between;padding:9px 0 9px 8px;border-bottom:1px solid var(--border);"><span style="font-size:0.82rem;color:var(--text-dim);">&#x1F381; Referral Rewards</span><span style="font-family:var(--mono);font-size:0.82rem;color:#ce1126;" id="revCostReferral">&#x2014;</span></div>
-          <div style="display:flex;justify-content:space-between;padding:9px 8px 9px 0;border-bottom:1px solid var(--border);"><span style="font-size:0.82rem;color:var(--text-dim);">&#x1F3C5; Creator Bounty Paid</span><span style="font-family:var(--mono);font-size:0.82rem;color:#ce1126;" id="revCostBounty">&#x2014;</span></div>
-          <div style="display:flex;justify-content:space-between;padding:9px 0 9px 8px;border-bottom:1px solid var(--border);"><span style="font-size:0.82rem;color:var(--text-dim);">&#x1F451; Creator Royalty Paid</span><span style="font-family:var(--mono);font-size:0.82rem;color:#ce1126;" id="revCostRoyalty">&#x2014;</span></div>
-          <div style="display:flex;justify-content:space-between;padding:10px 8px 4px 0;grid-column:1/-1;border-top:2px solid var(--border);"><span style="font-size:0.85rem;font-weight:700;">Total Costs</span><span style="font-family:var(--mono);font-size:0.85rem;font-weight:700;color:#ce1126;" id="revCostTotal">&#x2014;</span></div>
+          <div class="page-sub">Forecasting fees, market surplus, and challenge fees collected by CheckRada</div>
         </div>
       </div>
-
-      <!-- NET REVENUE -->
-      <div class="table-card" style="margin-bottom:24px;padding:16px 20px;background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1px solid #86efac;">
-        <div style="display:flex;justify-content:space-between;align-items:center;">
-          <div>
-            <div style="font-size:0.72rem;font-weight:700;color:#166534;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Net Revenue (Gross &#x2212; Costs)</div>
-            <div style="font-size:0.72rem;color:#166534;opacity:0.8;" id="revNetBreakdown">&#x2014;</div>
-          </div>
-          <div style="font-size:1.8rem;font-weight:800;" id="revNetRevenue">&#x2014;</div>
-        </div>
+      <div class="stats-grid" style="margin-bottom:24px;">
+        <div class="stat-card"><div class="stat-label">Forecasting Fees</div><div class="stat-val green" id="revFees">—</div><div class="stat-change" id="revFeesCount" style="color:var(--text-dim);">— markets</div></div>
+        <div class="stat-card"><div class="stat-label">Market Surplus</div><div class="stat-val green" id="revSurplus">—</div><div class="stat-change" id="revSurplusCount" style="color:var(--text-dim);">— markets</div></div>
+        <div class="stat-card"><div class="stat-label">Challenge Fees</div><div class="stat-val green" id="revChallenge">—</div><div class="stat-change" id="revChallengeCount" style="color:var(--text-dim);">— challenges</div></div>
+        <div class="stat-card"><div class="stat-label">Grand Total</div><div class="stat-val green" id="revTotal">—</div><div class="stat-change" style="color:var(--ke-green);">All time</div></div>
       </div>
-
-      <!-- TRADE VOLUME -->
-      <div style="font-size:0.7rem;font-weight:700;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;margin-bottom:8px;">Trade Volume</div>
-      <div class="table-card" style="margin-bottom:24px;padding:16px 20px;">
-        <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap;">
-          <input type="date" id="revVolumeFrom" class="search-input" style="width:140px;font-size:0.8rem;" onchange="loadRevenuePanel()">
-          <span style="font-size:0.8rem;color:var(--text-dim);">to</span>
-          <input type="date" id="revVolumeTo" class="search-input" style="width:140px;font-size:0.8rem;" onchange="loadRevenuePanel()">
-          <button class="topbar-btn" onclick="clearRevFilter('revVolumeFrom','revVolumeTo',loadRevenuePanel)">Clear</button>
-        </div>
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
-          <div style="text-align:center;"><div style="font-size:0.72rem;color:var(--text-dim);margin-bottom:4px;">Total Staked</div><div style="font-family:var(--mono);font-weight:700;color:var(--primary);" id="revVolTotal">&#x2014;</div></div>
-          <div style="text-align:center;"><div style="font-size:0.72rem;color:var(--text-dim);margin-bottom:4px;">Trade Count</div><div style="font-family:var(--mono);font-weight:700;" id="revVolCount">&#x2014;</div></div>
-          <div style="text-align:center;"><div style="font-size:0.72rem;color:var(--text-dim);margin-bottom:4px;">Avg Stake</div><div style="font-family:var(--mono);font-weight:700;" id="revVolAvg">&#x2014;</div></div>
-        </div>
-      </div>
-
-      <!-- LIQUIDITY ALL TIME -->
-      <div style="font-size:0.7rem;font-weight:700;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;margin-bottom:8px;">Liquidity &#x2014; All Time</div>
-      <div class="stats-grid" style="margin-bottom:8px;">
-        <div class="stat-card"><div class="stat-label">Total Deposits Ever</div><div class="stat-val" id="revDepTotal">&#x2014;</div><div class="stat-change" id="revDepTotalCount" style="color:var(--text-dim);">&#x2014; transactions</div></div>
-        <div class="stat-card"><div class="stat-label">Total Withdrawals Ever</div><div class="stat-val" id="revWdTotal">&#x2014;</div><div class="stat-change" id="revWdTotalCount" style="color:var(--text-dim);">&#x2014; transactions</div></div>
-        <div class="stat-card"><div class="stat-label">Net Cash Position</div><div class="stat-val" id="revNetCash">&#x2014;</div><div class="stat-change" style="color:var(--text-dim);">Deposits &#x2212; Withdrawals</div></div>
-        <div class="stat-card"><div class="stat-label">Paystack Fees Absorbed</div><div class="stat-val" id="revPaystackFees">&#x2014;</div><div class="stat-change" style="color:var(--text-dim);">All-time withdrawal cost</div></div>
-      </div>
-
-      <!-- LIQUIDITY CURRENT SNAPSHOT -->
-      <div style="font-size:0.7rem;font-weight:700;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;margin:20px 0 8px;">Liquidity &#x2014; Current Snapshot</div>
-      <div class="table-card" style="margin-bottom:8px;padding:16px 20px;">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;">
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 8px 10px 0;border-bottom:1px solid var(--border);"><div><div style="font-size:0.82rem;color:var(--text-dim);">Wallet Liability</div><div style="font-size:0.68rem;color:var(--text-dim);">if everyone withdraws now</div></div><span style="font-family:var(--mono);font-size:0.9rem;font-weight:700;color:#ce1126;" id="revWalletLiability">&#x2014;</span></div>
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0 10px 8px;border-bottom:1px solid var(--border);"><div><div style="font-size:0.82rem;color:var(--text-dim);">Bonus Balances</div><div style="font-size:0.68rem;color:var(--text-dim);">promotional credits, not real KES</div></div><span style="font-family:var(--mono);font-size:0.9rem;font-weight:700;color:var(--amber);" id="revBonusBalances">&#x2014;</span></div>
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 8px 10px 0;border-bottom:1px solid var(--border);"><div><div style="font-size:0.82rem;color:var(--text-dim);">Pending Deposits</div><div style="font-size:0.68rem;color:var(--text-dim);">M-Pesa initiated, not confirmed</div></div><span style="font-family:var(--mono);font-size:0.9rem;font-weight:700;color:var(--primary);" id="revPendingDep">&#x2014;</span></div>
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0 10px 8px;border-bottom:1px solid var(--border);"><div><div style="font-size:0.82rem;color:var(--text-dim);">Pending Withdrawals</div><div style="font-size:0.68rem;color:var(--text-dim);">deducted from wallets, not sent</div></div><span style="font-family:var(--mono);font-size:0.9rem;font-weight:700;color:#ce1126;" id="revPendingWd">&#x2014;</span></div>
-        </div>
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0 4px;margin-top:8px;border-top:2px solid var(--border);">
-          <div><div style="font-size:0.85rem;font-weight:700;">Liquidity Gap</div><div style="font-size:0.68rem;color:var(--text-dim);">Net Cash &#x2212; Wallet Liability. Negative = cannot cover all withdrawals from Paystack receipts alone.</div></div>
-          <div style="font-family:var(--mono);font-size:1.2rem;font-weight:800;" id="revLiquidityGap">&#x2014;</div>
-        </div>
-      </div>
-
-      <!-- DEPOSITS AND WITHDRAWALS PERIOD -->
-      <div style="font-size:0.7rem;font-weight:700;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;margin:20px 0 8px;">Deposits &amp; Withdrawals &#x2014; Period</div>
-      <div class="table-card" style="margin-bottom:24px;padding:16px 20px;">
-        <div style="display:flex;gap:8px;align-items:center;margin-bottom:16px;flex-wrap:wrap;">
-          <input type="date" id="revPeriodFrom" class="search-input" style="width:140px;font-size:0.8rem;" onchange="loadRevenueLiquidity()">
-          <span style="font-size:0.8rem;color:var(--text-dim);">to</span>
-          <input type="date" id="revPeriodTo" class="search-input" style="width:140px;font-size:0.8rem;" onchange="loadRevenueLiquidity()">
-          <button class="topbar-btn" onclick="clearRevFilter('revPeriodFrom','revPeriodTo',loadRevenueLiquidity)">Clear</button>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;">
-          <div style="display:flex;justify-content:space-between;padding:9px 8px 9px 0;border-bottom:1px solid var(--border);"><span style="font-size:0.82rem;color:var(--text-dim);">Deposits</span><div style="text-align:right;"><div style="font-family:var(--mono);font-weight:700;color:#166534;" id="revPeriodDep">&#x2014;</div><div style="font-size:0.68rem;color:var(--text-dim);" id="revPeriodDepCount">&#x2014;</div></div></div>
-          <div style="display:flex;justify-content:space-between;padding:9px 0 9px 8px;border-bottom:1px solid var(--border);"><span style="font-size:0.82rem;color:var(--text-dim);">Withdrawals</span><div style="text-align:right;"><div style="font-family:var(--mono);font-weight:700;color:#ce1126;" id="revPeriodWd">&#x2014;</div><div style="font-size:0.68rem;color:var(--text-dim);" id="revPeriodWdCount">&#x2014;</div></div></div>
-          <div style="display:flex;justify-content:space-between;padding:9px 8px 9px 0;border-bottom:1px solid var(--border);"><span style="font-size:0.82rem;color:var(--text-dim);">Net Flow</span><span style="font-family:var(--mono);font-weight:700;" id="revPeriodNet">&#x2014;</span></div>
-          <div style="display:flex;justify-content:space-between;padding:9px 0 9px 8px;border-bottom:1px solid var(--border);"><span style="font-size:0.82rem;color:var(--text-dim);">Paystack Fees</span><span style="font-family:var(--mono);font-weight:700;color:#9284b8;" id="revPeriodFees">&#x2014;</span></div>
-        </div>
-        <div style="font-size:0.68rem;color:var(--text-dim);margin-top:10px;">* Paystack fees: &#x2264;KES 1,500 = KES 20 &#x2044; &#x2264;KES 20,000 = KES 40 &#x2044; &gt;KES 20,000 = KES 60 per withdrawal</div>
-      </div>
-
-      <!-- MONTHLY BREAKDOWN -->
       <div class="table-wrap" style="margin-bottom:24px;">
-        <div class="table-head">
-          <div class="table-title">Revenue Breakdown</div>
-          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-            <input type="date" id="revMonthFrom" class="search-input" style="width:130px;font-size:0.78rem;" onchange="loadRevenueMonthly()">
-            <span style="font-size:0.78rem;color:var(--text-dim);">to</span>
-            <input type="date" id="revMonthTo" class="search-input" style="width:130px;font-size:0.78rem;" onchange="loadRevenueMonthly()">
-            <button class="topbar-btn" onclick="clearRevFilter('revMonthFrom','revMonthTo',loadRevenueMonthly)">Clear</button>
-          </div>
-        </div>
+        <div class="table-head"><div class="table-title">📅 Monthly Revenue (Last 6 Months)</div></div>
         <table class="data-table">
-          <thead><tr><th id="revMonthPeriodHead">Period</th><th>Forecasting Fees</th><th>Market Surplus</th><th>Challenge Fees</th><th>Total</th></tr></thead>
+          <thead><tr><th>Month</th><th>Forecasting Fees</th><th>Market Surplus</th><th>Challenge Fees</th><th>Total</th></tr></thead>
           <tbody id="revMonthlyBody"><tr><td colspan="5" style="text-align:center;color:var(--text-dim);padding:20px;">Loading...</td></tr></tbody>
         </table>
       </div>
-
-      <!-- TOP MARKETS -->
       <div class="table-wrap" style="margin-bottom:24px;">
-        <div class="table-head"><div class="table-title">Top Markets by Revenue</div></div>
+        <div class="table-head"><div class="table-title">🏆 Top Markets by Revenue</div></div>
         <table class="data-table">
           <thead><tr><th>Market</th><th>Status</th><th>Revenue</th></tr></thead>
           <tbody id="revTopMarketsBody"><tr><td colspan="3" style="text-align:center;color:var(--text-dim);padding:20px;">Loading...</td></tr></tbody>
         </table>
       </div>
-
-      <!-- RECENT RECORDS -->
       <div class="table-wrap">
-        <div class="table-head"><div class="table-title">Recent Revenue Records</div></div>
+        <div class="table-head"><div class="table-title">🕒 Recent Revenue Records</div><button class="topbar-btn" onclick="loadRevenuePanel()">🔄 Refresh</button></div>
         <table class="data-table">
-          <thead><tr><th>Date</th><th>Type</th><th>Market</th><th>Amount</th></tr></thead>
+          <thead><tr><th>Date</th><th>Type</th><th>Market / Challenge</th><th>Amount</th></tr></thead>
           <tbody id="revRecentBody"><tr><td colspan="4" style="text-align:center;color:var(--text-dim);padding:20px;">Loading...</td></tr></tbody>
         </table>
       </div>
@@ -2408,17 +2383,18 @@ function renderUsersTable() {
     var reviewBtn = u.kyc === 'PENDING'
       ? '<button class="act-btn act-amber" data-action="kyc" data-id="' + (u.id||'') + '" data-name="' + esc(u.name||'') + '" data-phone="' + esc(u.phone||'') + '">Review KYC</button>'
       : '';
+    var viewUserBtn   = '<button class="act-btn act-gray" data-action="view-user" data-id="' + (u.id||'') + '">View</button>';
     var editUserBtn   = '<button class="act-btn act-gray" data-action="edit-user" data-id="' + (u.id||'') + '">Edit</button>';
     var freezeUserBtn = '<button class="act-btn ' + (u.suspended ? 'act-green' : 'act-amber') + '" data-action="freeze-user" data-id="' + (u.id||'') + '" data-suspended="' + (u.suspended ? '1' : '0') + '">' + (u.suspended ? 'Unfreeze' : 'Freeze') + '</button>';
     var deleteUserBtn = '<button class="act-btn act-red" data-action="delete-user" data-id="' + (u.id||'') + '" data-name="' + esc(u.name||'—') + '" data-phone="' + esc(u.phone||'') + '">Delete</button>';
     return '<tr>' +
-      '<td style="font-weight:600">' + esc(u.name||'—') + '</td>' +
+      '<td style="font-weight:600;cursor:pointer;color:var(--primary)" onclick="openUserProfile(' + JSON.stringify(u.id) + ')" title="View profile">' + esc(u.name||'—') + '</td>' +
       '<td class="mono" style="color:var(--text-dim)">' + esc(u.phone||'—') + '</td>' +
       '<td>' + kycBadge + '</td>' +
       '<td class="mono">' + (u.balance||'—') + '</td>' +
       '<td class="mono" style="color:var(--text-dim)">' + (u.volume||'—') + '</td>' +
       '<td style="color:var(--text-dim)">' + (u.joined||'—') + '</td>' +
-      '<td style="display:flex;gap:5px;flex-wrap:wrap;">' + editUserBtn + ' ' + reviewBtn + ' ' + freezeUserBtn + ' ' + deleteUserBtn + '</td>' +
+      '<td style="display:flex;gap:5px;flex-wrap:wrap;">' + viewUserBtn + ' ' + editUserBtn + ' ' + reviewBtn + ' ' + freezeUserBtn + ' ' + deleteUserBtn + '</td>' +
     '</tr>';
   }).join('');
   tbody.onclick = function(e) {
@@ -2426,6 +2402,7 @@ function renderUsersTable() {
     if (!btn) return;
     var action = btn.dataset.action;
     if (action === 'kyc')         openKYCModal(btn.dataset.id, btn.dataset.name, btn.dataset.phone);
+    if (action === 'view-user')   openUserProfile(btn.dataset.id);
     if (action === 'edit-user')   openEditUserModal(btn.dataset.id);
     if (action === 'freeze-user') freezeUser(btn.dataset.id, btn.dataset.suspended === '1');
     if (action === 'delete-user') confirmDeleteUser(btn.dataset.id, btn.dataset.name, btn.dataset.phone);
@@ -4800,177 +4777,509 @@ document.addEventListener('DOMContentLoaded', function() {
   initCarouselAdmin();
 });
 
-function clearRevFilter(fromId, toId, reloadFn) {
-  var f = document.getElementById(fromId);
-  var t = document.getElementById(toId);
-  if (f) f.value = '';
-  if (t) t.value = '';
-  if (reloadFn) reloadFn();
-}
-
 function loadRevenuePanel() {
-  var fmt = function(n) { return 'KES ' + Math.round(Number(n)).toLocaleString(); };
-  var s   = function(id, v) { var el=document.getElementById(id); if(el) el.textContent=v; };
+  var fmt = function(n) { return 'KES ' + Number(n).toLocaleString(); };
 
-  var url = '/api/admin/revenue';
-  var vf  = (document.getElementById('revVolumeFrom')||{}).value||'';
-  var vt  = (document.getElementById('revVolumeTo')  ||{}).value||'';
-  if (vf) url += (url.includes('?')?'&':'?') + 'volumeFrom=' + vf;
-  if (vt) url += (url.includes('?')?'&':'?') + 'volumeTo='   + vt;
+  adminFetch('/api/admin/revenue')
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    // Summary cards
+    var s = function(id, v) { var el = document.getElementById(id); if (el) el.textContent = v; };
+    s('revFees',           fmt(d.totals.forecastingFees));
+    s('revFeesCount',      d.counts.forecastingFees + ' markets resolved');
+    s('revSurplus',        fmt(d.totals.marketSurplus));
+    s('revSurplusCount',   d.counts.marketSurplus + ' markets with surplus');
+    s('revChallenge',      fmt(d.totals.challengeFees));
+    s('revChallengeCount', d.counts.challengeFees + ' challenges resolved');
+    s('revTotal',          fmt(d.totals.grandTotal));
 
-  adminFetch(url)
-  .then(function(r){return r.json();})
-  .then(function(d){
-    // Gross revenue
-    s('revFees',           fmt(d.totalFees));
-    s('revFeesCount',      (d.feesCount||0).toLocaleString() + ' trades');
-    s('revSurplus',        fmt(d.totalSurplus));
-    s('revSurplusCount',   (d.surplusCount||0).toLocaleString() + ' markets');
-    s('revChallenge',      fmt(d.totalChallenge));
-    s('revChallengeCount', (d.challengeCount||0).toLocaleString() + ' challenges');
-    s('revTotal',          fmt(d.grossTotal));
-
-    // Costs
-    s('revCostSuggestion', '- ' + fmt(d.costSuggestion));
-    s('revCostReferral',   '- ' + fmt(d.costReferral));
-    s('revCostBounty',     '- ' + fmt(d.costBounty));
-    s('revCostRoyalty',    '- ' + fmt(d.costRoyalty));
-    s('revCostTotal',      '- ' + fmt(d.totalCosts));
-
-    // Net revenue
-    var net   = d.netRevenue || 0;
-    var netEl = document.getElementById('revNetRevenue');
-    if (netEl) {
-      netEl.textContent = fmt(net);
-      netEl.style.color = net >= 0 ? '#166534' : '#ce1126';
+    // Monthly breakdown
+    var monthlyBody = document.getElementById('revMonthlyBody');
+    if (monthlyBody) {
+      if (!d.monthly || !d.monthly.length) {
+        monthlyBody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-dim);padding:20px;">No revenue recorded yet.</td></tr>';
+      } else {
+        monthlyBody.innerHTML = d.monthly.map(function(m) {
+          return '<tr>' +
+            '<td>' + m.month + '</td>' +
+            '<td style="font-family:var(--mono);color:var(--ke-green)">' + fmt(m.fees) + '</td>' +
+            '<td style="font-family:var(--mono);color:var(--ke-green)">' + fmt(m.surplus) + '</td>' +
+            '<td style="font-family:var(--mono);color:var(--ke-green)">' + fmt(m.challenge) + '</td>' +
+            '<td style="font-family:var(--mono);font-weight:700;color:var(--ke-green)">' + fmt(m.total) + '</td>' +
+          '</tr>';
+        }).join('');
+      }
     }
-    s('revNetBreakdown',
-      fmt(d.grossTotal) + ' gross'
-      + ' \u2212 ' + fmt(d.costSuggestion) + ' suggestion'
-      + ' \u2212 ' + fmt(d.costReferral)   + ' referral'
-      + ' \u2212 ' + fmt(d.costBounty)     + ' bounties'
-      + ' \u2212 ' + fmt(d.costRoyalty)    + ' royalties'
-    );
-
-    // Rate note
-    s('revRateNote',
-      'Fee: ' + ((d.feeRate||0.05)*100).toFixed(1) + '% per trade  \u00B7  '
-      + 'Resolution cut: ' + ((d.cutRate||0.20)*100).toFixed(1) + '% of pool'
-    );
-
-    // Trade volume
-    s('revVolTotal', fmt(d.tradeTotal));
-    s('revVolCount', (d.tradeCount||0).toLocaleString() + ' trades');
-    s('revVolAvg',   'KES ' + Math.round(d.tradeAvg||0).toLocaleString() + ' avg');
-
-    // Liquidity all-time
-    s('revDepTotal',      fmt(d.totalDeposits));
-    s('revDepTotalCount', (d.depCount||0).toLocaleString() + ' transactions');
-    s('revWdTotal',       fmt(d.totalWithdrawals));
-    s('revWdTotalCount',  (d.wdCount||0).toLocaleString() + ' transactions');
-    s('revPaystackFees',  fmt(d.totalPaystackFees));
-    var ncEl = document.getElementById('revNetCash');
-    if (ncEl) { ncEl.textContent=fmt(d.netCash); ncEl.style.color=d.netCash>=0?'#166534':'#ce1126'; }
-
-    // Liquidity snapshot
-    s('revWalletLiability', fmt(d.walletLiability));
-    s('revBonusBalances',   fmt(d.bonusBalances));
-    s('revPendingDep',      fmt(d.pendingDeposits)    + ' (' + (d.pendingDepCount||0) + ')');
-    s('revPendingWd',       fmt(d.pendingWithdrawals) + ' (' + (d.pendingWdCount||0)  + ')');
-    var gap   = d.liquidityGap || 0;
-    var gapEl = document.getElementById('revLiquidityGap');
-    if (gapEl) { gapEl.textContent=fmt(gap); gapEl.style.color=gap>=0?'#166534':'#ce1126'; }
 
     // Top markets
-    var tb = document.getElementById('revTopMarketsBody');
-    if (tb) {
-      tb.innerHTML = !d.topMarkets||!d.topMarkets.length
-        ? '<tr><td colspan="3" style="text-align:center;color:var(--text-dim);padding:16px;">No market revenue yet</td></tr>'
-        : d.topMarkets.map(function(m){
-            return '<tr><td style="font-size:0.78rem;max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="'+esc(m.title)+'">'+esc(m.title||'—')+'</td>'
-              +'<td><span class="badge">'+esc(m.status||'—')+'</span></td>'
-              +'<td style="font-family:var(--mono);color:var(--ke-green);font-weight:700">'+fmt(m.revenue)+'</td></tr>';
-          }).join('');
+    var topBody = document.getElementById('revTopMarketsBody');
+    if (topBody) {
+      if (!d.topMarkets || !d.topMarkets.length) {
+        topBody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--text-dim);padding:20px;">No market revenue yet.</td></tr>';
+      } else {
+        topBody.innerHTML = d.topMarkets.map(function(m) {
+          return '<tr>' +
+            '<td>' + esc(m.title || '—') + '</td>' +
+            '<td><span class="badge">' + esc(m.status || '—') + '</span></td>' +
+            '<td style="font-family:var(--mono);color:var(--ke-green);font-weight:700">' + fmt(m.totalKes) + '</td>' +
+          '</tr>';
+        }).join('');
+      }
     }
 
     // Recent records
-    var rb = document.getElementById('revRecentBody');
-    if (rb) {
-      var lbl = {FORECASTING_FEE:'Forecasting Fee',MARKET_SURPLUS:'Market Surplus',CHALLENGE_FEE:'Challenge Fee'};
-      rb.innerHTML = !d.recent||!d.recent.length
-        ? '<tr><td colspan="4" style="text-align:center;color:var(--text-dim);padding:16px;">No records yet</td></tr>'
-        : d.recent.map(function(r){
-            var when=new Date(r.createdAt).toLocaleDateString('en-KE',{day:'numeric',month:'short',year:'numeric'});
-            return '<tr>'
-              +'<td style="font-size:0.78rem;color:var(--text-dim)">'+when+'</td>'
-              +'<td>'+esc(lbl[r.type]||r.type)+'</td>'
-              +'<td style="font-size:0.78rem">'+esc(r.marketTitle||'—')+'</td>'
-              +'<td style="font-family:var(--mono);color:var(--ke-green);font-weight:700">'+fmt(r.amountKes)+'</td>'
-              +'</tr>';
-          }).join('');
+    var recentBody = document.getElementById('revRecentBody');
+    if (recentBody) {
+      if (!d.recent || !d.recent.length) {
+        recentBody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-dim);padding:20px;">No revenue records yet.</td></tr>';
+      } else {
+        var typeLabel = { FORECASTING_FEE: '📊 Forecasting Fee', MARKET_SURPLUS: '💰 Market Surplus', CHALLENGE_FEE: '🤝 Challenge Fee' };
+        recentBody.innerHTML = d.recent.map(function(r) {
+          var when = new Date(r.createdAt).toLocaleDateString('en-KE', { day: 'numeric', month: 'short', year: 'numeric' });
+          var source = esc(r.marketTitle || r.challengeQ || '—');
+          return '<tr>' +
+            '<td style="font-size:0.78rem;color:var(--text-dim)">' + when + '</td>' +
+            '<td>' + esc(typeLabel[r.type] || r.type) + '</td>' +
+            '<td style="font-size:0.78rem">' + source + '</td>' +
+            '<td style="font-family:var(--mono);color:var(--ke-green);font-weight:700">' + fmt(r.amountKes) + '</td>' +
+          '</tr>';
+        }).join('');
+      }
     }
-
-    loadRevenueLiquidity();
-    loadRevenueMonthly();
   })
-  .catch(function(err){
-    console.error('loadRevenuePanel:',err);
+  .catch(function(err) {
+    console.error('loadRevenuePanel:', err);
+    var els = ['revMonthlyBody','revTopMarketsBody','revRecentBody'];
+    els.forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) el.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--ke-red);padding:20px;">Failed to load revenue data.</td></tr>';
+    });
   });
 }
 
-function loadRevenueLiquidity() {
-  var fmt = function(n) { return 'KES ' + Math.round(Number(n)).toLocaleString(); };
-  var s   = function(id, v) { var el=document.getElementById(id); if(el) el.textContent=v; };
-  var pf  = (document.getElementById('revPeriodFrom')||{}).value||'';
-  var pt  = (document.getElementById('revPeriodTo')  ||{}).value||'';
-  var url = '/api/admin/revenue';
-  if (pf) url += '?periodFrom=' + pf;
-  if (pt) url += (url.includes('?')?'&':'?') + 'periodTo=' + pt;
 
-  adminFetch(url)
-  .then(function(r){return r.json();})
-  .then(function(d){
-    s('revPeriodDep',      fmt(d.periodDepTotal));
-    s('revPeriodDepCount', (d.periodDepCount||0).toLocaleString() + ' deposits');
-    s('revPeriodWd',       fmt(d.periodWdTotal));
-    s('revPeriodWdCount',  (d.periodWdCount||0).toLocaleString()  + ' withdrawals');
-    var net   = d.periodNetFlow || 0;
-    var netEl = document.getElementById('revPeriodNet');
-    if (netEl) { netEl.textContent=(net>=0?'+':'')+fmt(net); netEl.style.color=net>=0?'#166534':'#ce1126'; }
-    s('revPeriodFees', 'KES ' + (d.periodPaystackFees||0).toLocaleString());
-  })
-  .catch(function(err){console.error('loadRevenueLiquidity:',err);});
+// ════════════════════════════════════════════════════════════════════════════
+// USER PROFILE MODAL
+// ════════════════════════════════════════════════════════════════════════════
+
+var UP_USER_ID   = null;
+var UP_TAB       = 'overview';
+var UP_PAGES     = { wallet:1, trades:1, challenges:1, suggestions:1, creator:1 };
+var UP_USER_DATA = null;
+
+function openUserProfile(userId) {
+  UP_USER_ID = userId;
+  UP_TAB = 'overview';
+  UP_PAGES = { wallet:1, trades:1, challenges:1, suggestions:1, creator:1 };
+  UP_USER_DATA = null;
+
+  // Default to last 30 days
+  var to   = new Date();
+  var from = new Date(to); from.setDate(from.getDate() - 30);
+  var fmt  = function(d){ return d.toISOString().slice(0,10); };
+  var fromEl = document.getElementById('upDateFrom');
+  var toEl   = document.getElementById('upDateTo');
+  if (fromEl) fromEl.value = fmt(from);
+  if (toEl)   toEl.value   = fmt(to);
+
+  // Reset tabs
+  document.querySelectorAll('.up-tab').forEach(function(t){ t.classList.remove('active'); });
+  document.querySelector('.up-tab').classList.add('active');
+  document.querySelectorAll('.up-tab-pane').forEach(function(p){ p.classList.remove('active'); });
+  var ov = document.getElementById('upPane-overview');
+  if (ov) { ov.classList.add('active'); ov.innerHTML = '<div class="up-loading">Loading...</div>'; }
+
+  document.getElementById('userProfileModal').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+  upLoadOverview();
 }
 
-function loadRevenueMonthly() {
-  var fmt = function(n) { return 'KES ' + Math.round(Number(n)).toLocaleString(); };
-  var s   = function(id, v) { var el=document.getElementById(id); if(el) el.textContent=v; };
-  var mf  = (document.getElementById('revMonthFrom')||{}).value||'';
-  var mt  = (document.getElementById('revMonthTo')  ||{}).value||'';
-  var url = '/api/admin/revenue';
-  if (mf) url += '?monthFrom=' + mf;
-  if (mt) url += (url.includes('?')?'&':'?') + 'monthTo=' + mt;
+function closeUserProfile() {
+  document.getElementById('userProfileModal').style.display = 'none';
+  document.body.style.overflow = '';
+}
 
-  adminFetch(url)
-  .then(function(r){return r.json();})
-  .then(function(d){
-    var hd = document.getElementById('revMonthPeriodHead');
-    if (hd) hd.textContent = d.groupBy==='day'?'Day':d.groupBy==='week'?'Week':'Month';
-    var body = document.getElementById('revMonthlyBody');
-    if (!body) return;
-    body.innerHTML = !d.monthly||!d.monthly.length
-      ? '<tr><td colspan="5" style="text-align:center;color:var(--text-dim);padding:16px;">No revenue in this period</td></tr>'
-      : d.monthly.map(function(m){
+function upDateChanged() {
+  // Reload only active tab
+  upLoadTab(UP_TAB, 1);
+}
+
+function upClearDates() {
+  var f = document.getElementById('upDateFrom');
+  var t = document.getElementById('upDateTo');
+  if (f) f.value = '';
+  if (t) t.value = '';
+  upLoadTab(UP_TAB, 1);
+}
+
+function upGetDateParams() {
+  var f = (document.getElementById('upDateFrom')||{}).value||'';
+  var t = (document.getElementById('upDateTo')  ||{}).value||'';
+  var p = '';
+  if (f) p += '&from=' + f;
+  if (t) p += '&to='   + t;
+  return p;
+}
+
+function upSwitchTab(tab) {
+  UP_TAB = tab;
+  document.querySelectorAll('.up-tab').forEach(function(bt){
+    bt.classList.toggle('active', bt.textContent.toLowerCase().trim() === tab ||
+      (tab==='overview' && bt.textContent.includes('Overview')) ||
+      (tab==='wallet' && bt.textContent.includes('Wallet')) ||
+      (tab==='positions' && bt.textContent.includes('Position')) ||
+      (tab==='trades' && bt.textContent.includes('Trade')) ||
+      (tab==='challenges' && bt.textContent.includes('Challenge')) ||
+      (tab==='suggestions' && bt.textContent.includes('Suggestion')) ||
+      (tab==='creator' && bt.textContent.includes('Creator'))
+    );
+  });
+  document.querySelectorAll('.up-tab-pane').forEach(function(p){ p.classList.remove('active'); });
+  var pane = document.getElementById('upPane-' + tab);
+  if (pane) pane.classList.add('active');
+  upLoadTab(tab, UP_PAGES[tab] || 1);
+}
+
+function upLoadTab(tab, page) {
+  if (tab === 'overview')    upLoadOverview();
+  else if (tab === 'wallet')     upLoadWallet(page||1);
+  else if (tab === 'positions')  upLoadPositions();
+  else if (tab === 'trades')     upLoadTrades(page||1);
+  else if (tab === 'challenges') upLoadChallenges(page||1);
+  else if (tab === 'suggestions')upLoadSuggestions(page||1);
+  else if (tab === 'creator')    upLoadCreator(page||1);
+}
+
+function upFetch(tab, page) {
+  var url = '/api/admin/users/' + UP_USER_ID + '/detail?tab=' + tab + '&page=' + (page||1) + upGetDateParams();
+  return adminFetch(url).then(function(r){ return r.json(); });
+}
+
+function upFmt(n) { return 'KES ' + Math.round(Number(n||0)).toLocaleString(); }
+function upFmtD(n) { return 'KES ' + Number(n||0).toFixed(2); }
+function upDate(d) { return d ? new Date(d).toLocaleDateString('en-KE',{day:'numeric',month:'short',year:'numeric'}) : '—'; }
+function upDateTime(d) { return d ? new Date(d).toLocaleDateString('en-KE',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '—'; }
+
+function upPagBar(containerId, page, total, limit, tabName) {
+  var el = document.getElementById(containerId);
+  if (!el) return;
+  var pages = Math.max(1, Math.ceil(total/limit));
+  var s = total===0?0:(page-1)*limit+1, e = Math.min(page*limit, total);
+  el.innerHTML = '<span>Showing <strong>'+s+'–'+e+'</strong> of <strong>'+total+'</strong></span>'
+    +'<div style="display:flex;gap:6px;align-items:center;">'
+    +'<button onclick="upLoadTab(\''+tabName+'\','+(page-1)+')" '+(page<=1?'disabled':'')+' style="padding:3px 10px;border-radius:6px;border:1px solid var(--border);background:var(--bg-card);cursor:pointer;font-size:0.75rem;">&larr;</button>'
+    +'<span style="font-size:0.75rem">'+page+'/'+pages+'</span>'
+    +'<button onclick="upLoadTab(\''+tabName+'\','+(page+1)+')" '+(page>=pages?'disabled':'')+' style="padding:3px 10px;border-radius:6px;border:1px solid var(--border);background:var(--bg-card);cursor:pointer;font-size:0.75rem;">&rarr;</button>'
+    +'</div>';
+}
+
+// ── OVERVIEW ─────────────────────────────────────────────────────────────────
+function upLoadOverview() {
+  upFetch('overview', 1).then(function(d) {
+    UP_USER_DATA = d.user;
+    var u = d.user;
+    var s = d.summary;
+
+    // Header
+    document.getElementById('upUserName').textContent = esc(u.name||'Unknown') + (u.suspended ? ' 🔒' : '');
+    document.getElementById('upUserMeta').innerHTML =
+      '+' + esc(u.phone||'') + ' &nbsp;·&nbsp; ' + esc(u.kycStatus||'') +
+      ' &nbsp;·&nbsp; ' + esc(u.role||'USER') +
+      ' &nbsp;·&nbsp; Integrity: ' + (u.integrityScore||0) +
+      ' &nbsp;·&nbsp; Joined: ' + upDate(u.createdAt);
+
+    // Freeze btn
+    var fb = document.getElementById('upFreezeBtn');
+    if (fb) { fb.textContent = u.suspended ? 'Unfreeze' : 'Freeze'; fb.className = 'act-btn ' + (u.suspended ? 'act-green':'act-amber'); }
+    // KYC btn
+    var kb = document.getElementById('upKycBtn');
+    if (kb) kb.style.display = u.kycStatus==='PENDING' ? '' : 'none';
+
+    // Creator tab dim/active
+    var ct = document.getElementById('upCreatorTab');
+
+    var html = '';
+
+    // Stat cards
+    html += '<div class="up-stat-grid">'
+      + '<div class="up-stat"><div class="up-stat-label">Real Balance</div><div class="up-stat-val" style="color:var(--primary)">' + upFmt(u.balanceKes) + '</div></div>'
+      + '<div class="up-stat"><div class="up-stat-label">Bonus Balance</div><div class="up-stat-val" style="color:var(--amber)">' + upFmt(u.bonusBalanceKes) + '</div></div>'
+      + '<div class="up-stat"><div class="up-stat-label">Lifetime Value &#x2605;</div><div class="up-stat-val" style="color:#16a34a">' + upFmt(d.lifetimeValue) + '</div></div>'
+      + '<div class="up-stat"><div class="up-stat-label">Win Rate</div><div class="up-stat-val">' + (s.winRate!==null ? s.winRate+'%' : '—') + '</div></div>'
+      + '</div>';
+
+    // Period summary
+    html += '<div class="up-section-title">Period Summary</div>'
+      + '<div class="up-stat-grid">'
+      + '<div class="up-stat"><div class="up-stat-label">Total Staked</div><div class="up-stat-val">' + upFmt(s.totalStaked) + '</div><div style="font-size:0.65rem;color:var(--text-dim)">' + s.tradeCount + ' trades</div></div>'
+      + '<div class="up-stat"><div class="up-stat-label">Fees Paid</div><div class="up-stat-val" style="color:#ce1126">' + upFmt(s.totalFeesPaid) + '</div></div>'
+      + '<div class="up-stat"><div class="up-stat-label">Deposits</div><div class="up-stat-val" style="color:#16a34a">' + upFmt(s.totalDeposits) + '</div><div style="font-size:0.65rem;color:var(--text-dim)">' + s.depositCount + ' txns</div></div>'
+      + '<div class="up-stat"><div class="up-stat-label">Withdrawals</div><div class="up-stat-val" style="color:#ce1126">' + upFmt(s.totalWithdrawals) + '</div><div style="font-size:0.65rem;color:var(--text-dim)">' + s.withdrawalCount + ' txns</div></div>'
+      + '<div class="up-stat"><div class="up-stat-label">Payouts Received</div><div class="up-stat-val" style="color:#16a34a">' + upFmt(s.totalPayouts) + '</div></div>'
+      + '<div class="up-stat"><div class="up-stat-label">Net P&amp;L</div><div class="up-stat-val" style="color:' + (s.netPnl>=0?'#16a34a':'#ce1126') + '">' + upFmt(s.netPnl) + '</div></div>'
+      + '<div class="up-stat"><div class="up-stat-label">Markets Won</div><div class="up-stat-val" style="color:#16a34a">' + s.wins + '</div></div>'
+      + '<div class="up-stat"><div class="up-stat-label">Markets Lost</div><div class="up-stat-val" style="color:#ce1126">' + s.losses + '</div></div>'
+      + '</div>';
+
+    // Account details
+    html += '<div class="up-section-title">Account Details</div>'
+      + '<div class="up-info-grid">'
+      + '<div class="up-info-row"><div class="up-info-key">Phone</div><div class="up-info-val mono">+' + esc(u.phone||'') + '</div></div>'
+      + '<div class="up-info-row"><div class="up-info-key">KYC Status</div><div class="up-info-val">' + esc(u.kycStatus||'') + '</div></div>'
+      + '<div class="up-info-row"><div class="up-info-key">Role</div><div class="up-info-val">' + esc(u.role||'USER') + '</div></div>'
+      + '<div class="up-info-row"><div class="up-info-key">Integrity Score</div><div class="up-info-val">' + (u.integrityScore||0) + '</div></div>'
+      + '<div class="up-info-row"><div class="up-info-key">Account Status</div><div class="up-info-val">' + (u.suspended ? '<span class="badge badge-red">FROZEN</span>' : '<span class="badge badge-green">ACTIVE</span>') + '</div></div>'
+      + '<div class="up-info-row"><div class="up-info-key">WhatsApp Opted Out</div><div class="up-info-val">' + (u.whatsappOptedOut ? 'Yes' : 'No') + '</div></div>'
+      + '<div class="up-info-row"><div class="up-info-key">Referral Code</div><div class="up-info-val mono">' + esc(u.referralCode||'—') + '</div></div>'
+      + '<div class="up-info-row"><div class="up-info-key">Joined</div><div class="up-info-val">' + upDate(u.createdAt) + '</div></div>'
+      + '</div>';
+
+    // Referrer
+    if (d.referrer) {
+      html += '<div class="up-section-title">Referred By</div>'
+        + '<div style="font-size:0.82rem;padding:8px 0;">'
+        + esc(d.referrer.name||'Unknown') + ' &nbsp;·&nbsp; +' + esc(d.referrer.phone||'') + '</div>';
+    }
+
+    // Referrals made
+    if (d.referrals && d.referrals.length) {
+      html += '<div class="up-section-title">Referrals Made (' + d.referrals.length + ')</div>'
+        + '<div class="up-table-wrap"><table class="up-table"><thead><tr><th>User</th><th>Phone</th><th>Status</th><th>Reward</th><th>Date</th></tr></thead><tbody>'
+        + d.referrals.map(function(r){
+            return '<tr><td>' + esc((r.referee&&r.referee.name)||'—') + '</td>'
+              + '<td class="mono">+' + esc((r.referee&&r.referee.phone)||'') + '</td>'
+              + '<td>' + esc(r.status||'') + '</td>'
+              + '<td class="mono">' + upFmt(r.referrerRewardKes) + '</td>'
+              + '<td style="color:var(--text-dim)">' + upDate(r.createdAt) + '</td></tr>';
+          }).join('') + '</tbody></table></div>';
+    }
+
+    document.getElementById('upPane-overview').innerHTML = html;
+  }).catch(function(e){ document.getElementById('upPane-overview').innerHTML = '<div class="up-empty">Failed to load overview</div>'; });
+}
+
+// ── WALLET ────────────────────────────────────────────────────────────────────
+function upLoadWallet(page) {
+  UP_PAGES.wallet = page;
+  document.getElementById('upWalletBody').innerHTML = '<tr><td colspan="6" class="up-loading">Loading...</td></tr>';
+  upFetch('wallet', page).then(function(d) {
+    var txTypeColor = { DEPOSIT:'#16a34a', WITHDRAWAL:'#ce1126', PAYOUT:'#16a34a',
+      TRADE_BUY:'#9284b8', SUGGESTION_REWARD:'#16a34a', REFERRAL_REWARD:'#16a34a',
+      CREATOR_BOUNTY:'#16a34a', REFUND:'#16a34a' };
+    document.getElementById('upWalletSummary').textContent = d.total + ' transactions';
+    document.getElementById('upWalletBody').innerHTML = !d.transactions||!d.transactions.length
+      ? '<tr><td colspan="6" class="up-empty">No transactions in this period</td></tr>'
+      : d.transactions.map(function(t){
+          var clr = txTypeColor[t.type] || 'var(--text)';
+          var sign = ['WITHDRAWAL','TRADE_BUY'].includes(t.type) ? '-' : '+';
           return '<tr>'
-            +'<td style="font-family:var(--mono);font-size:0.8rem">'+esc(m.period)+'</td>'
-            +'<td style="font-family:var(--mono);color:var(--ke-green)">'+fmt(m.fees)+'</td>'
-            +'<td style="font-family:var(--mono);color:var(--ke-green)">'+fmt(m.surplus)+'</td>'
-            +'<td style="font-family:var(--mono);color:var(--ke-green)">'+fmt(m.challenge)+'</td>'
-            +'<td style="font-family:var(--mono);font-weight:700;color:var(--ke-green)">'+fmt(m.total)+'</td>'
-            +'</tr>';
+            + '<td style="white-space:nowrap;color:var(--text-dim)">' + upDateTime(t.createdAt) + '</td>'
+            + '<td><span class="badge">' + esc(t.type) + '</span></td>'
+            + '<td class="mono" style="color:' + clr + ';font-weight:700">' + sign + upFmt(Math.abs(t.amountKes)) + '</td>'
+            + '<td class="mono">' + upFmt(t.balAfter) + '</td>'
+            + '<td><span class="badge ' + (t.status==='SUCCESS'?'badge-green':t.status==='PENDING'?'badge-amber':'badge-red') + '">' + esc(t.status) + '</span></td>'
+            + '<td style="font-size:0.7rem;max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="' + esc(t.description||'') + '">' + esc(t.description||'—') + '</td>'
+            + '</tr>';
         }).join('');
-  })
-  .catch(function(err){console.error('loadRevenueMonthly:',err);});
+    upPagBar('upWalletPag', page, d.total, d.limit, 'wallet');
+  }).catch(function(){ document.getElementById('upWalletBody').innerHTML = '<tr><td colspan="6" class="up-empty">Failed to load</td></tr>'; });
+}
+
+// ── POSITIONS ─────────────────────────────────────────────────────────────────
+function upLoadPositions() {
+  document.getElementById('upPositionsContent').innerHTML = '<div class="up-loading">Loading...</div>';
+  upFetch('positions', 1).then(function(d) {
+    var html = '';
+    var cutPct = d.cutRate ? (d.cutRate*100).toFixed(0)+'%' : '20%';
+
+    function posTable(arr, type) {
+      if (!arr||!arr.length) return '<div class="up-empty">No ' + type + ' positions</div>';
+      return '<div class="up-table-wrap"><table class="up-table"><thead><tr>'
+        + '<th>Market</th><th>Cat</th><th>Side</th><th>Staked</th><th>Fee</th><th>Shares</th><th>Avg Price</th>'
+        + (type==='open'||type==='pending' ? '<th>Mkt Prob</th><th>Est. Value *</th>' : '<th>Outcome</th><th>Realized P&amp;L</th>')
+        + '</tr></thead><tbody>'
+        + arr.map(function(p){
+            var sideClr = p.side==='YES'?'#16a34a':'#ce1126';
+            var outcomeCell = '';
+            if (type==='open'||type==='pending') {
+              outcomeCell = '<td class="mono">' + (p.currentProb*100).toFixed(1) + '%</td>'
+                + '<td class="mono">' + upFmt(p.estimatedValue) + '</td>';
+            } else {
+              var res = p.won ? '<span class="up-outcome-won">WON</span>' : p.lost ? '<span class="up-outcome-lost">LOST</span>' : '—';
+              outcomeCell = '<td>' + res + '</td><td class="mono">' + upFmt(p.realizedPnl) + '</td>';
+            }
+            return '<tr>'
+              + '<td style="font-size:0.72rem;max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="' + esc(p.marketTitle) + '">' + esc(p.marketTitle) + '</td>'
+              + '<td style="font-size:0.7rem;color:var(--text-dim)">' + esc(p.marketCategory||'') + '</td>'
+              + '<td style="font-weight:700;color:' + sideClr + '">' + esc(p.side) + '</td>'
+              + '<td class="mono">' + upFmt(p.grossStaked) + '</td>'
+              + '<td class="mono" style="color:#ce1126">' + upFmt(p.feesPaid) + '</td>'
+              + '<td class="mono">' + Number(p.shares).toFixed(2) + '</td>'
+              + '<td class="mono">' + (p.avgPrice*100).toFixed(1) + '%</td>'
+              + outcomeCell
+              + '</tr>';
+          }).join('')
+        + '</tbody></table></div>';
+    }
+
+    if (d.open && d.open.length) {
+      html += '<div class="up-section-title">Open Markets (' + d.open.length + ')</div>' + posTable(d.open, 'open');
+    }
+    if (d.pending && d.pending.length) {
+      html += '<div class="up-section-title">Pending Resolution (' + d.pending.length + ')</div>' + posTable(d.pending, 'pending');
+    }
+    if (d.resolved && d.resolved.length) {
+      html += '<div class="up-section-title">Resolved (' + d.resolved.length + ')</div>' + posTable(d.resolved, 'resolved');
+    }
+    if (!html) html = '<div class="up-empty">No positions found</div>';
+    html += '<div style="font-size:0.65rem;color:var(--text-dim);margin-top:10px;">* Estimated value = shares &times; market probability &times; (1 &minus; ' + cutPct + ' resolution cut). Subject to change at resolution.</div>';
+    document.getElementById('upPositionsContent').innerHTML = html;
+  }).catch(function(){ document.getElementById('upPositionsContent').innerHTML = '<div class="up-empty">Failed to load positions</div>'; });
+}
+
+// ── TRADES ────────────────────────────────────────────────────────────────────
+function upLoadTrades(page) {
+  UP_PAGES.trades = page;
+  document.getElementById('upTradesBody').innerHTML = '<tr><td colspan="10" class="up-loading">Loading...</td></tr>';
+  upFetch('trades', page).then(function(d) {
+    var sm = d.summary||{};
+    document.getElementById('upTradesSummary').innerHTML =
+      '<span><b>' + upFmt(sm.totalStaked) + '</b> staked</span>'
+      + '<span style="color:#ce1126"><b>' + upFmt(sm.totalFees) + '</b> fees</span>'
+      + '<span><b>' + upFmt(sm.totalNet) + '</b> net</span>'
+      + '<span style="color:var(--text-dim)">' + (d.total||0) + ' trades in period</span>';
+    document.getElementById('upTradesBody').innerHTML = !d.orders||!d.orders.length
+      ? '<tr><td colspan="10" class="up-empty">No trades in this period</td></tr>'
+      : d.orders.map(function(o){
+          var oc = o.marketOutcome ? (o.marketOutcome===o.side?'<span class="up-outcome-won">WON</span>':'<span class="up-outcome-lost">LOST</span>') : '<span style="color:var(--text-dim)">Open</span>';
+          return '<tr>'
+            + '<td style="white-space:nowrap;color:var(--text-dim)">' + upDate(o.createdAt) + '</td>'
+            + '<td style="font-size:0.7rem;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="' + esc(o.marketTitle) + '">' + esc(o.marketTitle) + '</td>'
+            + '<td style="font-size:0.7rem;color:var(--text-dim)">' + esc(o.marketCategory||'') + '</td>'
+            + '<td style="font-weight:700;color:' + (o.side==='YES'?'#16a34a':'#ce1126') + '">' + esc(o.side) + '</td>'
+            + '<td class="mono">' + upFmt(o.amountKes) + '</td>'
+            + '<td class="mono" style="color:#ce1126">' + upFmt(o.forecastingFeeKes) + '</td>'
+            + '<td class="mono">' + upFmt(o.netAmountKes) + '</td>'
+            + '<td class="mono">' + Number(o.shares).toFixed(2) + '</td>'
+            + '<td class="mono">' + (o.pricePerShare*100).toFixed(1) + '%</td>'
+            + '<td>' + oc + '</td>'
+            + '</tr>';
+        }).join('');
+    upPagBar('upTradesPag', page, d.total, d.limit, 'trades');
+  }).catch(function(){ document.getElementById('upTradesBody').innerHTML = '<tr><td colspan="10" class="up-empty">Failed to load</td></tr>'; });
+}
+
+// ── CHALLENGES ────────────────────────────────────────────────────────────────
+function upLoadChallenges(page) {
+  UP_PAGES.challenges = page;
+  document.getElementById('upChallengesBody').innerHTML = '<tr><td colspan="8" class="up-loading">Loading...</td></tr>';
+  upFetch('challenges', page).then(function(d) {
+    document.getElementById('upChallengesBody').innerHTML = !d.challenges||!d.challenges.length
+      ? '<tr><td colspan="8" class="up-empty">No challenges in this period</td></tr>'
+      : d.challenges.map(function(c){
+          var res = c.won ? '<span class="up-outcome-won">WON</span>'
+            : c.lost ? '<span class="up-outcome-lost">LOST</span>'
+            : c.tied ? '<span style="color:var(--amber)">TIE</span>'
+            : '—';
+          return '<tr>'
+            + '<td style="white-space:nowrap;color:var(--text-dim)">' + upDate(c.createdAt) + '</td>'
+            + '<td style="font-size:0.7rem;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="' + esc(c.question) + '">' + esc(c.question) + '</td>'
+            + '<td>' + esc((c.opponent&&c.opponent.name)||'—') + '</td>'
+            + '<td style="font-size:0.7rem">' + (c.isCreator?'Creator':'Challenger') + '</td>'
+            + '<td class="mono">' + upFmt(c.stakePerPerson) + '</td>'
+            + '<td class="mono" style="color:#ce1126">' + upFmt(c.platformFeeKes) + '</td>'
+            + '<td><span class="badge">' + esc(c.status||'') + '</span></td>'
+            + '<td>' + res + '</td>'
+            + '</tr>';
+        }).join('');
+    upPagBar('upChallengesPag', page, d.total, d.limit, 'challenges');
+  }).catch(function(){ document.getElementById('upChallengesBody').innerHTML = '<tr><td colspan="8" class="up-empty">Failed to load</td></tr>'; });
+}
+
+// ── SUGGESTIONS ───────────────────────────────────────────────────────────────
+function upLoadSuggestions(page) {
+  UP_PAGES.suggestions = page;
+  document.getElementById('upSuggestionsBody').innerHTML = '<tr><td colspan="6" class="up-loading">Loading...</td></tr>';
+  upFetch('suggestions', page).then(function(d) {
+    document.getElementById('upSuggestionsBody').innerHTML = !d.proposals||!d.proposals.length
+      ? '<tr><td colspan="6" class="up-empty">No suggestions in this period</td></tr>'
+      : d.proposals.map(function(p){
+          var stClr = p.status==='APPROVED'?'badge-green':p.status==='REJECTED'?'badge-red':'badge-amber';
+          return '<tr>'
+            + '<td style="white-space:nowrap;color:var(--text-dim)">' + upDate(p.createdAt) + '</td>'
+            + '<td style="font-size:0.7rem;max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="' + esc(p.question) + '">' + esc(p.question) + '</td>'
+            + '<td style="font-size:0.7rem">' + esc(p.category||'') + '</td>'
+            + '<td><span class="badge ' + stClr + '">' + esc(p.status) + '</span></td>'
+            + '<td class="mono" style="color:#16a34a">' + (p.rewardPaidAt ? '✓ Paid' : '—') + '</td>'
+            + '<td style="font-size:0.7rem;color:var(--text-dim);max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="' + esc(p.rejectionReason||'') + '">' + esc(p.rejectionReason||'—') + '</td>'
+            + '</tr>';
+        }).join('');
+    upPagBar('upSuggestionsPag', page, d.total, d.limit, 'suggestions');
+  }).catch(function(){ document.getElementById('upSuggestionsBody').innerHTML = '<tr><td colspan="6" class="up-empty">Failed to load</td></tr>'; });
+}
+
+// ── CREATOR ───────────────────────────────────────────────────────────────────
+function upLoadCreator(page) {
+  UP_PAGES.creator = page;
+  document.getElementById('upCreatorBody').innerHTML = '<tr><td colspan="7" class="up-loading">Loading...</td></tr>';
+  upFetch('creator', page).then(function(d) {
+    var sm = d.summary||{};
+    // Update creator tab style
+    var ct = document.getElementById('upCreatorTab');
+    if (ct) ct.className = 'up-tab' + (d.total>0?'':' dim') + (UP_TAB==='creator'?' active':'');
+
+    document.getElementById('upCreatorSummary').innerHTML = d.total > 0
+      ? '<div style="display:flex;gap:12px;flex-wrap:wrap;font-size:0.82rem;">'
+        + '<span><b style="color:#16a34a">' + upFmt(sm.totalEarned) + '</b> total earned</span>'
+        + '<span><b>' + upFmt(sm.totalPaidOut) + '</b> paid out</span>'
+        + '<span><b style="color:var(--amber)">' + upFmt(sm.totalUnpaid) + '</b> unpaid</span>'
+        + '<span style="color:var(--text-dim)">' + upFmt(sm.totalVolume) + ' qualifying volume</span>'
+        + '</div>'
+      : '<div class="up-empty" style="padding:8px 0">No creator activity</div>';
+
+    document.getElementById('upCreatorBody').innerHTML = !d.bounties||!d.bounties.length
+      ? '<tr><td colspan="7" class="up-empty">No creator records</td></tr>'
+      : d.bounties.map(function(b){
+          return '<tr>'
+            + '<td style="font-size:0.7rem;max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="' + esc(b.marketTitle) + '">' + esc(b.marketTitle) + '</td>'
+            + '<td><span class="badge">' + esc(b.marketStatus||'') + '</span></td>'
+            + '<td class="mono">' + upFmt(b.totalVolume) + '</td>'
+            + '<td class="mono">' + upFmt(b.tradeVolume) + '</td>'
+            + '<td class="mono" style="color:#16a34a">' + upFmtD(b.bountyEarned) + '</td>'
+            + '<td class="mono">' + upFmtD(b.paidOut) + '</td>'
+            + '<td class="mono" style="color:var(--amber)">' + upFmtD(b.unpaid) + '</td>'
+            + '</tr>';
+        }).join('');
+    upPagBar('upCreatorPag', page, d.total, d.limit, 'creator');
+  }).catch(function(){ document.getElementById('upCreatorBody').innerHTML = '<tr><td colspan="7" class="up-empty">Failed to load</td></tr>'; });
+}
+
+// ── MODAL ACTIONS ─────────────────────────────────────────────────────────────
+function upFreezeUser() {
+  if (!UP_USER_ID || !UP_USER_DATA) return;
+  var susp = UP_USER_DATA.suspended;
+  if (!confirm((susp?'Unfreeze':'Freeze') + ' this user?')) return;
+  adminFetch('/api/admin/users/' + UP_USER_ID + '/freeze', { method:'POST', body:'{}' })
+  .then(function(r){ return r.json(); })
+  .then(function(d){
+    if (d.success) {
+      var fb = document.getElementById('upFreezeBtn');
+      UP_USER_DATA.suspended = !susp;
+      if (fb){ fb.textContent = UP_USER_DATA.suspended?'Unfreeze':'Freeze'; fb.className='act-btn '+(UP_USER_DATA.suspended?'act-green':'act-amber'); }
+      document.getElementById('upUserName').textContent = esc(UP_USER_DATA.name||'Unknown') + (UP_USER_DATA.suspended?' 🔒':'');
+      loadUsersTable();
+    }
+  }).catch(function(){});
+}
+
+function upEditBalance() {
+  if (!UP_USER_ID) return;
+  openEditUserModal(UP_USER_ID);
+}
+
+function upReviewKYC() {
+  if (!UP_USER_DATA) return;
+  openKYCModal(UP_USER_ID, UP_USER_DATA.name, UP_USER_DATA.phone);
 }
 
 
@@ -5151,5 +5460,121 @@ function adminLogOut() {
   window.location.href = 'rada-admin-login.html';
 }
 </script>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     USER PROFILE MODAL
+════════════════════════════════════════════════════════════════════════════ -->
+<div id="userProfileModal" class="up-overlay" style="display:none" onclick="if(event.target===this)closeUserProfile()">
+  <div class="up-container">
+
+    <!-- Header -->
+    <div class="up-header">
+      <div class="up-header-top">
+        <div class="up-user-info">
+          <div class="up-user-name" id="upUserName">—</div>
+          <div class="up-user-meta" id="upUserMeta">—</div>
+        </div>
+        <div class="up-actions">
+          <button class="act-btn act-gray"  id="upFreezeBtn"  onclick="upFreezeUser()">Freeze</button>
+          <button class="act-btn act-gray"  onclick="upEditBalance()">Edit Balance</button>
+          <button class="act-btn act-amber" id="upKycBtn"     onclick="upReviewKYC()" style="display:none">Review KYC</button>
+          <button class="act-btn act-gray"  onclick="closeUserProfile()" style="font-size:1rem;padding:4px 10px;">&#x2715;</button>
+        </div>
+      </div>
+      <!-- Date range -->
+      <div class="up-date-row">
+        <span style="font-size:0.72rem;color:var(--text-dim);font-weight:600;">Period:</span>
+        <input type="date" id="upDateFrom" class="search-input" style="width:130px;font-size:0.75rem;" onchange="upDateChanged()">
+        <span style="font-size:0.72rem;color:var(--text-dim);">to</span>
+        <input type="date" id="upDateTo"   class="search-input" style="width:130px;font-size:0.75rem;" onchange="upDateChanged()">
+        <button class="topbar-btn" onclick="upClearDates()">All time</button>
+      </div>
+      <!-- Tabs -->
+      <div class="up-tabs">
+        <button class="up-tab active" onclick="upSwitchTab('overview')">Overview</button>
+        <button class="up-tab"        onclick="upSwitchTab('wallet')">Wallet</button>
+        <button class="up-tab"        onclick="upSwitchTab('positions')">Positions</button>
+        <button class="up-tab"        onclick="upSwitchTab('trades')">Trades</button>
+        <button class="up-tab"        onclick="upSwitchTab('challenges')">Challenges</button>
+        <button class="up-tab"        onclick="upSwitchTab('suggestions')">Suggestions</button>
+        <button class="up-tab dim"    id="upCreatorTab" onclick="upSwitchTab('creator')">Creator</button>
+      </div>
+    </div>
+
+    <!-- Body -->
+    <div class="up-body">
+
+      <!-- OVERVIEW -->
+      <div id="upPane-overview" class="up-tab-pane active">
+        <div id="upOverviewContent"><div class="up-loading">Loading...</div></div>
+      </div>
+
+      <!-- WALLET -->
+      <div id="upPane-wallet" class="up-tab-pane">
+        <div id="upWalletSummary" style="margin-bottom:10px;font-size:0.78rem;color:var(--text-dim);"></div>
+        <div class="up-table-wrap">
+          <table class="up-table">
+            <thead><tr><th>Date</th><th>Type</th><th>Amount</th><th>Balance After</th><th>Status</th><th>Description</th></tr></thead>
+            <tbody id="upWalletBody"><tr><td colspan="6" class="up-loading">Loading...</td></tr></tbody>
+          </table>
+        </div>
+        <div class="up-pagination" id="upWalletPag"></div>
+      </div>
+
+      <!-- POSITIONS -->
+      <div id="upPane-positions" class="up-tab-pane">
+        <div id="upPositionsContent"><div class="up-loading">Loading...</div></div>
+      </div>
+
+      <!-- TRADES -->
+      <div id="upPane-trades" class="up-tab-pane">
+        <div id="upTradesSummary" style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:12px;font-size:0.82rem;"></div>
+        <div class="up-table-wrap">
+          <table class="up-table">
+            <thead><tr><th>Date</th><th>Market</th><th>Cat</th><th>Side</th><th>Staked</th><th>Fee</th><th>Net</th><th>Shares</th><th>Price</th><th>Outcome</th></tr></thead>
+            <tbody id="upTradesBody"><tr><td colspan="10" class="up-loading">Loading...</td></tr></tbody>
+          </table>
+        </div>
+        <div class="up-pagination" id="upTradesPag"></div>
+      </div>
+
+      <!-- CHALLENGES -->
+      <div id="upPane-challenges" class="up-tab-pane">
+        <div class="up-table-wrap">
+          <table class="up-table">
+            <thead><tr><th>Date</th><th>Question</th><th>Opponent</th><th>Role</th><th>Stake</th><th>Fee</th><th>Status</th><th>Result</th></tr></thead>
+            <tbody id="upChallengesBody"><tr><td colspan="8" class="up-loading">Loading...</td></tr></tbody>
+          </table>
+        </div>
+        <div class="up-pagination" id="upChallengesPag"></div>
+      </div>
+
+      <!-- SUGGESTIONS -->
+      <div id="upPane-suggestions" class="up-tab-pane">
+        <div class="up-table-wrap">
+          <table class="up-table">
+            <thead><tr><th>Date</th><th>Question</th><th>Category</th><th>Status</th><th>Reward</th><th>Rejection Reason</th></tr></thead>
+            <tbody id="upSuggestionsBody"><tr><td colspan="6" class="up-loading">Loading...</td></tr></tbody>
+          </table>
+        </div>
+        <div class="up-pagination" id="upSuggestionsPag"></div>
+      </div>
+
+      <!-- CREATOR -->
+      <div id="upPane-creator" class="up-tab-pane">
+        <div id="upCreatorSummary" style="margin-bottom:12px;"></div>
+        <div class="up-table-wrap">
+          <table class="up-table">
+            <thead><tr><th>Market</th><th>Status</th><th>Market Volume</th><th>Qualifying Vol</th><th>Earned</th><th>Paid Out</th><th>Unpaid</th></tr></thead>
+            <tbody id="upCreatorBody"><tr><td colspan="7" class="up-loading">Loading...</td></tr></tbody>
+          </table>
+        </div>
+        <div class="up-pagination" id="upCreatorPag"></div>
+      </div>
+
+    </div><!-- /up-body -->
+  </div><!-- /up-container -->
+</div><!-- /userProfileModal -->
+
 </body>
 </html>
