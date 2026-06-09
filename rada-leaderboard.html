@@ -1118,7 +1118,7 @@ function renderTable(data) {
       : `<span class="rank-change rank-flat">—</span>`;
 
     const medal = t.rank === 1 ? '🥇' : t.rank === 2 ? '🥈' : t.rank === 3 ? '🥉' : '';
-    const vol = t.vol >= 1000000 ? `${(t.vol/1000000).toFixed(1)}M` : `${(t.vol/1000).toFixed(0)}K`;
+    const vol = t.vol >= 1000000 ? `${(t.vol/1000000).toFixed(1)}M` : t.vol >= 1000 ? `${(t.vol/1000).toFixed(0)}K` : `${Math.round(t.vol)}`;
 
     return `
     <div class="lb-row${t.isMe ? ' me' : ''}" style="animation-delay:${i*0.03}s">
