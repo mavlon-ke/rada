@@ -385,6 +385,11 @@ body::after {
 
 /* ── ACTIVITY FEED ── */
 .activity-feed { display: flex; flex-direction: column; gap: 1px; }
+.actv-tab { padding:8px 14px; border:none; background:none; cursor:pointer; font-size:0.8rem; color:var(--text-dim); border-bottom:3px solid transparent; margin-bottom:-2px; white-space:nowrap; font-weight:500; transition:color 0.15s; }
+.actv-tab:hover { color:var(--text); }
+.actv-tab.active { color:var(--primary); border-bottom-color:var(--primary); font-weight:700; }
+.actv-qf { font-size:0.75rem !important; padding:4px 10px !important; }
+.actv-qf.active { background:var(--primary) !important; color:#fff !important; }
 .activity-item {
   display: flex; align-items: flex-start; gap: 10px;
   padding: 10px 14px; border-bottom: 1px solid var(--border);
@@ -1269,15 +1274,39 @@ body::after {
          PANEL: ACTIVITY FEED
     ═══════════════════════════════════════════════════════════════════════ -->
     <div class="panel" id="panel-activity">
-      <div class="page-title">Activity Feed</div>
-      <div class="page-sub">Real-time user deposits, trades, withdrawals and KYC submissions</div>
-      <div class="table-card" style="box-shadow:0 2px 12px rgba(0,0,0,0.05);">
-        <div class="table-header">
-          <div class="table-title">Admin Action Log</div>
-          <button class="topbar-btn" onclick="loadActivityFeed()">🔄 Refresh</button>
+      <div class="page-head">
+        <div>
+          <div class="page-title">Activity Feed</div>
+          <div class="page-sub" id="actSummary">Real-time platform events</div>
         </div>
-        <div class="activity-feed" id="fullActivityFeed"><div style="text-align:center;padding:30px;color:var(--text-dim);">Loading...</div></div>
+        <button class="topbar-btn" onclick="loadActivityPanel()">&#x1F504; Refresh</button>
       </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;align-items:center;">
+        <button class="topbar-btn actv-qf" onclick="actQuickFilter('today')">Today</button>
+        <button class="topbar-btn actv-qf" onclick="actQuickFilter('yesterday')">Yesterday</button>
+        <button class="topbar-btn actv-qf" onclick="actQuickFilter('7d')">Last 7 Days</button>
+        <button class="topbar-btn actv-qf" onclick="actQuickFilter('month')">This Month</button>
+        <button class="topbar-btn actv-qf" onclick="actQuickFilter('alltime')">All Time</button>
+        <span style="color:var(--border);padding:0 2px;">|</span>
+        <input type="date" id="actFrom" class="search-input" style="width:136px;font-size:0.78rem;" onchange="actDateChanged()" placeholder="From">
+        <span style="font-size:0.78rem;color:var(--text-dim);">to</span>
+        <input type="date" id="actTo" class="search-input" style="width:136px;font-size:0.78rem;" onchange="actDateChanged()" placeholder="To">
+        <button class="topbar-btn" onclick="actClearDates()">Clear</button>
+      </div>
+      <div style="display:flex;overflow-x:auto;border-bottom:2px solid var(--border);margin-bottom:16px;scrollbar-width:none;-webkit-overflow-scrolling:touch;">
+        <button class="actv-tab active" data-tab="all"         onclick="actSwitchTab('all')">All</button>
+        <button class="actv-tab"        data-tab="deposits"    onclick="actSwitchTab('deposits')">Deposits</button>
+        <button class="actv-tab"        data-tab="withdrawals" onclick="actSwitchTab('withdrawals')">Withdrawals</button>
+        <button class="actv-tab"        data-tab="trades"      onclick="actSwitchTab('trades')">Trades</button>
+        <button class="actv-tab"        data-tab="payouts"     onclick="actSwitchTab('payouts')">Payouts</button>
+        <button class="actv-tab"        data-tab="challenges"  onclick="actSwitchTab('challenges')">Challenges</button>
+        <button class="actv-tab"        data-tab="rewards"     onclick="actSwitchTab('rewards')">Rewards</button>
+        <button class="actv-tab"        data-tab="users"       onclick="actSwitchTab('users')">Users</button>
+      </div>
+      <div id="actFeedContent">
+        <div style="text-align:center;padding:30px;color:var(--text-dim);">Loading...</div>
+      </div>
+      <div id="actPagination"></div>
     </div>
 
     <!-- PANEL: PLATFORM REVENUE -->
@@ -2562,23 +2591,41 @@ function renderRecentTxns() {
 }
 
 function renderActivity(containerId) {
-  // Legacy call — now loads from backend
+  // Dashboard live feed — shows last 20 events, EAT timestamps
   var el = document.getElementById(containerId);
   if (!el) return;
   el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-dim);">Loading...</div>';
-  loadActivityFeed(containerId);
+  adminFetch('/api/admin/user-activity?tab=all&limit=20')
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      var items = d.activities || [];
+      if (!items.length) {
+        el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-dim);">No activity yet.</div>';
+        return;
+      }
+      el.innerHTML = items.map(function(item) {
+        return '<div class="activity-item">'
+          + '<div class="activity-icon ' + item.color + '">' + item.icon + '</div>'
+          + '<div class="activity-main">'
+            + '<div class="activity-text">' + item.text + '</div>'
+            + '<div class="activity-time">' + fmtEAT(item.createdAt) + '</div>'
+          + '</div></div>';
+      }).join('');
+    })
+    .catch(function() {
+      el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-dim);">Failed to load.</div>';
+    });
 }
 
 function loadActivityFeed(containerId) {
-  // Activity Feed = USER activity (transactions, KYC)
-  // Admin Role Log = ADMIN activity (handled separately via loadAdminLog)
+  // Handles admin-log panel (adminLogBody) and legacy calls
   containerId = containerId || 'fullActivityFeed';
   var isAdminLog = containerId === 'adminLogBody';
   var el = document.getElementById(containerId);
   if (!el) return;
   el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-dim);">Loading...</div>';
 
-  var url = isAdminLog ? '/api/admin/activity?limit=50' : '/api/admin/user-activity?limit=50';
+  var url = isAdminLog ? '/api/admin/activity?limit=50' : '/api/admin/user-activity?tab=all&limit=50';
 
   adminFetch(url)
   .then(function(r) { return r.json(); })
@@ -2603,25 +2650,24 @@ function loadActivityFeed(containerId) {
           USER_DELETED: 'ai-red', KYC_REJECTED: 'ai-red', PAYOUT_RETRY_FAILED: 'ai-red',
           USER_FROZEN: 'ai-amber', DISPUTE_RESOLVED: 'ai-amber',
         };
-        icon      = adminIcons[item.action]  || '⚡';
-        colorClass= adminColors[item.action] || 'ai-blue';
-        var act   = item.action.replace(/_/g, ' ');
-        var tgt   = item.target && item.target !== '—' ? ' · <span style="color:var(--text-dim)">' + item.target + '</span>' : '';
-        text      = '<strong>' + item.admin + '</strong> · ' + act + tgt;
-        timeStr   = timeAgo(item.createdAt) + (item.ipAddress ? ' · ' + item.ipAddress : '');
+        icon       = adminIcons[item.action]  || '⚡';
+        colorClass = adminColors[item.action] || 'ai-blue';
+        var act    = item.action.replace(/_/g, ' ');
+        var tgt    = item.target && item.target !== '—' ? ' · <span style="color:var(--text-dim)">' + item.target + '</span>' : '';
+        text       = '<strong>' + item.admin + '</strong> · ' + act + tgt;
+        timeStr    = timeAgo(item.createdAt) + (item.ipAddress ? ' · ' + item.ipAddress : '');
       } else {
-        icon       = item.icon      || '⚡';
-        colorClass = item.color     || 'ai-blue';
-        text       = item.text      || '';
-        timeStr    = timeAgo(item.createdAt);
+        icon       = item.icon  || '⚡';
+        colorClass = item.color || 'ai-blue';
+        text       = item.text  || '';
+        timeStr    = fmtEAT(item.createdAt);
       }
-      return '<div class="activity-item">' +
-        '<div class="activity-icon ' + colorClass + '">' + icon + '</div>' +
-        '<div class="activity-main">' +
-          '<div class="activity-text">' + text + '</div>' +
-          '<div class="activity-time">' + timeStr + '</div>' +
-        '</div>' +
-      '</div>';
+      return '<div class="activity-item">'
+        + '<div class="activity-icon ' + colorClass + '">' + icon + '</div>'
+        + '<div class="activity-main">'
+          + '<div class="activity-text">' + text + '</div>'
+          + '<div class="activity-time">' + timeStr + '</div>'
+        + '</div></div>';
     }).join('');
   })
   .catch(function() {
@@ -2867,7 +2913,7 @@ function showPanel(id, btn) {
   if (id === 'suggestions')   { loadSuggestions(); }
   if (id === 'disputes')      { loadDisputes('DISPUTED'); }
   if (id === 'proposals')     { loadProposals('PENDING'); }
-  if (id === 'activity')      { loadActivityFeed(); }
+  if (id === 'activity')      { loadActivityPanel(); }
   if (id === 'carousel')      { setTimeout(function() { initCarouselAdmin(); loadCarouselFromBackend(); }, 50); }
   if (id === 'referral')      { setTimeout(loadReferralConfig, 50); }
   if (id === 'creator-programme') { loadCreatorProgrammeConfig(); }
@@ -5379,6 +5425,197 @@ function upEditBalance() {
 function upReviewKYC() {
   if (!UP_USER_DATA) return;
   openKYCModal(UP_USER_ID, UP_USER_DATA.name, UP_USER_DATA.phone);
+}
+
+
+
+// ════════════════════════════════════════════════════════════════════════════
+// ACTIVITY FEED PANEL
+// ════════════════════════════════════════════════════════════════════════════
+
+var ACT_TAB  = 'all';
+var ACT_PAGE = 1;
+
+function fmtEAT(dateStr) {
+  // Format a UTC date string as "10 Jun 2026, 14:32 EAT" (UTC+3)
+  var d   = new Date(dateStr);
+  var eat = new Date(d.getTime() + 3 * 60 * 60 * 1000);
+  var M   = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return eat.getUTCDate() + ' ' + M[eat.getUTCMonth()] + ' ' + eat.getUTCFullYear()
+    + ', ' + String(eat.getUTCHours()).padStart(2, '0')
+    + ':' + String(eat.getUTCMinutes()).padStart(2, '0') + ' EAT';
+}
+
+function actGetEATDate(offsetDays) {
+  // Returns YYYY-MM-DD for today + offsetDays, in EAT (UTC+3)
+  var eat = new Date(Date.now() + (3 * 60 + (offsetDays || 0) * 24 * 60) * 60 * 1000);
+  return eat.toISOString().slice(0, 10);
+}
+
+function actQuickFilter(period) {
+  var f = document.getElementById('actFrom');
+  var t = document.getElementById('actTo');
+  var today = actGetEATDate(0);
+  document.querySelectorAll('.actv-qf').forEach(function(b) { b.classList.remove('active'); });
+  var btn = document.querySelector('.actv-qf[onclick*="' + period + '"]');
+  if (btn) btn.classList.add('active');
+  if (period === 'alltime') {
+    f.value = ''; t.value = '';
+  } else if (period === 'today') {
+    f.value = today; t.value = today;
+  } else if (period === 'yesterday') {
+    var yday = actGetEATDate(-1);
+    f.value = yday; t.value = yday;
+  } else if (period === '7d') {
+    f.value = actGetEATDate(-6); t.value = today;
+  } else if (period === 'month') {
+    var eat = new Date(Date.now() + 3 * 60 * 60 * 1000);
+    f.value = eat.getUTCFullYear() + '-'
+      + String(eat.getUTCMonth() + 1).padStart(2, '0') + '-01';
+    t.value = today;
+  }
+  ACT_PAGE = 1;
+  loadActivityPanel();
+}
+
+function actDateChanged() {
+  document.querySelectorAll('.actv-qf').forEach(function(b) { b.classList.remove('active'); });
+  ACT_PAGE = 1;
+  loadActivityPanel();
+}
+
+function actClearDates() {
+  var f = document.getElementById('actFrom');
+  var t = document.getElementById('actTo');
+  if (f) f.value = '';
+  if (t) t.value = '';
+  document.querySelectorAll('.actv-qf').forEach(function(b) { b.classList.remove('active'); });
+  ACT_PAGE = 1;
+  loadActivityPanel();
+}
+
+function actSwitchTab(tab) {
+  ACT_TAB  = tab;
+  ACT_PAGE = 1;
+  document.querySelectorAll('.actv-tab').forEach(function(b) {
+    b.classList.toggle('active', b.dataset.tab === tab);
+  });
+  loadActivityPanel();
+}
+
+function actGoPage(page) {
+  if (page < 1) return;
+  ACT_PAGE = page;
+  loadActivityPanel();
+  // Scroll feed into view
+  var el = document.getElementById('actFeedContent');
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function loadActivityPanel() {
+  var content = document.getElementById('actFeedContent');
+  var summary = document.getElementById('actSummary');
+  if (!content) return;
+  content.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text-dim);">Loading...</div>';
+
+  var from = (document.getElementById('actFrom') || {}).value || '';
+  var to   = (document.getElementById('actTo')   || {}).value || '';
+  var url  = '/api/admin/user-activity?tab=' + ACT_TAB + '&page=' + ACT_PAGE + '&limit=100';
+  if (from) url += '&from=' + encodeURIComponent(from);
+  if (to)   url += '&to='   + encodeURIComponent(to);
+
+  adminFetch(url)
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      // Summary bar
+      if (summary) {
+        var txt = (d.total || 0).toLocaleString() + ' record' + (d.total !== 1 ? 's' : '');
+        if (d.summary && d.summary.volumeKes) {
+          txt += ' · KES ' + d.summary.volumeKes.toLocaleString();
+        }
+        summary.textContent = txt;
+      }
+      // Pagination
+      actRenderPagination(d.total || 0, d.page || 1, d.limit || 100);
+      // Content
+      if (ACT_TAB === 'users') {
+        actRenderUsers(d.users || [], d.total || 0);
+      } else {
+        actRenderFeed(d.activities || []);
+      }
+    })
+    .catch(function(err) {
+      console.error('loadActivityPanel:', err);
+      content.innerHTML = '<div style="text-align:center;color:#ce1126;padding:20px;">Failed to load. Check console.</div>';
+    });
+}
+
+function actRenderFeed(items) {
+  var el = document.getElementById('actFeedContent');
+  if (!el) return;
+  if (!items.length) {
+    el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-dim);font-size:0.82rem;">No activity in this period.</div>';
+    return;
+  }
+  el.innerHTML = '<div class="activity-feed">' + items.map(function(item) {
+    return '<div class="activity-item">'
+      + '<div class="activity-icon ' + esc(item.color || 'ai-blue') + '">' + (item.icon || '⚡') + '</div>'
+      + '<div class="activity-main">'
+        + '<div class="activity-text">' + (item.text || '') + '</div>'
+        + '<div class="activity-time">' + fmtEAT(item.createdAt) + '</div>'
+      + '</div>'
+      + '</div>';
+  }).join('') + '</div>';
+}
+
+function actRenderUsers(users, total) {
+  var el = document.getElementById('actFeedContent');
+  if (!el) return;
+  if (!users.length) {
+    el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-dim);font-size:0.82rem;">No new registrations in this period.</div>';
+    return;
+  }
+  var kycBadge = function(s) {
+    return s === 'VERIFIED' ? 'badge-green' : s === 'REJECTED' ? 'badge-red' : 'badge-amber';
+  };
+  el.innerHTML = '<div style="font-size:0.72rem;color:var(--text-dim);margin-bottom:10px;padding:0 2px;">'
+    + total.toLocaleString() + ' registration' + (total !== 1 ? 's' : '') + ' in this period'
+    + '</div>'
+    + '<div class="table-wrap"><table class="data-table"><thead><tr>'
+    + '<th>Name</th><th>Phone</th><th>KYC</th><th>Registered (EAT)</th>'
+    + '</tr></thead><tbody>'
+    + users.map(function(u) {
+      return '<tr>'
+        + '<td style="font-weight:600">' + esc(u.name || '—') + '</td>'
+        + '<td class="mono" style="font-size:0.8rem">+' + esc(u.phone || '') + '</td>'
+        + '<td><span class="badge ' + kycBadge(u.kycStatus) + '">' + esc(u.kycStatus || 'PENDING') + '</span></td>'
+        + '<td style="font-size:0.78rem;color:var(--text-dim);white-space:nowrap;">' + fmtEAT(u.createdAt) + '</td>'
+        + '</tr>';
+    }).join('')
+    + '</tbody></table></div>';
+}
+
+function actRenderPagination(total, page, limit) {
+  var el = document.getElementById('actPagination');
+  if (!el) return;
+  var pages = Math.max(1, Math.ceil(total / limit));
+  if (total === 0) { el.innerHTML = ''; return; }
+  var start = (page - 1) * limit + 1;
+  var end   = Math.min(page * limit, total);
+  el.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;'
+    + 'padding:14px 4px 4px;font-size:0.8rem;color:var(--text-dim);flex-wrap:wrap;gap:8px;">'
+    + '<span>Showing <strong>' + start.toLocaleString() + '–' + end.toLocaleString()
+    + '</strong> of <strong>' + total.toLocaleString() + '</strong></span>'
+    + '<div style="display:flex;gap:6px;align-items:center;">'
+    + '<button onclick="actGoPage(' + (page - 1) + ')" ' + (page <= 1 ? 'disabled' : '')
+    + ' style="padding:4px 12px;border-radius:6px;border:1px solid var(--border);'
+    + 'background:var(--bg-card);cursor:pointer;font-size:0.78rem;">&larr; Prev</button>'
+    + '<span style="font-size:0.8rem;font-weight:600;min-width:60px;text-align:center;">'
+    + page + ' / ' + pages + '</span>'
+    + '<button onclick="actGoPage(' + (page + 1) + ')" ' + (page >= pages ? 'disabled' : '')
+    + ' style="padding:4px 12px;border-radius:6px;border:1px solid var(--border);'
+    + 'background:var(--bg-card);cursor:pointer;font-size:0.78rem;">Next &rarr;</button>'
+    + '</div></div>';
 }
 
 
