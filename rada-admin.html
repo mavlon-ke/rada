@@ -2455,7 +2455,7 @@ function renderUsersTable() {
     var freezeUserBtn = '<button class="act-btn ' + (u.suspended ? 'act-green' : 'act-amber') + '" data-action="freeze-user" data-id="' + (u.id||'') + '" data-suspended="' + (u.suspended ? '1' : '0') + '">' + (u.suspended ? 'Unfreeze' : 'Freeze') + '</button>';
     var deleteUserBtn = '<button class="act-btn act-red" data-action="delete-user" data-id="' + (u.id||'') + '" data-name="' + esc(u.name||'—') + '" data-phone="' + esc(u.phone||'') + '">Delete</button>';
     return '<tr>' +
-      '<td style="font-weight:600;cursor:pointer;color:var(--primary)" onclick="openUserProfile(' + JSON.stringify(u.id) + ')" title="View profile">' + esc(u.name||'—') + '</td>' +
+      '<td style="font-weight:600;cursor:pointer;color:var(--primary)" onclick="openUserProfile(\'' + u.id + '\')" title="View profile">' + esc(u.name||'—') + '</td>' +
       '<td class="mono" style="color:var(--text-dim)">' + esc(u.phone||'—') + '</td>' +
       '<td>' + kycBadge + '</td>' +
       '<td class="mono">' + (u.balance||'—') + '</td>' +
@@ -4419,6 +4419,133 @@ renderActivity('liveFeed');
     if (el) el.style.display = pid === 'dashboard' ? 'block' : 'none';
   });
 })();
+
+
+// ─── WhatsApp Notifications config (moved here to share scope with showPanel) ─
+// ─── WhatsApp Notifications config ────────────────────────────────────────
+
+var WA_TOGGLE_FIELDS = [
+  ['waToggleDepositConfirmed',             'depositConfirmedEnabled'],
+  ['waToggleWithdrawalProcessed',          'withdrawalProcessedEnabled'],
+  ['waToggleMarketResolvedWon',            'marketResolvedWonEnabled'],
+  ['waToggleMarketResolvedLost',           'marketResolvedLostEnabled'],
+  ['waToggleReferralRewardCredited',       'referralRewardCreditedEnabled'],
+  ['waToggleRefereeNominated',             'refereeNominatedEnabled'],
+  ['waToggleChallengeOpponentStaked',      'challengeOpponentStakedEnabled'],
+  ['waToggleChallengeResolutionWindow',    'challengeResolutionWindowEnabled'],
+  ['waToggleChallengeResolutionWarning',   'challengeResolutionWarningEnabled'],
+];
+
+function loadWhatsappConfig() {
+  adminFetch('/api/admin/config/whatsapp').then(function(r) { return r.json(); }).then(function(cfg) {
+    if (!cfg || cfg.error) {
+      console.error('loadWhatsappConfig:', cfg && cfg.error);
+      return;
+    }
+
+    var gt  = document.getElementById('waGlobalToggle');
+    var lbl = document.getElementById('waStatusLabel');
+    if (gt) {
+      gt.checked = cfg.globalEnabled !== false;
+      if (lbl) {
+        lbl.textContent = gt.checked ? 'ON' : 'OFF';
+        lbl.style.color = gt.checked ? '#16a34a' : '#ce1126';
+      }
+    }
+
+    WA_TOGGLE_FIELDS.forEach(function(pair) {
+      var el = document.getElementById(pair[0]);
+      if (el) el.checked = cfg[pair[1]] !== false;
+    });
+
+    // Audit trail
+    var auditBox  = document.getElementById('waAuditTrail');
+    var auditText = document.getElementById('waAuditText');
+    if (auditBox && auditText && cfg.updatedAt) {
+      var when = new Date(cfg.updatedAt).toLocaleString();
+      var who  = (cfg.updatedByAdmin && cfg.updatedByAdmin.name) || (cfg.updatedByAdmin && cfg.updatedByAdmin.email) || 'system';
+      auditText.textContent = 'Last updated ' + when + ' by ' + who + '.';
+      auditBox.style.display = 'block';
+    }
+  }).catch(function(err) {
+    console.error('loadWhatsappConfig:', err);
+  });
+}
+
+function saveWhatsappConfig() {
+  var statusEl = document.getElementById('waSaveStatus');
+  if (statusEl) { statusEl.textContent = 'Saving...'; statusEl.style.color = '#9284b8'; }
+
+  var body = {};
+  var gt = document.getElementById('waGlobalToggle');
+  if (gt) body.globalEnabled = !!gt.checked;
+
+  WA_TOGGLE_FIELDS.forEach(function(pair) {
+    var el = document.getElementById(pair[0]);
+    if (el) body[pair[1]] = !!el.checked;
+  });
+
+  adminFetch('/api/admin/config/whatsapp', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  }).then(function(r) { return r.json(); }).then(function(d) {
+    if (d.success) {
+      if (statusEl) { statusEl.textContent = '✓ Saved'; statusEl.style.color = '#16a34a'; }
+      loadWhatsappConfig();  // refresh audit trail
+    } else {
+      if (statusEl) { statusEl.textContent = 'Error: ' + JSON.stringify(d.error || d); statusEl.style.color = '#ce1126'; }
+    }
+  }).catch(function(err) {
+    if (statusEl) { statusEl.textContent = 'Network error'; statusEl.style.color = '#ce1126'; }
+    console.error('saveWhatsappConfig:', err);
+  });
+}
+
+function setUserWhatsappOptout(optedOut) {
+  var statusEl = document.getElementById('waOptoutStatus');
+  var raw      = (document.getElementById('waOptoutUserId') || {value:''}).value.trim();
+  if (!raw) {
+    if (statusEl) { statusEl.textContent = 'Please enter a user ID or phone number'; statusEl.style.color = '#ce1126'; }
+    return;
+  }
+
+  // If input looks like a phone (digits with optional +/254/0 prefix), look up the user first.
+  var looksLikePhone = /^[+0-9]/.test(raw) && /\d{6,}/.test(raw);
+  var resolveUserId  = looksLikePhone
+    ? adminFetch('/api/admin/users?q=' + encodeURIComponent(raw)).then(function(r) { return r.json(); }).then(function(d) {
+        var match = (d.users || []).find(function(u) { return u.phone && u.phone.replace(/\D/g, '').endsWith(raw.replace(/\D/g, '').slice(-9)); });
+        return match ? match.id : null;
+      })
+    : Promise.resolve(raw);
+
+  if (statusEl) { statusEl.textContent = 'Working...'; statusEl.style.color = '#9284b8'; }
+
+  resolveUserId.then(function(userId) {
+    if (!userId) {
+      if (statusEl) { statusEl.textContent = 'User not found'; statusEl.style.color = '#ce1126'; }
+      return null;
+    }
+    return adminFetch('/api/admin/users/' + encodeURIComponent(userId) + '/whatsapp-optout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ optedOut: !!optedOut }),
+    }).then(function(r) { return r.json(); });
+  }).then(function(d) {
+    if (!d) return;
+    if (d.success) {
+      if (statusEl) {
+        statusEl.textContent = optedOut ? '✓ User marked OPTED-OUT' : '✓ Opt-out cleared';
+        statusEl.style.color = '#16a34a';
+      }
+    } else {
+      if (statusEl) { statusEl.textContent = 'Error: ' + (d.error || 'unknown'); statusEl.style.color = '#ce1126'; }
+    }
+  }).catch(function(err) {
+    if (statusEl) { statusEl.textContent = 'Network error'; statusEl.style.color = '#ce1126'; }
+    console.error('setUserWhatsappOptout:', err);
+  });
+}
 </script>
 <script>
 /* ── CAROUSEL ADMIN (self-contained) ── */
@@ -4684,130 +4811,8 @@ function saveCreatorProgrammeConfig() {
   var bountyMin        = parseFloat((document.getElementById('cpBountyMinInput')        || {value:100}).value);
   var statusEl         = document.getElementById('cpSaveStatus');
 
-// ─── WhatsApp Notifications config ────────────────────────────────────────
+// WhatsApp config functions moved to Block 5 (same block as showPanel)
 
-var WA_TOGGLE_FIELDS = [
-  ['waToggleDepositConfirmed',             'depositConfirmedEnabled'],
-  ['waToggleWithdrawalProcessed',          'withdrawalProcessedEnabled'],
-  ['waToggleMarketResolvedWon',            'marketResolvedWonEnabled'],
-  ['waToggleMarketResolvedLost',           'marketResolvedLostEnabled'],
-  ['waToggleReferralRewardCredited',       'referralRewardCreditedEnabled'],
-  ['waToggleRefereeNominated',             'refereeNominatedEnabled'],
-  ['waToggleChallengeOpponentStaked',      'challengeOpponentStakedEnabled'],
-  ['waToggleChallengeResolutionWindow',    'challengeResolutionWindowEnabled'],
-  ['waToggleChallengeResolutionWarning',   'challengeResolutionWarningEnabled'],
-];
-
-function loadWhatsappConfig() {
-  adminFetch('/api/admin/config/whatsapp').then(function(r) { return r.json(); }).then(function(cfg) {
-    if (!cfg || cfg.error) {
-      console.error('loadWhatsappConfig:', cfg && cfg.error);
-      return;
-    }
-
-    var gt  = document.getElementById('waGlobalToggle');
-    var lbl = document.getElementById('waStatusLabel');
-    if (gt) {
-      gt.checked = cfg.globalEnabled !== false;
-      if (lbl) {
-        lbl.textContent = gt.checked ? 'ON' : 'OFF';
-        lbl.style.color = gt.checked ? '#16a34a' : '#ce1126';
-      }
-    }
-
-    WA_TOGGLE_FIELDS.forEach(function(pair) {
-      var el = document.getElementById(pair[0]);
-      if (el) el.checked = cfg[pair[1]] !== false;
-    });
-
-    // Audit trail
-    var auditBox  = document.getElementById('waAuditTrail');
-    var auditText = document.getElementById('waAuditText');
-    if (auditBox && auditText && cfg.updatedAt) {
-      var when = new Date(cfg.updatedAt).toLocaleString();
-      var who  = (cfg.updatedByAdmin && cfg.updatedByAdmin.name) || (cfg.updatedByAdmin && cfg.updatedByAdmin.email) || 'system';
-      auditText.textContent = 'Last updated ' + when + ' by ' + who + '.';
-      auditBox.style.display = 'block';
-    }
-  }).catch(function(err) {
-    console.error('loadWhatsappConfig:', err);
-  });
-}
-
-function saveWhatsappConfig() {
-  var statusEl = document.getElementById('waSaveStatus');
-  if (statusEl) { statusEl.textContent = 'Saving...'; statusEl.style.color = '#9284b8'; }
-
-  var body = {};
-  var gt = document.getElementById('waGlobalToggle');
-  if (gt) body.globalEnabled = !!gt.checked;
-
-  WA_TOGGLE_FIELDS.forEach(function(pair) {
-    var el = document.getElementById(pair[0]);
-    if (el) body[pair[1]] = !!el.checked;
-  });
-
-  adminFetch('/api/admin/config/whatsapp', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  }).then(function(r) { return r.json(); }).then(function(d) {
-    if (d.success) {
-      if (statusEl) { statusEl.textContent = '✓ Saved'; statusEl.style.color = '#16a34a'; }
-      loadWhatsappConfig();  // refresh audit trail
-    } else {
-      if (statusEl) { statusEl.textContent = 'Error: ' + JSON.stringify(d.error || d); statusEl.style.color = '#ce1126'; }
-    }
-  }).catch(function(err) {
-    if (statusEl) { statusEl.textContent = 'Network error'; statusEl.style.color = '#ce1126'; }
-    console.error('saveWhatsappConfig:', err);
-  });
-}
-
-function setUserWhatsappOptout(optedOut) {
-  var statusEl = document.getElementById('waOptoutStatus');
-  var raw      = (document.getElementById('waOptoutUserId') || {value:''}).value.trim();
-  if (!raw) {
-    if (statusEl) { statusEl.textContent = 'Please enter a user ID or phone number'; statusEl.style.color = '#ce1126'; }
-    return;
-  }
-
-  // If input looks like a phone (digits with optional +/254/0 prefix), look up the user first.
-  var looksLikePhone = /^[+0-9]/.test(raw) && /\d{6,}/.test(raw);
-  var resolveUserId  = looksLikePhone
-    ? adminFetch('/api/admin/users?q=' + encodeURIComponent(raw)).then(function(r) { return r.json(); }).then(function(d) {
-        var match = (d.users || []).find(function(u) { return u.phone && u.phone.replace(/\D/g, '').endsWith(raw.replace(/\D/g, '').slice(-9)); });
-        return match ? match.id : null;
-      })
-    : Promise.resolve(raw);
-
-  if (statusEl) { statusEl.textContent = 'Working...'; statusEl.style.color = '#9284b8'; }
-
-  resolveUserId.then(function(userId) {
-    if (!userId) {
-      if (statusEl) { statusEl.textContent = 'User not found'; statusEl.style.color = '#ce1126'; }
-      return null;
-    }
-    return adminFetch('/api/admin/users/' + encodeURIComponent(userId) + '/whatsapp-optout', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ optedOut: !!optedOut }),
-    }).then(function(r) { return r.json(); });
-  }).then(function(d) {
-    if (!d) return;
-    if (d.success) {
-      if (statusEl) {
-        statusEl.textContent = optedOut ? '✓ User marked OPTED-OUT' : '✓ Opt-out cleared';
-        statusEl.style.color = '#16a34a';
-      }
-    } else {
-      if (statusEl) { statusEl.textContent = 'Error: ' + (d.error || 'unknown'); statusEl.style.color = '#ce1126'; }
-    }
-  }).catch(function(err) {
-    if (statusEl) { statusEl.textContent = 'Network error'; statusEl.style.color = '#ce1126'; }
-    console.error('setUserWhatsappOptout:', err);
-  });
-}
 
   // Client-side validation matching server-side hard caps (server is source of truth)
   if (isNaN(ratePct) || ratePct < 0 || ratePct > 5) {
