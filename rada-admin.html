@@ -1289,8 +1289,6 @@ body::after {
         </div>
         <button class="topbar-btn" onclick="loadRevenuePanel()">&#x1F504; Refresh</button>
       </div>
-
-      <!-- GROSS REVENUE -->
       <div style="font-size:0.7rem;font-weight:700;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;margin-bottom:8px;">Gross Revenue &#x2014; All Time</div>
       <div class="stats-grid" style="margin-bottom:8px;">
         <div class="stat-card"><div class="stat-label">Forecasting Fees</div><div class="stat-val green" id="revFees">&#x2014;</div><div class="stat-change" id="revFeesCount" style="color:var(--text-dim);">&#x2014; trades</div></div>
@@ -1298,8 +1296,6 @@ body::after {
         <div class="stat-card"><div class="stat-label">Challenge Fees</div><div class="stat-val green" id="revChallenge">&#x2014;</div><div class="stat-change" id="revChallengeCount" style="color:var(--text-dim);">&#x2014; challenges</div></div>
         <div class="stat-card"><div class="stat-label">Gross Total</div><div class="stat-val green" id="revTotal">&#x2014;</div><div class="stat-change" style="color:var(--ke-green);">All time</div></div>
       </div>
-
-      <!-- COSTS -->
       <div style="font-size:0.7rem;font-weight:700;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;margin:20px 0 8px;">Platform Costs &#x2014; All Time</div>
       <div class="table-card" style="margin-bottom:8px;padding:16px 20px;">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;">
@@ -1310,19 +1306,12 @@ body::after {
           <div style="display:flex;justify-content:space-between;padding:10px 8px 4px 0;grid-column:1/-1;border-top:2px solid var(--border);"><span style="font-size:0.85rem;font-weight:700;">Total Costs</span><span style="font-family:var(--mono);font-size:0.85rem;font-weight:700;color:#ce1126;" id="revCostTotal">&#x2014;</span></div>
         </div>
       </div>
-
-      <!-- NET REVENUE -->
       <div class="table-card" style="margin-bottom:24px;padding:16px 20px;background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1px solid #86efac;">
         <div style="display:flex;justify-content:space-between;align-items:center;">
-          <div>
-            <div style="font-size:0.72rem;font-weight:700;color:#166534;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Net Revenue (Gross &#x2212; Costs)</div>
-            <div style="font-size:0.72rem;color:#166534;opacity:0.8;" id="revNetBreakdown">&#x2014;</div>
-          </div>
+          <div><div style="font-size:0.72rem;font-weight:700;color:#166534;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Net Revenue (Gross &#x2212; Costs)</div><div style="font-size:0.72rem;color:#166534;opacity:0.8;" id="revNetBreakdown">&#x2014;</div></div>
           <div style="font-size:1.8rem;font-weight:800;" id="revNetRevenue">&#x2014;</div>
         </div>
       </div>
-
-      <!-- TRADE VOLUME -->
       <div style="font-size:0.7rem;font-weight:700;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;margin-bottom:8px;">Trade Volume</div>
       <div class="table-card" style="margin-bottom:24px;padding:16px 20px;">
         <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap;">
@@ -1337,8 +1326,6 @@ body::after {
           <div style="text-align:center;"><div style="font-size:0.72rem;color:var(--text-dim);margin-bottom:4px;">Avg Stake</div><div style="font-family:var(--mono);font-weight:700;" id="revVolAvg">&#x2014;</div></div>
         </div>
       </div>
-
-      <!-- LIQUIDITY ALL TIME -->
       <div style="font-size:0.7rem;font-weight:700;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;margin-bottom:8px;">Liquidity &#x2014; All Time</div>
       <div class="stats-grid" style="margin-bottom:8px;">
         <div class="stat-card"><div class="stat-label">Total Deposits Ever</div><div class="stat-val" id="revDepTotal">&#x2014;</div><div class="stat-change" id="revDepTotalCount" style="color:var(--text-dim);">&#x2014; transactions</div></div>
@@ -1346,8 +1333,6 @@ body::after {
         <div class="stat-card"><div class="stat-label">Net Cash Position</div><div class="stat-val" id="revNetCash">&#x2014;</div><div class="stat-change" style="color:var(--text-dim);">Deposits &#x2212; Withdrawals</div></div>
         <div class="stat-card"><div class="stat-label">Paystack Fees Absorbed</div><div class="stat-val" id="revPaystackFees">&#x2014;</div><div class="stat-change" style="color:var(--text-dim);">All-time withdrawal cost</div></div>
       </div>
-
-      <!-- LIQUIDITY CURRENT SNAPSHOT -->
       <div style="font-size:0.7rem;font-weight:700;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;margin:20px 0 8px;">Liquidity &#x2014; Current Snapshot</div>
       <div class="table-card" style="margin-bottom:8px;padding:16px 20px;">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;">
@@ -1356,13 +1341,8 @@ body::after {
           <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 8px 10px 0;border-bottom:1px solid var(--border);"><div><div style="font-size:0.82rem;color:var(--text-dim);">Pending Deposits</div><div style="font-size:0.68rem;color:var(--text-dim);">M-Pesa initiated, not confirmed</div></div><span style="font-family:var(--mono);font-size:0.9rem;font-weight:700;color:var(--primary);" id="revPendingDep">&#x2014;</span></div>
           <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0 10px 8px;border-bottom:1px solid var(--border);"><div><div style="font-size:0.82rem;color:var(--text-dim);">Pending Withdrawals</div><div style="font-size:0.68rem;color:var(--text-dim);">deducted from wallets, not sent</div></div><span style="font-family:var(--mono);font-size:0.9rem;font-weight:700;color:#ce1126;" id="revPendingWd">&#x2014;</span></div>
         </div>
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0 4px;margin-top:8px;border-top:2px solid var(--border);">
-          <div><div style="font-size:0.85rem;font-weight:700;">Liquidity Gap</div><div style="font-size:0.68rem;color:var(--text-dim);">Net Cash &#x2212; Wallet Liability. Negative = cannot cover all withdrawals from Paystack receipts alone.</div></div>
-          <div style="font-family:var(--mono);font-size:1.2rem;font-weight:800;" id="revLiquidityGap">&#x2014;</div>
-        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0 4px;margin-top:8px;border-top:2px solid var(--border);"><div><div style="font-size:0.85rem;font-weight:700;">Liquidity Gap</div><div style="font-size:0.68rem;color:var(--text-dim);">Net Cash &#x2212; Wallet Liability.</div></div><div style="font-family:var(--mono);font-size:1.2rem;font-weight:800;" id="revLiquidityGap">&#x2014;</div></div>
       </div>
-
-      <!-- DEPOSITS AND WITHDRAWALS PERIOD -->
       <div style="font-size:0.7rem;font-weight:700;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;margin:20px 0 8px;">Deposits &amp; Withdrawals &#x2014; Period</div>
       <div class="table-card" style="margin-bottom:24px;padding:16px 20px;">
         <div style="display:flex;gap:8px;align-items:center;margin-bottom:16px;flex-wrap:wrap;">
@@ -1379,8 +1359,6 @@ body::after {
         </div>
         <div style="font-size:0.68rem;color:var(--text-dim);margin-top:10px;">* Paystack fees: &#x2264;KES 1,500 = KES 20 &#x2044; &#x2264;KES 20,000 = KES 40 &#x2044; &gt;KES 20,000 = KES 60 per withdrawal</div>
       </div>
-
-      <!-- MONTHLY BREAKDOWN -->
       <div class="table-wrap" style="margin-bottom:24px;">
         <div class="table-head">
           <div class="table-title">Revenue Breakdown</div>
@@ -1391,28 +1369,18 @@ body::after {
             <button class="topbar-btn" onclick="clearRevFilter('revMonthFrom','revMonthTo',loadRevenueMonthly)">Clear</button>
           </div>
         </div>
-        <table class="data-table">
-          <thead><tr><th id="revMonthPeriodHead">Period</th><th>Forecasting Fees</th><th>Market Surplus</th><th>Challenge Fees</th><th>Total</th></tr></thead>
-          <tbody id="revMonthlyBody"><tr><td colspan="5" style="text-align:center;color:var(--text-dim);padding:20px;">Loading...</td></tr></tbody>
-        </table>
+        <table class="data-table"><thead><tr><th id="revMonthPeriodHead">Period</th><th>Forecasting Fees</th><th>Market Surplus</th><th>Challenge Fees</th><th>Total</th></tr></thead>
+        <tbody id="revMonthlyBody"><tr><td colspan="5" style="text-align:center;color:var(--text-dim);padding:20px;">Loading...</td></tr></tbody></table>
       </div>
-
-      <!-- TOP MARKETS -->
       <div class="table-wrap" style="margin-bottom:24px;">
         <div class="table-head"><div class="table-title">Top Markets by Revenue</div></div>
-        <table class="data-table">
-          <thead><tr><th>Market</th><th>Status</th><th>Revenue</th></tr></thead>
-          <tbody id="revTopMarketsBody"><tr><td colspan="3" style="text-align:center;color:var(--text-dim);padding:20px;">Loading...</td></tr></tbody>
-        </table>
+        <table class="data-table"><thead><tr><th>Market</th><th>Status</th><th>Revenue</th></tr></thead>
+        <tbody id="revTopMarketsBody"><tr><td colspan="3" style="text-align:center;color:var(--text-dim);padding:20px;">Loading...</td></tr></tbody></table>
       </div>
-
-      <!-- RECENT RECORDS -->
       <div class="table-wrap">
         <div class="table-head"><div class="table-title">Recent Revenue Records</div></div>
-        <table class="data-table">
-          <thead><tr><th>Date</th><th>Type</th><th>Market</th><th>Amount</th></tr></thead>
-          <tbody id="revRecentBody"><tr><td colspan="4" style="text-align:center;color:var(--text-dim);padding:20px;">Loading...</td></tr></tbody>
-        </table>
+        <table class="data-table"><thead><tr><th>Date</th><th>Type</th><th>Market</th><th>Amount</th></tr></thead>
+        <tbody id="revRecentBody"><tr><td colspan="4" style="text-align:center;color:var(--text-dim);padding:20px;">Loading...</td></tr></tbody></table>
       </div>
     </div>
 
@@ -1506,8 +1474,8 @@ body::after {
       </div>
       <div class="table-card" style="box-shadow:0 2px 12px rgba(0,0,0,0.05);" style="padding:20px;margin-bottom:16px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-          <div style="font-weight:700;font-size:0.88rem;">Sentiment Velocity by Category (7d)</div>
-          <button class="topbar-btn" onclick="alert('Exporting sentiment_report.csv…')">⬇ Export CSV</button>
+          <div style="font-weight:700;font-size:0.88rem;">Sentiment Velocity by Category (All Time)</div>
+          <button class="topbar-btn" onclick="exportB2BCSV()">&#x2B07; Export CSV</button>
         </div>
         <div id="velBars"></div>
       </div>
@@ -2775,6 +2743,7 @@ function renderDataApps() {
         '<div>📱 ' + (app.phone || '—') + '</div>' +
         '<div>🌍 ' + (app.city || '') + (app.country ? ', ' + app.country : '') + '</div>' +
         '<div>📊 ' + (app.useCase || '—') + '</div>' +
+        (app.website ? '<div style="grid-column:1/-1">🔗 <a href="' + esc(app.website) + '" target="_blank" style="color:var(--primary)">' + esc(app.website) + '</a></div>' : '') +
       '</div>' +
       '<div style="font-size:0.62rem;color:var(--text-dim);background:var(--bg3);border-radius:7px;padding:8px 10px;margin-bottom:10px;line-height:1.5;">' +
         (app.useDesc
@@ -4237,22 +4206,9 @@ function payBounty(bountyId, creator, amount) {
 }
 
 // ── B2B ANALYTICS ─────────────────────────────────────────────────────────────
-const CONVICTION_DATA = [
-  { market:'Will CBK hold rates in April?', cat:'Economy', yes:72, avgStake:1240, conviction:'High', forecasters:847 },
-  { market:'Will Ruto announce referendum?', cat:'Politics', yes:38, avgStake:890, conviction:'Medium', forecasters:1203 },
-  { market:'Will Nairobi receive >3 rainy days?', cat:'Weather', yes:61, avgStake:420, conviction:'Medium', forecasters:392 },
-  { market:'Will AI replace data entry jobs by 2027?', cat:'Tech', yes:84, avgStake:210, conviction:'Low', forecasters:556 },
-  { market:'Will KRA hit March tax target?', cat:'Economy', yes:45, avgStake:1820, conviction:'High', forecasters:671 },
-];
-
-const VEL_DATA = [
-  { cat:'Economy', pct:82, change:'+18%' },
-  { cat:'Politics', pct:74, change:'+22%' },
-  { cat:'Tech', pct:61, change:'+9%' },
-  { cat:'Entertainment', pct:55, change:'+14%' },
-  { cat:'Weather', pct:43, change:'+5%' },
-  { cat:'General', pct:38, change:'+3%' },
-];
+// B2B panel data — populated by loadB2BAnalytics() from live API
+var B2B_CATEGORIES = [];
+var B2B_TOP_MARKETS = [];
 
 function loadB2BAnalytics() {
   var velDiv = document.getElementById('velBars');
@@ -4281,56 +4237,97 @@ function loadB2BAnalytics() {
 }
 
 function renderB2B(categories, topMarkets) {
-  // Velocity bars
+  // Velocity bars — live data only, no fake fallback
   var vb = document.getElementById('velBars');
   if (vb) {
     if (!categories || !categories.length) {
-      // Fall back to hardcoded display if no live data
-      vb.innerHTML = VEL_DATA.map(function(v) {
-        return '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">' +
-          '<div style="width:100px;font-size:0.75rem;color:var(--text-mid);text-align:right;">' + v.cat + '</div>' +
-          '<div style="flex:1;background:var(--bg3);border-radius:4px;height:8px;overflow:hidden;">' +
-            '<div style="width:' + v.pct + '%;background:var(--primary);height:100%;border-radius:4px;transition:width 0.6s ease;"></div>' +
-          '</div>' +
-          '<div style="font-size:0.72rem;font-family:var(--mono);color:var(--text-dim);min-width:80px;">' + v.pct + '% ' + v.delta + '</div>' +
-        '</div>';
-      }).join('');
+      vb.innerHTML = '<div style="text-align:center;padding:24px;color:var(--text-dim);font-size:0.82rem;">No market data yet. Bars will appear once markets have trades.</div>';
     } else {
       var maxVol = Math.max.apply(null, categories.map(function(c) { return c.volumeKes; })) || 1;
       vb.innerHTML = categories.map(function(c) {
         var barPct = Math.round((c.volumeKes / maxVol) * 100);
-        return '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">' +
-          '<div style="width:110px;font-size:0.75rem;color:var(--text-mid);text-align:right;">' + c.category + '</div>' +
-          '<div style="flex:1;background:var(--bg3);border-radius:4px;height:8px;overflow:hidden;">' +
-            '<div style="width:' + barPct + '%;background:var(--primary);height:100%;border-radius:4px;transition:width 0.6s ease;"></div>' +
-          '</div>' +
-          '<div style="font-size:0.72rem;font-family:var(--mono);color:var(--text-dim);min-width:130px;">' +
-            '<span style="color:var(--green);font-weight:700">' + c.yesPct + '% Y</span> · ' +
-            '<span style="color:var(--red);font-weight:700">' + (100 - c.yesPct) + '% N</span> · ' +
-            c.markets + ' mkts' +
-          '</div>' +
-        '</div>';
+        return '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">'
+          + '<div style="width:110px;font-size:0.75rem;color:var(--text-mid);text-align:right;">' + esc(c.category) + '</div>'
+          + '<div style="flex:1;background:var(--bg3);border-radius:4px;height:8px;overflow:hidden;">'
+            + '<div style="width:' + barPct + '%;background:var(--primary);height:100%;border-radius:4px;transition:width 0.6s ease;"></div>'
+          + '</div>'
+          + '<div style="font-size:0.72rem;font-family:var(--mono);color:var(--text-dim);min-width:160px;">'
+            + '<span style="color:var(--green);font-weight:700">' + c.yesPct + '% Y</span> · '
+            + '<span style="color:var(--red);font-weight:700">' + (100 - c.yesPct) + '% N</span> · '
+            + c.markets + ' mkts · '
+            + '<span style="color:var(--primary)">Avg KES ' + (c.avgStake||0).toLocaleString() + '</span>'
+          + '</div>'
+        + '</div>';
       }).join('');
     }
   }
 
-  // Conviction table
+  // Conviction table — live data only, no fake fallback
   var cb = document.getElementById('convictionBody');
   if (cb) {
-    var rows = (topMarkets && topMarkets.length) ? topMarkets : CONVICTION_DATA;
-    cb.innerHTML = rows.map(function(r) {
-      var convColor = r.conviction === 'High' ? 'var(--green)' : r.conviction === 'Medium' ? 'var(--amber)' : 'var(--text-dim)';
-      return '<tr>' +
-        '<td style="font-weight:600;max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (r.title || r.market || '—') + '</td>' +
-        '<td><span class="badge badge-gray">' + (r.category || r.cat || '—') + '</span></td>' +
-        '<td class="mono" style="color:' + (r.yesPct > 50 ? 'var(--green)' : 'var(--text-mid)') + ';font-weight:700;">' + (r.yesPct || r.yes || '—') + '%</td>' +
-        '<td class="mono" style="color:' + ((100-(r.yesPct||r.yes||50)) > 50 ? 'var(--red)' : 'var(--text-mid)') + ';font-weight:700;">' + (100-(r.yesPct||r.yes||50)) + '%</td>' +
-        '<td class="mono">KES ' + (r.avgStake || '—').toLocaleString() + '</td>' +
-        '<td style="font-weight:700;color:' + convColor + '">' + (r.conviction || '—') + '</td>' +
-        '<td class="mono">' + (r.forecasters || '—').toLocaleString() + '</td>' +
-      '</tr>';
-    }).join('');
+    if (!topMarkets || !topMarkets.length) {
+      cb.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--text-dim);">No resolved markets yet. Conviction scores will appear once markets close.</td></tr>';
+    } else {
+      cb.innerHTML = topMarkets.map(function(r) {
+        var convColor = r.conviction === 'High' ? 'var(--green)' : r.conviction === 'Medium' ? 'var(--amber)' : 'var(--text-dim)';
+        return '<tr>'
+          + '<td style="font-weight:600;max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="' + esc(r.title||'') + '">' + esc(r.title || '—') + '</td>'
+          + '<td><span class="badge badge-gray">' + esc(r.category || '—') + '</span></td>'
+          + '<td class="mono" style="color:' + (r.yesPct > 50 ? 'var(--green)' : 'var(--text-mid)') + ';font-weight:700;">' + (r.yesPct || 50) + '%</td>'
+          + '<td class="mono" style="color:' + ((100 - (r.yesPct||50)) > 50 ? 'var(--red)' : 'var(--text-mid)') + ';font-weight:700;">' + (100 - (r.yesPct||50)) + '%</td>'
+          + '<td class="mono">KES ' + (r.avgStake || 0).toLocaleString() + '</td>'
+          + '<td style="font-weight:700;color:' + convColor + '">' + esc(r.conviction || '—') + '</td>'
+          + '<td class="mono">' + (r.forecasters || 0).toLocaleString() + '</td>'
+          + '</tr>';
+      }).join('');
+    }
   }
+
+  // Store for CSV export
+  B2B_CATEGORIES  = categories  || [];
+  B2B_TOP_MARKETS = topMarkets  || [];
+}
+
+function exportB2BCSV() {
+  if (!B2B_CATEGORIES.length && !B2B_TOP_MARKETS.length) {
+    alert('No live data to export yet. Load the panel first.');
+    return;
+  }
+  var lines = [];
+
+  // Section 1: Category sentiment
+  lines.push('CATEGORY SENTIMENT (All Time)');
+  lines.push('Category,Markets,Trades,Volume (KES),YES%,NO%,Avg Stake (KES),Forecasters,Conviction');
+  B2B_CATEGORIES.forEach(function(c) {
+    lines.push([
+      c.category, c.markets, c.trades, c.volumeKes,
+      c.yesPct, 100 - c.yesPct, c.avgStake, c.forecasters, c.conviction
+    ].join(','));
+  });
+
+  lines.push('');
+
+  // Section 2: Top market conviction scores
+  lines.push('TOP MARKETS BY VOLUME');
+  lines.push('Market,Category,YES%,NO%,Avg Stake (KES),Forecasters,Conviction');
+  B2B_TOP_MARKETS.forEach(function(r) {
+    lines.push([
+      '"' + (r.title||'').replace(/"/g,'""') + '"',
+      r.category, r.yesPct, 100-(r.yesPct||50), r.avgStake, r.forecasters, r.conviction
+    ].join(','));
+  });
+
+  var csv  = lines.join('\n');
+  var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  var url  = URL.createObjectURL(blob);
+  var a    = document.createElement('a');
+  var date = new Date().toISOString().slice(0,10);
+  a.href     = url;
+  a.download = 'checkrada_analytics_' + date + '.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
 // ── ADMIN LOG ─────────────────────────────────────────────────────────────────
@@ -4413,7 +4410,6 @@ function renderAdminLog() {
 
 renderRecentTxns();
 renderActivity('liveFeed');
-renderB2B([], []);
 
 // Initialise panel display — show dashboard, hide all others
 // This ensures the style-based approach starts correctly
@@ -4877,178 +4873,82 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function clearRevFilter(fromId, toId, reloadFn) {
-  var f = document.getElementById(fromId);
-  var t = document.getElementById(toId);
-  if (f) f.value = '';
-  if (t) t.value = '';
-  if (reloadFn) reloadFn();
+  var f = document.getElementById(fromId), t = document.getElementById(toId);
+  if (f) f.value = ''; if (t) t.value = ''; if (reloadFn) reloadFn();
 }
 
 function loadRevenuePanel() {
   var fmt = function(n) { return 'KES ' + Math.round(Number(n||0)).toLocaleString(); };
-  var s   = function(id, v) { var el=document.getElementById(id); if(el) el.textContent=v; };
-
+  var s   = function(id, v) { var el = document.getElementById(id); if (el) el.textContent = v; };
   var url = '/api/admin/revenue';
   var vf  = (document.getElementById('revVolumeFrom')||{}).value||'';
   var vt  = (document.getElementById('revVolumeTo')  ||{}).value||'';
   if (vf) url += (url.includes('?')?'&':'?') + 'volumeFrom=' + vf;
   if (vt) url += (url.includes('?')?'&':'?') + 'volumeTo='   + vt;
-
-  adminFetch(url)
-  .then(function(r){return r.json();})
-  .then(function(d){
-    // Gross revenue
-    s('revFees',           fmt(d.totalFees));
-    s('revFeesCount',      (d.feesCount||0).toLocaleString() + ' trades');
-    s('revSurplus',        fmt(d.totalSurplus));
-    s('revSurplusCount',   (d.surplusCount||0).toLocaleString() + ' markets');
-    s('revChallenge',      fmt(d.totalChallenge));
-    s('revChallengeCount', (d.challengeCount||0).toLocaleString() + ' challenges');
-    s('revTotal',          fmt(d.grossTotal));
-
-    // Costs
-    s('revCostSuggestion', '- ' + fmt(d.costSuggestion));
-    s('revCostReferral',   '- ' + fmt(d.costReferral));
-    s('revCostBounty',     '- ' + fmt(d.costBounty));
-    s('revCostRoyalty',    '- ' + fmt(d.costRoyalty));
-    s('revCostTotal',      '- ' + fmt(d.totalCosts));
-
-    // Net revenue
-    var net   = d.netRevenue || 0;
-    var netEl = document.getElementById('revNetRevenue');
-    if (netEl) { netEl.textContent=fmt(net); netEl.style.color=net>=0?'#166534':'#ce1126'; }
-    s('revNetBreakdown',
-      fmt(d.grossTotal) + ' gross'
-      + ' \u2212 ' + fmt(d.costSuggestion) + ' suggestion'
-      + ' \u2212 ' + fmt(d.costReferral)   + ' referral'
-      + ' \u2212 ' + fmt(d.costBounty)     + ' bounties'
-      + ' \u2212 ' + fmt(d.costRoyalty)    + ' royalties'
-    );
-
-    // Rate note
-    s('revRateNote',
-      'Fee: ' + ((d.feeRate||0.05)*100).toFixed(1) + '% per trade  \u00B7  '
-      + 'Resolution cut: ' + ((d.cutRate||0.20)*100).toFixed(1) + '% of pool'
-    );
-
-    // Trade volume
-    s('revVolTotal', fmt(d.tradeTotal));
-    s('revVolCount', (d.tradeCount||0).toLocaleString() + ' trades');
-    s('revVolAvg',   'KES ' + Math.round(d.tradeAvg||0).toLocaleString() + ' avg');
-
-    // Liquidity all-time
-    s('revDepTotal',      fmt(d.totalDeposits));
-    s('revDepTotalCount', (d.depCount||0).toLocaleString() + ' transactions');
-    s('revWdTotal',       fmt(d.totalWithdrawals));
-    s('revWdTotalCount',  (d.wdCount||0).toLocaleString() + ' transactions');
-    s('revPaystackFees',  fmt(d.totalPaystackFees));
+  adminFetch(url).then(function(r) { return r.json(); }).then(function(d) {
+    s('revFees', fmt(d.totalFees)); s('revFeesCount', (d.feesCount||0).toLocaleString() + ' trades');
+    s('revSurplus', fmt(d.totalSurplus)); s('revSurplusCount', (d.surplusCount||0).toLocaleString() + ' markets');
+    s('revChallenge', fmt(d.totalChallenge)); s('revChallengeCount', (d.challengeCount||0).toLocaleString() + ' challenges');
+    s('revTotal', fmt(d.grossTotal));
+    s('revCostSuggestion', '- ' + fmt(d.costSuggestion)); s('revCostReferral', '- ' + fmt(d.costReferral));
+    s('revCostBounty', '- ' + fmt(d.costBounty)); s('revCostRoyalty', '- ' + fmt(d.costRoyalty));
+    s('revCostTotal', '- ' + fmt(d.totalCosts));
+    var net = d.netRevenue || 0, netEl = document.getElementById('revNetRevenue');
+    if (netEl) { netEl.textContent = fmt(net); netEl.style.color = net >= 0 ? '#166534' : '#ce1126'; }
+    s('revNetBreakdown', fmt(d.grossTotal) + ' gross − ' + fmt(d.costSuggestion) + ' suggestion − ' + fmt(d.costReferral) + ' referral − ' + fmt(d.costBounty) + ' bounties − ' + fmt(d.costRoyalty) + ' royalties');
+    s('revRateNote', 'Fee: ' + ((d.feeRate||0.05)*100).toFixed(1) + '% per trade  ·  Resolution cut: ' + ((d.cutRate||0.20)*100).toFixed(1) + '% of pool');
+    s('revVolTotal', fmt(d.tradeTotal)); s('revVolCount', (d.tradeCount||0).toLocaleString() + ' trades');
+    s('revVolAvg', 'KES ' + Math.round(d.tradeAvg||0).toLocaleString() + ' avg');
+    s('revDepTotal', fmt(d.totalDeposits)); s('revDepTotalCount', (d.depCount||0).toLocaleString() + ' transactions');
+    s('revWdTotal', fmt(d.totalWithdrawals)); s('revWdTotalCount', (d.wdCount||0).toLocaleString() + ' transactions');
+    s('revPaystackFees', fmt(d.totalPaystackFees));
     var ncEl = document.getElementById('revNetCash');
-    if (ncEl) { ncEl.textContent=fmt(d.netCash); ncEl.style.color=d.netCash>=0?'#166534':'#ce1126'; }
-
-    // Liquidity snapshot
-    s('revWalletLiability', fmt(d.walletLiability));
-    s('revBonusBalances',   fmt(d.bonusBalances));
-    s('revPendingDep',      fmt(d.pendingDeposits)    + ' (' + (d.pendingDepCount||0) + ')');
-    s('revPendingWd',       fmt(d.pendingWithdrawals) + ' (' + (d.pendingWdCount||0)  + ')');
-    var gap   = d.liquidityGap || 0;
-    var gapEl = document.getElementById('revLiquidityGap');
-    if (gapEl) { gapEl.textContent=fmt(gap); gapEl.style.color=gap>=0?'#166534':'#ce1126'; }
-
-    // Top markets
+    if (ncEl) { ncEl.textContent = fmt(d.netCash); ncEl.style.color = d.netCash >= 0 ? '#166534' : '#ce1126'; }
+    s('revWalletLiability', fmt(d.walletLiability)); s('revBonusBalances', fmt(d.bonusBalances));
+    s('revPendingDep', fmt(d.pendingDeposits) + ' (' + (d.pendingDepCount||0) + ')');
+    s('revPendingWd', fmt(d.pendingWithdrawals) + ' (' + (d.pendingWdCount||0) + ')');
+    var gap = d.liquidityGap || 0, gapEl = document.getElementById('revLiquidityGap');
+    if (gapEl) { gapEl.textContent = fmt(gap); gapEl.style.color = gap >= 0 ? '#166534' : '#ce1126'; }
     var tb = document.getElementById('revTopMarketsBody');
-    if (tb) {
-      tb.innerHTML = !d.topMarkets||!d.topMarkets.length
-        ? '<tr><td colspan="3" style="text-align:center;color:var(--text-dim);padding:16px;">No market revenue yet</td></tr>'
-        : d.topMarkets.map(function(m){
-            return '<tr><td style="font-size:0.78rem;max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="'+esc(m.title)+'">'+esc(m.title||'—')+'</td>'
-              +'<td><span class="badge">'+esc(m.status||'—')+'</span></td>'
-              +'<td style="font-family:var(--mono);color:var(--ke-green);font-weight:700">'+fmt(m.revenue)+'</td></tr>';
-          }).join('');
-    }
-
-    // Recent records
+    if (tb) { tb.innerHTML = !d.topMarkets||!d.topMarkets.length ? '<tr><td colspan="3" style="text-align:center;color:var(--text-dim);padding:16px;">No market revenue yet</td></tr>' : d.topMarkets.map(function(m) { return '<tr><td style="font-size:0.78rem;max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="'+esc(m.title)+'">'+esc(m.title||'—')+'</td><td><span class="badge">'+esc(m.status||'—')+'</span></td><td style="font-family:var(--mono);color:var(--ke-green);font-weight:700">'+fmt(m.revenue)+'</td></tr>'; }).join(''); }
     var rb = document.getElementById('revRecentBody');
-    if (rb) {
-      var lbl = {FORECASTING_FEE:'Forecasting Fee',MARKET_SURPLUS:'Market Surplus',CHALLENGE_FEE:'Challenge Fee'};
-      rb.innerHTML = !d.recent||!d.recent.length
-        ? '<tr><td colspan="4" style="text-align:center;color:var(--text-dim);padding:16px;">No records yet</td></tr>'
-        : d.recent.map(function(r){
-            var when=new Date(r.createdAt).toLocaleDateString('en-KE',{day:'numeric',month:'short',year:'numeric'});
-            return '<tr>'
-              +'<td style="font-size:0.78rem;color:var(--text-dim)">'+when+'</td>'
-              +'<td>'+esc(lbl[r.type]||r.type)+'</td>'
-              +'<td style="font-size:0.78rem">'+esc(r.marketTitle||'—')+'</td>'
-              +'<td style="font-family:var(--mono);color:var(--ke-green);font-weight:700">'+fmt(r.amountKes)+'</td>'
-              +'</tr>';
-          }).join('');
-    }
-
-    loadRevenueLiquidity();
-    loadRevenueMonthly();
-  })
-  .catch(function(err){
-    console.error('loadRevenuePanel:',err);
-    ['revMonthlyBody','revTopMarketsBody','revRecentBody'].forEach(function(id){
-      var el=document.getElementById(id);
-      if(el) el.innerHTML='<tr><td colspan="5" style="text-align:center;color:#ce1126;padding:16px;">Failed to load revenue data</td></tr>';
-    });
-  });
+    if (rb) { var lbl = {FORECASTING_FEE:'Forecasting Fee',MARKET_SURPLUS:'Market Surplus',CHALLENGE_FEE:'Challenge Fee'}; rb.innerHTML = !d.recent||!d.recent.length ? '<tr><td colspan="4" style="text-align:center;color:var(--text-dim);padding:16px;">No records yet</td></tr>' : d.recent.map(function(r) { var when = new Date(r.createdAt).toLocaleDateString('en-KE',{day:'numeric',month:'short',year:'numeric'}); return '<tr><td style="font-size:0.78rem;color:var(--text-dim)">'+when+'</td><td>'+esc(lbl[r.type]||r.type)+'</td><td style="font-size:0.78rem">'+esc(r.marketTitle||'—')+'</td><td style="font-family:var(--mono);color:var(--ke-green);font-weight:700">'+fmt(r.amountKes)+'</td></tr>'; }).join(''); }
+    loadRevenueLiquidity(); loadRevenueMonthly();
+  }).catch(function(err) { console.error('loadRevenuePanel:', err); });
 }
 
 function loadRevenueLiquidity() {
   var fmt = function(n) { return 'KES ' + Math.round(Number(n||0)).toLocaleString(); };
-  var s   = function(id, v) { var el=document.getElementById(id); if(el) el.textContent=v; };
+  var s   = function(id, v) { var el = document.getElementById(id); if (el) el.textContent = v; };
   var pf  = (document.getElementById('revPeriodFrom')||{}).value||'';
   var pt  = (document.getElementById('revPeriodTo')  ||{}).value||'';
   var url = '/api/admin/revenue';
   if (pf) url += '?periodFrom=' + pf;
   if (pt) url += (url.includes('?')?'&':'?') + 'periodTo=' + pt;
-
-  adminFetch(url)
-  .then(function(r){return r.json();})
-  .then(function(d){
-    s('revPeriodDep',      fmt(d.periodDepTotal));
-    s('revPeriodDepCount', (d.periodDepCount||0).toLocaleString() + ' deposits');
-    s('revPeriodWd',       fmt(d.periodWdTotal));
-    s('revPeriodWdCount',  (d.periodWdCount||0).toLocaleString()  + ' withdrawals');
-    var net   = d.periodNetFlow || 0;
-    var netEl = document.getElementById('revPeriodNet');
-    if (netEl) { netEl.textContent=(net>=0?'+':'')+fmt(net); netEl.style.color=net>=0?'#166534':'#ce1126'; }
+  adminFetch(url).then(function(r) { return r.json(); }).then(function(d) {
+    s('revPeriodDep', fmt(d.periodDepTotal)); s('revPeriodDepCount', (d.periodDepCount||0).toLocaleString() + ' deposits');
+    s('revPeriodWd', fmt(d.periodWdTotal)); s('revPeriodWdCount', (d.periodWdCount||0).toLocaleString() + ' withdrawals');
+    var net = d.periodNetFlow || 0, netEl = document.getElementById('revPeriodNet');
+    if (netEl) { netEl.textContent = (net >= 0 ? '+' : '') + fmt(net); netEl.style.color = net >= 0 ? '#166534' : '#ce1126'; }
     s('revPeriodFees', 'KES ' + (d.periodPaystackFees||0).toLocaleString());
-  })
-  .catch(function(err){console.error('loadRevenueLiquidity:',err);});
+  }).catch(function(err) { console.error('loadRevenueLiquidity:', err); });
 }
 
 function loadRevenueMonthly() {
   var fmt = function(n) { return 'KES ' + Math.round(Number(n||0)).toLocaleString(); };
-  var s   = function(id, v) { var el=document.getElementById(id); if(el) el.textContent=v; };
   var mf  = (document.getElementById('revMonthFrom')||{}).value||'';
   var mt  = (document.getElementById('revMonthTo')  ||{}).value||'';
   var url = '/api/admin/revenue';
   if (mf) url += '?monthFrom=' + mf;
   if (mt) url += (url.includes('?')?'&':'?') + 'monthTo=' + mt;
-
-  adminFetch(url)
-  .then(function(r){return r.json();})
-  .then(function(d){
+  adminFetch(url).then(function(r) { return r.json(); }).then(function(d) {
     var hd = document.getElementById('revMonthPeriodHead');
-    if (hd) hd.textContent = d.groupBy==='day'?'Day':d.groupBy==='week'?'Week':'Month';
-    var body = document.getElementById('revMonthlyBody');
-    if (!body) return;
-    body.innerHTML = !d.monthly||!d.monthly.length
-      ? '<tr><td colspan="5" style="text-align:center;color:var(--text-dim);padding:16px;">No revenue in this period</td></tr>'
-      : d.monthly.map(function(m){
-          return '<tr>'
-            +'<td style="font-family:var(--mono);font-size:0.8rem">'+esc(m.period)+'</td>'
-            +'<td style="font-family:var(--mono);color:var(--ke-green)">'+fmt(m.fees)+'</td>'
-            +'<td style="font-family:var(--mono);color:var(--ke-green)">'+fmt(m.surplus)+'</td>'
-            +'<td style="font-family:var(--mono);color:var(--ke-green)">'+fmt(m.challenge)+'</td>'
-            +'<td style="font-family:var(--mono);font-weight:700;color:var(--ke-green)">'+fmt(m.total)+'</td>'
-            +'</tr>';
-        }).join('');
-  })
-  .catch(function(err){console.error('loadRevenueMonthly:',err);});
+    if (hd) hd.textContent = d.groupBy === 'day' ? 'Day' : d.groupBy === 'week' ? 'Week' : 'Month';
+    var body = document.getElementById('revMonthlyBody'); if (!body) return;
+    body.innerHTML = !d.monthly||!d.monthly.length ? '<tr><td colspan="5" style="text-align:center;color:var(--text-dim);padding:16px;">No revenue in this period</td></tr>' : d.monthly.map(function(m) { return '<tr><td style="font-family:var(--mono);font-size:0.8rem">'+esc(m.period)+'</td><td style="font-family:var(--mono);color:var(--ke-green)">'+fmt(m.fees)+'</td><td style="font-family:var(--mono);color:var(--ke-green)">'+fmt(m.surplus)+'</td><td style="font-family:var(--mono);color:var(--ke-green)">'+fmt(m.challenge)+'</td><td style="font-family:var(--mono);font-weight:700;color:var(--ke-green)">'+fmt(m.total)+'</td></tr>'; }).join('');
+  }).catch(function(err) { console.error('loadRevenueMonthly:', err); });
 }
+
 
 
 
@@ -5067,6 +4967,7 @@ function openUserProfile(userId) {
   UP_PAGES = { wallet:1, trades:1, challenges:1, suggestions:1, creator:1 };
   UP_USER_DATA = null;
 
+  // Default to last 30 days
   var to   = new Date();
   var from = new Date(to); from.setDate(from.getDate() - 30);
   var fmt  = function(d){ return d.toISOString().slice(0,10); };
@@ -5075,9 +4976,9 @@ function openUserProfile(userId) {
   if (fromEl) fromEl.value = fmt(from);
   if (toEl)   toEl.value   = fmt(to);
 
+  // Reset tabs
   document.querySelectorAll('.up-tab').forEach(function(t){ t.classList.remove('active'); });
-  var firstTab = document.querySelector('.up-tab');
-  if (firstTab) firstTab.classList.add('active');
+  document.querySelector('.up-tab').classList.add('active');
   document.querySelectorAll('.up-tab-pane').forEach(function(p){ p.classList.remove('active'); });
   var ov = document.getElementById('upPane-overview');
   if (ov) { ov.classList.add('active'); ov.innerHTML = '<div class="up-loading">Loading...</div>'; }
@@ -5092,7 +4993,10 @@ function closeUserProfile() {
   document.body.style.overflow = '';
 }
 
-function upDateChanged() { upLoadTab(UP_TAB, 1); }
+function upDateChanged() {
+  // Reload only active tab
+  upLoadTab(UP_TAB, 1);
+}
 
 function upClearDates() {
   var f = document.getElementById('upDateFrom');
@@ -5113,10 +5017,16 @@ function upGetDateParams() {
 
 function upSwitchTab(tab) {
   UP_TAB = tab;
-  var tabMap = {overview:'Overview',wallet:'Wallet',positions:'Position',
-    trades:'Trade',challenges:'Challenge',suggestions:'Suggestion',creator:'Creator'};
   document.querySelectorAll('.up-tab').forEach(function(bt){
-    bt.classList.toggle('active', bt.textContent.trim().indexOf(tabMap[tab]||tab) === 0);
+    bt.classList.toggle('active', bt.textContent.toLowerCase().trim() === tab ||
+      (tab==='overview' && bt.textContent.includes('Overview')) ||
+      (tab==='wallet' && bt.textContent.includes('Wallet')) ||
+      (tab==='positions' && bt.textContent.includes('Position')) ||
+      (tab==='trades' && bt.textContent.includes('Trade')) ||
+      (tab==='challenges' && bt.textContent.includes('Challenge')) ||
+      (tab==='suggestions' && bt.textContent.includes('Suggestion')) ||
+      (tab==='creator' && bt.textContent.includes('Creator'))
+    );
   });
   document.querySelectorAll('.up-tab-pane').forEach(function(p){ p.classList.remove('active'); });
   var pane = document.getElementById('upPane-' + tab);
@@ -5125,13 +5035,13 @@ function upSwitchTab(tab) {
 }
 
 function upLoadTab(tab, page) {
-  if      (tab === 'overview')    upLoadOverview();
-  else if (tab === 'wallet')      upLoadWallet(page||1);
-  else if (tab === 'positions')   upLoadPositions();
-  else if (tab === 'trades')      upLoadTrades(page||1);
-  else if (tab === 'challenges')  upLoadChallenges(page||1);
-  else if (tab === 'suggestions') upLoadSuggestions(page||1);
-  else if (tab === 'creator')     upLoadCreator(page||1);
+  if (tab === 'overview')    upLoadOverview();
+  else if (tab === 'wallet')     upLoadWallet(page||1);
+  else if (tab === 'positions')  upLoadPositions();
+  else if (tab === 'trades')     upLoadTrades(page||1);
+  else if (tab === 'challenges') upLoadChallenges(page||1);
+  else if (tab === 'suggestions')upLoadSuggestions(page||1);
+  else if (tab === 'creator')    upLoadCreator(page||1);
 }
 
 function upFetch(tab, page) {
@@ -5139,7 +5049,7 @@ function upFetch(tab, page) {
   return adminFetch(url).then(function(r){ return r.json(); });
 }
 
-function upFmt(n)  { return 'KES ' + Math.round(Number(n||0)).toLocaleString(); }
+function upFmt(n) { return 'KES ' + Math.round(Number(n||0)).toLocaleString(); }
 function upFmtD(n) { return 'KES ' + Number(n||0).toFixed(2); }
 function upDate(d) { return d ? new Date(d).toLocaleDateString('en-KE',{day:'numeric',month:'short',year:'numeric'}) : '—'; }
 function upDateTime(d) { return d ? new Date(d).toLocaleDateString('en-KE',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '—'; }
@@ -5157,11 +5067,14 @@ function upPagBar(containerId, page, total, limit, tabName) {
     +'</div>';
 }
 
+// ── OVERVIEW ─────────────────────────────────────────────────────────────────
 function upLoadOverview() {
   upFetch('overview', 1).then(function(d) {
     UP_USER_DATA = d.user;
-    var u = d.user, s = d.summary;
+    var u = d.user;
+    var s = d.summary;
 
+    // Header
     document.getElementById('upUserName').textContent = esc(u.name||'Unknown') + (u.suspended ? ' 🔒' : '');
     document.getElementById('upUserMeta').innerHTML =
       '+' + esc(u.phone||'') + ' &nbsp;·&nbsp; ' + esc(u.kycStatus||'') +
@@ -5169,12 +5082,19 @@ function upLoadOverview() {
       ' &nbsp;·&nbsp; Integrity: ' + (u.integrityScore||0) +
       ' &nbsp;·&nbsp; Joined: ' + upDate(u.createdAt);
 
+    // Freeze btn
     var fb = document.getElementById('upFreezeBtn');
-    if (fb) { fb.textContent=u.suspended?'Unfreeze':'Freeze'; fb.className='act-btn '+(u.suspended?'act-green':'act-amber'); }
+    if (fb) { fb.textContent = u.suspended ? 'Unfreeze' : 'Freeze'; fb.className = 'act-btn ' + (u.suspended ? 'act-green':'act-amber'); }
+    // KYC btn
     var kb = document.getElementById('upKycBtn');
     if (kb) kb.style.display = u.kycStatus==='PENDING' ? '' : 'none';
 
+    // Creator tab dim/active
+    var ct = document.getElementById('upCreatorTab');
+
     var html = '';
+
+    // Stat cards
     html += '<div class="up-stat-grid">'
       + '<div class="up-stat"><div class="up-stat-label">Real Balance</div><div class="up-stat-val" style="color:var(--primary)">' + upFmt(u.balanceKes) + '</div></div>'
       + '<div class="up-stat"><div class="up-stat-label">Bonus Balance</div><div class="up-stat-val" style="color:var(--amber)">' + upFmt(u.bonusBalanceKes) + '</div></div>'
@@ -5182,6 +5102,7 @@ function upLoadOverview() {
       + '<div class="up-stat"><div class="up-stat-label">Win Rate</div><div class="up-stat-val">' + (s.winRate!==null ? s.winRate+'%' : '—') + '</div></div>'
       + '</div>';
 
+    // Period summary
     html += '<div class="up-section-title">Period Summary</div>'
       + '<div class="up-stat-grid">'
       + '<div class="up-stat"><div class="up-stat-label">Total Staked</div><div class="up-stat-val">' + upFmt(s.totalStaked) + '</div><div style="font-size:0.65rem;color:var(--text-dim)">' + s.tradeCount + ' trades</div></div>'
@@ -5194,23 +5115,27 @@ function upLoadOverview() {
       + '<div class="up-stat"><div class="up-stat-label">Markets Lost</div><div class="up-stat-val" style="color:#ce1126">' + s.losses + '</div></div>'
       + '</div>';
 
+    // Account details
     html += '<div class="up-section-title">Account Details</div>'
       + '<div class="up-info-grid">'
       + '<div class="up-info-row"><div class="up-info-key">Phone</div><div class="up-info-val mono">+' + esc(u.phone||'') + '</div></div>'
       + '<div class="up-info-row"><div class="up-info-key">KYC Status</div><div class="up-info-val">' + esc(u.kycStatus||'') + '</div></div>'
       + '<div class="up-info-row"><div class="up-info-key">Role</div><div class="up-info-val">' + esc(u.role||'USER') + '</div></div>'
       + '<div class="up-info-row"><div class="up-info-key">Integrity Score</div><div class="up-info-val">' + (u.integrityScore||0) + '</div></div>'
-      + '<div class="up-info-row"><div class="up-info-key">Account Status</div><div class="up-info-val">' + (u.suspended?'<span class="badge badge-red">FROZEN</span>':'<span class="badge badge-green">ACTIVE</span>') + '</div></div>'
-      + '<div class="up-info-row"><div class="up-info-key">WhatsApp Opted Out</div><div class="up-info-val">' + (u.whatsappOptedOut?'Yes':'No') + '</div></div>'
+      + '<div class="up-info-row"><div class="up-info-key">Account Status</div><div class="up-info-val">' + (u.suspended ? '<span class="badge badge-red">FROZEN</span>' : '<span class="badge badge-green">ACTIVE</span>') + '</div></div>'
+      + '<div class="up-info-row"><div class="up-info-key">WhatsApp Opted Out</div><div class="up-info-val">' + (u.whatsappOptedOut ? 'Yes' : 'No') + '</div></div>'
       + '<div class="up-info-row"><div class="up-info-key">Referral Code</div><div class="up-info-val mono">' + esc(u.referralCode||'—') + '</div></div>'
       + '<div class="up-info-row"><div class="up-info-key">Joined</div><div class="up-info-val">' + upDate(u.createdAt) + '</div></div>'
       + '</div>';
 
+    // Referrer
     if (d.referrer) {
       html += '<div class="up-section-title">Referred By</div>'
-        + '<div style="font-size:0.82rem;padding:8px 0;">' + esc(d.referrer.name||'Unknown') + ' &nbsp;·&nbsp; +' + esc(d.referrer.phone||'') + '</div>';
+        + '<div style="font-size:0.82rem;padding:8px 0;">'
+        + esc(d.referrer.name||'Unknown') + ' &nbsp;·&nbsp; +' + esc(d.referrer.phone||'') + '</div>';
     }
 
+    // Referrals made
     if (d.referrals && d.referrals.length) {
       html += '<div class="up-section-title">Referrals Made (' + d.referrals.length + ')</div>'
         + '<div class="up-table-wrap"><table class="up-table"><thead><tr><th>User</th><th>Phone</th><th>Status</th><th>Reward</th><th>Date</th></tr></thead><tbody>'
@@ -5224,100 +5149,121 @@ function upLoadOverview() {
     }
 
     document.getElementById('upPane-overview').innerHTML = html;
-  }).catch(function(){ document.getElementById('upPane-overview').innerHTML = '<div class="up-empty">Failed to load overview</div>'; });
+  }).catch(function(e){ document.getElementById('upPane-overview').innerHTML = '<div class="up-empty">Failed to load overview</div>'; });
 }
 
+// ── WALLET ────────────────────────────────────────────────────────────────────
 function upLoadWallet(page) {
   UP_PAGES.wallet = page;
   document.getElementById('upWalletBody').innerHTML = '<tr><td colspan="6" class="up-loading">Loading...</td></tr>';
   upFetch('wallet', page).then(function(d) {
-    var txTypeColor = {DEPOSIT:'#16a34a',WITHDRAWAL:'#ce1126',PAYOUT:'#16a34a',TRADE_BUY:'#9284b8',SUGGESTION_REWARD:'#16a34a',REFERRAL_REWARD:'#16a34a',CREATOR_BOUNTY:'#16a34a',REFUND:'#16a34a'};
+    var txTypeColor = { DEPOSIT:'#16a34a', WITHDRAWAL:'#ce1126', PAYOUT:'#16a34a',
+      TRADE_BUY:'#9284b8', SUGGESTION_REWARD:'#16a34a', REFERRAL_REWARD:'#16a34a',
+      CREATOR_BOUNTY:'#16a34a', REFUND:'#16a34a' };
     document.getElementById('upWalletSummary').textContent = d.total + ' transactions';
     document.getElementById('upWalletBody').innerHTML = !d.transactions||!d.transactions.length
       ? '<tr><td colspan="6" class="up-empty">No transactions in this period</td></tr>'
       : d.transactions.map(function(t){
-          var clr = txTypeColor[t.type]||'var(--text)';
-          var sign = ['WITHDRAWAL','TRADE_BUY'].includes(t.type)?'-':'+';
+          var clr = txTypeColor[t.type] || 'var(--text)';
+          var sign = ['WITHDRAWAL','TRADE_BUY'].includes(t.type) ? '-' : '+';
           return '<tr>'
             + '<td style="white-space:nowrap;color:var(--text-dim)">' + upDateTime(t.createdAt) + '</td>'
             + '<td><span class="badge">' + esc(t.type) + '</span></td>'
-            + '<td class="mono" style="color:'+clr+';font-weight:700">' + sign + upFmt(Math.abs(t.amountKes)) + '</td>'
+            + '<td class="mono" style="color:' + clr + ';font-weight:700">' + sign + upFmt(Math.abs(t.amountKes)) + '</td>'
             + '<td class="mono">' + upFmt(t.balAfter) + '</td>'
-            + '<td><span class="badge '+(t.status==='SUCCESS'?'badge-green':t.status==='PENDING'?'badge-amber':'badge-red')+'">' + esc(t.status) + '</span></td>'
-            + '<td style="font-size:0.7rem;max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="'+esc(t.description||'')+'">'+esc(t.description||'—')+'</td>'
+            + '<td><span class="badge ' + (t.status==='SUCCESS'?'badge-green':t.status==='PENDING'?'badge-amber':'badge-red') + '">' + esc(t.status) + '</span></td>'
+            + '<td style="font-size:0.7rem;max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="' + esc(t.description||'') + '">' + esc(t.description||'—') + '</td>'
             + '</tr>';
         }).join('');
     upPagBar('upWalletPag', page, d.total, d.limit, 'wallet');
   }).catch(function(){ document.getElementById('upWalletBody').innerHTML = '<tr><td colspan="6" class="up-empty">Failed to load</td></tr>'; });
 }
 
+// ── POSITIONS ─────────────────────────────────────────────────────────────────
 function upLoadPositions() {
   document.getElementById('upPositionsContent').innerHTML = '<div class="up-loading">Loading...</div>';
   upFetch('positions', 1).then(function(d) {
     var html = '';
     var cutPct = d.cutRate ? (d.cutRate*100).toFixed(0)+'%' : '20%';
+
     function posTable(arr, type) {
       if (!arr||!arr.length) return '<div class="up-empty">No ' + type + ' positions</div>';
       return '<div class="up-table-wrap"><table class="up-table"><thead><tr>'
         + '<th>Market</th><th>Cat</th><th>Side</th><th>Staked</th><th>Fee</th><th>Shares</th><th>Avg Price</th>'
-        + (type!=='resolved' ? '<th>Mkt Prob</th><th>Est. Value *</th>' : '<th>Outcome</th><th>Realized P&amp;L</th>')
+        + (type==='open'||type==='pending' ? '<th>Mkt Prob</th><th>Est. Value *</th>' : '<th>Outcome</th><th>Realized P&amp;L</th>')
         + '</tr></thead><tbody>'
         + arr.map(function(p){
             var sideClr = p.side==='YES'?'#16a34a':'#ce1126';
-            var outcomeCell = type!=='resolved'
-              ? '<td class="mono">' + (p.currentProb*100).toFixed(1) + '%</td><td class="mono">' + upFmt(p.estimatedValue) + '</td>'
-              : '<td>' + (p.won?'<span class="up-outcome-won">WON</span>':p.lost?'<span class="up-outcome-lost">LOST</span>':'—') + '</td><td class="mono">' + upFmt(p.realizedPnl) + '</td>';
+            var outcomeCell = '';
+            if (type==='open'||type==='pending') {
+              outcomeCell = '<td class="mono">' + (p.currentProb*100).toFixed(1) + '%</td>'
+                + '<td class="mono">' + upFmt(p.estimatedValue) + '</td>';
+            } else {
+              var res = p.won ? '<span class="up-outcome-won">WON</span>' : p.lost ? '<span class="up-outcome-lost">LOST</span>' : '—';
+              outcomeCell = '<td>' + res + '</td><td class="mono">' + upFmt(p.realizedPnl) + '</td>';
+            }
             return '<tr>'
-              + '<td style="font-size:0.72rem;max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="'+esc(p.marketTitle)+'">'+esc(p.marketTitle)+'</td>'
-              + '<td style="font-size:0.7rem;color:var(--text-dim)">'+esc(p.marketCategory||'')+'</td>'
-              + '<td style="font-weight:700;color:'+sideClr+'">'+esc(p.side)+'</td>'
-              + '<td class="mono">'+upFmt(p.grossStaked)+'</td>'
-              + '<td class="mono" style="color:#ce1126">'+upFmt(p.feesPaid)+'</td>'
-              + '<td class="mono">'+Number(p.shares).toFixed(2)+'</td>'
-              + '<td class="mono">'+(p.avgPrice*100).toFixed(1)+'%</td>'
-              + outcomeCell + '</tr>';
+              + '<td style="font-size:0.72rem;max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="' + esc(p.marketTitle) + '">' + esc(p.marketTitle) + '</td>'
+              + '<td style="font-size:0.7rem;color:var(--text-dim)">' + esc(p.marketCategory||'') + '</td>'
+              + '<td style="font-weight:700;color:' + sideClr + '">' + esc(p.side) + '</td>'
+              + '<td class="mono">' + upFmt(p.grossStaked) + '</td>'
+              + '<td class="mono" style="color:#ce1126">' + upFmt(p.feesPaid) + '</td>'
+              + '<td class="mono">' + Number(p.shares).toFixed(2) + '</td>'
+              + '<td class="mono">' + (p.avgPrice*100).toFixed(1) + '%</td>'
+              + outcomeCell
+              + '</tr>';
           }).join('')
         + '</tbody></table></div>';
     }
-    if (d.open&&d.open.length)     html += '<div class="up-section-title">Open Markets ('+d.open.length+')</div>' + posTable(d.open,'open');
-    if (d.pending&&d.pending.length) html += '<div class="up-section-title">Pending Resolution ('+d.pending.length+')</div>' + posTable(d.pending,'pending');
-    if (d.resolved&&d.resolved.length) html += '<div class="up-section-title">Resolved ('+d.resolved.length+')</div>' + posTable(d.resolved,'resolved');
+
+    if (d.open && d.open.length) {
+      html += '<div class="up-section-title">Open Markets (' + d.open.length + ')</div>' + posTable(d.open, 'open');
+    }
+    if (d.pending && d.pending.length) {
+      html += '<div class="up-section-title">Pending Resolution (' + d.pending.length + ')</div>' + posTable(d.pending, 'pending');
+    }
+    if (d.resolved && d.resolved.length) {
+      html += '<div class="up-section-title">Resolved (' + d.resolved.length + ')</div>' + posTable(d.resolved, 'resolved');
+    }
     if (!html) html = '<div class="up-empty">No positions found</div>';
-    html += '<div style="font-size:0.65rem;color:var(--text-dim);margin-top:10px;">* Estimated value = shares &times; market probability &times; (1 &minus; '+cutPct+' resolution cut). Subject to change at resolution.</div>';
+    html += '<div style="font-size:0.65rem;color:var(--text-dim);margin-top:10px;">* Estimated value = shares &times; market probability &times; (1 &minus; ' + cutPct + ' resolution cut). Subject to change at resolution.</div>';
     document.getElementById('upPositionsContent').innerHTML = html;
   }).catch(function(){ document.getElementById('upPositionsContent').innerHTML = '<div class="up-empty">Failed to load positions</div>'; });
 }
 
+// ── TRADES ────────────────────────────────────────────────────────────────────
 function upLoadTrades(page) {
   UP_PAGES.trades = page;
   document.getElementById('upTradesBody').innerHTML = '<tr><td colspan="10" class="up-loading">Loading...</td></tr>';
   upFetch('trades', page).then(function(d) {
     var sm = d.summary||{};
     document.getElementById('upTradesSummary').innerHTML =
-      '<span><b>'+upFmt(sm.totalStaked)+'</b> staked</span>'
-      + '<span style="color:#ce1126"><b>'+upFmt(sm.totalFees)+'</b> fees</span>'
-      + '<span><b>'+upFmt(sm.totalNet)+'</b> net</span>'
-      + '<span style="color:var(--text-dim)">'+(d.total||0)+' trades in period</span>';
+      '<span><b>' + upFmt(sm.totalStaked) + '</b> staked</span>'
+      + '<span style="color:#ce1126"><b>' + upFmt(sm.totalFees) + '</b> fees</span>'
+      + '<span><b>' + upFmt(sm.totalNet) + '</b> net</span>'
+      + '<span style="color:var(--text-dim)">' + (d.total||0) + ' trades in period</span>';
     document.getElementById('upTradesBody').innerHTML = !d.orders||!d.orders.length
       ? '<tr><td colspan="10" class="up-empty">No trades in this period</td></tr>'
       : d.orders.map(function(o){
-          var oc = o.marketOutcome?(o.marketOutcome===o.side?'<span class="up-outcome-won">WON</span>':'<span class="up-outcome-lost">LOST</span>'):'<span style="color:var(--text-dim)">Open</span>';
+          var oc = o.marketOutcome ? (o.marketOutcome===o.side?'<span class="up-outcome-won">WON</span>':'<span class="up-outcome-lost">LOST</span>') : '<span style="color:var(--text-dim)">Open</span>';
           return '<tr>'
-            + '<td style="white-space:nowrap;color:var(--text-dim)">'+upDate(o.createdAt)+'</td>'
-            + '<td style="font-size:0.7rem;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="'+esc(o.marketTitle)+'">'+esc(o.marketTitle)+'</td>'
-            + '<td style="font-size:0.7rem;color:var(--text-dim)">'+esc(o.marketCategory||'')+'</td>'
-            + '<td style="font-weight:700;color:'+(o.side==='YES'?'#16a34a':'#ce1126')+'">'+esc(o.side)+'</td>'
-            + '<td class="mono">'+upFmt(o.amountKes)+'</td>'
-            + '<td class="mono" style="color:#ce1126">'+upFmt(o.forecastingFeeKes)+'</td>'
-            + '<td class="mono">'+upFmt(o.netAmountKes)+'</td>'
-            + '<td class="mono">'+Number(o.shares).toFixed(2)+'</td>'
-            + '<td class="mono">'+(o.pricePerShare*100).toFixed(1)+'%</td>'
-            + '<td>'+oc+'</td></tr>';
+            + '<td style="white-space:nowrap;color:var(--text-dim)">' + upDate(o.createdAt) + '</td>'
+            + '<td style="font-size:0.7rem;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="' + esc(o.marketTitle) + '">' + esc(o.marketTitle) + '</td>'
+            + '<td style="font-size:0.7rem;color:var(--text-dim)">' + esc(o.marketCategory||'') + '</td>'
+            + '<td style="font-weight:700;color:' + (o.side==='YES'?'#16a34a':'#ce1126') + '">' + esc(o.side) + '</td>'
+            + '<td class="mono">' + upFmt(o.amountKes) + '</td>'
+            + '<td class="mono" style="color:#ce1126">' + upFmt(o.forecastingFeeKes) + '</td>'
+            + '<td class="mono">' + upFmt(o.netAmountKes) + '</td>'
+            + '<td class="mono">' + Number(o.shares).toFixed(2) + '</td>'
+            + '<td class="mono">' + (o.pricePerShare*100).toFixed(1) + '%</td>'
+            + '<td>' + oc + '</td>'
+            + '</tr>';
         }).join('');
     upPagBar('upTradesPag', page, d.total, d.limit, 'trades');
   }).catch(function(){ document.getElementById('upTradesBody').innerHTML = '<tr><td colspan="10" class="up-empty">Failed to load</td></tr>'; });
 }
 
+// ── CHALLENGES ────────────────────────────────────────────────────────────────
 function upLoadChallenges(page) {
   UP_PAGES.challenges = page;
   document.getElementById('upChallengesBody').innerHTML = '<tr><td colspan="8" class="up-loading">Loading...</td></tr>';
@@ -5325,21 +5271,26 @@ function upLoadChallenges(page) {
     document.getElementById('upChallengesBody').innerHTML = !d.challenges||!d.challenges.length
       ? '<tr><td colspan="8" class="up-empty">No challenges in this period</td></tr>'
       : d.challenges.map(function(c){
-          var res = c.won?'<span class="up-outcome-won">WON</span>':c.lost?'<span class="up-outcome-lost">LOST</span>':c.tied?'<span style="color:var(--amber)">TIE</span>':'—';
+          var res = c.won ? '<span class="up-outcome-won">WON</span>'
+            : c.lost ? '<span class="up-outcome-lost">LOST</span>'
+            : c.tied ? '<span style="color:var(--amber)">TIE</span>'
+            : '—';
           return '<tr>'
-            + '<td style="white-space:nowrap;color:var(--text-dim)">'+upDate(c.createdAt)+'</td>'
-            + '<td style="font-size:0.7rem;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="'+esc(c.question)+'">'+esc(c.question)+'</td>'
-            + '<td>'+esc((c.opponent&&c.opponent.name)||'—')+'</td>'
-            + '<td style="font-size:0.7rem">'+(c.isCreator?'Creator':'Challenger')+'</td>'
-            + '<td class="mono">'+upFmt(c.stakePerPerson)+'</td>'
-            + '<td class="mono" style="color:#ce1126">'+upFmt(c.platformFeeKes)+'</td>'
-            + '<td><span class="badge">'+esc(c.status||'')+'</span></td>'
-            + '<td>'+res+'</td></tr>';
+            + '<td style="white-space:nowrap;color:var(--text-dim)">' + upDate(c.createdAt) + '</td>'
+            + '<td style="font-size:0.7rem;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="' + esc(c.question) + '">' + esc(c.question) + '</td>'
+            + '<td>' + esc((c.opponent&&c.opponent.name)||'—') + '</td>'
+            + '<td style="font-size:0.7rem">' + (c.isCreator?'Creator':'Challenger') + '</td>'
+            + '<td class="mono">' + upFmt(c.stakePerPerson) + '</td>'
+            + '<td class="mono" style="color:#ce1126">' + upFmt(c.platformFeeKes) + '</td>'
+            + '<td><span class="badge">' + esc(c.status||'') + '</span></td>'
+            + '<td>' + res + '</td>'
+            + '</tr>';
         }).join('');
     upPagBar('upChallengesPag', page, d.total, d.limit, 'challenges');
   }).catch(function(){ document.getElementById('upChallengesBody').innerHTML = '<tr><td colspan="8" class="up-empty">Failed to load</td></tr>'; });
 }
 
+// ── SUGGESTIONS ───────────────────────────────────────────────────────────────
 function upLoadSuggestions(page) {
   UP_PAGES.suggestions = page;
   document.getElementById('upSuggestionsBody').innerHTML = '<tr><td colspan="6" class="up-loading">Loading...</td></tr>';
@@ -5349,50 +5300,55 @@ function upLoadSuggestions(page) {
       : d.proposals.map(function(p){
           var stClr = p.status==='APPROVED'?'badge-green':p.status==='REJECTED'?'badge-red':'badge-amber';
           return '<tr>'
-            + '<td style="white-space:nowrap;color:var(--text-dim)">'+upDate(p.createdAt)+'</td>'
-            + '<td style="font-size:0.7rem;max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="'+esc(p.question)+'">'+esc(p.question)+'</td>'
-            + '<td style="font-size:0.7rem">'+esc(p.category||'')+'</td>'
-            + '<td><span class="badge '+stClr+'">'+esc(p.status)+'</span></td>'
-            + '<td class="mono" style="color:#16a34a">'+(p.rewardPaidAt?'✓ Paid':'—')+'</td>'
-            + '<td style="font-size:0.7rem;color:var(--text-dim);max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="'+esc(p.rejectionReason||'')+'">'+esc(p.rejectionReason||'—')+'</td>'
+            + '<td style="white-space:nowrap;color:var(--text-dim)">' + upDate(p.createdAt) + '</td>'
+            + '<td style="font-size:0.7rem;max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="' + esc(p.question) + '">' + esc(p.question) + '</td>'
+            + '<td style="font-size:0.7rem">' + esc(p.category||'') + '</td>'
+            + '<td><span class="badge ' + stClr + '">' + esc(p.status) + '</span></td>'
+            + '<td class="mono" style="color:#16a34a">' + (p.rewardPaidAt ? '✓ Paid' : '—') + '</td>'
+            + '<td style="font-size:0.7rem;color:var(--text-dim);max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="' + esc(p.rejectionReason||'') + '">' + esc(p.rejectionReason||'—') + '</td>'
             + '</tr>';
         }).join('');
     upPagBar('upSuggestionsPag', page, d.total, d.limit, 'suggestions');
   }).catch(function(){ document.getElementById('upSuggestionsBody').innerHTML = '<tr><td colspan="6" class="up-empty">Failed to load</td></tr>'; });
 }
 
+// ── CREATOR ───────────────────────────────────────────────────────────────────
 function upLoadCreator(page) {
   UP_PAGES.creator = page;
   document.getElementById('upCreatorBody').innerHTML = '<tr><td colspan="7" class="up-loading">Loading...</td></tr>';
   upFetch('creator', page).then(function(d) {
     var sm = d.summary||{};
+    // Update creator tab style
     var ct = document.getElementById('upCreatorTab');
     if (ct) ct.className = 'up-tab' + (d.total>0?'':' dim') + (UP_TAB==='creator'?' active':'');
-    document.getElementById('upCreatorSummary').innerHTML = d.total>0
+
+    document.getElementById('upCreatorSummary').innerHTML = d.total > 0
       ? '<div style="display:flex;gap:12px;flex-wrap:wrap;font-size:0.82rem;">'
-        + '<span><b style="color:#16a34a">'+upFmt(sm.totalEarned)+'</b> total earned</span>'
-        + '<span><b>'+upFmt(sm.totalPaidOut)+'</b> paid out</span>'
-        + '<span><b style="color:var(--amber)">'+upFmt(sm.totalUnpaid)+'</b> unpaid</span>'
-        + '<span style="color:var(--text-dim)">'+upFmt(sm.totalVolume)+' qualifying volume</span>'
+        + '<span><b style="color:#16a34a">' + upFmt(sm.totalEarned) + '</b> total earned</span>'
+        + '<span><b>' + upFmt(sm.totalPaidOut) + '</b> paid out</span>'
+        + '<span><b style="color:var(--amber)">' + upFmt(sm.totalUnpaid) + '</b> unpaid</span>'
+        + '<span style="color:var(--text-dim)">' + upFmt(sm.totalVolume) + ' qualifying volume</span>'
         + '</div>'
       : '<div class="up-empty" style="padding:8px 0">No creator activity</div>';
+
     document.getElementById('upCreatorBody').innerHTML = !d.bounties||!d.bounties.length
       ? '<tr><td colspan="7" class="up-empty">No creator records</td></tr>'
       : d.bounties.map(function(b){
           return '<tr>'
-            + '<td style="font-size:0.7rem;max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="'+esc(b.marketTitle)+'">'+esc(b.marketTitle)+'</td>'
-            + '<td><span class="badge">'+esc(b.marketStatus||'')+'</span></td>'
-            + '<td class="mono">'+upFmt(b.totalVolume)+'</td>'
-            + '<td class="mono">'+upFmt(b.tradeVolume)+'</td>'
-            + '<td class="mono" style="color:#16a34a">'+upFmtD(b.bountyEarned)+'</td>'
-            + '<td class="mono">'+upFmtD(b.paidOut)+'</td>'
-            + '<td class="mono" style="color:var(--amber)">'+upFmtD(b.unpaid)+'</td>'
+            + '<td style="font-size:0.7rem;max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="' + esc(b.marketTitle) + '">' + esc(b.marketTitle) + '</td>'
+            + '<td><span class="badge">' + esc(b.marketStatus||'') + '</span></td>'
+            + '<td class="mono">' + upFmt(b.totalVolume) + '</td>'
+            + '<td class="mono">' + upFmt(b.tradeVolume) + '</td>'
+            + '<td class="mono" style="color:#16a34a">' + upFmtD(b.bountyEarned) + '</td>'
+            + '<td class="mono">' + upFmtD(b.paidOut) + '</td>'
+            + '<td class="mono" style="color:var(--amber)">' + upFmtD(b.unpaid) + '</td>'
             + '</tr>';
         }).join('');
     upPagBar('upCreatorPag', page, d.total, d.limit, 'creator');
   }).catch(function(){ document.getElementById('upCreatorBody').innerHTML = '<tr><td colspan="7" class="up-empty">Failed to load</td></tr>'; });
 }
 
+// ── MODAL ACTIONS ─────────────────────────────────────────────────────────────
 function upFreezeUser() {
   if (!UP_USER_ID || !UP_USER_DATA) return;
   var susp = UP_USER_DATA.suspended;
@@ -5401,17 +5357,24 @@ function upFreezeUser() {
   .then(function(r){ return r.json(); })
   .then(function(d){
     if (d.success) {
-      UP_USER_DATA.suspended = !susp;
       var fb = document.getElementById('upFreezeBtn');
-      if (fb) { fb.textContent=UP_USER_DATA.suspended?'Unfreeze':'Freeze'; fb.className='act-btn '+(UP_USER_DATA.suspended?'act-green':'act-amber'); }
+      UP_USER_DATA.suspended = !susp;
+      if (fb){ fb.textContent = UP_USER_DATA.suspended?'Unfreeze':'Freeze'; fb.className='act-btn '+(UP_USER_DATA.suspended?'act-green':'act-amber'); }
       document.getElementById('upUserName').textContent = esc(UP_USER_DATA.name||'Unknown') + (UP_USER_DATA.suspended?' 🔒':'');
       loadUsersTable();
     }
   }).catch(function(){});
 }
 
-function upEditBalance()  { if (!UP_USER_ID) return; openEditUserModal(UP_USER_ID); }
-function upReviewKYC()    { if (!UP_USER_DATA) return; openKYCModal(UP_USER_ID, UP_USER_DATA.name, UP_USER_DATA.phone); }
+function upEditBalance() {
+  if (!UP_USER_ID) return;
+  openEditUserModal(UP_USER_ID);
+}
+
+function upReviewKYC() {
+  if (!UP_USER_DATA) return;
+  openKYCModal(UP_USER_ID, UP_USER_DATA.name, UP_USER_DATA.phone);
+}
 
 
 
