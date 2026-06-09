@@ -180,7 +180,7 @@ export async function GET(
       });
 
       // Staked per position — sum orders by marketId + side
-      const mIds = [...new Set(positions.map(p => p.marketId))];
+      const mIds = Array.from(new Set(positions.map(p => p.marketId)));
       const stakeRows = await prisma.order.groupBy({
         by:    ['marketId', 'side'],
         where: { userId, marketId: { in: mIds } },
