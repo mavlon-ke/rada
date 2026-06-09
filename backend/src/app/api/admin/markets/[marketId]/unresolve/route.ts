@@ -118,6 +118,12 @@ export async function POST(
         });
       }
 
+      // Reset realizedPnl — position is no longer resolved
+      await tx.position.update({
+        where: { id: c.positionId },
+        data:  { realizedPnl: 0 },
+      });
+
       results.push({ userId: c.userId, phone: c.phone, paidKes: c.paidKes, clawedKes, shortfall });
     }
 

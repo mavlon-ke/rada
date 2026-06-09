@@ -137,6 +137,11 @@ export async function POST(
             + `Resolution cut: ${(resolutionCutRate * 100).toFixed(1)}%.`,
         },
       });
+      // Update realizedPnl on the position so the admin profile modal shows actual payout
+      await tx.position.update({
+        where: { id: p.positionId },
+        data:  { realizedPnl: p.netKes },
+      });
     }
 
     // 3. Forecasting fees revenue record
