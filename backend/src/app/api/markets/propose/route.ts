@@ -6,6 +6,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/db/prisma';
 import { requireAuth } from '@/lib/auth/session';
+import { sendAdminAlert } from '@/lib/whatsapp/admin-alerts';
 
 const Schema = z.object({
   question:         z.string().min(10).max(200),
@@ -58,6 +59,11 @@ export async function POST(req: NextRequest) {
       closesAt,
     },
   });
+
+  // Fire admin alert — fire-and-forget, never blocks the response
+  void sendAdminAlert('ADMIN_PROPOSAL', [
+    { name: 'proposer_name', value: user.name ?? user.phone ?? 'A user' },
+  ]);
 
   return NextResponse.json({ success: true, proposalId: proposal.id });
 }

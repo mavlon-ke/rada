@@ -6,6 +6,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/db/prisma';
 import { requireAdmin, adminUnauthorized, logAdminAction } from '@/lib/auth/admin';
+import { sendAdminAlert } from '@/lib/whatsapp/admin-alerts';
 
 // ─── PATCH /api/admin/users/[userId] ─────────────────────────────────────────
 
@@ -90,6 +91,14 @@ export async function PATCH(
     req
   );
 
+  // Fire admin balance alert only when a wallet adjustment was made — fire-and-forget
+  if (balanceAdjustKes !== undefined && balanceAdjustKes !== 0) {
+    void sendAdminAlert('ADMIN_BALANCE', [
+      { name: 'user_name', value: user.name ?? user.phone ?? 'Unknown user' },
+      { name: 'amount',    value: `${balanceAdjustKes > 0 ? '+' : ''}${balanceAdjustKes}` },
+    ]);
+  }
+
   return NextResponse.json({
     success: true,
     user: { ...updated, balanceKes: Number(updated.balanceKes) },
@@ -145,7 +154,6 @@ export async function DELETE(
           description: `Account permanently deleted by admin. Wallet balance KES ${walletBalance} swept to platform. User: ${user.phone} (${user.name || 'no name'}).`,
         },
       });
-      // Also create a transaction record for the user's history
       await tx.transaction.create({
         data: {
           userId:      user.id,
@@ -158,18 +166,18 @@ export async function DELETE(
       });
     }
 
-    // 2. Zero out all positions (shares become 0 — records kept with null userId after delete)
+    // 2. Zero out all positions
     await tx.position.updateMany({
       where: { userId: user.id },
       data:  { shares: 0 },
     });
 
-    // 3. Delete referrals (unique constraint on refereeId prevents SetNull)
+    // 3. Delete referrals
     await tx.referral.deleteMany({
       where: { OR: [{ referrerId: user.id }, { refereeId: user.id }] },
     });
 
-    // 4. Delete notifications (no audit value)
+    // 4. Delete notifications
     await tx.notification.deleteMany({ where: { userId: user.id } });
 
     // 5. Delete OTP codes
@@ -191,7 +199,7 @@ export async function DELETE(
       });
     }
 
-    // 7. Delete the user — onDelete: SetNull handles Order, Transaction, Market, etc.
+    // 7. Delete the user
     await tx.user.delete({ where: { id: user.id } });
   });
 

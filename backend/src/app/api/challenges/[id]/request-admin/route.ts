@@ -1,16 +1,16 @@
 // src/app/api/challenges/[id]/request-admin/route.ts
 // Participant requests admin intervention after 24h of the 48h resolution window.
 // Only available to Challenger A or B, only after 24h of the window have elapsed.
-// Marks the challenge as DISPUTED, notifies both parties and the admin team via SMS.
+// Marks the challenge as DISPUTED, notifies both parties and the admin team via WhatsApp.
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { requireAuth } from '@/lib/auth/session';
 import { createNotification } from '@/lib/notifications';
+import { sendAdminAlert } from '@/lib/whatsapp/admin-alerts';
 
 
 const MIN_HOURS_BEFORE_INTERVENTION = 24; // must wait 24h into the 48h window
-const ADMIN_PHONE = process.env.ADMIN_ALERT_PHONE ?? ''; // set in Railway env vars
 
 export async function POST(
   req: NextRequest,
@@ -75,15 +75,13 @@ export async function POST(
     data:  { status: 'DISPUTED' },
   });
 
-  // ── SMS both participants ────────────────────────────────────────────────
-  const requesterName = user.name ?? 'A participant';
+  // ── Notify both participants in-app + WhatsApp ───────────────────────────
   const smsParticipants =
     `CheckRada: Admin intervention has been requested for your challenge ` +
     `"${challenge.question.slice(0, 60)}...". ` +
     `A 15% dispute fee will apply. Admin will review within 12 hours. ` +
     `rada.co.ke`;
 
-  // Notify both participants in-app. Admin sees disputed challenges in /admin/disputes.
   await Promise.allSettled([
     challenge.userA ? createNotification({
       userId:  challenge.userA.id,
@@ -108,7 +106,19 @@ export async function POST(
       },
     }) : Promise.resolve(),
   ]);
-  console.info(`[Dispute] Admin intervention requested on challenge ${challenge.id} by ${requesterName}. Pool: KES ${Number(challenge.totalPool).toLocaleString()}.`);
+
+  // ── Alert admin via WhatsApp — fire-and-forget ───────────────────────────
+  const userAName = challenge.userA?.name ?? challenge.userA?.phone ?? 'User A';
+  const userBName = challenge.userB?.name ?? challenge.userB?.phone ?? 'User B';
+  void sendAdminAlert('ADMIN_DISPUTE', [
+    { name: 'user_one', value: userAName },
+    { name: 'user_two', value: userBName },
+  ]);
+
+  console.info(
+    `[Dispute] Admin intervention requested on challenge ${challenge.id} by ` +
+    `${user.name ?? user.id}. Pool: KES ${Number(challenge.totalPool).toLocaleString()}.`
+  );
 
   return NextResponse.json({
     success:     true,
