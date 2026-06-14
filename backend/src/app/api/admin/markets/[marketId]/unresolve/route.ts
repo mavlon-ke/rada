@@ -2,18 +2,15 @@
 // Reverses a wrongly-resolved market.
 //
 // What this does (inverse of /resolve):
-//   1. Claws back each winner's payout from their current wallet balance.
-//      If a winner has already withdrawn some/all of their payout, we take
-//      what's available and flag the shortfall — we cannot reclaim real
-//      M-Pesa money that has already left the platform.
-//   2. Creates a REFUND transaction record for each clawback to keep the
-//      ledger consistent.
-//   3. Deletes the PlatformRevenue records tied to this market resolution
-//      (FORECASTING_FEE and MARKET_SURPLUS rows).
+//   1. Claws back each winner's payout using position.realizedPnl — the exact
+//      amount credited at resolution. This is correct regardless of any formula
+//      changes between resolution and reversal.
+//      Fallback: if realizedPnl is 0 (pre-fix positions), recompute using the
+//      current resolve formula (loserNetStakes × resolutionCutRate).
+//   2. Creates a REFUND transaction record for each clawback.
+//   3. Deletes the PlatformRevenue records tied to this market resolution.
 //   4. Reactivates the creator bounty if it was deactivated at resolution.
-//   5. Resets the market to CLOSED — it can then be re-resolved correctly.
-//      Status goes back to CLOSED (not OPEN) because the event has already
-//      happened; the market just needs to be re-resolved with the right outcome.
+//   5. Resets the market to CLOSED — ready for correct re-resolution.
 //
 // Idempotency: guards against running on a market that is not RESOLVED.
 
@@ -51,42 +48,54 @@ export async function POST(
   }
 
   const originalOutcome = market.outcome;
+  const losingSide      = originalOutcome === 'YES' ? 'NO' : 'YES';
 
-  // ── Dynamic rate — must match resolve route exactly ─────────────────────
-  const platformConfig    = await prisma.platformConfig.findUnique({ where: { id: 'singleton' } });
+  // ── Winning positions ────────────────────────────────────────────────────
+  const winningPositions = market.positions.filter(p => p.side === originalOutcome);
+
+  // ── Fallback formula (mirrors fixed resolve route) ───────────────────────
+  // Used only when position.realizedPnl = 0 (positions resolved before the fix).
+  const platformConfig = await prisma.platformConfig.findUnique({ where: { id: 'singleton' } });
   const resolutionCutRate = platformConfig ? Number(platformConfig.resolutionCutRate) : 0.20;
 
-  // ── Identify winning positions (same logic as /resolve) ─────────────────
-  const winningPositions   = market.positions.filter(p => p.side === originalOutcome);
-
-  // ── Recompute payoutPerShare using same formula as /resolve ───────────────
-  // realPoolBalance = totalVolume (actual KES net of fees)
-  // distributable   = realPoolBalance × (1 − resolutionCutRate)
-  // payoutPerShare  = distributable / totalWinningShares
+  const loserAgg = await prisma.order.aggregate({
+    where: { marketId: market.id, side: losingSide },
+    _sum:  { netAmountKes: true },
+  });
+  const loserNetStakes     = Number(loserAgg._sum.netAmountKes ?? 0);
+  const platformCut        = Math.floor(loserNetStakes * resolutionCutRate);
   const realPoolBalance    = Number(market.totalVolume);
-  const platformCut        = Math.floor(realPoolBalance * resolutionCutRate);
   const distributable      = realPoolBalance - platformCut;
   const totalWinningShares = winningPositions.reduce((s, p) => s + Number(p.shares), 0);
   const payoutPerShare     = totalWinningShares > 0 ? distributable / totalWinningShares : 0;
 
+  // ── Build clawbacks ──────────────────────────────────────────────────────
+  // Primary:  use realizedPnl (exact amount credited at resolution).
+  // Fallback: recompute with current formula if realizedPnl is 0.
   const clawbacks = winningPositions
-    .map(p => ({
-      userId:     p.userId,
-      phone:      p.user?.phone ?? '',
-      name:       p.user?.name ?? 'User',
-      paidKes:    Math.floor(Number(p.shares) * payoutPerShare),
-      positionId: p.id,
-    }))
+    .map(p => {
+      const realizedPnl = Number(p.realizedPnl);
+      const paidKes = realizedPnl > 0
+        ? realizedPnl
+        : Math.floor(Number(p.shares) * payoutPerShare);
+      return {
+        userId:     p.userId,
+        phone:      p.user?.phone ?? '',
+        name:       p.user?.name ?? 'User',
+        paidKes,
+        positionId: p.id,
+      };
+    })
     .filter(c => c.paidKes >= 1);
 
   // ── Atomic reversal ──────────────────────────────────────────────────────
   const clawbackResults = await prisma.$transaction(async (tx) => {
     const results: Array<{
-      userId:     string;
-      phone:      string;
-      paidKes:    number;
-      clawedKes:  number;
-      shortfall:  number;
+      userId:    string;
+      phone:     string;
+      paidKes:   number;
+      clawedKes: number;
+      shortfall: number;
     }> = [];
 
     // 1. Clawback each winner
@@ -127,7 +136,7 @@ export async function POST(
       results.push({ userId: c.userId, phone: c.phone, paidKes: c.paidKes, clawedKes, shortfall });
     }
 
-    // 2. Delete platform revenue records tied to this market resolution
+    // 2. Delete platform revenue records for this resolution
     await tx.platformRevenue.deleteMany({
       where: { marketId: market.id },
     });
@@ -138,19 +147,19 @@ export async function POST(
       data:  { active: true, deactivatedAt: null },
     });
 
-    // 4. Reset market to CLOSED — ready for correct re-resolution
+    // 4. Reset market to CLOSED
     await tx.market.update({
       where: { id: market.id },
-      data: { status: 'CLOSED', outcome: null, resolvedAt: null },
+      data:  { status: 'CLOSED', outcome: null, resolvedAt: null },
     });
 
     return results;
   });
 
-  // ── Summarise clawback results ───────────────────────────────────────────
-  const totalPaidOut    = clawbackResults.reduce((s, r) => s + r.paidKes,   0);
-  const totalClawed     = clawbackResults.reduce((s, r) => s + r.clawedKes, 0);
-  const totalShortfall  = clawbackResults.reduce((s, r) => s + r.shortfall,  0);
+  // ── Summarise ────────────────────────────────────────────────────────────
+  const totalPaidOut     = clawbackResults.reduce((s, r) => s + r.paidKes,   0);
+  const totalClawed      = clawbackResults.reduce((s, r) => s + r.clawedKes, 0);
+  const totalShortfall   = clawbackResults.reduce((s, r) => s + r.shortfall,  0);
   const partialClawbacks = clawbackResults.filter(r => r.shortfall > 0);
 
   console.log(
@@ -158,25 +167,23 @@ export async function POST(
     `Clawbacks: ${clawbacks.length}. Clawed: KES ${totalClawed}. Shortfall: KES ${totalShortfall}.`
   );
 
-  // ── Log admin activity ───────────────────────────────────────────────────
   await logAdminAction(
     admin.id,
     'MARKET_UNRESOLVED',
     market.id,
     {
       originalOutcome,
-      title:          market.title,
-      clawbackCount:  clawbacks.length,
+      title:         market.title,
+      clawbackCount: clawbacks.length,
       totalPaidOut,
       totalClawed,
       totalShortfall,
-      partialUsers:   partialClawbacks.map(r => r.phone),
+      partialUsers:  partialClawbacks.map(r => r.phone),
     },
     req
   );
 
-  // ── Post-commit: notify all affected users (fire-and-forget) ────────────
-  // Winners: tell them their payout was reversed and the market will be re-resolved.
+  // ── Notify affected users (fire-and-forget) ───────────────────────────
   for (const c of clawbackResults) {
     void createNotification({
       userId:  c.userId,
@@ -190,11 +197,10 @@ export async function POST(
       link: '/rada-portfolio.html',
     });
   }
-  // Losers (positions on the losing side) also had a loss notification sent at resolution.
-  // Notify them too so they know the outcome is under review.
+
   const losingPositions = market.positions.filter(p => p.side !== originalOutcome);
   for (const p of losingPositions) {
-    if (clawbackResults.some(c => c.userId === p.userId)) continue; // already notified above
+    if (clawbackResults.some(c => c.userId === p.userId)) continue;
     void createNotification({
       userId:  p.userId,
       type:    'MARKET_RESOLVED',

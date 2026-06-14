@@ -2,14 +2,22 @@
 //
 // Payout model:
 //   realPoolBalance   = market.totalVolume  (actual KES collected net of fees)
-//   platformCut       = floor(realPoolBalance × resolutionCutRate)  [from PlatformConfig]
+//   loserNetStakes    = SUM(netAmountKes) for orders on the LOSING side
+//   platformCut       = floor(loserNetStakes × resolutionCutRate)  [from PlatformConfig]
 //   distributable     = realPoolBalance − platformCut
 //   payoutPerShare    = distributable / totalWinningShares
 //   each winner gets  = floor(shares × payoutPerShare)
-//   marketSurplus     = realPoolBalance − totalPayouts  (includes cut + floor dust)
+//   marketSurplus     = realPoolBalance − totalPayouts  (cut + floor dust)
+//
+// WHY cut only from loser stakes:
+//   The resolution cut is a fee on money that changes hands — loser contributions.
+//   Cutting from the entire pool taxes winner principal, causing correct bettors to
+//   lose their own money in lopsided markets. With this formula, the only guaranteed
+//   cost to a winner is the 5% forecasting fee agreed at trade time.
+//   Unanimous markets: loserNetStakes = 0 → platformCut = 0 → winners get full net stakes back.
 //
 // This guarantees: totalPayouts < realPoolBalance < grossDeposits — always solvent.
-// Works correctly for balanced, unbalanced, and unanimous (all one side) markets.
+// Works correctly for balanced, unbalanced, and unanimous markets.
 
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
@@ -71,17 +79,24 @@ export async function POST(
   const losingPositions  = market.positions.filter(p => p.side === losingSide);
 
   // ── Pool and payout calculation ───────────────────────────────────────────
-  // realPoolBalance = actual KES collected net of fees (stored in totalVolume)
-  const realPoolBalance     = Number(market.totalVolume);
-  const platformCut         = Math.floor(realPoolBalance * resolutionCutRate);
-  const distributable       = realPoolBalance - platformCut;
-  const totalWinningShares  = winningPositions.reduce((s, p) => s + Number(p.shares), 0);
+  const realPoolBalance = Number(market.totalVolume);
 
-  // payoutPerShare: distributable divided across all winning shares
-  // If no winning positions (impossible if market is valid, but guard anyway):
+  // ── Loser net stakes — platform cut source ────────────────────────────────
+  // Platform cut comes ONLY from loser net stakes, never from winner principal.
+  // Queried from orders (not positions) because orders store the original netAmountKes.
+  const loserAgg = await prisma.order.aggregate({
+    where: { marketId: market.id, side: losingSide },
+    _sum:  { netAmountKes: true },
+  });
+  const loserNetStakes = Number(loserAgg._sum.netAmountKes ?? 0);
+  const platformCut    = Math.floor(loserNetStakes * resolutionCutRate);
+  const distributable  = realPoolBalance - platformCut;
+
+  const totalWinningShares = winningPositions.reduce((s, p) => s + Number(p.shares), 0);
+
   const payoutPerShare = totalWinningShares > 0 ? distributable / totalWinningShares : 0;
 
-  // isUnanimous: true when only one side has any bettors
+  // isUnanimous: all stakes on one side — loserNetStakes will be 0, cut = 0
   const hasYesBettors = market.positions.some(p => p.side === 'YES');
   const hasNoBettors  = market.positions.some(p => p.side === 'NO');
   const isUnanimous   = !hasYesBettors || !hasNoBettors;
@@ -96,9 +111,8 @@ export async function POST(
   const totalPayouts = payouts.reduce((s, p) => s + p.netKes, 0);
 
   // Platform revenue breakdown:
-  // - Forecasting fees: recorded from Order.forecastingFeeKes (collected at trade time)
-  // - Market surplus:   realPoolBalance − totalPayouts (includes cut + floor dust)
-  //   Note: do NOT subtract fees here — totalVolume is already net of fees.
+  // - Forecasting fees: collected at trade time (Order.forecastingFeeKes)
+  // - Market surplus:   platformCut (from loser stakes) + floor rounding dust
   const ordersAgg = await prisma.order.aggregate({
     where: { marketId: market.id },
     _sum:  { forecastingFeeKes: true },
@@ -134,10 +148,11 @@ export async function POST(
           status:      'SUCCESS',
           description: `Market payout (${outcome}) — ${market.title.slice(0, 80)}. `
             + `${p.shares.toFixed(4)} shares × KES ${payoutPerShare.toFixed(4)}/share. `
-            + `Resolution cut: ${(resolutionCutRate * 100).toFixed(1)}%.`,
+            + `Resolution cut: ${(resolutionCutRate * 100).toFixed(1)}% of loser stakes `
+            + `(KES ${loserNetStakes}).`,
         },
       });
-      // Update realizedPnl on the position so the admin profile modal shows actual payout
+      // Update realizedPnl on the position
       await tx.position.update({
         where: { id: p.positionId },
         data:  { realizedPnl: p.netKes },
@@ -156,7 +171,7 @@ export async function POST(
       });
     }
 
-    // 4. Market surplus revenue record (resolution cut + floor dust)
+    // 4. Market surplus = resolution cut (from loser stakes) + floor rounding dust
     if (marketSurplus > 0) {
       await tx.platformRevenue.create({
         data: {
@@ -164,7 +179,7 @@ export async function POST(
           type:        'MARKET_SURPLUS',
           amountKes:   marketSurplus,
           description: `Market surplus — ${market.title.slice(0, 80)}. `
-            + `Resolution cut (${(resolutionCutRate * 100).toFixed(1)}%): KES ${platformCut}. `
+            + `Resolution cut (${(resolutionCutRate * 100).toFixed(1)}% of loser KES ${loserNetStakes}): KES ${platformCut}. `
             + `Floor dust: KES ${marketSurplus - platformCut}.`,
         },
       });
@@ -179,8 +194,10 @@ export async function POST(
 
   console.log(
     `[RESOLVE] ${market.id} → ${outcome}. ` +
-    `Pool: KES ${realPoolBalance}, Cut: KES ${platformCut} (${(resolutionCutRate*100).toFixed(1)}%), ` +
-    `Distributable: KES ${distributable}, Payouts: KES ${totalPayouts}, Surplus: KES ${marketSurplus}. ` +
+    `Pool: KES ${realPoolBalance}, Loser stakes: KES ${loserNetStakes}, ` +
+    `Cut: KES ${platformCut} (${(resolutionCutRate*100).toFixed(1)}% of losers), ` +
+    `Distributable: KES ${distributable}, Payouts: KES ${totalPayouts}, ` +
+    `Surplus: KES ${marketSurplus}. ` +
     `Winners: ${payouts.length}, Losers: ${losingPositions.length}.`
   );
 
@@ -210,16 +227,17 @@ export async function POST(
   }
 
   return NextResponse.json({
-    success:        true,
+    success:         true,
     outcome,
-    marketId:       market.id,
+    marketId:        market.id,
     isUnanimous,
-    poolKes:        realPoolBalance,
-    platformCutKes: platformCut,
-    distributedKes: distributable,
-    payoutPerShare: parseFloat(payoutPerShare.toFixed(6)),
-    winnersCount:   payouts.length,
-    totalPayoutKes: totalPayouts,
+    poolKes:         realPoolBalance,
+    loserNetStakes,
+    platformCutKes:  platformCut,
+    distributedKes:  distributable,
+    payoutPerShare:  parseFloat(payoutPerShare.toFixed(6)),
+    winnersCount:    payouts.length,
+    totalPayoutKes:  totalPayouts,
     platformRevenue: {
       forecastingFees: totalFeesCollected,
       marketSurplus,
