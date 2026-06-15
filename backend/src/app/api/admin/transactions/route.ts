@@ -1,4 +1,6 @@
 // src/app/api/admin/transactions/route.ts
+export const dynamic = 'force-dynamic'; // prevent Next.js caching — filters must always reach the DB
+
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { requireAdmin, adminUnauthorized } from '@/lib/auth/admin';
@@ -21,30 +23,34 @@ export async function GET(req: NextRequest) {
       : type as any
     : undefined;
 
-  const txns = await prisma.transaction.findMany({
-    where: {
-      AND: [
-        q ? {
-          OR: [
-            { mpesaRef:   { contains: q } },
-            { description:{ contains: q, mode: 'insensitive' } },
-            { user: { OR: [
-              { phone: { contains: q } },
-              { name:  { contains: q, mode: 'insensitive' } },
-            ]}},
-          ],
-        } : {},
-        typeFilter ? { type: typeFilter } : {},
-        status ? { status: status as any } : {},
-      ],
-    },
-    include: { user: { select: { name: true, phone: true } } },
-    orderBy: { createdAt: 'desc' },
-    skip: (page - 1) * limit,
-    take: limit,
-  });
+  // Build WHERE once — used by both findMany and count so pagination is accurate
+  const where = {
+    AND: [
+      q ? {
+        OR: [
+          { mpesaRef:    { contains: q } },
+          { description: { contains: q, mode: 'insensitive' as const } },
+          { user: { OR: [
+            { phone: { contains: q } },
+            { name:  { contains: q, mode: 'insensitive' as const } },
+          ]}},
+        ],
+      } : {},
+      typeFilter ? { type: typeFilter } : {},
+      status ? { status: status as any } : {},
+    ],
+  };
 
-  const total = await prisma.transaction.count();
+  const [txns, total] = await Promise.all([
+    prisma.transaction.findMany({
+      where,
+      include: { user: { select: { name: true, phone: true } } },
+      orderBy: { createdAt: 'desc' },
+      skip:    (page - 1) * limit,
+      take:    limit,
+    }),
+    prisma.transaction.count({ where }),  // filtered count for correct pagination
+  ]);
 
   return NextResponse.json({
     transactions: txns.map(t => ({
