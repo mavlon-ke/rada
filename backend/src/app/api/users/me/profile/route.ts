@@ -1,6 +1,10 @@
 // src/app/api/users/me/profile/route.ts
 // PATCH /api/users/me/profile — Update name, agreedToTerms, confirmedAge
-// Called by rada-auth.html after new user completes registration step
+// Called by rada-auth.html after new user completes registration step (compliance only).
+// Also called by rada-portfolio.html for voluntary name setting / clearing.
+//
+// Name clearing: sending name: "" (empty string) sets name to null.
+// This returns the user to masked-phone display on leaderboard, challenges, etc.
 
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
@@ -10,7 +14,7 @@ import { sanitizeText } from '@/lib/security/middleware';
 import { withErrorHandling } from '@/lib/security/route-guard';
 
 const ProfileSchema = z.object({
-  name:          z.string().min(2).max(80).optional(),
+  name:          z.string().max(80).optional(),   // empty string allowed → clears name
   agreedToTerms: z.boolean().optional(),
   confirmedAge:  z.boolean().optional(),
 });
@@ -45,8 +49,19 @@ export const PATCH = withErrorHandling(async (req: NextRequest) => {
   }
 
   const updates: Record<string, unknown> = {};
-  if (parsed.data.name)          updates.name          = sanitizeText(parsed.data.name);
-  if (parsed.data.agreedToTerms) updates.agreedToTerms = true; // can only set to true, never false
+
+  // Name: undefined = not changing, "" = clear to null, any string = set
+  if (parsed.data.name !== undefined) {
+    const trimmed = parsed.data.name.trim();
+    if (trimmed.length === 0) {
+      updates.name = null;                         // clear — user returns to masked phone display
+    } else if (trimmed.length < 2) {
+      return NextResponse.json({ error: 'Name must be at least 2 characters' }, { status: 400 });
+    } else {
+      updates.name = sanitizeText(trimmed);
+    }
+  }
+  if (parsed.data.agreedToTerms) updates.agreedToTerms = true;  // can only set to true, never false
   if (parsed.data.confirmedAge)  updates.confirmedAge  = true;
 
   if (Object.keys(updates).length === 0) {
@@ -56,7 +71,12 @@ export const PATCH = withErrorHandling(async (req: NextRequest) => {
   const updated = await prisma.user.update({
     where:  { id: user.id },
     data:   updates,
-    select: { id: true, phone: true, name: true, agreedToTerms: true, confirmedAge: true, kycStatus: true, referralCode: true, balanceKes: true, bonusBalanceKes: true },
+    select: {
+      id: true, phone: true, name: true,
+      agreedToTerms: true, confirmedAge: true,
+      kycStatus: true, referralCode: true,
+      balanceKes: true, bonusBalanceKes: true,
+    },
   });
 
   return NextResponse.json({ success: true, user: updated });

@@ -12,6 +12,7 @@ import { requireAuth } from '@/lib/auth/session';
 
 import { randomInt } from 'crypto';
 import { createNotification } from '@/lib/notifications';
+import { displayName }        from '@/lib/user/display-name';
 
 const MAX_STAKE = 20000;  // KES 20,000 per person (Social Challenge cap)
 const MIN_STAKE = 20;     // KES 20 minimum
@@ -209,11 +210,11 @@ export async function POST(req: NextRequest) {
     userId:  challengerB.id,
     type:    'CHALLENGE_OPPONENT_STAKED',
     title:   '⚡ You\'ve been challenged!',
-    message: `${user.name ?? 'Someone'} challenged you on "${question.slice(0, 70)}..." Stake: KES ${stakePerPerson.toLocaleString()}. Code: ${accessCode}`,
+    message: `${displayName(user.name, user.phone)} challenged you on "${question.slice(0, 70)}..." Stake: KES ${stakePerPerson.toLocaleString()}. Code: ${accessCode}`,
     link:    `/join/${accessCode}`,
     whatsapp: {
       template:   'CHALLENGE_OPPONENT_STAKED',
-      parameters: [user.name ?? 'Someone', stakePerPerson.toLocaleString()],
+      parameters: [displayName(user.name, user.phone), stakePerPerson.toLocaleString()],
     },
   });
 
@@ -224,11 +225,11 @@ export async function POST(req: NextRequest) {
         userId:  referee.id,
         type:    'REFEREE_NOMINATED',
         title:   '⚖ You\'ve been nominated as referee',
-        message: `${user.name ?? 'Someone'} nominated you to referee "${question.slice(0, 60)}..." Code: ${accessCode}`,
+        message: `${displayName(user.name, user.phone)} nominated you to referee "${question.slice(0, 60)}..." Code: ${accessCode}`,
         link:    `/rada-friends.html`,
         whatsapp: {
           template:   'REFEREE_NOMINATED',
-          parameters: [user.name ?? 'Someone'],
+          parameters: [displayName(user.name, user.phone)],
         },
       });
     }
@@ -269,5 +270,12 @@ export async function GET(req: NextRequest) {
     },
   });
 
-  return NextResponse.json({ challenges });
+  return NextResponse.json({
+    challenges: challenges.map(c => ({
+      ...c,
+      userA:   c.userA   ? { ...c.userA,   name: displayName(c.userA.name,   c.userA.phone)   } : null,
+      userB:   c.userB   ? { ...c.userB,   name: displayName(c.userB.name,   c.userB.phone)   } : null,
+      referee: c.referee ? { ...c.referee, name: displayName(c.referee.name, c.referee.phone) } : null,
+    })),
+  });
 }

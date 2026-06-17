@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { prisma } from '@/lib/db/prisma';
 import { requireAuth } from '@/lib/auth/session';
 import { generateUniqueSlug, buildMarketShareUrl } from '@/lib/market/slug';
+import { maskPhone, displayName }                  from '@/lib/user/display-name';
 
 // ─── GET /api/markets ─────────────────────────────────────────────────────────
 
@@ -78,7 +79,7 @@ export async function GET(req: NextRequest) {
       tradeCount:      m._count.orders,
       shareUrl:        buildMarketShareUrl(m.slug, null),
       // Suppress creator badge for admin-created markets (system user)
-      creatorShareUrl: m.creator.id !== systemUserId ? buildMarketShareUrl(m.slug, m.creator.phone) : buildMarketShareUrl(m.slug, null),
+      creatorShareUrl: m.creator.id !== systemUserId ? buildMarketShareUrl(m.slug, maskPhone(m.creator.phone)) : buildMarketShareUrl(m.slug, null),
       isAdminMarket:   m.creator.id === systemUserId,
       isSocialChallenge: false,
     };
@@ -96,8 +97,8 @@ export async function GET(req: NextRequest) {
         status:   { in: ['ACTIVE', 'PENDING_JOIN'] },
       },
       include: {
-        userA: { select: { name: true } },
-        userB: { select: { name: true } },
+        userA: { select: { name: true, phone: true } },
+        userB: { select: { name: true, phone: true } },
       },
       orderBy: { createdAt: 'desc' },
       take: 10,
@@ -116,8 +117,8 @@ export async function GET(req: NextRequest) {
       accessCode:       ch.accessCode,
       stakePerPerson:   Number(ch.stakePerPerson),
       totalPool:        Number(ch.totalPool),
-      participantA:     ch.userA?.name ?? 'Challenger A',
-      participantB:     ch.userB?.name ?? 'Challenger B',
+      participantA:     displayName(ch.userA?.name, ch.userA?.phone) ?? 'Challenger A',
+      participantB:     displayName(ch.userB?.name, ch.userB?.phone) ?? 'Challenger B',
       closesAt:         ch.eventExpiresAt,
       shareUrl:         `${process.env.NEXT_PUBLIC_BASE_URL}/join/${ch.accessCode}`,
     }));
@@ -183,6 +184,6 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({
     market,
     shareUrl:        buildMarketShareUrl(slug, null),
-    creatorShareUrl: buildMarketShareUrl(slug, market.creator.phone),
+    creatorShareUrl: buildMarketShareUrl(slug, maskPhone(market.creator.phone)),
   }, { status: 201 });
 }

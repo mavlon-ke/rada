@@ -8,10 +8,15 @@
 //      exaggeration because staked amounts were never subtracted.
 //   2. winRate mixed units: PAYOUT count (per market) ÷ Order count (per trade).
 //      Now computed from resolved Position records: wins ÷ total resolved.
+//
+// Display name:
+//   name field uses displayName() helper — shows real name if set, masked phone
+//   (e.g. 0722***397) if not. Never exposes full phone on the public leaderboard.
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma }                    from '@/lib/db/prisma';
 import { requireAuth }               from '@/lib/auth/session';
+import { displayName }               from '@/lib/user/display-name';
 
 export async function GET(req: NextRequest) {
   const user   = await requireAuth(req);
@@ -69,10 +74,10 @@ export async function GET(req: NextRequest) {
     if (pos.market.outcome === pos.side) entry.wins++;
   }
 
-  // ── 4. User names ──────────────────────────────────────────────────────────
+  // ── 4. User display names — name + phone for displayName() helper ──────────
   const users   = await prisma.user.findMany({
     where:  { id: { in: userIds } },
-    select: { id: true, name: true },
+    select: { id: true, name: true, phone: true },  // phone needed for masked fallback
   });
   const userMap = new Map(users.map(u => [u.id, u]));
 
@@ -93,7 +98,7 @@ export async function GET(req: NextRequest) {
 
       return {
         userId:       row.userId,
-        name:         u?.name ?? `Trader #${row.userId.slice(0, 4)}`,
+        name:         displayName(u?.name, u?.phone),  // masked phone if no name
         profit:       parseFloat(profit.toFixed(2)),
         volume:       parseFloat(totalStaked.toFixed(2)),
         trades:       tradeCount,

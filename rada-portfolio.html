@@ -1249,6 +1249,41 @@ nav a.active { color: #8b5cf6 !important; background: rgba(109,40,217,0.12) !imp
     </div>
 
   </div>
+
+  <!-- ── ACCOUNT SETTINGS — Display Name ─────────────────────────────────── -->
+  <div style="margin:24px 0 8px;">
+    <div class="stats-card" style="padding:20px 16px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+        <div class="card-title" style="margin:0;">Display Name</div>
+        <div style="font-size:0.7rem;color:var(--text-dim);">Optional · shown on leaderboard</div>
+      </div>
+      <div style="font-size:0.72rem;color:var(--text-dim);margin-bottom:14px;" id="nameCurrentDisplay">
+        Currently showing as: <span id="nameCurrentVal" style="color:var(--text);font-weight:600;">—</span>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <input
+          id="displayNameInput"
+          type="text"
+          placeholder="e.g. Baraka Mwangi (optional)"
+          maxlength="80"
+          style="flex:1;min-width:160px;padding:9px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:0.82rem;outline:none;"
+        >
+        <button
+          onclick="saveDisplayName()"
+          style="padding:9px 16px;border-radius:8px;background:var(--purple,#6d28d9);color:#fff;border:none;font-size:0.8rem;font-weight:600;cursor:pointer;white-space:nowrap;">
+          Save
+        </button>
+        <button
+          onclick="clearDisplayName()"
+          style="padding:9px 14px;border-radius:8px;background:var(--bg3);color:var(--text-dim);border:1px solid var(--border);font-size:0.8rem;cursor:pointer;white-space:nowrap;"
+          title="Remove name — you will show as a masked phone number">
+          Clear
+        </button>
+      </div>
+      <div id="nameMsg" style="margin-top:8px;font-size:0.72rem;display:none;"></div>
+    </div>
+  </div>
+
 </div>
 
 <script>
@@ -1265,6 +1300,9 @@ var CHART_DATA = {
 };
 
 function loadPortfolioData() {
+  // Init display name section
+  initDisplayNameSection();
+
   // 0. Show wallet balance immediately from localStorage, then refresh from API
   var wEl = document.getElementById('walletVal');
   if (wEl && radaUser && radaUser.balanceKes !== undefined) {
@@ -1676,7 +1714,66 @@ window.addEventListener('resize', () => drawChart(currentPeriod));
 
 
 
-<script>function logOut(){localStorage.removeItem('rada_user');localStorage.removeItem('rada_token');closeAccountTray();window.location.href='rada-auth.html';}</script>
+<script>// ── Display name management ───────────────────────────────────────────────────
+function maskPhone(phone) {
+  if (!phone) return '0***';
+  var local = phone.startsWith('254') ? '0' + phone.slice(3) : phone;
+  if (local.length < 7) return local.slice(0, 2) + '***';
+  return local.slice(0, 4) + '***' + local.slice(-3);
+}
+
+function initDisplayNameSection() {
+  var stored = null;
+  try { stored = JSON.parse(localStorage.getItem('rada_user') || 'null'); } catch(e) {}
+  if (!stored) return;
+  var input = document.getElementById('displayNameInput');
+  var curVal = document.getElementById('nameCurrentVal');
+  if (input && stored.name) input.value = stored.name;
+  if (curVal) curVal.textContent = stored.name || maskPhone(stored.phone) || '—';
+}
+
+function saveDisplayName() {
+  var input = document.getElementById('displayNameInput');
+  var msg   = document.getElementById('nameMsg');
+  var val   = (input ? input.value : '').trim();
+  if (val && val.length < 2) {
+    if (msg) { msg.textContent = 'Name must be at least 2 characters.'; msg.style.color = '#ce1126'; msg.style.display = 'block'; }
+    return;
+  }
+  var token = localStorage.getItem('rada_token') || '';
+  if (!token) return;
+  fetch(API_BASE + '/api/users/me/profile', {
+    method:      'PATCH',
+    headers:     { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+    credentials: 'include',
+    body:        JSON.stringify({ name: val }),
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    if (d.success) {
+      var stored = null;
+      try { stored = JSON.parse(localStorage.getItem('rada_user') || 'null'); } catch(e) {}
+      if (stored) { stored.name = d.user.name; localStorage.setItem('rada_user', JSON.stringify(stored)); }
+      var curVal = document.getElementById('nameCurrentVal');
+      if (curVal) curVal.textContent = d.user.name || maskPhone(stored && stored.phone) || '—';
+      if (msg) { msg.textContent = val ? 'Name saved!' : 'Name cleared — showing as masked number.'; msg.style.color = '#16a34a'; msg.style.display = 'block'; }
+      setTimeout(function() { if (msg) msg.style.display = 'none'; }, 3000);
+    } else {
+      if (msg) { msg.textContent = d.error || 'Could not save.'; msg.style.color = '#ce1126'; msg.style.display = 'block'; }
+    }
+  })
+  .catch(function() {
+    if (msg) { msg.textContent = 'Network error. Try again.'; msg.style.color = '#ce1126'; msg.style.display = 'block'; }
+  });
+}
+
+function clearDisplayName() {
+  var input = document.getElementById('displayNameInput');
+  if (input) input.value = '';
+  saveDisplayName();
+}
+
+function logOut(){localStorage.removeItem('rada_user');localStorage.removeItem('rada_token');closeAccountTray();window.location.href='rada-auth.html';}</script>
 
 <div class="m-bot-nav" id="mBotNav"><button class="m-bot-item" id="botHomeBtn" onclick="botHomeClick()"><span class="mbi">🏠</span><span>Home</span></button><button class="m-bot-item" id="botSearchBtn" onclick="botSearchClick()"><span class="mbi">🔍</span><span>Search Events</span></button><button class="m-bot-fab" onclick="openPredictSheet()"><div class="m-fab-circle">✦<div class="m-fab-badge" id="mFabBadge">0</div></div><span>Predict</span></button><button class="m-bot-item" id="botLiveBtn" onclick="botLiveClick()"><span class="mbi">📡</span><span>Live</span></button><button class="m-bot-item" id="botAccountBtn" onclick="openAccountTray()"><span class="mbi">👤</span><span>Account</span></button></div>
 <div class="notif-overlay" id="notifOverlay" onclick="if(event.target===this)closeNotifTray()"><div class="notif-tray"><div class="notif-tray-head"><div class="notif-tray-title">🔔 Notifications</div><button class="notif-mark-read" onclick="markAllRead()">Mark all read</button></div><div class="notif-tray-body" id="notifTrayBody"><div class="notif-empty">Loading...</div></div></div></div>

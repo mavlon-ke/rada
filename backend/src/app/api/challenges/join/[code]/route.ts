@@ -6,6 +6,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { requireAuth } from '@/lib/auth/session';
 import { createNotification } from '@/lib/notifications';
+import { displayName }        from '@/lib/user/display-name';
 
 
 export async function GET(
@@ -15,8 +16,8 @@ export async function GET(
   const challenge = await prisma.marketChallenge.findUnique({
     where: { accessCode: params.code.toUpperCase() },
     include: {
-      userA:   { select: { name: true } },
-      referee: { select: { name: true } },
+      userA:   { select: { name: true, phone: true } },
+      referee: { select: { name: true, phone: true } },
     },
   });
 
@@ -31,9 +32,9 @@ export async function GET(
     stakePerPerson: challenge.stakePerPerson,
     eventExpiresAt: challenge.eventExpiresAt,
     validatorType:  challenge.validatorType,
-    createdBy:      challenge.userA.name ?? 'Anonymous',
+    createdBy:      displayName(challenge.userA.name, challenge.userA.phone),
     hasReferee:     !!challenge.refereeId,
-    refereeName:    challenge.referee?.name ?? null,
+    refereeName:    challenge.referee ? displayName(challenge.referee.name, challenge.referee.phone) : null,
   });
 }
 
@@ -97,11 +98,11 @@ export async function POST(
     userId:  challenge.userAId,
     type:    'CHALLENGE_OPPONENT_STAKED',
     title:   '🤝 Challenge accepted',
-    message: `${user.name ?? 'Someone'} accepted your challenge "${challenge.question.slice(0, 50)}..." Pool: KES ${Number(updated.totalPool).toLocaleString()}`,
+    message: `${displayName(user.name, user.phone)} accepted your challenge "${challenge.question.slice(0, 50)}..." Pool: KES ${Number(updated.totalPool).toLocaleString()}`,
     link:    `/rada-friends.html`,
     whatsapp: {
       template:   'CHALLENGE_OPPONENT_STAKED',
-      parameters: [user.name ?? 'Someone', Number(updated.totalPool).toLocaleString()],
+      parameters: [displayName(user.name, user.phone), Number(updated.totalPool).toLocaleString()],
     },
   });
 

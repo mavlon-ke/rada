@@ -6,6 +6,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { requireAuth } from '@/lib/auth/session';
 import { createNotification } from '@/lib/notifications';
+import { displayName } from '@/lib/user/display-name';
 
 
 export async function GET(req: NextRequest) {
@@ -21,7 +22,20 @@ export async function GET(req: NextRequest) {
     orderBy: { createdAt: 'desc' },
   });
 
-  return NextResponse.json({ queue });
+  // Apply displayName — referee sees masked phone for nameless challengers
+  const mappedQueue = queue.map(c => ({
+    ...c,
+    userA: c.userA ? {
+      ...c.userA,
+      name: displayName(c.userA.name, c.userA.phone),
+    } : null,
+    userB: c.userB ? {
+      ...c.userB,
+      name: displayName(c.userB.name, c.userB.phone),
+    } : null,
+  }));
+
+  return NextResponse.json({ queue: mappedQueue });
 }
 
 // POST /api/users/me/referee-queue  body: { challengeId, action: 'ACCEPT' | 'DECLINE' }

@@ -359,16 +359,6 @@ body::after{content:'';position:fixed;top:-200px;left:50%;transform:translateX(-
               <div class="step-dot active"></div>
             </div>
 
-            <!-- Name field -->
-            <div class="form-group" style="margin-bottom:16px;">
-              <label class="field-label" for="nameInput" style="font-size:0.72rem;font-weight:700;color:#7c6fa0;margin-bottom:6px;display:block;">Your Name <span style="color:#CE1126;">*</span></label>
-              <input class="phone-input" type="text" id="nameInput"
-                placeholder="e.g. Baraka Mwangi"
-                style="font-size:0.88rem;"
-                maxlength="50">
-              <div id="nameErr" class="err-msg" style="display:none;">Please enter your name to continue.</div>
-            </div>
-
             <div class="compliance-section">
               <div class="comp-label">Legal Agreement Required</div>
 
@@ -565,10 +555,10 @@ function verifyOTP() {
       document.getElementById('step2').style.display = 'none';
 
       // Detect new vs returning from API response (no name = new user)
-      const isExistingUser = user && user.name;
+      const isExistingUser = user && user.agreedToTerms;
 
       if (isExistingUser) {
-        document.getElementById('sv-title').textContent = 'Welcome back' + (user.name ? ', ' + user.name.split(' ')[0] + '!' : '!');
+        document.getElementById('sv-title').textContent = 'Welcome back 🎉';
         document.getElementById('sv-sub').innerHTML = 'Great to see you again. Your portfolio and open forecasts are waiting.<br><br>Your phone number is your CheckRada identity.';
         document.getElementById('sv-cta-primary').textContent = 'Go to My Dashboard →';
         document.getElementById('sv-cta-primary').onclick = function() { window.location = 'rada-dashboard.html'; };
@@ -583,10 +573,6 @@ function verifyOTP() {
         document.getElementById('step3').style.display = '';
         var backBtn = document.getElementById('authBackBtn');
         if (backBtn) backBtn.style.display = 'none';
-        setTimeout(function() {
-          var nameEl = document.getElementById('nameInput');
-          if (nameEl) nameEl.focus();
-        }, 200);
       }
     })
     .catch(function() {
@@ -620,42 +606,31 @@ function goBack(showId, hideId) {
 
 // ── COMPLIANCE ────────────────────────────────────────────────────────────────
 function completeRegistration() {
-  const nameVal = (document.getElementById('nameInput').value || '').trim();
   const age     = document.getElementById('chkAge').checked;
   const terms   = document.getElementById('chkTerms').checked;
-  const nameErr = document.getElementById('nameErr');
   const compErr = document.getElementById('complianceErr');
 
-  // Validate name
-  if (!nameVal) {
-    nameErr.style.display = 'block';
-    document.getElementById('nameInput').focus();
-    return;
-  }
-  nameErr.style.display = 'none';
-
-  // Validate compliance
+  // Validate compliance checkboxes
   if (!age || !terms) { compErr.style.display = 'block'; return; }
   compErr.style.display = 'none';
 
-  // Save name + compliance to backend, update local cache
+  // Save compliance to backend, update local cache
   var storedUser = null;
   try { storedUser = JSON.parse(localStorage.getItem('rada_user') || 'null'); } catch(e) {}
   const token = localStorage.getItem('rada_token') || '';
 
-  // Update name on backend (fire and forget — don't block UI)
+  // Update compliance on backend (fire and forget — don't block UI)
   if (token) {
     fetch(API_BASE + '/api/users/me/profile', {
       method:      'PATCH',
       headers:     { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
       credentials: 'include',
-      body:        JSON.stringify({ name: nameVal, agreedToTerms: true, confirmedAge: true }),
+      body:        JSON.stringify({ agreedToTerms: true, confirmedAge: true }),
     }).catch(function() {});
   }
 
   // Update local cache
   if (storedUser) {
-    storedUser.name          = nameVal;
     storedUser.agreedToTerms = true;
     storedUser.confirmedAge  = true;
     localStorage.setItem('rada_user', JSON.stringify(storedUser));
@@ -663,7 +638,7 @@ function completeRegistration() {
 
   // Show new user success screen
   document.getElementById('step3').style.display = 'none';
-  document.getElementById('sv-title').textContent = 'Welcome, ' + nameVal + '! 🎉';
+  document.getElementById('sv-title').textContent = 'Welcome to CheckRada! 🎉';
   document.getElementById('sv-sub').innerHTML = 'Your account is live. Start by exploring markets and making your first forecast.<br><br>Your phone number is your CheckRada identity.';
   document.getElementById('sv-cta-primary').textContent = 'Browse Markets →';
   document.getElementById('sv-cta-primary').onclick = function() { window.location = 'rada-markets.html'; };
@@ -688,7 +663,7 @@ function validateReferralCode(code) {
   }).then(r => r.json()).then(d => {
     if (d.valid) {
       validatedReferralCode = code.trim().toUpperCase();
-      if (statusEl) statusEl.innerHTML = '<span style="color:#16a34a;font-weight:700;">✅ Valid! ' + d.referrerName + ' referred you. You both get KES ' + d.refereeMatchKes + ' bonus.</span>';
+      if (statusEl) statusEl.innerHTML = '<span style="color:#16a34a;font-weight:700;">✅ Valid! Your friend referred you!</span>';
     } else {
       validatedReferralCode = null;
       if (statusEl) statusEl.innerHTML = '<span style="color:#ce1126;">❌ Invalid code</span>';

@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { requireAuth } from '@/lib/auth/session';
+import { displayName } from '@/lib/user/display-name';
 
 export async function GET(req: NextRequest) {
   const user = await requireAuth(req);
@@ -11,7 +12,7 @@ export async function GET(req: NextRequest) {
     prisma.referralConfig.findUnique({ where: { id: 'singleton' } }),
     prisma.referral.findMany({
       where:   { referrerId: user.id },
-      include: { referee: { select: { name: true, createdAt: true } } },
+      include: { referee: { select: { name: true, phone: true, createdAt: true } } },
       orderBy: { createdAt: 'desc' },
     }),
   ]);
@@ -31,11 +32,18 @@ export async function GET(req: NextRequest) {
 
   return NextResponse.json({
     referralCode,
-    referrals,
+    referrals: referrals.map(r => ({
+      ...r,
+      referee: r.referee ? {
+        // Apply displayName — referrer sees masked phone if referee has no name
+        name:      displayName(r.referee.name, r.referee.phone),
+        createdAt: r.referee.createdAt,
+      } : null,
+    })),
     totalReferred: referrals.length,
     totalEarned,
     shareMessage,
-    programmeActive: config?.active ?? false,
+    programmeActive:   config?.active ?? false,
     referrerRewardKes: Number(config?.referrerRewardKes ?? 50),
     refereeRewardKes:  refereeReward,
   });

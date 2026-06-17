@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { buildMarketShareUrl } from '@/lib/market/slug';
+import { maskPhone }           from '@/lib/user/display-name';
 
 export async function GET(
   req: NextRequest,
@@ -46,7 +47,7 @@ export async function GET(
       noPrice:         parseFloat((1 - yesPrice).toFixed(4)),
       tradeCount:      market._count.orders,
       shareUrl:        buildMarketShareUrl(market.slug, null),
-      creatorShareUrl: buildMarketShareUrl(market.slug, market.creator.phone),
+      creatorShareUrl: buildMarketShareUrl(market.slug, maskPhone(market.creator.phone)),
     },
   });
 
