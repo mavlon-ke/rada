@@ -662,7 +662,7 @@ function validateReferralCode(code) {
     if (statusEl) statusEl.textContent = '';
     return;
   }
-  fetch('/api/referrals/validate', {
+  fetch(API_BASE + '/api/referrals/validate', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ code: code.trim().toUpperCase() })
