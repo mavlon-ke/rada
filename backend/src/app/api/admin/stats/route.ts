@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'; // stats change on every referral/deposit — never serve stale cache
+
 // src/app/api/admin/stats/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';

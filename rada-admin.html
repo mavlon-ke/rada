@@ -1796,6 +1796,55 @@ body::after {
           <div class="stat-card"><div class="stat-label">Total Paid Out</div><div class="stat-val" id="rStatPaid">—</div></div>
         </div>
       </div>
+
+      <!-- Individual Referral Records -->
+      <div class="stat-card" style="margin-top:16px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+          <div style="font-size:0.78rem;font-weight:800;color:#1a1035;">Referral Records</div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <input type="text" id="refSearchInput" placeholder="Search phone or name…"
+              style="padding:6px 10px;border-radius:8px;border:1px solid var(--border);font-size:0.75rem;background:var(--bg2);color:var(--text);width:180px;"
+              oninput="loadReferrals(1)">
+            <select id="refStatusFilter"
+              style="padding:6px 10px;border-radius:8px;border:1px solid var(--border);font-size:0.75rem;background:var(--bg2);color:var(--text);"
+              onchange="loadReferrals(1)">
+              <option value="">All Status</option>
+              <option value="PENDING">Pending</option>
+              <option value="QUALIFIED">Qualified</option>
+              <option value="REWARDED">Rewarded</option>
+              <option value="FLAGGED">Flagged</option>
+            </select>
+          </div>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="data-table" style="min-width:560px;">
+            <thead>
+              <tr>
+                <th>Referrer</th>
+                <th>Referee</th>
+                <th>Status</th>
+                <th>Referrer Reward</th>
+                <th>Referee Bonus</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody id="referralTableBody">
+              <tr><td colspan="6" style="text-align:center;color:var(--text-dim);padding:20px;">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;">
+          <div style="font-size:0.7rem;color:var(--text-dim);" id="refPaginationInfo"></div>
+          <div style="display:flex;gap:6px;">
+            <button onclick="loadReferrals(refCurrentPage - 1)"
+              style="padding:5px 12px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:0.72rem;cursor:pointer;"
+              id="refPrevBtn">← Prev</button>
+            <button onclick="loadReferrals(refCurrentPage + 1)"
+              style="padding:5px 12px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:0.72rem;cursor:pointer;"
+              id="refNextBtn">Next →</button>
+          </div>
+        </div>
+      </div>
     </div>
 
   </div><!-- /content -->
@@ -4759,6 +4808,76 @@ function loadReferralConfig() {
     if (p)  p.textContent  = rs.pendingReferrals || 0;
     if (pa) pa.textContent = 'KES ' + (rs.totalPaidKes || 0).toLocaleString();
   }).catch(function(){});
+
+  // Load individual referral records
+  loadReferrals(1);
+}
+
+var refCurrentPage = 1;
+
+function loadReferrals(page) {
+  if (page < 1) return;
+  refCurrentPage = page;
+  var q      = (document.getElementById('refSearchInput')   || {}).value || '';
+  var status = (document.getElementById('refStatusFilter')  || {}).value || '';
+  var tbody  = document.getElementById('referralTableBody');
+  if (tbody) tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-dim);padding:16px;">Loading…</td></tr>';
+
+  var qs = '?page=' + page;
+  if (q)      qs += '&q='      + encodeURIComponent(q);
+  if (status) qs += '&status=' + encodeURIComponent(status);
+
+  adminFetch('/api/admin/referrals' + qs)
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      var rows = d.referrals || [];
+      var total = d.total || 0;
+      var pages = d.pages || 1;
+
+      // Status badge colours
+      var statusColor = {
+        PENDING:   { bg:'#fef3c7', color:'#92400e' },
+        QUALIFIED: { bg:'#dbeafe', color:'#1e40af' },
+        REWARDED:  { bg:'#dcfce7', color:'#166534' },
+        FLAGGED:   { bg:'#fee2e2', color:'#991b1b' },
+      };
+
+      if (!rows.length) {
+        if (tbody) tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-dim);padding:20px;">No referrals found.</td></tr>';
+      } else {
+        if (tbody) tbody.innerHTML = rows.map(function(r) {
+          var sc  = statusColor[r.status] || { bg:'#f3f4f6', color:'#374151' };
+          var ref = r.referrer ? (r.referrer.name || r.referrer.phone) : '—';
+          var ree = r.referee  ? (r.referee.name  || r.referee.phone)  : '—';
+          var refPhone = r.referrer ? r.referrer.phone : '';
+          var reePhone = r.referee  ? r.referee.phone  : '';
+          var date = r.createdAt ? new Date(r.createdAt).toLocaleDateString('en-KE') : '—';
+          return '<tr>'
+            + '<td><div style="font-size:0.78rem;font-weight:600;">' + esc(ref) + '</div>'
+            + (refPhone && refPhone !== ref ? '<div style="font-size:0.65rem;color:var(--text-dim);">' + esc(refPhone) + '</div>' : '')
+            + '</td>'
+            + '<td><div style="font-size:0.78rem;font-weight:600;">' + esc(ree) + '</div>'
+            + (reePhone && reePhone !== ree ? '<div style="font-size:0.65rem;color:var(--text-dim);">' + esc(reePhone) + '</div>' : '')
+            + '</td>'
+            + '<td><span style="padding:2px 8px;border-radius:10px;font-size:0.65rem;font-weight:700;background:' + sc.bg + ';color:' + sc.color + ';">' + r.status + '</span></td>'
+            + '<td style="font-size:0.78rem;">' + (r.referrerRewardKes > 0 ? 'KES ' + r.referrerRewardKes : '—') + '</td>'
+            + '<td style="font-size:0.78rem;">' + (r.refereeRewardKes  > 0 ? 'KES ' + r.refereeRewardKes  : '—') + '</td>'
+            + '<td style="font-size:0.72rem;color:var(--text-dim);">' + date + '</td>'
+            + '</tr>';
+        }).join('');
+      }
+
+      // Pagination info
+      var info = document.getElementById('refPaginationInfo');
+      if (info) info.textContent = total + ' referral' + (total !== 1 ? 's' : '') + ' · Page ' + page + ' of ' + pages;
+      var prev = document.getElementById('refPrevBtn');
+      var next = document.getElementById('refNextBtn');
+      if (prev) prev.disabled = page <= 1;
+      if (next) next.disabled = page >= pages;
+    })
+    .catch(function() {
+      if (tbody) tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#ce1126;padding:16px;">Error loading referrals.</td></tr>';
+    });
 }
 
 function updateReferralPreview() {

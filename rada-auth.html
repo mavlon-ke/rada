@@ -529,7 +529,13 @@ function verifyOTP() {
   if (verifyBtn) { verifyBtn.textContent = 'Verifying…'; verifyBtn.disabled = true; }
 
   const payload = { phone: currentFullPhone, code: otp };
-  if (validatedReferralCode) payload.referralCode = validatedReferralCode;
+  // Use validatedReferralCode if async validation has already resolved.
+  // Fall back to raw input value to avoid race condition where the user clicks
+  // Verify before the async validateReferralCode() fetch returns.
+  // The backend (otp/verify) independently validates the code regardless.
+  var rawReferralInput = ((document.getElementById('referralCodeInput') || {}).value || '').trim().toUpperCase();
+  var referralCodeToSend = validatedReferralCode || (rawReferralInput.length >= 4 ? rawReferralInput : null);
+  if (referralCodeToSend) payload.referralCode = referralCodeToSend;
 
   fetch(API_BASE + '/api/auth/otp/verify', {
     method:      'POST',

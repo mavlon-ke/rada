@@ -51,8 +51,10 @@ export async function GET(
       // Referrer (user who referred this user)
       let referrer: { id:string; name:string|null; phone:string } | null = null;
       if (user.referredBy) {
-        referrer = await prisma.user.findFirst({
-          where:  { referralCode: user.referredBy },
+        // user.referredBy stores the referrer's USER ID (set by otp/verify).
+        // Previous code incorrectly queried by referralCode — now uses id.
+        referrer = await prisma.user.findUnique({
+          where:  { id: user.referredBy },
           select: { id: true, name: true, phone: true },
         });
       }
