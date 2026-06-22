@@ -120,6 +120,9 @@ export async function POST(
   const totalFeesCollected = Math.floor(Number(ordersAgg._sum.forecastingFeeKes ?? 0));
   const marketSurplus      = Math.max(0, realPoolBalance - totalPayouts);
 
+  // Declared outside transaction so it's accessible in console.log and response
+  let creatorRoyaltyPaid = 0;
+
   // ── Atomic resolution transaction ────────────────────────────────────────
   await prisma.$transaction(async (tx) => {
     // 1. Mark market resolved
@@ -193,7 +196,6 @@ export async function POST(
       where:  { marketId: market.id },
       select: { bountyEarned: true, creatorId: true, paidOut: true },
     });
-    let creatorRoyaltyPaid = 0;
     if (bounty && bounty.creatorId && Number(bounty.bountyEarned) >= 1 && Number(bounty.paidOut) === 0) {
       creatorRoyaltyPaid = Number(bounty.bountyEarned);
 

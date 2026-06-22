@@ -88,6 +88,10 @@ export async function POST(
     })
     .filter(c => c.paidKes >= 1);
 
+  // Declared outside transaction so both are accessible in logAdminAction
+  let royaltyClawedKes = 0;
+  let royaltyShortfall = 0;
+
   // ── Atomic reversal ──────────────────────────────────────────────────────
   const clawbackResults = await prisma.$transaction(async (tx) => {
     const results: Array<{
@@ -143,8 +147,8 @@ export async function POST(
       where:  { marketId: market.id },
       select: { bountyEarned: true, creatorId: true, paidOut: true },
     });
-    let royaltyClawedKes = 0;
-    let royaltyShortfall = 0;
+    royaltyClawedKes = 0;
+    royaltyShortfall = 0;
     if (bounty && bounty.creatorId && Number(bounty.paidOut) >= 1) {
       const paidOut = Number(bounty.paidOut);
 
