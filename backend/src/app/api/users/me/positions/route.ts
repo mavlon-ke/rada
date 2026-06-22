@@ -2,6 +2,9 @@
 // Returns two arrays:
 //   positions       — active open positions (shares > 0, market not CANCELLED)
 //   voidedPositions — positions on voided markets, shown in My Forecasts with VOIDED badge
+//
+// Uses only plain arrays and objects (no Map/Set iteration) to stay compatible
+// with this project's TypeScript target (no explicit target → defaults to ES3).
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
@@ -24,8 +27,8 @@ export async function GET(req: NextRequest) {
   });
 
   const enriched = positions.map(p => {
-    const yesPrice    = getYesPrice(Number(p.market.yesPool), Number(p.market.noPool));
-    const currentProb = p.side === 'YES' ? yesPrice : 1 - yesPrice;
+    const yesPrice      = getYesPrice(Number(p.market.yesPool), Number(p.market.noPool));
+    const currentProb   = p.side === 'YES' ? yesPrice : 1 - yesPrice;
     const currentValue  = Number(p.shares) * currentProb;
     const costBasis     = Number(p.shares) * Number(p.avgPrice);
     const unrealizedPnl = currentValue - costBasis;
@@ -39,10 +42,10 @@ export async function GET(req: NextRequest) {
       unrealizedPnl: parseFloat(unrealizedPnl.toFixed(2)),
       market: {
         ...p.market,
-        yesPrice:  parseFloat(yesPrice.toFixed(4)),
-        noPrice:   parseFloat((1 - yesPrice).toFixed(4)),
-        yesPool:   Number(p.market.yesPool),
-        noPool:    Number(p.market.noPool),
+        yesPrice: parseFloat(yesPrice.toFixed(4)),
+        noPrice:  parseFloat((1 - yesPrice).toFixed(4)),
+        yesPool:  Number(p.market.yesPool),
+        noPool:   Number(p.market.noPool),
       },
     };
   });
@@ -58,8 +61,11 @@ export async function GET(req: NextRequest) {
     include: {
       market: {
         select: {
-          id: true, title: true, status: true, category: true,
-          updatedAt: true,   // proxy for void timestamp
+          id:        true,
+          title:     true,
+          status:    true,
+          category:  true,
+          updatedAt: true,  // proxy for void timestamp
         },
       },
     },
@@ -67,8 +73,12 @@ export async function GET(req: NextRequest) {
     take:    20,  // cap at 20 — rare event, not worth paginating
   });
 
-  // Get gross stakes from Orders so we can show "Refunded KES X" in the badge
-  const voidedMarketIds = [...new Set(voidedRaw.map(p => p.market.id))];
+  // Deduplicate market IDs using filter — avoids Set spread (ES target compat)
+  const voidedMarketIds = voidedRaw
+    .map(p => p.market.id)
+    .filter((id, index, arr) => arr.indexOf(id) === index);
+
+  // Fetch gross stakes from Orders so we can show "Refunded KES X" in the badge
   const voidedOrders = voidedMarketIds.length > 0
     ? await prisma.order.groupBy({
         by:    ['marketId'],
@@ -77,15 +87,17 @@ export async function GET(req: NextRequest) {
       })
     : [];
 
-  const stakeByMarket = new Map(
-    voidedOrders.map(o => [o.marketId, Math.round(Number(o._sum.amountKes ?? 0))])
-  );
+  // Build lookup using plain object — avoids Map constructor tuple-type inference
+  const stakeByMarket: Record<string, number> = {};
+  for (const o of voidedOrders) {
+    stakeByMarket[o.marketId] = Math.round(Number(o._sum.amountKes ?? 0));
+  }
 
   const voidedPositions = voidedRaw.map(p => ({
-    id:            p.id,
-    side:          p.side,
-    voidedAt:      p.market.updatedAt,
-    refundedKes:   stakeByMarket.get(p.market.id) ?? 0,
+    id:          p.id,
+    side:        p.side,
+    voidedAt:    p.market.updatedAt,
+    refundedKes: stakeByMarket[p.market.id] ?? 0,
     market: {
       id:       p.market.id,
       title:    p.market.title,

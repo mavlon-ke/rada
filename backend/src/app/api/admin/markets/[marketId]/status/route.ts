@@ -107,7 +107,7 @@ export async function POST(
       });
 
       // 2. Full refund to each user
-      for (const [userId, refund] of refundMap.entries()) {
+      for (const [userId, refund] of Array.from(refundMap.entries())) {
         const realRefund  = refund.gross - refund.bonus;  // return to main balance
         const bonusRefund = refund.bonus;                  // return to bonus balance
 
@@ -170,7 +170,7 @@ export async function POST(
       ? market.title.slice(0, 77) + '...'
       : market.title;
 
-    for (const [userId, refund] of refundMap.entries()) {
+    for (const [userId, refund] of Array.from(refundMap.entries())) {
       void createNotification({
         userId,
         type:    'MARKET_RESOLVED',
