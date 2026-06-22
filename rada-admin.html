@@ -3304,18 +3304,20 @@ function pauseMarket(marketId, title) {
 
 // Cancel a market — refunds all positions
 function cancelMarket(marketId, title) {
-  if (!confirm('CANCEL market: ' + title + '?\n\nAll positions will be fully refunded. This cannot be undone.')) return;
+  if (!confirm('VOID market: ' + title + '?\n\nAll participants will receive a full refund including trading fees. This cannot be undone.')) return;
+  var reason = window.prompt('Reason for voiding this market (shown to users):');
+  if (reason === null) return; // admin cancelled the prompt
   adminFetch('/api/admin/markets/' + marketId + '/status', {
     method: 'POST',
-    body:   JSON.stringify({ action: 'CANCEL' }),
+    body:   JSON.stringify({ action: 'CANCEL', reason: reason.trim() || 'Admin decision' }),
   })
   .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
   .then(function(res) {
     if (res.ok) {
-      showToast('Market cancelled. ' + (res.d.refundedUsers || 0) + ' users refunded.');
+      showToast('Market voided. ' + (res.d.refundedUsers || 0) + ' users issued full refunds.');
       loadMarketsTable();
     } else {
-      alert('Error: ' + (res.d.error || 'Could not cancel market.'));
+      alert('Error: ' + (res.d.error || 'Could not void market.'));
     }
   })
   .catch(function() { alert('Network error. Please try again.'); });

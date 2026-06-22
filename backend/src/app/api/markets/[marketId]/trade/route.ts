@@ -3,7 +3,8 @@
 // Creator royalty (admin-tunable, default 0.5%) is carved from the 5% fee — only when
 // market totalVolume >= configured threshold (default KES 1,000) AND creator is not a system/admin user.
 // Net amount entering AMM = stake - 5% fee (always).
-// When royalty applies: platform keeps fee minus royalty; creator gets royalty. Pool unaffected.
+// Option B: royalty wallet credit is DEFERRED to resolve time (not paid per-trade).
+// bountyEarned counter increments per-trade for live dashboard display only.
 // Wallet-first payment: real balance used first, then bonus balance.
 //
 // Referral programme:
@@ -176,10 +177,10 @@ export async function POST(
     //      - trader IS the creator (anti-self-dealing), OR
     //      - market's creator is an ADMIN role user (admin-created markets), OR
     //      - market's volume hasn't crossed the threshold yet.
-    //    Double-counting fix: when royalty fires, ALSO write a negative
-    //    PlatformRevenue row of type CREATOR_ROYALTY_PAID. The resolve flow
-    //    sums all forecastingFeeKes as FORECASTING_FEE revenue; without this
-    //    offset, the books overstate platform revenue by the royalty amount.
+    //    Option B: royalty wallet credit is DEFERRED to resolve time.
+    //    Both the wallet credit and the CREATOR_ROYALTY_PAID PlatformRevenue offset
+    //    are written atomically at resolution — see resolve/route.ts step 4b.
+    //    bountyEarned counter increments here for live dashboard display only.
     const updatedMarket = await tx.market.findUnique({
       where:  { id: market.id },
       select: {
@@ -200,11 +201,9 @@ export async function POST(
     ) {
       creatorRoyaltyKes = Math.floor(netAmount * creatorRoyaltyRate);
       if (creatorRoyaltyKes >= 1) {
-        // Credit creator from the fee — carved out of platform's 5% take
-        await tx.user.update({
-          where: { id: updatedMarket.creatorId },
-          data:  { balanceKes: { increment: creatorRoyaltyKes } },
-        });
+        // Option B: wallet credit is DEFERRED to resolve time.
+        // bountyEarned counter increments here so the creator dashboard
+        // shows live earnings during trading. No money moves until resolution.
         await tx.creatorBounty.upsert({
           where:  { marketId: market.id },
           update: { tradeVolume: { increment: netAmount }, bountyEarned: { increment: creatorRoyaltyKes } },
@@ -216,15 +215,8 @@ export async function POST(
             active:       true,
           },
         });
-        // Negative PlatformRevenue offset — accounting integrity.
-        await tx.platformRevenue.create({
-          data: {
-            marketId:    market.id,
-            type:        'CREATOR_ROYALTY_PAID',
-            amountKes:   -creatorRoyaltyKes,
-            description: `Creator royalty paid on "${market.title.slice(0,60)}" — offsets the FORECASTING_FEE recorded at resolve.`,
-          },
-        });
+        // NOTE: wallet credit and PlatformRevenue CREATOR_ROYALTY_PAID offset
+        // are both written atomically at resolve time — see resolve/route.ts step 4b.
       }
     }
 

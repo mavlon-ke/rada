@@ -136,12 +136,65 @@ export async function POST(
       results.push({ userId: c.userId, phone: c.phone, paidKes: c.paidKes, clawedKes, shortfall });
     }
 
+    // 1b. Creator royalty clawback — reverse what was paid at resolve time.
+    //     Uses paidOut field (set by Option B resolve) as the exact amount to recover.
+    //     If paidOut = 0 (pre-Option-B market), no clawback — nothing was deferred.
+    const bounty = await tx.creatorBounty.findUnique({
+      where:  { marketId: market.id },
+      select: { bountyEarned: true, creatorId: true, paidOut: true },
+    });
+    let royaltyClawedKes = 0;
+    let royaltyShortfall = 0;
+    if (bounty && bounty.creatorId && Number(bounty.paidOut) >= 1) {
+      const paidOut = Number(bounty.paidOut);
+
+      const freshCreator = await tx.user.findUnique({
+        where:  { id: bounty.creatorId },
+        select: { balanceKes: true },
+      });
+      const creatorBal = Math.max(0, Number(freshCreator?.balanceKes ?? 0));
+      royaltyClawedKes = Math.min(paidOut, creatorBal);
+      royaltyShortfall = paidOut - royaltyClawedKes;
+
+      if (royaltyClawedKes > 0) {
+        const updatedCreator = await tx.user.update({
+          where: { id: bounty.creatorId },
+          data:  { balanceKes: { decrement: royaltyClawedKes } },
+        });
+        await tx.transaction.create({
+          data: {
+            userId:      bounty.creatorId,
+            type:        'REFUND',
+            amountKes:   -royaltyClawedKes,
+            balAfter:    Number(updatedCreator.balanceKes),
+            status:      'SUCCESS',
+            description: `Creator royalty clawback — resolution of "${market.title.slice(0, 80)}" reversed. `
+              + `KES ${paidOut} reclaimed${royaltyShortfall > 0 ? ` (KES ${royaltyShortfall} could not be recovered — already withdrawn)` : ''}.`,
+          },
+        });
+      }
+
+      // Reset paidOut so re-resolution starts clean
+      await tx.creatorBounty.update({
+        where: { marketId: market.id },
+        data:  { paidOut: 0, lastPaidAt: null },
+      });
+
+      if (royaltyShortfall > 0) {
+        console.warn(
+          `[UNRESOLVE] Creator royalty shortfall on market ${market.id}: ` +
+          `KES ${royaltyShortfall} could not be recovered (already withdrawn).`
+        );
+      }
+    }
+
     // 2. Delete platform revenue records for this resolution
+    // Includes FORECASTING_FEE, MARKET_SURPLUS, and CREATOR_ROYALTY_PAID rows.
     await tx.platformRevenue.deleteMany({
       where: { marketId: market.id },
     });
 
-    // 3. Reactivate creator bounty
+    // 3. Reactivate creator bounty (bountyEarned counter preserved for re-resolution)
     await tx.creatorBounty.updateMany({
       where: { marketId: market.id, active: false },
       data:  { active: true, deactivatedAt: null },
@@ -173,12 +226,14 @@ export async function POST(
     market.id,
     {
       originalOutcome,
-      title:         market.title,
-      clawbackCount: clawbacks.length,
+      title:              market.title,
+      clawbackCount:      clawbacks.length,
       totalPaidOut,
       totalClawed,
       totalShortfall,
-      partialUsers:  partialClawbacks.map(r => r.phone),
+      partialUsers:       partialClawbacks.map(r => r.phone),
+      royaltyClawedKes,
+      royaltyShortfall,
     },
     req
   );

@@ -1289,7 +1289,8 @@ nav a.active { color: #8b5cf6 !important; background: rgba(109,40,217,0.12) !imp
 <script>
 // ── DATA ──────────────────────────────────────────────────────────────────────
 
-var POSITIONS = [];
+var POSITIONS        = [];
+var VOIDED_POSITIONS = [];
 var TRANSACTIONS = [];
 
 // Hardcoded chart data as fallback; overwritten by loadPortfolioHistory()
@@ -1352,6 +1353,7 @@ function loadPortfolioData() {
       ovVal.textContent = 'KES ' + Math.round(totalVal).toLocaleString();
     }
 
+    VOIDED_POSITIONS = d.voidedPositions || [];
     renderPositions();
   })
   .catch(function() { renderPositions(); });
@@ -1466,6 +1468,20 @@ function renderPositions() {
     return;
   }
 
+  // Voided markets — append below active positions
+  const voidedHtml = VOIDED_POSITIONS.map(function(v) {
+    return '<div class="position-item" style="opacity:0.75;">' +
+      '<div class="pos-top">' +
+        '<div class="pos-market" style="flex:1;font-size:0.78rem;">' + v.market.title + '</div>' +
+        '<span class="pos-badge" style="background:#fef3c7;color:#92400e;border-color:#fde68a;font-size:0.62rem;">VOIDED</span>' +
+      '</div>' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;padding-top:6px;border-top:1px solid var(--border);">' +
+        '<span style="font-size:0.72rem;color:var(--text-dim);">' + v.side + ' forecast</span>' +
+        '<span style="font-size:0.75rem;font-weight:700;color:#16a34a;">↩ KES ' + (v.refundedKes || 0).toLocaleString() + ' refunded</span>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+
   el.innerHTML = POSITIONS.map(p => {
     const currentVal = p.shares * p.currentProb;
     const pnl = currentVal - p.staked;
@@ -1503,7 +1519,8 @@ function renderPositions() {
         </div>
       </div>
     </div>`;
-  }).join('');
+  }).join('') + voidedHtml;
+  if (!POSITIONS.length && !VOIDED_POSITIONS.length) renderPositions();
 }
 
 // ── RENDER TRANSACTIONS ───────────────────────────────────────────────────────

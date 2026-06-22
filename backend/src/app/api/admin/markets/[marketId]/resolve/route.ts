@@ -185,6 +185,53 @@ export async function POST(
       });
     }
 
+    // 4b. Creator royalty — deferred from per-trade to resolve time (Option B).
+    //     bountyEarned accumulated per-trade as a live counter.
+    //     At resolve: pay the full accumulated amount, book the PlatformRevenue offset.
+    //     Guard: paidOut === 0 ensures idempotency — safe to call twice.
+    const bounty = await tx.creatorBounty.findUnique({
+      where:  { marketId: market.id },
+      select: { bountyEarned: true, creatorId: true, paidOut: true },
+    });
+    let creatorRoyaltyPaid = 0;
+    if (bounty && bounty.creatorId && Number(bounty.bountyEarned) >= 1 && Number(bounty.paidOut) === 0) {
+      creatorRoyaltyPaid = Number(bounty.bountyEarned);
+
+      const updatedCreator = await tx.user.update({
+        where: { id: bounty.creatorId },
+        data:  { balanceKes: { increment: creatorRoyaltyPaid } },
+      });
+
+      await tx.transaction.create({
+        data: {
+          userId:      bounty.creatorId,
+          type:        'CREATOR_BOUNTY',
+          amountKes:   creatorRoyaltyPaid,
+          balAfter:    Number(updatedCreator.balanceKes),
+          status:      'SUCCESS',
+          description: `Creator royalty paid at resolution — "${market.title.slice(0, 80)}". `
+            + `KES ${creatorRoyaltyPaid} earned from KES ${Math.round(Number(market.totalVolume))} volume.`,
+        },
+      });
+
+      await tx.creatorBounty.update({
+        where: { marketId: market.id },
+        data:  { paidOut: creatorRoyaltyPaid, lastPaidAt: new Date() },
+      });
+
+      // Negative PlatformRevenue offset — royalty is carved out of forecasting fees.
+      // Both this and FORECASTING_FEE are booked atomically here at resolve time.
+      await tx.platformRevenue.create({
+        data: {
+          marketId:    market.id,
+          type:        'CREATOR_ROYALTY_PAID',
+          amountKes:   -creatorRoyaltyPaid,
+          description: `Creator royalty paid at resolution — "${market.title.slice(0, 80)}". `
+            + `Offsets FORECASTING_FEE. KES ${creatorRoyaltyPaid}.`,
+        },
+      });
+    }
+
     // 5. Deactivate creator bounty
     await tx.creatorBounty.updateMany({
       where: { marketId: market.id, active: true },
@@ -198,7 +245,8 @@ export async function POST(
     `Cut: KES ${platformCut} (${(resolutionCutRate*100).toFixed(1)}% of losers), ` +
     `Distributable: KES ${distributable}, Payouts: KES ${totalPayouts}, ` +
     `Surplus: KES ${marketSurplus}. ` +
-    `Winners: ${payouts.length}, Losers: ${losingPositions.length}.`
+    `Winners: ${payouts.length}, Losers: ${losingPositions.length}. ` +
+    `Creator royalty: KES ${creatorRoyaltyPaid}.`
   );
 
   // ── Notifications (fire-and-forget, outside transaction) ─────────────────
@@ -239,9 +287,10 @@ export async function POST(
     winnersCount:    payouts.length,
     totalPayoutKes:  totalPayouts,
     platformRevenue: {
-      forecastingFees: totalFeesCollected,
+      forecastingFees:  totalFeesCollected,
       marketSurplus,
-      total:           totalFeesCollected + marketSurplus,
+      creatorRoyalty:   creatorRoyaltyPaid,
+      total:            totalFeesCollected + marketSurplus - creatorRoyaltyPaid,
     },
   });
 }
