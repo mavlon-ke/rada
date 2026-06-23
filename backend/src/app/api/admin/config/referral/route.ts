@@ -9,6 +9,7 @@ const ConfigSchema = z.object({
   referrerRewardKes: z.number().min(0).max(10000),
   refereeMatchKes:   z.number().min(0).max(10000),
   minDepositKes:     z.number().min(0).max(10000),
+  minTradeKes:       z.number().min(0).max(10000),
 });
 
 export async function GET(req: NextRequest) {

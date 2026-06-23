@@ -90,13 +90,6 @@ export async function POST(
       throw new Error('Insufficient bonus balance');
     }
 
-    // ── First-trade detection — required for referrer payout below.
-    //    Counted BEFORE this trade's order is created, so a return value of 0 means
-    //    "this is the user's first trade." Order count is a fast lookup with the
-    //    orders(userId) index already in place.
-    const previousOrderCount = await tx.order.count({ where: { userId: user.id } });
-    const isFirstTrade = previousOrderCount === 0;
-
     // AMM calculation
     const yesPool = Number(market.yesPool);
     const noPool  = Number(market.noPool);
@@ -220,12 +213,10 @@ export async function POST(
       }
     }
 
-    // ── Referrer reward on referee's first trade — delegated to service.
-    //    Service handles config read, status check, payout, and PENDING -> REWARDED.
-    let referrerPayout = { paid: 0, referrerId: null as string | null };
-    if (isFirstTrade) {
-      referrerPayout = await payReferrerOnFirstTrade(tx, user.id);
-    }
+    // ── Referrer reward — delegated to service on every trade.
+    //    Service checks cumulative deposit + trade volume milestones internally.
+    //    Fast no-op for most trades (early-returns if not PENDING or thresholds not met).
+    const referrerPayout = await payReferrerOnFirstTrade(tx, user.id);
 
     return {
       order,

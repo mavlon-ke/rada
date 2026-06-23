@@ -94,20 +94,20 @@ export const POST = withErrorHandling(async (req: NextRequest) => {
       where: { referralCode: referralCode.toUpperCase().trim() },
     });
     if (referrer && referrer.id !== user.id) {
-      const config = await prisma.referralConfig.findUnique({ where: { id: 'singleton' } });
-      if (config?.active) {
-        await prisma.$transaction(async (tx) => {
-          await tx.user.update({
-            where: { id: user.id },
-            data:  { referredBy: referrer.id },
-          });
-          await tx.referral.upsert({
-            where:  { refereeId: user.id },
-            create: { referrerId: referrer.id, refereeId: user.id, status: 'PENDING' },
-            update: {},
-          });
+      // Always create referral tracking row — even when programme is paused.
+      // Bonus crediting is gated on config.active inside the service functions,
+      // so toggling OFF stops payouts without losing the referral record.
+      await prisma.$transaction(async (tx) => {
+        await tx.user.update({
+          where: { id: user.id },
+          data:  { referredBy: referrer.id },
         });
-      }
+        await tx.referral.upsert({
+          where:  { refereeId: user.id },
+          create: { referrerId: referrer.id, refereeId: user.id, status: 'PENDING' },
+          update: {},
+        });
+      });
     }
   }
 

@@ -1751,19 +1751,29 @@ body::after {
           <div>
             <div class="stat-label" style="margin-bottom:5px;">Referrer Reward (KES)</div>
             <input class="table-input" type="number" id="referrerRewardInput" value="50" min="0" max="10000" oninput="updateReferralPreview()">
-            <div style="font-size:0.6rem;color:#9284b8;margin-top:4px;">Credited to referrer as bonus balance</div>
+            <div style="font-size:0.6rem;color:#9284b8;margin-top:4px;">Credited to referrer as real withdrawable balance</div>
           </div>
           <div>
             <div class="stat-label" style="margin-bottom:5px;">Referee Match Cap (KES)</div>
             <input class="table-input" type="number" id="refereeMatchInput" value="100" min="0" max="10000" oninput="updateReferralPreview()">
-            <div style="font-size:0.6rem;color:#9284b8;margin-top:4px;">Max bonus on referee's first forecast</div>
+            <div style="font-size:0.6rem;color:#9284b8;margin-top:4px;">Non-withdrawable bonus credited on first qualifying deposit</div>
           </div>
         </div>
 
-        <div style="margin-bottom:16px;">
-          <div class="stat-label" style="margin-bottom:5px;">Minimum Deposit to Qualify (KES)</div>
-          <input class="table-input" type="number" id="minDepositInput" value="100" min="0" style="max-width:220px;">
-          <div style="font-size:0.6rem;color:#9284b8;margin-top:4px;">Referee must deposit at least this amount before reward fires</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+          <div>
+            <div class="stat-label" style="margin-bottom:5px;">Minimum Deposit (KES)</div>
+            <input class="table-input" type="number" id="minDepositInput" value="100" min="0" oninput="checkReferralThresholds()">
+            <div style="font-size:0.6rem;color:#9284b8;margin-top:4px;">Referee must reach this total deposit before bonus is credited</div>
+          </div>
+          <div>
+            <div class="stat-label" style="margin-bottom:5px;">Minimum Trade Volume (KES)</div>
+            <input class="table-input" type="number" id="minTradeInput" value="100" min="0" oninput="checkReferralThresholds()">
+            <div style="font-size:0.6rem;color:#9284b8;margin-top:4px;">Referee must reach this total trade volume before referrer is paid</div>
+          </div>
+        </div>
+        <div id="referralThresholdWarning" style="display:none;background:#fef3c7;border:1px solid #fde68a;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:0.72rem;color:#92400e;">
+          ⚠️ <strong>Scam risk:</strong> Minimum trade is below minimum deposit. A user could deposit, collect the bonus, then withdraw before trading. Set minimum trade ≥ minimum deposit.
         </div>
 
         <div style="background:#f0edff;border-radius:10px;padding:12px 14px;margin-bottom:16px;">
@@ -4792,11 +4802,14 @@ function loadReferralConfig() {
     var r = document.getElementById('referrerRewardInput');
     var m = document.getElementById('refereeMatchInput');
     var md = document.getElementById('minDepositInput');
+    var mt = document.getElementById('minTradeInput');
     if (t) t.checked = cfg.active !== false;
     if (r) r.value = cfg.referrerRewardKes || 50;
     if (m) m.value = cfg.refereeMatchKes || 100;
     if (md) md.value = cfg.minDepositKes || 100;
+    if (mt) mt.value = cfg.minTradeKes || 100;
     updateReferralPreview();
+    checkReferralThresholds();
   }).catch(function(){});
 
   adminFetch('/api/admin/stats').then(function(r){ return r.json(); }).then(function(d) {
@@ -4888,6 +4901,13 @@ function updateReferralPreview() {
   }
 }
 
+function checkReferralThresholds() {
+  var dep   = parseFloat((document.getElementById('minDepositInput') || {value:100}).value) || 0;
+  var trade = parseFloat((document.getElementById('minTradeInput')   || {value:100}).value) || 0;
+  var warn  = document.getElementById('referralThresholdWarning');
+  if (warn) warn.style.display = (trade < dep && trade > 0) ? 'block' : 'none';
+}
+
 function toggleReferralMaster(cb) {
   var lbl = document.getElementById('referralStatusLabel');
   if (lbl) { lbl.textContent = cb.checked ? 'ACTIVE' : 'PAUSED'; lbl.style.color = cb.checked ? '#16a34a' : '#ce1126'; }
@@ -4897,12 +4917,13 @@ function saveReferralConfig() {
   var active   = document.getElementById('referralMasterToggle') ? document.getElementById('referralMasterToggle').checked : true;
   var referrer = parseFloat((document.getElementById('referrerRewardInput') || {value:50}).value);
   var referee  = parseFloat((document.getElementById('refereeMatchInput')   || {value:100}).value);
-  var minDep   = parseFloat((document.getElementById('minDepositInput')     || {value:100}).value);
+  var minDep   = parseFloat((document.getElementById('minDepositInput')  || {value:100}).value);
+  var minTrade = parseFloat((document.getElementById('minTradeInput')     || {value:100}).value);
   var statusEl = document.getElementById('referralSaveStatus');
   if (statusEl) statusEl.textContent = 'Saving...';
   adminFetch('/api/admin/config/referral', {
     method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ active: active, referrerRewardKes: referrer, refereeMatchKes: referee, minDepositKes: minDep })
+    body: JSON.stringify({ active: active, referrerRewardKes: referrer, refereeMatchKes: referee, minDepositKes: minDep, minTradeKes: minTrade })
   }).then(function(){ if (statusEl) statusEl.textContent = '✅ Saved at ' + new Date().toLocaleTimeString(); })
     .catch(function(){ if (statusEl) statusEl.textContent = '✅ Config saved (connect backend to persist)'; });
 }

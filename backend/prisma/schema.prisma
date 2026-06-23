@@ -278,6 +278,7 @@ model ReferralConfig {
   referrerRewardKes Decimal  @default(50)  @db.Decimal(10,2)
   refereeMatchKes   Decimal  @default(100) @db.Decimal(10,2)
   minDepositKes     Decimal  @default(100) @db.Decimal(10,2)
+  minTradeKes       Decimal  @default(100) @db.Decimal(10,2)
   updatedAt         DateTime @updatedAt
 
   @@map("referral_config")
