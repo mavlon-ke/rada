@@ -35,10 +35,6 @@ const CreateSchema = z.object({
   mpesaAmountKes:    z.number().min(0).optional(),  // amount via M-Pesa STK push
 });
 
-function normalisePhone(phone: string): string {
-  return phone.replace(/\D/g, '').replace(/^0/, '254');
-}
-
 async function generateAccessCode(): Promise<string> {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   let code: string;
