@@ -13,6 +13,11 @@ import { requireAuth } from '@/lib/auth/session';
 import { randomInt } from 'crypto';
 import { createNotification } from '@/lib/notifications';
 import { displayName }        from '@/lib/user/display-name';
+import {
+  chargeMpesa,
+  generateReference,
+  normalisePhone,
+} from '@/lib/paystack/paystack.service';
 
 const MAX_STAKE = 20000;  // KES 20,000 per person (Social Challenge cap)
 const MIN_STAKE = 20;     // KES 20 minimum
@@ -129,6 +134,10 @@ export async function POST(req: NextRequest) {
 
   const accessCode = await generateAccessCode();
 
+  // Hoisted outside transaction so they're accessible for STK push rollback
+  let actualRealUsedOut  = 0;
+  let actualBonusUsedOut = 0;
+
   // ── Atomic transaction ────────────────────────────────────────────────────
   const challenge = await prisma.$transaction(async (tx) => {
     const u = await tx.user.findUnique({ where: { id: user.id } });
@@ -139,6 +148,9 @@ export async function POST(req: NextRequest) {
     const actualRealUsed  = Math.min(currentReal,  walletTotal);
     const actualBonusUsed = Math.min(currentBonus, Math.max(0, walletTotal - actualRealUsed));
     const actualWalletTotal = actualRealUsed + actualBonusUsed;
+    // Expose to outer scope for STK push rollback
+    actualRealUsedOut  = actualRealUsed;
+    actualBonusUsedOut = actualBonusUsed;
 
     // Validate sufficient wallet funds for the wallet portion
     if (actualWalletTotal < walletTotal) {
@@ -197,26 +209,93 @@ export async function POST(req: NextRequest) {
     return ch;
   });
 
-  // ── Trigger M-Pesa STK Push if shortfall ─────────────────────────────────
-  // Note: M-Pesa STK Push happens here when mpesaRequired > 0
-  // The mpesa/callback will update challenge status to PENDING_JOIN once payment confirmed
+  // ── Trigger M-Pesa STK Push for wallet shortfall ────────────────────────
+  // When the user's wallet doesn't fully cover the stake, we trigger an STK push
+  // for the shortfall. The webhook (charge.success) will move the challenge from
+  // PENDING_PAYMENT → PENDING_JOIN and notify Challenger B once payment is confirmed.
+  // On STK push failure: challenge is cancelled and wallet portion is refunded.
+  let stkMessage: string | null = null;
+
   if (mpesaRequired > 0) {
-    // TODO: Trigger STK Push via mpesa.service.ts for mpesaRequired amount
-    // await mpesaService.stkPush({ phone: freshUser.phone, amount: mpesaRequired, challengeId: challenge.id });
+    const ref          = generateReference('CHG');
+    const formattedPhone = normalisePhone(freshUser.phone);
+    const email        = `${formattedPhone.replace('+', '')}@checkrada.co.ke`;
+
+    try {
+      // Record the pending M-Pesa payment — webhook identifies it by mpesaRef
+      await prisma.transaction.create({
+        data: {
+          userId:      user.id,
+          challengeId: challenge.id,
+          type:        'CHALLENGE_STAKE',
+          amountKes:   mpesaRequired,
+          balAfter:    Number(freshUser.balanceKes) - actualRealUsedOut,
+          phone:       formattedPhone,
+          mpesaRef:    ref,
+          status:      'PENDING',
+          description: `Challenge M-Pesa payment: KES ${mpesaRequired} for "${question.slice(0, 50)}"`,
+        },
+      });
+
+      const stkResult = await chargeMpesa({
+        email,
+        amountKes:  mpesaRequired,
+        phone:      formattedPhone,
+        reference:  ref,
+        metadata: {
+          userId:      user.id,
+          challengeId: challenge.id,
+          platform:    'checkrada',
+          paymentType: 'challenge_stake',
+        },
+      });
+
+      stkMessage = stkResult.display_text || 'Check your phone for an M-Pesa prompt.';
+      console.log(`[Challenge] STK Push sent for challenge ${challenge.id} — KES ${mpesaRequired}`);
+
+    } catch (stkErr: any) {
+      // STK push failed — cancel the challenge and refund the wallet portion
+      console.error('[Challenge] STK Push failed:', stkErr.message);
+
+      await prisma.$transaction(async (tx) => {
+        await tx.marketChallenge.update({
+          where: { id: challenge.id },
+          data:  { status: 'CANCELLED' },
+        });
+        if (actualRealUsedOut > 0 || actualBonusUsedOut > 0) {
+          await tx.user.update({
+            where: { id: user.id },
+            data: {
+              ...(actualRealUsedOut  > 0 ? { balanceKes:      { increment: actualRealUsedOut  } } : {}),
+              ...(actualBonusUsedOut > 0 ? { bonusBalanceKes: { increment: actualBonusUsedOut } } : {}),
+            },
+          });
+        }
+      });
+
+      return NextResponse.json({
+        error: `Could not initiate M-Pesa payment: ${stkErr.message}. Your wallet balance has been refunded.`,
+      }, { status: 500 });
+    }
   }
 
-  // ── SMS notifications ─────────────────────────────────────────────────────
-  await createNotification({
-    userId:  challengerB.id,
-    type:    'CHALLENGE_OPPONENT_STAKED',
-    title:   '⚡ You\'ve been challenged!',
-    message: `${displayName(user.name, user.phone)} challenged you on "${question.slice(0, 70)}..." Stake: KES ${stakePerPerson.toLocaleString()}. Code: ${accessCode}`,
-    link:    `/join/${accessCode}`,
-    whatsapp: {
-      template:   'CHALLENGE_OPPONENT_STAKED',
-      parameters: [displayName(user.name, user.phone), stakePerPerson.toLocaleString()],
-    },
-  });
+  // ── Notifications ─────────────────────────────────────────────────────────
+  // Challenger B is only notified once the challenge is PENDING_JOIN.
+  // When mpesaRequired > 0, Challenger B will be notified from the webhook
+  // after M-Pesa confirms — otherwise they'd try to join a PENDING_PAYMENT challenge.
+  if (mpesaRequired === 0) {
+    await createNotification({
+      userId:  challengerB.id,
+      type:    'CHALLENGE_OPPONENT_STAKED',
+      title:   '⚡ You\'ve been challenged!',
+      message: `${displayName(user.name, user.phone)} challenged you on "${question.slice(0, 70)}..." Stake: KES ${stakePerPerson.toLocaleString()}. Code: ${accessCode}`,
+      link:    `/join/${accessCode}`,
+      whatsapp: {
+        template:   'CHALLENGE_OPPONENT_STAKED',
+        parameters: [displayName(user.name, user.phone), stakePerPerson.toLocaleString()],
+      },
+    });
+  }
 
   if (refereeId) {
     const referee = await prisma.user.findUnique({ where: { id: refereeId } });
@@ -241,6 +320,7 @@ export async function POST(req: NextRequest) {
     accessCode,
     shareUrl:       `${process.env.NEXT_PUBLIC_BASE_URL}/join/${accessCode}`,
     isPublic,
+    stkMessage,               // null when no M-Pesa needed; STK prompt text otherwise
     payment: {
       walletUsed:    walletTotal,
       realUsed:      realUsed,

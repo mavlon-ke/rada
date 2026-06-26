@@ -1875,10 +1875,30 @@ function createChallenge() {
   .then(function(res) {
     btn.disabled = false;
     if (res.ok && res.d.success && res.d.accessCode) {
-      var code = res.d.accessCode;
+      var code           = res.d.accessCode;
+      var mpesaPending   = res.d.payment && res.d.payment.mpesaRequired > 0;
+      var stkMsg         = res.d.stkMessage;
+
       document.getElementById('generatedCode').textContent = code;
       if (document.getElementById('challengeCode2')) document.getElementById('challengeCode2').textContent = code;
       if (breakdown) breakdown.textContent = '';
+
+      // Update success view title and sub based on payment state
+      var ssTitle = document.querySelector('#successView .ss-title');
+      var ssSub   = document.querySelector('#successView .ss-sub');
+      if (mpesaPending) {
+        if (ssTitle) ssTitle.textContent = 'Check Your Phone';
+        if (ssSub)   ssSub.innerHTML =
+          '<strong>📱 ' + (stkMsg || 'M-Pesa prompt sent') + '</strong><br><br>' +
+          'Enter your M-Pesa PIN to activate the challenge. ' +
+          'Your friend will be notified automatically once payment is confirmed.<br><br>' +
+          '<span style="color:var(--text-dim);font-size:0.8em;">Challenge code (valid once payment confirms):</span>';
+      } else {
+        if (ssTitle) ssTitle.textContent = 'Challenge Created! Share the Code.';
+        if (ssSub)   ssSub.textContent =
+          'Your stake has been locked. Share the invite code or link with your opponent — they must stake their side before the challenge is live.';
+      }
+
       document.getElementById('formView').style.display = 'none';
       document.getElementById('successView').style.display = 'block';
       loadChallenges();

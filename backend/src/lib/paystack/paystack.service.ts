@@ -218,7 +218,7 @@ export function verifyWebhookSignature(
 
 import { randomBytes } from 'crypto';
 
-export function generateReference(prefix: 'DEP' | 'WIT' | 'TRF'): string {
+export function generateReference(prefix: 'DEP' | 'WIT' | 'TRF' | 'CHG'): string {
   const rand = randomBytes(8).toString('hex').toUpperCase();
   return `CKR-${prefix}-${rand}`;
 }
