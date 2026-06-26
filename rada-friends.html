@@ -610,9 +610,9 @@ nav{padding:14px 24px;display:flex;align-items:center;justify-content:space-betw
   .modal-foot { position: relative; }
 }
 
-/* ── formView must flex so modal-body scrolls and footer stays pinned ── */
-#formView { display:flex; flex-direction:column; flex:1; overflow:hidden; min-height:0; }
-#successView { display:flex; flex-direction:column; flex:1; overflow-y:auto; }
+/* ── Inline form/success view ── */
+#formView { display:block; }
+#successView { display:none; }
 .modal-head { flex-shrink: 0; }
 .modal-body { flex:1; overflow-y:auto; min-height:0; -webkit-overflow-scrolling:touch; }
 .modal-foot { flex-shrink: 0; }
@@ -992,6 +992,14 @@ nav{padding:14px 24px;display:flex;align-items:center;justify-content:space-betw
   body { padding-top: 100px !important; }
 }
 
+/* ── Inline create card (replaces modal) ── */
+.create-card{background:var(--bg2);border:1px solid rgba(109,40,217,0.18);border-radius:18px;overflow:hidden;margin-bottom:32px;}
+.create-card-head{padding:18px 22px;border-bottom:1px solid rgba(109,40,217,0.10);display:flex;align-items:center;gap:12px;background:var(--purple-dim);}
+.create-card-icon{width:38px;height:38px;border-radius:10px;background:rgba(109,40,217,0.12);border:1px solid rgba(109,40,217,0.2);display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;}
+.create-card-title{font-weight:700;font-size:0.95rem;color:var(--purple);}
+.create-card-sub{font-size:0.72rem;color:var(--text-mid);margin-top:2px;}
+.create-card-body{padding:22px;}
+
 </style>
 <!-- Google Analytics GA4 -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-C7QXV6BHCN"></script>
@@ -1101,6 +1109,138 @@ nav{padding:14px 24px;display:flex;align-items:center;justify-content:space-betw
   <h1 class="page-title">Social Challenge.<br><em>Settle It Fairly.</em></h1>
   <p class="page-sub">Friendly disputes, fitness bets, work milestones. Create a private YES/NO challenge, nominate a Referee, and let M-Pesa handle the payout automatically — fairly and transparently.</p>
 
+  <!-- INLINE CREATE CHALLENGE FORM -->
+  <div class="create-card" id="inlineCreateCard">
+    <div class="create-card-head">
+      <div class="create-card-icon">🤝</div>
+      <div>
+        <div class="create-card-title">Create a Social Challenge</div>
+        <div class="create-card-sub">Private · 5% forecasting fee · Max KES 20,000 · Min KES 20</div>
+      </div>
+    </div>
+
+    <!-- FORM VIEW -->
+    <div id="formView" class="create-card-body">
+
+      <label class="mf-label">The Challenge Question</label>
+      <input class="mf-input" id="cfQuestion" placeholder="e.g. Will I beat Kamau in the 5km Parkrun this Saturday?">
+
+      <!-- Challenger A -->
+      <div class="mf-row">
+        <div>
+          <label class="mf-label">Your Name (Challenger A)</label>
+          <input class="mf-input" id="cfNameA" placeholder="Your name">
+        </div>
+        <div>
+          <label class="mf-label">Your Phone Number</label>
+          <div style="position:relative">
+            <input class="mf-input" id="cfPhoneA" placeholder="07XX XXX XXX" maxlength="12" oninput="validatePhone('cfPhoneA','phoneStatusA')">
+            <span id="phoneStatusA" class="phone-status"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Challenger B -->
+      <div class="mf-row">
+        <div>
+          <label class="mf-label">Friend's Name (Challenger B)</label>
+          <input class="mf-input" id="cfNameB" placeholder="Friend's name">
+        </div>
+        <div>
+          <label class="mf-label">Friend's Phone Number</label>
+          <div style="position:relative">
+            <input class="mf-input" id="cfPhoneB" placeholder="07XX XXX XXX" maxlength="12" oninput="validatePhone('cfPhoneB','phoneStatusB')">
+            <span id="phoneStatusB" class="phone-status"></span>
+          </div>
+          <div class="field-hint">Must be a registered CheckRada user</div>
+        </div>
+      </div>
+
+      <label class="mf-label">Stake Per Person</label>
+      <div class="stake-display">
+        <div class="sd-row">
+          <span class="sd-label">Each stakes</span>
+          <div class="stake-input-wrap">
+            <span class="stake-input-prefix">KES</span>
+            <input type="number" class="stake-direct-input" id="stakeDirectInput"
+              min="20" max="20000" value="500" placeholder="500"
+              oninput="syncStakeFromInput(this.value)"
+              onblur="clampStake(this)">
+          </div>
+        </div>
+        <input type="range" class="stake-range" id="stakeRangeF" min="20" max="20000" step="20" value="500" oninput="updateFriendStake(this.value)">
+        <div class="stake-limits"><span>KES 20 min</span><span>KES 20,000 max</span></div>
+      </div>
+
+      <div class="fee-preview" id="feePreview">
+        <div class="fp-row"><span class="fp-dimmed">Total pool</span><span id="fpPool">KES 1,000</span></div>
+        <div class="fp-row"><span class="fp-dimmed">Forecasting fee (5%)</span><span id="fpFee">KES 50</span></div>
+        <div class="fp-row"><span class="fp-dimmed fp-bold" style="color:var(--ke-green)">Winner receives</span><span id="fpWinner" style="color:var(--ke-green);font-family:var(--mono)">KES 950</span></div>
+        <div class="fp-row fp-dimmed" style="font-size:0.65rem;color:var(--text-dim);border:none;padding-top:4px;margin-top:0;">
+          <span>If tie: each refunded KES <span id="fpTie">490</span> (KES 10 processing fee each)</span>
+          <span>Dispute fee: 15%</span>
+        </div>
+      </div>
+
+      <label class="mf-label">Resolution Type</label>
+      <div class="res-type-grid">
+        <div class="res-type-btn selected" onclick="selectResType(this,'referee')" data-type="referee">
+          <div class="res-type-icon">⚖️</div>
+          <div class="res-type-label">Referee</div>
+        </div>
+        <div class="res-type-btn" onclick="selectResType(this,'timer')" data-type="timer">
+          <div class="res-type-icon">⏱️</div>
+          <div class="res-type-label">Timer</div>
+        </div>
+        <div class="res-type-btn" onclick="selectResType(this,'mutual')" data-type="mutual">
+          <div class="res-type-icon">🤝</div>
+          <div class="res-type-label">Mutual</div>
+        </div>
+      </div>
+
+      <div class="referee-note">
+        <strong>Referee:</strong> A trusted third party (must be a registered CheckRada user) who judges the outcome. Only the Referee can release funds — no collusion possible. Referee earns no fee but builds their Integrity Score.
+      </div>
+
+      <div class="referee-field show" id="refereeField">
+        <label class="mf-label">Referee's Phone Number</label>
+        <div style="position:relative">
+          <input class="mf-input" id="cfReferee" placeholder="07XX XXX XXX" maxlength="12" oninput="validatePhone('cfReferee','phoneStatusRef')">
+          <span id="phoneStatusRef" class="phone-status"></span>
+        </div>
+        <div class="field-hint">Referee must be a registered CheckRada user. They will receive an SMS nomination alert.</div>
+      </div>
+
+      <div id="timerField" style="display:none;">
+        <label class="mf-label">Auto-Resolve At</label>
+        <input class="mf-input" id="cfTimer" type="datetime-local">
+      </div>
+
+      <label class="mf-label">Resolution Deadline</label>
+      <input class="mf-input" id="cfDeadline" type="date">
+
+      <button class="btn-create" id="createBtn" onclick="createChallenge()">Create Challenge &amp; Pay via M-Pesa →</button>
+      <div id="challengeWalletBreakdown" style="text-align:center;font-size:0.65rem;color:#9284b8;margin:6px 0 4px;min-height:16px;line-height:1.5;"></div>
+      <div style="text-align:center;font-size:0.62rem;color:var(--text-dim);margin-top:4px;line-height:1.5;">
+        Peer-to-Peer Escrow · Funds held securely until resolution · By creating you agree to CheckRada Social Escrow Terms
+      </div>
+    </div>
+
+    <!-- SUCCESS VIEW (shown after challenge created) -->
+    <div id="successView" style="display:none;padding:28px 22px;text-align:center;">
+      <div class="ss-icon">🎉</div>
+      <div class="ss-title">Challenge Created! Share the Code.</div>
+      <div class="ss-sub">Your stake has been locked. Share the invite code or link with your opponent — they must stake their side before the challenge is live.</div>
+      <div class="ss-code-box" onclick="copyCode()">
+        <div class="ss-code-label">Your Challenge Code — tap to copy</div>
+        <div class="ss-code" id="generatedCode">K7X4P2</div>
+        <div class="ss-link">checkrada.co.ke/join/<span id="challengeSlug">marathon-challenge</span>?code=<span id="challengeCode2">K7X4P2</span></div>
+      </div>
+      <button class="btn-create" style="margin-bottom:8px" onclick="nativeChallengeShare()">⤴ Share Challenge</button>
+      <button class="btn-done" onclick="resetForm()">Done</button>
+    </div>
+  </div>
+
   <!-- TABS -->
   <div class="tab-row">
     <button class="tab active" onclick="switchTab(this,'my-challenges')">My Challenges</button>
@@ -1143,151 +1283,6 @@ nav{padding:14px 24px;display:flex;align-items:center;justify-content:space-betw
     <div class="challenge-grid" id="historyGrid"></div>
   </div>
 
-</div>
-
-<!-- FAB -->
-<button class="fab" onclick="openCreate()">+ New Challenge</button>
-
-<!-- CREATE MODAL -->
-<div class="modal-overlay" id="createModal">
-  <div class="modal">
-    <div class="modal-handle" onclick="closeModal('createModal')"></div>
-    <button class="modal-close-btn" onclick="closeModal('createModal')" aria-label="Close">✕</button>
-
-    <!-- FORM VIEW -->
-    <div id="formView">
-      <div class="modal-head">
-        <div class="modal-title">Create a Social Challenge</div>
-        <div class="modal-sub">Private · 5% forecasting fee · Max KES 20,000 · Min KES 20</div>
-      </div>
-      <div class="modal-body">
-
-        <label class="mf-label">The Challenge Question</label>
-        <input class="mf-input" id="cfQuestion" placeholder="e.g. Will I beat Kamau in the 5km Parkrun this Saturday?">
-
-        <!-- Challenger A -->
-        <div class="mf-row">
-          <div>
-            <label class="mf-label">Your Name (Challenger A)</label>
-            <input class="mf-input" id="cfNameA" placeholder="Your name">
-          </div>
-          <div>
-            <label class="mf-label">Your Phone Number</label>
-            <div style="position:relative">
-              <input class="mf-input" id="cfPhoneA" placeholder="07XX XXX XXX" maxlength="12" oninput="validatePhone('cfPhoneA','phoneStatusA')">
-              <span id="phoneStatusA" class="phone-status"></span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Challenger B -->
-        <div class="mf-row">
-          <div>
-            <label class="mf-label">Friend's Name (Challenger B)</label>
-            <input class="mf-input" id="cfNameB" placeholder="Friend's name">
-          </div>
-          <div>
-            <label class="mf-label">Friend's Phone Number</label>
-            <div style="position:relative">
-              <input class="mf-input" id="cfPhoneB" placeholder="07XX XXX XXX" maxlength="12" oninput="validatePhone('cfPhoneB','phoneStatusB')">
-              <span id="phoneStatusB" class="phone-status"></span>
-            </div>
-            <div class="field-hint">Must be a registered CheckRada user</div>
-          </div>
-        </div>
-
-        
-
-        <label class="mf-label">Stake Per Person</label>
-        <div class="stake-display">
-          <div class="sd-row">
-            <span class="sd-label">Each stakes</span>
-            <div class="stake-input-wrap">
-              <span class="stake-input-prefix">KES</span>
-              <input type="number" class="stake-direct-input" id="stakeDirectInput"
-                min="20" max="20000" value="500" placeholder="500"
-                oninput="syncStakeFromInput(this.value)"
-                onblur="clampStake(this)">
-            </div>
-          </div>
-          <input type="range" class="stake-range" id="stakeRangeF" min="20" max="20000" step="20" value="500" oninput="updateFriendStake(this.value)">
-          <div class="stake-limits"><span>KES 20 min</span><span>KES 20,000 max</span></div>
-        </div>
-
-        <div class="fee-preview" id="feePreview">
-          <div class="fp-row"><span class="fp-dimmed">Total pool</span><span id="fpPool">KES 1,000</span></div>
-          <div class="fp-row"><span class="fp-dimmed">Forecasting fee (5%)</span><span id="fpFee">KES 50</span></div>
-          <div class="fp-row"><span class="fp-dimmed fp-bold" style="color:var(--ke-green)">Winner receives</span><span id="fpWinner" style="color:var(--ke-green);font-family:var(--mono)">KES 950</span></div>
-          <div class="fp-row fp-dimmed" style="font-size:0.65rem;color:var(--text-dim);border:none;padding-top:4px;margin-top:0;">
-            <span>If tie: each refunded KES <span id="fpTie">490</span> (KES 10 processing fee each)</span>
-            <span>Dispute fee: 15%</span>
-          </div>
-        </div>
-
-        <label class="mf-label">Resolution Type</label>
-        <div class="res-type-grid">
-          <div class="res-type-btn selected" onclick="selectResType(this,'referee')" data-type="referee">
-            <div class="res-type-icon">⚖️</div>
-            <div class="res-type-label">Referee</div>
-          </div>
-          <div class="res-type-btn" onclick="selectResType(this,'timer')" data-type="timer">
-            <div class="res-type-icon">⏱️</div>
-            <div class="res-type-label">Timer</div>
-          </div>
-          <div class="res-type-btn" onclick="selectResType(this,'mutual')" data-type="mutual">
-            <div class="res-type-icon">🤝</div>
-            <div class="res-type-label">Mutual</div>
-          </div>
-        </div>
-
-        <div class="referee-note">
-          <strong>Referee:</strong> A trusted third party (must be a registered CheckRada user) who judges the outcome. Only the Referee can release funds — no collusion possible. Referee earns no fee but builds their Integrity Score.
-        </div>
-
-        <div class="referee-field show" id="refereeField">
-          <label class="mf-label">Referee's Phone Number</label>
-          <div style="position:relative">
-            <input class="mf-input" id="cfReferee" placeholder="07XX XXX XXX" maxlength="12" oninput="validatePhone('cfReferee','phoneStatusRef')">
-            <span id="phoneStatusRef" class="phone-status"></span>
-          </div>
-          <div class="field-hint">Referee must be a registered CheckRada user. They will receive an SMS nomination alert.</div>
-        </div>
-
-        <div id="timerField" style="display:none;">
-          <label class="mf-label">Auto-Resolve At</label>
-          <input class="mf-input" id="cfTimer" type="datetime-local">
-        </div>
-
-        <label class="mf-label">Resolution Deadline</label>
-        <input class="mf-input" id="cfDeadline" type="date">
-
-      </div>
-    </div>
-    <!-- STICKY SUBMIT FOOTER -->
-    <div class="modal-foot" id="createFooter">
-      <button class="btn-create" id="createBtn" onclick="createChallenge()">Create Challenge &amp; Pay via M-Pesa →</button>
-      <div id="challengeWalletBreakdown" style="text-align:center;font-size:0.65rem;color:#9284b8;margin:6px 0 4px;min-height:16px;line-height:1.5;"></div>
-      <div class="modal-foot-note">
-        Peer-to-Peer Escrow · Funds held securely until resolution · By creating you agree to CheckRada Social Escrow Terms
-      </div>
-    </div>
-
-    <!-- SUCCESS VIEW -->
-    <div id="successView" style="display:none;">
-      <div class="success-sheet">
-        <div class="ss-icon">🎉</div>
-        <div class="ss-title">Challenge Created! Share the Code.</div>
-        <div class="ss-sub">Your stake has been locked. Share the invite code or link with your opponent — they must stake their side before the challenge is live.</div>
-        <div class="ss-code-box" onclick="copyCode()">
-          <div class="ss-code-label">Your Challenge Code — tap to copy</div>
-          <div class="ss-code" id="generatedCode">K7X4P2</div>
-          <div class="ss-link">checkrada.co.ke/join/<span id="challengeSlug">marathon-challenge</span>?code=<span id="challengeCode2">K7X4P2</span></div>
-        </div>
-        <button class="btn-create" style="margin-bottom:8px" onclick="nativeChallengeShare()">⤴ Share Challenge</button>
-        <button class="btn-done" onclick="closeModal('createModal');resetForm()">Done</button>
-      </div>
-    </div>
-  </div>
 </div>
 
 <!-- RESOLVE MODAL -->
@@ -1723,12 +1718,10 @@ function switchTab(btn, tab) {
 let friendStake = 500;
 let resolutionType = 'referee';
 
-function openCreate() { document.getElementById('createModal').classList.add('open'); setTimeout(updateChallengeWalletBtn, 100); }
+function openCreate() { var el = document.getElementById('inlineCreateCard'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); updateChallengeWalletBtn(); }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 
-document.getElementById('createModal').addEventListener('click', e => {
-  if (e.target === document.getElementById('createModal')) closeModal('createModal');
-});
+
 document.getElementById('resolveModal').addEventListener('click', e => {
   if (e.target === document.getElementById('resolveModal')) closeModal('resolveModal');
 });
@@ -1887,7 +1880,7 @@ function createChallenge() {
       if (document.getElementById('challengeCode2')) document.getElementById('challengeCode2').textContent = code;
       if (breakdown) breakdown.textContent = '';
       document.getElementById('formView').style.display = 'none';
-      document.getElementById('successView').style.display = '';
+      document.getElementById('successView').style.display = 'block';
       loadChallenges();
     } else {
       btn.textContent = 'Create Challenge';
@@ -1915,8 +1908,10 @@ function createChallenge() {
 
 
 function resetForm() {
-  document.getElementById('formView').style.display = '';
+  document.getElementById('formView').style.display = 'block';
   document.getElementById('successView').style.display = 'none';
+  var el = document.getElementById('inlineCreateCard');
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
   document.getElementById('cfQuestion').value = '';
   document.getElementById('cfNameA').value = '';
   document.getElementById('cfNameB').value = '';
