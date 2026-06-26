@@ -1221,7 +1221,10 @@ nav{padding:14px 24px;display:flex;align-items:center;justify-content:space-betw
 
       <button class="btn-create" id="createBtn" onclick="createChallenge()">Create Challenge &amp; Pay via M-Pesa →</button>
       <div id="challengeWalletBreakdown" style="text-align:center;font-size:0.65rem;color:#9284b8;margin:6px 0 4px;min-height:16px;line-height:1.5;"></div>
-      <div style="text-align:center;font-size:0.62rem;color:var(--text-dim);margin-top:4px;line-height:1.5;">
+      <div style="background:rgba(244,185,66,0.10);border:1px solid rgba(244,185,66,0.3);border-radius:8px;padding:9px 12px;margin-top:10px;font-size:0.68rem;color:#92400e;line-height:1.6;">
+        ⚠️ <strong>5% fee applies if:</strong> your friend doesn't accept — or if you cancel before they do. This fee is non-refundable.
+      </div>
+      <div style="text-align:center;font-size:0.62rem;color:var(--text-dim);margin-top:8px;line-height:1.5;">
         Peer-to-Peer Escrow · Funds held securely until resolution · By creating you agree to CheckRada Social Escrow Terms
       </div>
     </div>
@@ -1404,19 +1407,20 @@ function loadChallenges() {
         pool:      Number(c.totalPool),
         fee:       Math.round(Number(c.totalPool) * 0.05),
         winner:    Math.round(Number(c.totalPool) * 0.95),
-        isCreator: isCreator,
-        stake:     Number(c.stakePerPerson),
+        isCreator:         isCreator,
+        stake:             Number(c.stakePerPerson),
+        cancelRequestedBy: c.cancelRequestedBy || null,
       };
-    }).filter(function(c) { return c.status !== 'resolved'; });
+    }).filter(function(c) { return c.status !== 'resolved' && c.status !== 'cancelled'; });
 
-    HISTORY = all.filter(function(c) { return c.status === 'RESOLVED'; }).map(function(c) {
+    HISTORY = all.filter(function(c) { return c.status === 'RESOLVED' || c.status === 'CANCELLED'; }).map(function(c) {
       return {
-        id:     c.id,
-        q:      c.question,
-        a:      { name: c.userA && c.userA.name ? c.userA.name : 'Player A', stake: Number(c.stakePerPerson) },
-        b:      { name: c.userB && c.userB.name ? c.userB.name : 'Player B', stake: Number(c.stakePerPerson) },
-        status: 'resolved',
-        payout: 'KES ' + Math.round(Number(c.totalPool) * 0.95).toLocaleString(),
+        id:       c.id,
+        q:        c.question,
+        a:        { name: c.userA && c.userA.name ? c.userA.name : 'Player A', stake: Number(c.stakePerPerson) },
+        b:        { name: c.userB && c.userB.name ? c.userB.name : 'Player B', stake: Number(c.stakePerPerson) },
+        status:   c.status === 'CANCELLED' ? 'cancelled' : 'resolved',
+        payout:   'KES ' + Math.round(Number(c.totalPool) * 0.95).toLocaleString(),
         deadline: c.eventExpiresAt ? new Date(c.eventExpiresAt).toLocaleDateString('en-KE') : '—',
       };
     });
@@ -1524,6 +1528,7 @@ function challengeCard(c, isMine, isRef = false) {
     pending:`<span class="cc-badge badge-pending">◎ Awaiting B</span>`,
     awaiting_referee:`<span class="cc-badge badge-pending">⚖️ Ref Needed</span>`,
     disputed:`<span class="cc-badge badge-disputed">⚠ Disputed</span>`,
+    cancelled:`<span class="cc-badge badge-disputed" style="background:rgba(107,114,128,0.1);color:#6b7280;border-color:rgba(107,114,128,0.2);">✕ Cancelled</span>`,
   }[c.status] || '';
 
   const pctFilled = c.status === 'open' || isRef ? 100 : 50;
@@ -1623,17 +1628,54 @@ function challengeCard(c, isMine, isRef = false) {
       </div>`
     : '';
 
+  // Cancel-request state for ACTIVE challenges
+  const cancelPendingByOther = c.cancelRequestedBy && c.cancelRequestedBy !== myId;
+  const cancelPendingByMe    = c.cancelRequestedBy && c.cancelRequestedBy === myId;
+
+  const cancelBanner = (c.status === 'open' || c.status === 'resolving') && cancelPendingByOther
+    ? `<div class="resolution-alert" style="background:rgba(244,185,66,0.08);border-left:3px solid var(--gold);margin-bottom:6px;">
+        <div class="resolution-alert-icon">⚠️</div>
+        <div class="resolution-alert-body">
+          <div class="resolution-alert-title">Cancel Requested by Opponent</div>
+          <div class="resolution-alert-sub">Accept at 5% fee or refuse (admin intervenes at 15%).</div>
+        </div>
+       </div>
+       <div style="display:flex;gap:6px;margin-bottom:6px;">
+         <button class="btn-sm btn-sm-purple" style="flex:1;" onclick="agreeCancel('${c.id}')">✓ Accept Cancel (5%)</button>
+         <button class="btn-sm" style="flex:1;border:1px solid rgba(206,17,38,0.3);color:var(--ke-red);background:rgba(206,17,38,0.06);border-radius:8px;padding:7px 10px;font-size:0.72rem;cursor:pointer;" onclick="refuseCancel('${c.id}')">✕ Refuse (Admin 15%)</button>
+       </div>`
+    : (c.status === 'open' || c.status === 'resolving') && cancelPendingByMe
+    ? `<div class="resolution-alert" style="background:rgba(109,40,217,0.06);margin-bottom:6px;">
+        <div class="resolution-alert-icon">⏳</div>
+        <div class="resolution-alert-body">
+          <div class="resolution-alert-title">Cancel Request Sent</div>
+          <div class="resolution-alert-sub">Waiting for your opponent to accept or refuse.</div>
+        </div>
+       </div>`
+    : '';
+
+  const cancelBtn = (c.status === 'open' || c.status === 'resolving') && !cancelPendingByMe && !cancelPendingByOther
+    ? `<button class="btn-sm" style="border:1px solid rgba(206,17,38,0.25);color:#b91c1c;background:rgba(206,17,38,0.05);border-radius:8px;padding:7px 12px;font-size:0.72rem;cursor:pointer;width:100%;margin-top:4px;" onclick="requestCancel('${c.id}')">✕ Cancel Challenge</button>`
+    : '';
+
   const actions = isMine
     ? `<div class="cc-actions">
         ${resAlert}
+        ${cancelBanner}
         ${mutualBtn}
         ${adminBtn}
         <div class="cc-share-row">
           <button class="csh-btn native" onclick="nativeShareChallenge('${c.slug}','${c.code}','${c.q}')">⤴ Share</button>
         </div>
-        ${c.status === 'pending' && c.isCreator ? `<button class="btn-sm btn-sm-ghost">Wait for Friend →</button>` : ''}
-        ${c.status === 'pending' && !c.isCreator ? `<button class="btn-sm btn-sm-purple" onclick="acceptChallenge('${c.code}',${c.stake})">✓ Accept & Stake KES ${c.stake?.toLocaleString()}</button>` : ''}
-        ${c.status === 'open' ? `<button class="btn-sm btn-sm-ghost">View Details</button>` : ''}
+        ${c.status === 'pending' && c.isCreator ? `
+          <button class="btn-sm btn-sm-ghost" style="margin-bottom:4px;">Wait for Friend →</button>
+          <button class="btn-sm" style="border:1px solid rgba(206,17,38,0.25);color:#b91c1c;background:rgba(206,17,38,0.05);border-radius:8px;padding:7px 12px;font-size:0.72rem;cursor:pointer;width:100%;" onclick="cancelChallenge('${c.id}', true)">✕ Cancel Challenge</button>
+        ` : ''}
+        ${c.status === 'pending' && !c.isCreator ? `
+          <button class="btn-sm btn-sm-purple" style="margin-bottom:4px;" onclick="acceptChallenge('${c.code}',${c.stake})">✓ Accept & Stake KES ${c.stake?.toLocaleString()}</button>
+          <button class="btn-sm" style="border:1px solid rgba(206,17,38,0.25);color:#b91c1c;background:rgba(206,17,38,0.05);border-radius:8px;padding:7px 12px;font-size:0.72rem;cursor:pointer;width:100%;" onclick="declineChallenge('${c.id}')">✕ Decline Challenge</button>
+        ` : ''}
+        ${cancelBtn}
       </div>`
     : `<div class="cc-actions">
         ${resAlert}
@@ -1682,7 +1724,9 @@ function historyCard(c) {
   return `
     <div class="challenge-card" style="opacity:0.8">
       <div class="cc-header">
-        ${c.status === 'tie'
+        ${c.status === 'cancelled'
+          ? `<span class="cc-badge" style="background:rgba(107,114,128,0.1);color:#6b7280;border:1px solid rgba(107,114,128,0.2);">✕ Cancelled</span>`
+          : c.status === 'tie'
           ? `<span class="cc-badge badge-pending">🤝 Tie</span>`
           : `<span class="cc-badge ${won ? 'badge-open' : 'badge-disputed'}">${won ? '✓ Won' : '✗ Lost'}</span>`}
         <span class="cc-code">${c.deadline}</span>
@@ -1712,6 +1756,79 @@ function switchTab(btn, tab) {
   ['my-challenges','referee','history'].forEach(id => {
     document.getElementById(`tab-${id}`).style.display = id === tab ? '' : 'none';
   });
+}
+
+// ── CANCEL FLOW ──────────────────────────────────────────────────────────────
+// cancelChallenge — PENDING_JOIN: creator cancels before B joins (5% fee)
+function cancelChallenge(id) {
+  if (!confirm('Cancel this challenge?
+
+You will be charged a 5% fee and refunded 95% of your stake. This cannot be undone.')) return;
+  userFetch('/api/challenges/' + id + '/cancel', { method: 'POST', body: '{}' })
+    .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
+    .then(function(res) {
+      if (res.ok) { alert(res.d.message || 'Challenge cancelled.'); loadChallenges(); }
+      else { alert('Error: ' + (res.d.error || 'Could not cancel.')); }
+    }).catch(function() { alert('Network error. Please try again.'); });
+}
+
+// declineChallenge — PENDING_JOIN: B declines (A charged 5%)
+function declineChallenge(id) {
+  if (!confirm('Decline this challenge?
+
+The challenger will be charged a 5% fee and refunded 95%.')) return;
+  userFetch('/api/challenges/' + id + '/cancel', { method: 'POST', body: '{}' })
+    .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
+    .then(function(res) {
+      if (res.ok) { alert('Challenge declined.'); loadChallenges(); }
+      else { alert('Error: ' + (res.d.error || 'Could not decline.')); }
+    }).catch(function() { alert('Network error. Please try again.'); });
+}
+
+// requestCancel — ACTIVE: initiate cancel request
+function requestCancel(id) {
+  if (!confirm('Request to cancel this challenge?
+
+If your opponent agrees, 5% fee applies and you each get 47.5% back.
+If they refuse, admin intervenes at 15% fee.')) return;
+  userFetch('/api/challenges/' + id + '/cancel', { method: 'POST', body: '{}' })
+    .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
+    .then(function(res) {
+      if (res.ok) { alert(res.d.message || 'Cancel request sent.'); loadChallenges(); }
+      else { alert('Error: ' + (res.d.error || 'Could not send request.')); }
+    }).catch(function() { alert('Network error. Please try again.'); });
+}
+
+// agreeCancel — ACTIVE: accept other party's cancel request (5% fee)
+function agreeCancel(id) {
+  if (!confirm('Accept the cancel request?
+
+5% fee applies. You will each receive 47.5% of the pool back.')) return;
+  userFetch('/api/challenges/' + id + '/cancel', {
+    method: 'POST',
+    body:   JSON.stringify({ agree: true }),
+  })
+    .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
+    .then(function(res) {
+      if (res.ok) { alert(res.d.message || 'Challenge cancelled. Refund credited.'); loadChallenges(); }
+      else { alert('Error: ' + (res.d.error || 'Could not process.')); }
+    }).catch(function() { alert('Network error. Please try again.'); });
+}
+
+// refuseCancel — ACTIVE: refuse other party's cancel request → admin at 15%
+function refuseCancel(id) {
+  if (!confirm('Refuse the cancel request?
+
+Admin will intervene. 15% fee applies at resolution. This escalates to a formal dispute.')) return;
+  userFetch('/api/challenges/' + id + '/cancel', {
+    method: 'POST',
+    body:   JSON.stringify({ agree: false }),
+  })
+    .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
+    .then(function(res) {
+      if (res.ok) { alert('Cancel refused. Admin has been notified and will review within 12 hours.'); loadChallenges(); }
+      else { alert('Error: ' + (res.d.error || 'Could not process.')); }
+    }).catch(function() { alert('Network error. Please try again.'); });
 }
 
 // ── CREATE FLOW ───────────────────────────────────────────────────────────────
