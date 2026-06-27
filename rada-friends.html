@@ -1761,9 +1761,7 @@ function switchTab(btn, tab) {
 // ── CANCEL FLOW ──────────────────────────────────────────────────────────────
 // cancelChallenge — PENDING_JOIN: creator cancels before B joins (5% fee)
 function cancelChallenge(id) {
-  if (!confirm('Cancel this challenge?
-
-You will be charged a 5% fee and refunded 95% of your stake. This cannot be undone.')) return;
+  if (!confirm('Cancel this challenge?\n\nYou will be charged a 5% fee and refunded 95% of your stake. This cannot be undone.')) return;
   userFetch('/api/challenges/' + id + '/cancel', { method: 'POST', body: '{}' })
     .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
     .then(function(res) {
@@ -1774,9 +1772,7 @@ You will be charged a 5% fee and refunded 95% of your stake. This cannot be undo
 
 // declineChallenge — PENDING_JOIN: B declines (A charged 5%)
 function declineChallenge(id) {
-  if (!confirm('Decline this challenge?
-
-The challenger will be charged a 5% fee and refunded 95%.')) return;
+  if (!confirm('Decline this challenge?\n\nThe challenger will be charged a 5% fee and refunded 95%.')) return;
   userFetch('/api/challenges/' + id + '/cancel', { method: 'POST', body: '{}' })
     .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
     .then(function(res) {
@@ -1787,10 +1783,7 @@ The challenger will be charged a 5% fee and refunded 95%.')) return;
 
 // requestCancel — ACTIVE: initiate cancel request
 function requestCancel(id) {
-  if (!confirm('Request to cancel this challenge?
-
-If your opponent agrees, 5% fee applies and you each get 47.5% back.
-If they refuse, admin intervenes at 15% fee.')) return;
+  if (!confirm('Request to cancel this challenge?\n\nIf your opponent agrees, 5% fee applies and you each get 47.5% back.\nIf they refuse, admin intervenes at 15% fee.')) return;
   userFetch('/api/challenges/' + id + '/cancel', { method: 'POST', body: '{}' })
     .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
     .then(function(res) {
@@ -1801,9 +1794,7 @@ If they refuse, admin intervenes at 15% fee.')) return;
 
 // agreeCancel — ACTIVE: accept other party's cancel request (5% fee)
 function agreeCancel(id) {
-  if (!confirm('Accept the cancel request?
-
-5% fee applies. You will each receive 47.5% of the pool back.')) return;
+  if (!confirm('Accept the cancel request?\n\n5% fee applies. You will each receive 47.5% of the pool back.')) return;
   userFetch('/api/challenges/' + id + '/cancel', {
     method: 'POST',
     body:   JSON.stringify({ agree: true }),
@@ -1817,9 +1808,7 @@ function agreeCancel(id) {
 
 // refuseCancel — ACTIVE: refuse other party's cancel request → admin at 15%
 function refuseCancel(id) {
-  if (!confirm('Refuse the cancel request?
-
-Admin will intervene. 15% fee applies at resolution. This escalates to a formal dispute.')) return;
+  if (!confirm('Refuse the cancel request?\n\nAdmin will intervene. 15% fee applies at resolution. This escalates to a formal dispute.')) return;
   userFetch('/api/challenges/' + id + '/cancel', {
     method: 'POST',
     body:   JSON.stringify({ agree: false }),
