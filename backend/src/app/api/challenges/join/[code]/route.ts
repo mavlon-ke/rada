@@ -212,6 +212,16 @@ export async function POST(
     return NextResponse.json({ error: 'This challenge is no longer open to join' }, { status: 400 });
   }
 
+  const stake = Number(challenge.stakePerPerson);
+
+  // ── Read fresh balances before any join path ──────────────────────────────
+  // Must be declared here — used by both referee and regular join paths.
+  const freshUser = await prisma.user.findUnique({
+    where:  { id: user.id },
+    select: { balanceKes: true, bonusBalanceKes: true, phone: true, name: true },
+  });
+  if (!freshUser) return NextResponse.json({ error: 'User not found' }, { status: 404 });
+
   // ── Referee-created challenge: handle PENDING_BOTH / PENDING_A / PENDING_B ─
   if (['PENDING_BOTH', 'PENDING_A', 'PENDING_B'].includes(challenge.status)) {
     return handleRefereeJoin(challenge, user, freshUser);
@@ -228,16 +238,6 @@ export async function POST(
       error: 'This challenge is reserved for a specific person and cannot be joined with this code.',
     }, { status: 403 });
   }
-
-  const stake = Number(challenge.stakePerPerson);
-
-  // ── Read fresh balances (needed before any join path) ────────────────────
-  // Never use balanceKes from requireAuth — it may be stale or undefined.
-  const freshUser = await prisma.user.findUnique({
-    where:  { id: user.id },
-    select: { balanceKes: true, bonusBalanceKes: true, phone: true, name: true },
-  });
-  if (!freshUser) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
   const realBal  = Number(freshUser.balanceKes);
   const bonusBal = Number(freshUser.bonusBalanceKes);
