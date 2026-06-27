@@ -97,7 +97,7 @@ async function cancelPendingPayment(challenge: any, requesterId: string) {
     // Cancel any pending M-Pesa transaction for this challenge
     await tx.transaction.updateMany({
       where: { challengeId: challenge.id, status: 'PENDING', type: 'CHALLENGE_STAKE' },
-      data:  { status: 'CANCELLED', description: 'Challenge cancelled before M-Pesa confirmed' },
+      data:  { status: 'FAILED', description: 'Challenge cancelled before M-Pesa confirmed' },
     });
 
     // Refund full wallet portion

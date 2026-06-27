@@ -69,7 +69,7 @@ export async function POST(
   // so the old Paystack reference can't accidentally activate the challenge later
   await prisma.transaction.updateMany({
     where: { challengeId: challenge.id, status: 'PENDING', type: 'CHALLENGE_STAKE' },
-    data:  { status: 'CANCELLED', description: 'Superseded by retry payment request' },
+    data:  { status: 'FAILED', description: 'Superseded by retry payment request' },
   });
 
   // ── Wallet now covers remaining shortfall → complete immediately ───────────
