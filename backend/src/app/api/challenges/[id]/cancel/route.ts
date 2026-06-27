@@ -70,6 +70,30 @@ export async function POST(
     return NextResponse.json({ error: 'You are not a participant in this challenge' }, { status: 403 });
   }
 
+  // ── PENDING_BOTH: nobody has staked → free cancel for any participant ───────
+  if (challenge.status === 'PENDING_BOTH') {
+    if (!isA && !isB && challenge.refereeId !== user.id) {
+      return NextResponse.json({ error: 'You are not a participant in this challenge' }, { status: 403 });
+    }
+    return cancelPendingBoth(challenge, user.id);
+  }
+
+  // ── PENDING_B: A has staked, B hasn't → 5% on A's stake ──────────────────
+  if (challenge.status === 'PENDING_B') {
+    if (!isA && !isB && challenge.refereeId !== user.id) {
+      return NextResponse.json({ error: 'You are not a participant in this challenge' }, { status: 403 });
+    }
+    return cancelHalfStaked(challenge, 'A', user.id);
+  }
+
+  // ── PENDING_A: B has staked, A hasn't → 5% on B's stake ──────────────────
+  if (challenge.status === 'PENDING_A') {
+    if (!isA && !isB && challenge.refereeId !== user.id) {
+      return NextResponse.json({ error: 'You are not a participant in this challenge' }, { status: 403 });
+    }
+    return cancelHalfStaked(challenge, 'B', user.id);
+  }
+
   // ── PENDING_JOIN: immediate cancel regardless of initiator ──────────────────
   if (challenge.status === 'PENDING_JOIN') {
     return cancelPendingJoin(challenge, user.id, isA);
@@ -85,6 +109,87 @@ export async function POST(
   if (agree === false) return refuseCancel(challenge, user.id);
   if (agree === true)  return acceptCancel(challenge, user.id);
   return initiateCancel(challenge, user.id, isA);
+}
+
+// ── PENDING_BOTH: free cancel — nobody has staked ────────────────────────────
+async function cancelPendingBoth(challenge: any, requesterId: string) {
+  await prisma.marketChallenge.update({
+    where: { id: challenge.id },
+    data:  { status: 'CANCELLED', cancelRequestedBy: requesterId },
+  });
+
+  // Notify all three parties
+  const msg = 'The challenge "' + challenge.question.slice(0, 50) + '" was cancelled. No fee — nobody had staked yet.';
+  const notifyIds = [challenge.userAId, challenge.userBId, challenge.refereeId].filter(
+    (id: string | null): id is string => !!id && id !== requesterId
+  );
+  for (const uid of notifyIds) {
+    void createNotification({
+      userId: uid, type: 'CHALLENGE_RESOLUTION_WARNING',
+      title: '❌ Challenge cancelled', message: msg, link: '/rada-friends.html',
+    });
+  }
+
+  return NextResponse.json({ success: true, status: 'CANCELLED', fee: 0,
+    message: 'Challenge cancelled. No fee applied — nobody had staked yet.' });
+}
+
+// ── PENDING_B (A staked) or PENDING_A (B staked): 5% on the staked party ────
+async function cancelHalfStaked(challenge: any, stakedSide: 'A' | 'B', requesterId: string) {
+  const stakedUserId = stakedSide === 'A' ? challenge.userAId : challenge.userBId;
+  const stake  = Number(challenge.stakePerPerson);
+  const fee    = Math.floor(stake * FEE_CANCEL);
+  const refund = stake - fee;
+
+  await prisma.$transaction(async (tx: any) => {
+    if (stakedUserId && refund > 0) {
+      const upd = await tx.user.update({
+        where: { id: stakedUserId },
+        data:  { balanceKes: { increment: refund } },
+      });
+      await tx.transaction.create({
+        data: {
+          userId:      stakedUserId,
+          challengeId: challenge.id,
+          type:        'REFUND',
+          amountKes:   refund,
+          balAfter:    Number(upd.balanceKes),
+          status:      'SUCCESS',
+          description: 'Referee challenge cancelled — KES ' + refund + ' refunded (5% fee: KES ' + fee + ')',
+        },
+      });
+    }
+    await tx.marketChallenge.update({
+      where: { id: challenge.id },
+      data:  { status: 'CANCELLED', cancelRequestedBy: requesterId },
+    });
+  });
+
+  if (fee > 0) {
+    await prisma.platformRevenue.create({
+      data: {
+        challengeId: challenge.id,
+        type:        'CHALLENGE_FEE',
+        amountKes:   fee,
+        description: 'Cancellation fee (5%) — Challenger ' + stakedSide + ' had staked',
+      },
+    });
+  }
+
+  // Notify all three parties
+  const msg = 'Challenge cancelled. Challenger ' + stakedSide + ' refunded KES ' + refund.toLocaleString() + ' (5% fee: KES ' + fee + ').';
+  const allIds = [challenge.userAId, challenge.userBId, challenge.refereeId].filter(
+    (id: string | null): id is string => !!id
+  );
+  for (const uid of allIds) {
+    void createNotification({
+      userId: uid, type: 'CHALLENGE_RESOLUTION_WARNING',
+      title: '❌ Challenge cancelled', message: msg, link: '/rada-friends.html',
+    });
+  }
+
+  return NextResponse.json({ success: true, status: 'CANCELLED', fee, refund,
+    message: 'Challenge cancelled. KES ' + refund.toLocaleString() + ' refunded. KES ' + fee + ' fee applied.' });
 }
 
 // ── PENDING_PAYMENT: full refund, no fee ─────────────────────────────────────

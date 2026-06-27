@@ -14,6 +14,143 @@ import { createNotification } from '@/lib/notifications';
 import { displayName }        from '@/lib/user/display-name';
 import { normalisePhone } from '@/lib/paystack/paystack.service';
 
+// ── Referee challenge join (PENDING_BOTH / PENDING_A / PENDING_B) ──────────────
+// A and B join independently using the same code.
+// The backend determines their role from userAId / userBId.
+// B joining first → PENDING_A. A joining first → PENDING_B. Both joined → ACTIVE.
+// Referee (R) cannot join their own challenge.
+// Wallet must fully cover stake — no M-Pesa STK for joining.
+
+async function handleRefereeJoin(challenge: any, user: any, freshUser: any) {
+  const isA = challenge.userAId === user.id;
+  const isB = challenge.userBId === user.id;
+  const isR = challenge.refereeId === user.id;
+
+  if (isR) {
+    return NextResponse.json({ error: 'The referee cannot join their own challenge' }, { status: 403 });
+  }
+  if (!isA && !isB) {
+    return NextResponse.json({ error: 'You are not a participant in this challenge' }, { status: 403 });
+  }
+
+  // Guard: cannot re-stake if already done
+  if (isA && challenge.status === 'PENDING_B') {
+    return NextResponse.json({ error: 'You have already staked in this challenge' }, { status: 400 });
+  }
+  if (isB && challenge.status === 'PENDING_A') {
+    return NextResponse.json({ error: 'You have already staked in this challenge' }, { status: 400 });
+  }
+  if (challenge.status === 'PENDING_A' && !isA) {
+    return NextResponse.json({ error: 'This slot is reserved for the other participant' }, { status: 403 });
+  }
+  if (challenge.status === 'PENDING_B' && !isB) {
+    return NextResponse.json({ error: 'This slot is reserved for the other participant' }, { status: 403 });
+  }
+
+  const stake    = Number(challenge.stakePerPerson);
+  const realBal  = Number(freshUser.balanceKes);
+  const bonusBal = Number(freshUser.bonusBalanceKes);
+  const walletTotal = realBal + bonusBal;
+
+  if (walletTotal < stake) {
+    const shortfall = Math.ceil(stake - walletTotal);
+    return NextResponse.json({
+      error: 'Insufficient balance. You need KES ' + shortfall.toLocaleString() + ' more to join. Please deposit first.',
+    }, { status: 400 });
+  }
+
+  const realUsed  = Math.min(realBal,  stake);
+  const bonusUsed = Math.min(bonusBal, Math.max(0, stake - realUsed));
+
+  // Determine status transition
+  const newStatus = challenge.status === 'PENDING_BOTH'
+    ? (isA ? 'PENDING_B' : 'PENDING_A')   // first joiner
+    : 'ACTIVE';                             // second joiner — both have staked
+
+  let actualRealUsed  = 0;
+  let actualBonusUsed = 0;
+
+  const updated = await prisma.$transaction(async (tx: any) => {
+    const u = await tx.user.findUnique({ where: { id: user.id } });
+    const curReal  = Number(u.balanceKes);
+    const curBonus = Number(u.bonusBalanceKes);
+    actualRealUsed  = Math.min(curReal,  stake);
+    actualBonusUsed = Math.min(curBonus, Math.max(0, stake - actualRealUsed));
+
+    if (actualRealUsed + actualBonusUsed < stake) throw new Error('Insufficient balance');
+
+    const updateData: any = {};
+    if (actualRealUsed  > 0) updateData.balanceKes      = { decrement: actualRealUsed  };
+    if (actualBonusUsed > 0) updateData.bonusBalanceKes = { decrement: actualBonusUsed };
+    if (Object.keys(updateData).length > 0) {
+      await tx.user.update({ where: { id: user.id }, data: updateData });
+    }
+
+    const ch = await tx.marketChallenge.update({
+      where: { id: challenge.id },
+      data:  { totalPool: { increment: stake }, status: newStatus },
+    });
+
+    await tx.transaction.create({
+      data: {
+        userId:      user.id,
+        challengeId: ch.id,
+        type:        actualBonusUsed > 0 ? 'BONUS_USED' : 'CHALLENGE_STAKE',
+        amountKes:   -(actualRealUsed + actualBonusUsed),
+        balAfter:    curReal - actualRealUsed,
+        status:      'SUCCESS',
+        description: 'Joined referee challenge as ' + (isA ? 'Challenger A' : 'Challenger B'),
+      },
+    });
+
+    return ch;
+  });
+
+  const joinerName = displayName(user.name, freshUser.phone);
+  const otherId    = isA ? challenge.userBId : challenge.userAId;
+
+  if (newStatus === 'ACTIVE') {
+    // Both staked — notify both parties and referee
+    const msg = 'Both challengers have staked for "' + challenge.question.slice(0, 50) + '". The challenge is now live.';
+    if (challenge.userAId) {
+      void createNotification({ userId: challenge.userAId, type: 'CHALLENGE_OPPONENT_STAKED',
+        title: '🔴 Challenge is live!', message: msg, link: '/rada-friends.html' });
+    }
+    if (challenge.userBId) {
+      void createNotification({ userId: challenge.userBId, type: 'CHALLENGE_OPPONENT_STAKED',
+        title: '🔴 Challenge is live!', message: msg, link: '/rada-friends.html' });
+    }
+    if (challenge.refereeId) {
+      void createNotification({ userId: challenge.refereeId, type: 'REFEREE_NOMINATED',
+        title: '⚖️ Both challengers have staked',
+        message: 'Both parties have staked for "' + challenge.question.slice(0, 50) + '". You can now resolve once the event occurs.',
+        link: '/rada-friends.html' });
+    }
+  } else {
+    // First joiner — notify the other party (blind: just stake amount)
+    if (otherId) {
+      void createNotification({
+        userId:  otherId,
+        type:    'CHALLENGE_OPPONENT_STAKED',
+        title:   '⚡ Your opponent has staked!',
+        message: 'Your opponent has accepted the challenge. Stake KES ' + stake.toLocaleString() + ' using code ' + challenge.accessCode + ' to make it live.',
+        link:    '/join/' + challenge.accessCode,
+        whatsapp: {
+          template:   'CHALLENGE_OPPONENT_STAKED',
+          parameters: ['your opponent', stake.toLocaleString()],
+        },
+      });
+    }
+  }
+
+  return NextResponse.json({
+    success:    true,
+    challengeId: updated.id,
+    status:     newStatus,
+    payment: { walletUsed: actualRealUsed + actualBonusUsed },
+  });
+}
+
 export async function GET(
   _req: NextRequest,
   { params }: { params: { code: string } }
@@ -27,22 +164,31 @@ export async function GET(
   });
 
   if (!challenge) return NextResponse.json({ error: 'Challenge not found' }, { status: 404 });
-  if (challenge.status !== 'PENDING_JOIN') {
+
+  const joinableStatuses = ['PENDING_JOIN', 'PENDING_BOTH', 'PENDING_A', 'PENDING_B'];
+  if (!joinableStatuses.includes(challenge.status)) {
     return NextResponse.json({ error: 'This challenge is no longer open to join' }, { status: 400 });
   }
 
+  const isRefCreated = ['PENDING_BOTH','PENDING_A','PENDING_B'].includes(challenge.status);
+
   return NextResponse.json({
-    challengeId:    challenge.id,
-    question:       challenge.question,
-    stakePerPerson: Number(challenge.stakePerPerson),
-    eventExpiresAt: challenge.eventExpiresAt,
-    validatorType:  challenge.validatorType,
-    createdBy:      displayName(challenge.userA.name, challenge.userA.phone),
+    challengeId:      challenge.id,
+    question:         challenge.question,
+    stakePerPerson:   Number(challenge.stakePerPerson),
+    eventExpiresAt:   challenge.eventExpiresAt,
+    validatorType:    challenge.validatorType,
+    status:           challenge.status,
+    // For referee-created: show referee name; creator field stays blind
+    createdBy:        isRefCreated
+      ? (challenge.referee ? displayName(challenge.referee.name, challenge.referee.phone) : 'Referee')
+      : displayName(challenge.userA.name, challenge.userA.phone),
     challengerAAlias: challenge.challengerAAlias || null,
     challengerBAlias: challenge.challengerBAlias || null,
-    hasReferee:     !!challenge.refereeId,
-    refereeName:    challenge.referee ? displayName(challenge.referee.name, challenge.referee.phone) : null,
-    isLocked:       !!challenge.userBId,   // true = only pre-assigned user can join
+    hasReferee:       !!challenge.refereeId,
+    refereeName:      challenge.referee ? displayName(challenge.referee.name, challenge.referee.phone) : null,
+    isLocked:         !!challenge.userBId,
+    isRefCreated,
   });
 }
 
@@ -61,14 +207,22 @@ export async function POST(
   if (!challenge) {
     return NextResponse.json({ error: 'Challenge not found' }, { status: 404 });
   }
-  if (challenge.status !== 'PENDING_JOIN') {
+  const joinableStatuses = ['PENDING_JOIN', 'PENDING_BOTH', 'PENDING_A', 'PENDING_B'];
+  if (!joinableStatuses.includes(challenge.status)) {
     return NextResponse.json({ error: 'This challenge is no longer open to join' }, { status: 400 });
   }
+
+  // ── Referee-created challenge: handle PENDING_BOTH / PENDING_A / PENDING_B ─
+  if (['PENDING_BOTH', 'PENDING_A', 'PENDING_B'].includes(challenge.status)) {
+    return handleRefereeJoin(challenge, user, freshUser);
+  }
+
+  // ── Regular challenge (PENDING_JOIN) ──────────────────────────────────────
   if (challenge.userAId === user.id) {
     return NextResponse.json({ error: 'You created this challenge' }, { status: 400 });
   }
 
-  // ── Locked challenge: enforce pre-assigned Challenger B ───────────────────
+  // Locked challenge: enforce pre-assigned Challenger B
   if (challenge.userBId && challenge.userBId !== user.id) {
     return NextResponse.json({
       error: 'This challenge is reserved for a specific person and cannot be joined with this code.',
@@ -77,11 +231,11 @@ export async function POST(
 
   const stake = Number(challenge.stakePerPerson);
 
-  // ── Read fresh balances for wallet-first calculation ─────────────────────
+  // ── Read fresh balances (needed before any join path) ────────────────────
   // Never use balanceKes from requireAuth — it may be stale or undefined.
   const freshUser = await prisma.user.findUnique({
     where:  { id: user.id },
-    select: { balanceKes: true, bonusBalanceKes: true, phone: true },
+    select: { balanceKes: true, bonusBalanceKes: true, phone: true, name: true },
   });
   if (!freshUser) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 

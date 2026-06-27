@@ -999,6 +999,11 @@ nav{padding:14px 24px;display:flex;align-items:center;justify-content:space-betw
 .create-card-title{font-weight:700;font-size:0.95rem;color:var(--purple);}
 .create-card-sub{font-size:0.72rem;color:var(--text-mid);margin-top:2px;}
 .create-card-body{padding:22px;}
+.create-mode-tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:0;}
+.create-mode-tab{flex:1;padding:12px 8px;font-size:0.75rem;font-weight:700;border:none;background:transparent;cursor:pointer;color:var(--text-dim);border-bottom:2px solid transparent;transition:all .15s;}
+.create-mode-tab.active{color:var(--purple);border-bottom-color:var(--purple);}
+.referee-pair-row{background:var(--bg3);border-radius:10px;padding:10px 12px;border:1px solid var(--border);}
+.pair-phones{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px;}
 
 </style>
 <!-- Google Analytics GA4 -->
@@ -1112,14 +1117,20 @@ nav{padding:14px 24px;display:flex;align-items:center;justify-content:space-betw
   <!-- INLINE CREATE CHALLENGE FORM -->
   <div class="create-card" id="inlineCreateCard">
     <div class="create-card-head">
-      <div class="create-card-icon">🤝</div>
+      <div class="create-card-icon" id="createCardIcon">🤝</div>
       <div>
-        <div class="create-card-title">Create a Social Challenge</div>
-        <div class="create-card-sub">Private · 5% forecasting fee · Max KES 20,000 · Min KES 20</div>
+        <div class="create-card-title" id="createCardTitle">Create a Social Challenge</div>
+        <div class="create-card-sub" id="createCardSub">Private · 5% forecasting fee · Max KES 20,000 · Min KES 20</div>
       </div>
     </div>
 
-    <!-- FORM VIEW -->
+    <!-- MODE TABS -->
+    <div class="create-mode-tabs">
+      <button class="create-mode-tab active" id="tabChallenger" onclick="setCreateMode('challenger')">🤝 Create as Challenger</button>
+      <button class="create-mode-tab" id="tabReferee" onclick="setCreateMode('referee')">⚖️ Create as Referee</button>
+    </div>
+
+    <!-- CHALLENGER FORM VIEW -->
     <div id="formView" class="create-card-body">
 
       <label class="mf-label">The Challenge Question</label>
@@ -1206,6 +1217,54 @@ nav{padding:14px 24px;display:flex;align-items:center;justify-content:space-betw
       <button class="btn-create" style="margin-bottom:8px" onclick="nativeChallengeShare()">⤴ Share Challenge</button>
       <button class="btn-done" onclick="resetForm()">Done</button>
     </div>
+  </div>
+
+  <!-- REFEREE FORM VIEW (hidden by default) -->
+  <div id="refereeFormView" style="display:none;" class="create-card-body">
+
+    <div style="background:rgba(109,40,217,0.06);border-radius:10px;padding:10px 14px;margin-bottom:16px;font-size:0.72rem;color:var(--purple);">
+      ⚖️ As referee, you set up the challenge and judge the outcome. Neither party knows who they are playing against.
+    </div>
+
+    <label class="mf-label">The Challenge Question</label>
+    <input class="mf-input" id="refQuestion" placeholder="e.g. Who will complete the 5km run faster?">
+
+    <label class="mf-label" style="margin-top:16px;">Challenge Pairs <span style="font-weight:400;color:var(--text-dim);font-size:0.68rem;">(up to 100 · each pair has independent stakes)</span></label>
+    <div id="pairRowsContainer" style="max-height:340px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding-right:2px;margin-bottom:8px;">
+      <!-- Pair rows injected by JS -->
+    </div>
+    <button type="button" id="addPairBtn" onclick="addPairRow()"
+      style="width:100%;padding:9px;border:1.5px dashed rgba(109,40,217,0.3);border-radius:10px;background:transparent;color:var(--purple);font-size:0.75rem;font-weight:600;cursor:pointer;margin-bottom:12px;">
+      + Add Another Pair
+    </button>
+
+    <!-- Referee pair summary -->
+    <div id="refereeSummary" style="display:none;background:rgba(109,40,217,0.06);border:1px solid rgba(109,40,217,0.15);border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:0.72rem;">
+      <div style="font-weight:700;color:var(--purple);" id="refSummaryTitle">1 challenge pair</div>
+      <div style="color:var(--text-dim);margin-top:2px;" id="refSummarySkipped" style="display:none;"></div>
+    </div>
+
+    <label class="mf-label">Resolution Deadline</label>
+    <input class="mf-input" id="refDeadline" type="date">
+
+    <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);">
+      <label class="mf-label">Your Referee Nickname <span style="font-weight:400;color:var(--text-dim);">(optional)</span></label>
+      <input class="mf-input" id="refAliasR" placeholder="e.g. Coach Wanjiru, The Judge">
+      <div class="field-hint">Shown to both challengers instead of your display name. Leave blank to use your display name.</div>
+    </div>
+
+    <button class="btn-create" id="refCreateBtn" onclick="createRefereeChallenges()">Create Challenges as Referee →</button>
+    <div style="text-align:center;font-size:0.62rem;color:var(--text-dim);margin-top:8px;line-height:1.5;">
+      Neither challenger will know who they are facing until both have staked.
+    </div>
+  </div>
+
+  <!-- REFEREE SUCCESS VIEW -->
+  <div id="refereeSuccessView" style="display:none;padding:28px 22px;text-align:center;">
+    <div class="ss-icon">⚖️</div>
+    <div class="ss-title">Challenges Created!</div>
+    <div class="ss-sub" id="refereeSuccessSub">Both challengers have been notified with the code.</div>
+    <button class="btn-done" onclick="resetRefereeForm()">Done</button>
   </div>
 
   <!-- TABS -->
@@ -1359,9 +1418,15 @@ function loadChallenges() {
         a:         { name: c.userA && c.userA.name ? c.userA.name : 'Player A', stake: Number(c.stakePerPerson) },
         b:         { name: c.userB && c.userB.name ? c.userB.name : 'Player B', stake: Number(c.stakePerPerson) },
         referee:   c.refereePhone ? { name: 'Referee', phone: '+' + c.refereePhone } : null,
-        status:    c.status === 'ACTIVE' ? 'open' : c.status === 'PENDING_JOIN' ? 'pending'
-                 : c.status === 'PENDING_RESOLUTION' ? 'resolving'
-                 : c.status === 'DISPUTED' ? 'disputed' : c.status === 'RESOLVED' ? 'resolved' : 'pending',
+        status:    c.status === 'ACTIVE'             ? 'open'
+                 : c.status === 'PENDING_JOIN'        ? 'pending'
+                 : c.status === 'PENDING_BOTH'        ? 'pending_both'
+                 : c.status === 'PENDING_A'           ? 'pending_a'
+                 : c.status === 'PENDING_B'           ? 'pending_b'
+                 : c.status === 'PENDING_RESOLUTION'  ? 'resolving'
+                 : c.status === 'DISPUTED'            ? 'disputed'
+                 : c.status === 'RESOLVED'            ? 'resolved'
+                 : 'pending',
         aConfirm:  c.userAConfirm || null,
         bConfirm:  c.userBConfirm || null,
         resType:   c.validatorType ? c.validatorType.toLowerCase() : 'mutual',
@@ -1406,16 +1471,22 @@ function loadChallenges() {
   .then(function(r) { return r.json(); })
   .then(function(d) {
     REF_QUEUE = (d.challenges || []).map(function(c) {
+      var rawSt = c.rawStatus || c.status || '';
+      var isRefCreated = rawSt === 'PENDING_BOTH' || rawSt === 'PENDING_A' || rawSt === 'PENDING_B';
       return {
-        id:       c.id,
-        q:        c.question,
-        a:        { name: c.userA && c.userA.name ? c.userA.name : 'Player A', stake: Number(c.stakePerPerson) },
-        b:        { name: c.userB && c.userB.name ? c.userB.name : 'Player B', stake: Number(c.stakePerPerson) },
-        status:   'awaiting_referee',
-        deadline: c.eventExpiresAt ? new Date(c.eventExpiresAt).toLocaleDateString('en-KE', { day:'numeric', month:'short', year:'numeric' }) : '—',
-        pool:     Number(c.totalPool),
-        fee:      Math.round(Number(c.totalPool) * 0.05),
-        winner:   Math.round(Number(c.totalPool) * 0.95),
+        id:          c.id,
+        q:           c.question,
+        a:           { name: c.userA && c.userA.name ? c.userA.name : 'Player A', stake: Number(c.stakePerPerson) },
+        b:           { name: c.userB && c.userB.name ? c.userB.name : 'Player B', stake: Number(c.stakePerPerson) },
+        status:      isRefCreated ? rawSt.toLowerCase().replace('_','-') : 'awaiting_referee',
+        rawStatus:   rawSt,
+        isRefCreated: isRefCreated,
+        code:        c.accessCode,
+        deadline:    c.eventExpiresAt ? new Date(c.eventExpiresAt).toLocaleDateString('en-KE', { day:'numeric', month:'short', year:'numeric' }) : '—',
+        pool:        Number(c.totalPool),
+        stake:       Number(c.stakePerPerson),
+        fee:         Math.round(Number(c.totalPool) * 0.05),
+        winner:      Math.round(Number(c.totalPool) * 0.95),
       };
     });
     renderRefQueue();
@@ -1636,6 +1707,19 @@ function challengeCard(c, isMine, isRef = false) {
         <div class="cc-share-row">
           <button class="csh-btn native" onclick="nativeShareChallenge('${c.slug}','${c.code}','${c.q}')">⤴ Share</button>
         </div>
+        ${(c.rawStatus === 'PENDING_BOTH' || c.rawStatus === 'PENDING_A' || c.rawStatus === 'PENDING_B') ? `
+          <div class="resolution-alert" style="background:rgba(109,40,217,0.06);border-left:3px solid var(--purple);margin-bottom:8px;">
+            <div class="resolution-alert-icon">⚖️</div>
+            <div class="resolution-alert-body">
+              <div class="resolution-alert-title">${c.rawStatus === 'PENDING_BOTH' ? 'Referee challenge — stake to join' : c.rawStatus === 'PENDING_B' && iAmA ? 'You staked. Waiting for opponent.' : c.rawStatus === 'PENDING_A' && !iAmA ? 'You staked. Waiting for opponent.' : 'Your turn to stake'}</div>
+              <div class="resolution-alert-sub">Only the referee can resolve this challenge. 5% fee applies on cancellation.</div>
+            </div>
+          </div>
+          ${(c.rawStatus === 'PENDING_BOTH') || (c.rawStatus === 'PENDING_B' && !iAmA) || (c.rawStatus === 'PENDING_A' && iAmA) ? `
+            <button class="btn-sm btn-sm-purple" style="margin-bottom:4px;" onclick="joinRefereeChallenge('${c.code}')">✓ Accept & Stake KES ${c.stake?.toLocaleString()}</button>
+          ` : ''}
+          <button class="btn-sm" style="border:1px solid rgba(206,17,38,0.25);color:#b91c1c;background:rgba(206,17,38,0.05);border-radius:8px;padding:7px 12px;font-size:0.72rem;cursor:pointer;width:100%;" onclick="cancelChallenge('${c.id}', false)">✕ Cancel</button>
+        ` : ''}
         ${c.rawStatus === 'PENDING_PAYMENT' && c.isCreator ? `
           <div class="resolution-alert" style="background:rgba(244,185,66,0.08);border-left:3px solid var(--gold);margin-bottom:8px;">
             <div class="resolution-alert-icon">⏳</div>
@@ -1659,17 +1743,22 @@ function challengeCard(c, isMine, isRef = false) {
       </div>`
     : `<div class="cc-actions">
         <div style="background:rgba(109,40,217,0.08);border:1.5px solid rgba(109,40,217,0.2);border-radius:10px;padding:9px 12px;margin-bottom:8px;text-align:center;">
-          <div style="font-size:0.78rem;font-weight:800;color:var(--purple);">⚖️ You are the Referee</div>
-          <div style="font-size:0.65rem;color:var(--text-dim);margin-top:2px;">Only you can resolve this challenge. Your integrity score is on the line.</div>
+          ${c.isRefCreated ? '<div style="font-size:0.78rem;font-weight:800;color:var(--purple);">⚖️ You Created This Challenge</div><div style="font-size:0.65rem;color:var(--text-dim);margin-top:2px;">You are the referee and sole resolver. Neither party knows the other.</div>'
+            : '<div style="font-size:0.78rem;font-weight:800;color:var(--purple);">⚖️ You are the Referee</div><div style="font-size:0.65rem;color:var(--text-dim);margin-top:2px;">Only you can resolve this challenge.</div>'}
         </div>
         ${resAlert}
-        ${c.status === 'open' ? `<button class="btn-sm btn-sm-purple" onclick="openResolveModal('${c.id}')">⚖️ Submit Ruling</button>` : ''}
-        ${c.status === 'pending' ? `
+        ${(c.rawStatus === 'PENDING_BOTH' || c.rawStatus === 'PENDING_A' || c.rawStatus === 'PENDING_B') ? `
+          <div style="font-size:0.72rem;color:var(--text-dim);text-align:center;padding:6px 0;">
+            ${c.rawStatus === 'PENDING_BOTH' ? '⏳ Waiting for both challengers to stake.' : c.rawStatus === 'PENDING_B' ? '⏳ Challenger A has staked. Waiting for B.' : '⏳ Challenger B has staked. Waiting for A.'}
+          </div>
+          <button class="btn-sm" style="border:1px solid rgba(206,17,38,0.25);color:#b91c1c;background:rgba(206,17,38,0.05);border-radius:8px;padding:7px 12px;font-size:0.72rem;cursor:pointer;width:100%;margin-top:4px;" onclick="cancelChallenge('${c.id}', false)">✕ Cancel Challenge (No Fee)</button>
+        ` : c.status === 'open' ? `<button class="btn-sm btn-sm-purple" onclick="openResolveModal('${c.id}')">⚖️ Submit Ruling</button>` : ''}
+        ${!c.isRefCreated && c.status === 'pending' ? `
           <button class="btn-sm btn-sm-purple" style="margin-bottom:4px;" onclick="acceptRefereeRole('${c.id}')">✓ Accept Referee Role</button>
           <button class="btn-sm" style="border:1px solid rgba(206,17,38,0.25);color:#b91c1c;background:rgba(206,17,38,0.05);border-radius:8px;padding:7px 12px;font-size:0.72rem;cursor:pointer;width:100%;" onclick="declineRefereeRole('${c.id}')">✕ Decline (Switches to Mutual)</button>
-        ` : `
+        ` : !c.isRefCreated && c.status !== 'open' ? `
           <button class="btn-sm btn-sm-ghost" style="color:#b91c1c;border-color:rgba(206,17,38,0.2);" onclick="declineRefereeRole('${c.id}')">✕ Decline Role (Switches to Mutual)</button>
-        `}
+        ` : ''}
       </div>`;
 
   return `
@@ -1803,6 +1892,225 @@ function declineRefereeRole(id) {
       if (res.ok) { alert('Referee role declined. Challenge switched to Mutual Consent. Challengers notified.'); loadChallenges(); }
       else { alert('Error: ' + (res.d.error || 'Could not decline.')); }
     }).catch(function() { alert('Network error.'); });
+}
+
+// ── REFEREE CREATE MODE ──────────────────────────────────────────────────────
+var createMode  = 'challenger';
+var pairCount   = 0;
+var pairTimersA = {}, pairTimersB = {};
+
+function setCreateMode(mode) {
+  createMode = mode;
+  var isChal = mode === 'challenger';
+  document.getElementById('formView').style.display          = isChal ? 'block' : 'none';
+  document.getElementById('refereeFormView').style.display   = isChal ? 'none' : 'block';
+  document.getElementById('successView').style.display       = 'none';
+  document.getElementById('refereeSuccessView').style.display= 'none';
+  document.getElementById('tabChallenger').classList.toggle('active', isChal);
+  document.getElementById('tabReferee').classList.toggle('active', !isChal);
+  document.getElementById('createCardIcon').textContent = isChal ? '🤝' : '⚖️';
+  document.getElementById('createCardTitle').textContent = isChal ? 'Create a Social Challenge' : 'Referee Challenge';
+  document.getElementById('createCardSub').textContent = isChal
+    ? 'Private · 5% forecasting fee · Max KES 20,000 · Min KES 20'
+    : 'You set up the challenge and judge the outcome — you pay nothing';
+}
+
+function addPairRow() {
+  var container = document.getElementById('pairRowsContainer');
+  if (!container) return;
+  var existing = container.querySelectorAll('.referee-pair-row').length;
+  if (existing >= 100) { alert('Maximum 100 pairs per challenge.'); return; }
+  pairCount++;
+  var id  = pairCount;
+  var num = existing + 1;
+  var div = document.createElement('div');
+  div.className = 'referee-pair-row';
+  div.setAttribute('data-pair-id', id);
+  div.innerHTML =
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">' +
+      '<span class="pair-num" style="font-size:0.72rem;font-weight:700;color:var(--purple);">Pair ' + num + '</span>' +
+      (existing > 0 ? '<button type="button" onclick="removePairRow(' + id + ')" style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:0.9rem;">✕</button>' : '') +
+    '</div>' +
+    '<div class="pair-phones">' +
+      '<div style="position:relative;">' +
+        '<input class="mf-input" id="pairA-' + id + '" data-side="A" data-pair="' + id + '" placeholder="A: 07XX XXX XXX" maxlength="12" style="padding-right:26px;" oninput="debouncedValidatePairPhone(this)">' +
+        '<span class="phone-status" id="pairAStatus-' + id + '" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:0.7rem;"></span>' +
+      '</div>' +
+      '<div style="position:relative;">' +
+        '<input class="mf-input" id="pairB-' + id + '" data-side="B" data-pair="' + id + '" placeholder="B: 07XX XXX XXX" maxlength="12" style="padding-right:26px;" oninput="debouncedValidatePairPhone(this)">' +
+        '<span class="phone-status" id="pairBStatus-' + id + '" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:0.7rem;"></span>' +
+      '</div>' +
+    '</div>' +
+    '<div style="display:flex;align-items:center;gap:6px;">' +
+      '<span style="font-size:0.72rem;color:var(--text-dim);white-space:nowrap;">Stake KES</span>' +
+      '<input type="number" class="mf-input" id="pairStake-' + id + '" min="20" max="20000" value="500" oninput="updateRefereeSummary()" style="flex:1;">' +
+    '</div>';
+  container.appendChild(div);
+  updateRefereeSummary();
+}
+
+function removePairRow(id) {
+  var row = document.querySelector('.referee-pair-row[data-pair-id="' + id + '"]');
+  if (row) row.remove();
+  clearTimeout(pairTimersA[id]);
+  clearTimeout(pairTimersB[id]);
+  delete pairTimersA[id]; delete pairTimersB[id];
+  renumberPairRows();
+  updateRefereeSummary();
+}
+
+function renumberPairRows() {
+  document.querySelectorAll('.referee-pair-row').forEach(function(row, idx) {
+    var label = row.querySelector('.pair-num');
+    if (label) label.textContent = 'Pair ' + (idx + 1);
+  });
+}
+
+function debouncedValidatePairPhone(input) {
+  var side   = input.getAttribute('data-side');
+  var pairId = input.getAttribute('data-pair');
+  var timers = side === 'A' ? pairTimersA : pairTimersB;
+  clearTimeout(timers[pairId]);
+  var statusEl = document.getElementById('pair' + side + 'Status-' + pairId);
+  if (statusEl) { statusEl.textContent = '…'; statusEl.style.color = 'var(--text-dim)'; }
+  timers[pairId] = setTimeout(function() { validatePairPhone(side, pairId); }, 500);
+}
+
+function validatePairPhone(side, pairId) {
+  var inputEl  = document.getElementById('pair' + side + '-' + pairId);
+  var statusEl = document.getElementById('pair' + side + 'Status-' + pairId);
+  if (!inputEl || !inputEl.value.trim()) {
+    if (statusEl) { statusEl.textContent = ''; statusEl.removeAttribute('data-valid'); }
+    return;
+  }
+  userFetch('/api/users/validate-phone', {
+    method: 'POST',
+    body:   JSON.stringify({ phone: inputEl.value.trim() }),
+  }).then(function(r) { return r.json(); })
+  .then(function(d) {
+    var valid = !!(d && d.valid);
+    if (statusEl) {
+      statusEl.textContent = valid ? '✓' : '✗';
+      statusEl.style.color = valid ? 'var(--ke-green)' : 'var(--ke-red)';
+      statusEl.setAttribute('data-valid', valid ? 'true' : 'false');
+    }
+    updateRefereeSummary();
+  }).catch(function() {
+    if (statusEl) { statusEl.textContent = '?'; statusEl.style.color = 'var(--gold)'; statusEl.setAttribute('data-valid', 'pending'); }
+  });
+}
+
+function getValidPairs() {
+  var rows = document.querySelectorAll('.referee-pair-row');
+  var valid = [], skipped = 0;
+  rows.forEach(function(row) {
+    var id      = row.getAttribute('data-pair-id');
+    var aEl     = document.getElementById('pairA-'      + id);
+    var bEl     = document.getElementById('pairB-'      + id);
+    var stakeEl = document.getElementById('pairStake-'  + id);
+    var aStatus = document.getElementById('pairAStatus-' + id);
+    var bStatus = document.getElementById('pairBStatus-' + id);
+    var phoneA  = aEl    ? aEl.value.trim()    : '';
+    var phoneB  = bEl    ? bEl.value.trim()    : '';
+    var dvA     = aStatus ? aStatus.getAttribute('data-valid') : '';
+    var dvB     = bStatus ? bStatus.getAttribute('data-valid') : '';
+    if (!phoneA || !phoneB || dvA === 'false' || dvB === 'false') { if (phoneA || phoneB) skipped++; return; }
+    valid.push({
+      phoneA:         phoneA,
+      phoneB:         phoneB,
+      stakePerPerson: stakeEl ? (parseInt(stakeEl.value) || 500) : 500,
+    });
+  });
+  return { valid: valid, skipped: skipped };
+}
+
+function updateRefereeSummary() {
+  var result = getValidPairs();
+  var summEl = document.getElementById('refereeSummary');
+  var titlEl = document.getElementById('refSummaryTitle');
+  var skipEl = document.getElementById('refSummarySkipped');
+  if (!result.valid.length) { if (summEl) summEl.style.display = 'none'; return; }
+  if (summEl) summEl.style.display = 'block';
+  if (titlEl) titlEl.textContent = result.valid.length + ' challenge pair' + (result.valid.length > 1 ? 's' : '');
+  if (skipEl) {
+    skipEl.style.display = result.skipped > 0 ? '' : 'none';
+    if (result.skipped > 0) skipEl.textContent = result.skipped + ' invalid pair(s) will be skipped.';
+  }
+}
+
+function createRefereeChallenges() {
+  if (!isLoggedIn) { alert('Please log in first.'); window.location.href = 'rada-auth.html'; return; }
+  var question = (document.getElementById('refQuestion') || {}).value || '';
+  var deadline = (document.getElementById('refDeadline') || {}).value || '';
+  var aliasR   = (document.getElementById('refAliasR')   || {}).value || '';
+  if (!question || question.trim().length < 10) { return alert('Please enter a challenge question (at least 10 characters).'); }
+  if (!deadline) { return alert('Please set a resolution deadline.'); }
+  var result = getValidPairs();
+  if (!result.valid.length) { return alert('Please add at least one valid pair of phone numbers.'); }
+  var btn = document.getElementById('refCreateBtn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Creating...'; }
+  userFetch('/api/challenges/referee-batch', {
+    method: 'POST',
+    body:   JSON.stringify({
+      question:       question.trim(),
+      pairs:          result.valid,
+      eventExpiresAt: new Date(deadline + 'T23:59:00').toISOString(),
+      refereeAlias:   aliasR.trim() || undefined,
+    }),
+  })
+  .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
+  .then(function(res) {
+    if (btn) { btn.disabled = false; btn.textContent = 'Create Challenges as Referee →'; }
+    if (res.ok && res.d.success) {
+      var n = res.d.created && res.d.created.length;
+      var sub = document.getElementById('refereeSuccessSub');
+      if (sub) {
+        sub.textContent = n + ' challenge' + (n > 1 ? 's' : '') + ' created. Both challengers in each pair have been notified (blind).';
+        if (res.d.skipped && res.d.skipped.length > 0) {
+          sub.textContent += ' ' + res.d.skipped.length + ' pair(s) were skipped.';
+        }
+      }
+      document.getElementById('refereeFormView').style.display = 'none';
+      document.getElementById('refereeSuccessView').style.display = 'block';
+      loadChallenges();
+    } else {
+      var err = res.d && (res.d.error || 'Could not create challenges.');
+      alert('Error: ' + (typeof err === 'string' ? err : JSON.stringify(err)));
+    }
+  }).catch(function() {
+    if (btn) { btn.disabled = false; btn.textContent = 'Create Challenges as Referee →'; }
+    alert('Network error. Please try again.');
+  });
+}
+
+function resetRefereeForm() {
+  document.getElementById('refereeFormView').style.display = 'block';
+  document.getElementById('refereeSuccessView').style.display = 'none';
+  var container = document.getElementById('pairRowsContainer');
+  if (container) { container.innerHTML = ''; pairCount = 0; }
+  addPairRow();
+  var q = document.getElementById('refQuestion'); if (q) q.value = '';
+  var d = document.getElementById('refDeadline'); if (d) d.value = '';
+  var a = document.getElementById('refAliasR');   if (a) a.value = '';
+  var el = document.getElementById('inlineCreateCard');
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function joinRefereeChallenge(code) {
+  if (!confirm('Accept this challenge?\n\nYour stake will be deducted from your wallet. You must have sufficient balance.')) return;
+  userFetch('/api/challenges/join/' + code, { method: 'POST', body: '{}' })
+    .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
+    .then(function(res) {
+      if (res.ok && res.d.status === 'ACTIVE') {
+        alert('Both challengers have staked! The challenge is now live. Only the referee can resolve it.');
+        loadChallenges();
+      } else if (res.ok) {
+        alert('You have staked! Waiting for the other challenger to stake.');
+        loadChallenges();
+      } else {
+        alert('Error: ' + ((res.d && res.d.error) || 'Could not join.'));
+      }
+    }).catch(function() { alert('Network error. Please try again.'); });
 }
 
 // ── CANCEL FLOW ──────────────────────────────────────────────────────────────
@@ -3322,6 +3630,8 @@ function showToast(msg, duration) {
 document.addEventListener('DOMContentLoaded', function() {
   // Initialise multi-row friend form with one empty row
   addFriendRow();
+  // Initialise referee pair form with one empty row
+  addPairRow();
   initCarousel();
 });
 </script>

@@ -472,6 +472,9 @@ enum ChallengeStatus {
   DISPUTED
   RESOLVED
   CANCELLED
+  PENDING_BOTH      // Referee created — neither A nor B has staked yet
+  PENDING_A         // Referee created — B staked, waiting for A to stake
+  PENDING_B         // Referee created — A staked, waiting for B to stake
 }
 
 enum ChallengeOutcome {

@@ -35,7 +35,11 @@ export async function GET(req: NextRequest) {
     } : null,
   }));
 
-  return NextResponse.json({ queue: mappedQueue });
+  // Return as 'challenges' to match frontend expectation
+  return NextResponse.json({ challenges: mappedQueue.map(c => ({
+    ...c,
+    rawStatus: c.status,        // keep raw enum for frontend status logic
+  })) });
 }
 
 // POST /api/users/me/referee-queue  body: { challengeId, action: 'ACCEPT' | 'DECLINE' }
