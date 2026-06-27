@@ -30,7 +30,7 @@ const MIN_STAKE   = 20;
 const MAX_STAKE   = 20000;
 
 const FriendSchema = z.object({
-  phone:         z.string().min(10).max(15),
+  phone:         z.string().min(10).max(15).optional(),  // omit = open challenge
   nickname:      z.string().max(40).optional(),
   stakePerPerson: z.number().min(MIN_STAKE).max(MAX_STAKE),
 });
@@ -83,15 +83,28 @@ export async function POST(req: NextRequest) {
   // ── Pre-flight: validate all friend phones ────────────────────────────────
   const skipped: Array<{ phone: string; reason: string }> = [];
   const valid:   Array<{
-    phone:          string;
+    phone:          string | null;
     nickname?:      string;
     stakePerPerson: number;
-    userId:         string;
+    userId:         string | null;
     userName:       string | null;
-    userPhone:      string;
+    userPhone:      string | null;
   }> = [];
 
   for (const f of friends) {
+    // No phone = open challenge; anyone with the code can join
+    if (!f.phone) {
+      valid.push({
+        phone:          null,
+        nickname:       f.nickname,
+        stakePerPerson: f.stakePerPerson,
+        userId:         null,      // not pre-assigned
+        userName:       null,
+        userPhone:      null,
+      });
+      continue;
+    }
+
     const normPhone = normalisePhone(f.phone);
     if (normPhone === normalisePhone(user.phone)) {
       skipped.push({ phone: f.phone, reason: 'Cannot challenge yourself' });
@@ -172,7 +185,7 @@ export async function POST(req: NextRequest) {
           question,
           accessCode,
           userAId:          user.id,
-          userBId:          alloc.userId,
+          userBId:          alloc.userId || null,   // null = open challenge
           refereeId,
           stakePerPerson:   alloc.stakePerPerson,
           totalPool:        alloc.walletUsed,  // M-Pesa portion added by webhook
@@ -195,7 +208,7 @@ export async function POST(req: NextRequest) {
             amountKes:   -alloc.walletUsed,
             balAfter:    Number(freshUser.balanceKes) - totalRealUsed,
             status:      'SUCCESS',
-            description: `Challenge stake KES ${alloc.walletUsed} for "${question.slice(0, 40)}" vs ${alloc.phone}`,
+            description: `Challenge stake KES ${alloc.walletUsed} for "${question.slice(0, 40)}" vs ${alloc.phone || 'open challenge'}`,
           },
         });
       }
@@ -265,10 +278,12 @@ export async function POST(req: NextRequest) {
 
   // ── Notifications: only for challenges that are already PENDING_JOIN ──────
   const creatorName = displayName(user.name, user.phone);
-  for (const alloc of allocations) {
-    const ch = createdChallenges.find(c => c.userBId === alloc.userId);
+  for (let i = 0; i < allocations.length; i++) {
+    const alloc = allocations[i];
+    const ch    = createdChallenges[i];   // created in same order as allocations
     if (!ch) continue;
     if (ch.status !== 'PENDING_JOIN') continue;  // webhook notifies after M-Pesa
+    if (!alloc.userId) continue;                 // open challenge — no B to notify yet
 
     void createNotification({
       userId:  alloc.userId,

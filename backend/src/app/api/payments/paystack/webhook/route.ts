@@ -223,9 +223,12 @@ async function handleChallengeStakeSuccess(data: any) {
 
   for (const ch of toActivate) {
     const mpesaForThis = Math.max(0, Number(ch.stakePerPerson) - Number(ch.totalPool));
+    // A's creation payment: PENDING_PAYMENT → PENDING_JOIN
+    // B's join payment: challenge already ACTIVE — just add to pool, keep status
+    const newStatus = ch.status === 'PENDING_PAYMENT' ? 'PENDING_JOIN' : ch.status;
     await prisma.marketChallenge.update({
       where: { id: ch.id },
-      data:  { totalPool: { increment: mpesaForThis }, status: 'PENDING_JOIN' },
+      data:  { totalPool: { increment: mpesaForThis }, status: newStatus },
     });
 
     if (ch.userBId && ch.userA) {

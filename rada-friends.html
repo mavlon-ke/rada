@@ -1850,10 +1850,12 @@ function addFriendRow() {
         ? '<button type="button" onclick="removeFriendRow(' + id + ')" style="background:none;border:none;color:var(--text-dim);font-size:0.9rem;cursor:pointer;padding:0 4px;">✕</button>'
         : '') +
     '</div>' +
-    '<div style="position:relative;margin-bottom:6px;">' +
-      '<input class="mf-input friend-phone" id="phone-' + id + '" placeholder="07XX XXX XXX" maxlength="12" style="padding-right:28px;" oninput="debouncedValidatePhone(' + id + ')">' +
+    '<div style="position:relative;margin-bottom:4px;">' +
+      '<input class="mf-input friend-phone" id="phone-' + id + '" placeholder="07XX XXX XXX (optional)" maxlength="12" style="padding-right:28px;" oninput="debouncedValidatePhone(' + id + ')">' +
       '<span class="phone-status" id="phoneStatus-' + id + '" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:0.72rem;"></span>' +
     '</div>' +
+    '<div id="lockStatus-' + id + '" style="font-size:0.65rem;color:var(--ke-green);margin-bottom:6px;min-height:14px;"></div>' +
+    '<div style="font-size:0.63rem;color:var(--text-dim);margin-bottom:6px;margin-top:-4px;">Leave blank to create an open challenge — anyone with the code can join.</div>' +
     '<input class="mf-input" id="nick-' + id + '" placeholder="Nickname (optional)" style="margin-bottom:6px;">' +
     '<div style="display:flex;align-items:center;gap:6px;">' +
       '<span style="font-size:0.72rem;color:var(--text-dim);white-space:nowrap;">Stake KES</span>' +
@@ -1897,23 +1899,23 @@ function validateFriendPhone(rowId) {
     return;
   }
   var phone = input.value.trim();
-  userFetch('/api/referrals/validate', {
+  userFetch('/api/users/validate-phone', {
     method: 'POST',
-    body:   JSON.stringify({ code: phone }),
+    body:   JSON.stringify({ phone: phone }),
   }).then(function(r) { return r.json(); })
   .then(function(d) {
-    // Validate endpoint returns {valid, referrerName} — we check if it's a registered user
-    // A valid phone = user exists (valid=true OR has a name means registered)
-    // For phones not yet validated as referral codes, check the user-check endpoint
     var valid = !!(d && d.valid);
     if (statusEl) {
       statusEl.textContent = valid ? '✓' : '✗';
       statusEl.style.color = valid ? 'var(--ke-green)' : 'var(--ke-red)';
       statusEl.setAttribute('data-valid', valid ? 'true' : 'false');
     }
+    // Update lock/open indicator for this row
+    var rowId2 = rowId;
+    var lockEl = document.getElementById('lockStatus-' + rowId2);
+    if (lockEl) lockEl.textContent = valid ? '🔒 Locked to this friend' : '';
     updateChallengeSummary();
   }).catch(function() {
-    // On network error, mark as pending — backend will validate on submit
     if (statusEl) { statusEl.textContent = '?'; statusEl.style.color = 'var(--gold)'; statusEl.setAttribute('data-valid', 'pending'); }
     updateChallengeSummary();
   });
@@ -1928,17 +1930,16 @@ function getValidFriends() {
     var nickEl   = document.getElementById('nick-'        + id);
     var stakeEl  = document.getElementById('stake-'       + id);
     var statusEl = document.getElementById('phoneStatus-' + id);
-    var phone    = phoneEl  ? phoneEl.value.trim()          : '';
+    var phone    = phoneEl  ? phoneEl.value.trim() : '';
     var dv       = statusEl ? statusEl.getAttribute('data-valid') : '';
-    if (phone && dv !== 'false') {
-      valid.push({
-        phone:          phone,
-        nickname:       nickEl  ? nickEl.value.trim()        : '',
-        stakePerPerson: stakeEl ? (parseInt(stakeEl.value) || 500) : 500,
-      });
-    } else if (phone && dv === 'false') {
-      skipped++;
-    }
+    // Phone entered but explicitly invalid (red X) — skip this row
+    if (phone && dv === 'false') { skipped++; return; }
+    // Include: phone valid/pending (locked), OR phone blank (open challenge)
+    valid.push({
+      phone:          phone || undefined,
+      nickname:       nickEl  ? nickEl.value.trim()        : '',
+      stakePerPerson: stakeEl ? (parseInt(stakeEl.value) || 500) : 500,
+    });
   });
   return { valid: valid, skipped: skipped };
 }
@@ -2168,16 +2169,18 @@ function createChallenges() {
           if (ssSub) ssSub.textContent = 'Share the code with your friend — they must accept and stake to go live.';
         }
       } else {
-        if (codeEl) codeEl.textContent = created[0].accessCode + ' +' + (n - 1) + ' more';
+        if (codeEl) codeEl.textContent = created[0].accessCode;
         if (code2)  code2.textContent  = created[0].accessCode;
-        var codeList = created.map(function(ch) {
-          return (ch.friendPhone || '') + ': <strong>' + ch.accessCode + '</strong> · KES ' + (ch.stake || '').toLocaleString();
+        var codeList = created.map(function(ch, idx) {
+          var label = ch.friendPhone ? ch.friendPhone : 'Open challenge ' + (idx + 1);
+          return label + ': <strong>' + ch.accessCode + '</strong> · KES ' + Number(ch.stake || 0).toLocaleString();
         }).join('<br>');
         if (ssTitle) ssTitle.textContent = n + ' Challenges Created!';
         if (ssSub) ssSub.innerHTML =
           (mpesaPending ? '<strong>📱 ' + (stkMsg || 'M-Pesa prompt sent for combined payment') + '</strong><br><br>' : '') +
-          'Share each code with the respective friend:<br><br>' + codeList +
-          (skipped.length ? '<br><br><span style="color:#b45309;font-size:0.8em;">⚠ ' + skipped.length + ' skipped: ' + skipped.map(function(s){return s.phone;}).join(', ') + '</span>' : '');
+          'Share each code with the right friend. Your friends have been notified via WhatsApp where applicable.<br><br>' +
+          codeList +
+          (skipped.length ? '<br><br><span style="color:#b45309;font-size:0.8em;">⚠ ' + skipped.length + ' number(s) skipped (not registered): ' + skipped.map(function(s){return s.phone;}).join(', ') + '</span>' : '');
       }
 
       document.getElementById('formView').style.display = 'none';
@@ -2247,7 +2250,7 @@ function acceptChallenge(code, stake) {
   })
   .then(function(res) {
     if (res.ok) {
-      alert('✓ Challenge accepted! The challenge is now active. Good luck!');
+      alert('✓ Challenge accepted! The challenge is now live. Good luck!');
       loadChallenges();
     } else {
       var msg = (res.d && typeof res.d.error === 'string') ? res.d.error : 'Could not accept challenge.';
@@ -2297,7 +2300,7 @@ function joinChallenge() {
         })
         .then(function(res2) {
           if (res2.ok) {
-            alert('✓ You have joined the challenge! The challenge is now active. Good luck!');
+            alert('✓ You have joined the challenge! The challenge is now live. Good luck!');
             document.getElementById('joinCodeInput').value = '';
             loadChallenges();
           } else {
