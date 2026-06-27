@@ -1151,10 +1151,7 @@ nav{padding:14px 24px;display:flex;align-items:center;justify-content:space-betw
           <div class="res-type-icon">⚖️</div>
           <div class="res-type-label">Referee</div>
         </div>
-        <div class="res-type-btn" onclick="selectResType(this,'timer')" data-type="timer">
-          <div class="res-type-icon">⏱️</div>
-          <div class="res-type-label">Timer</div>
-        </div>
+
         <div class="res-type-btn" onclick="selectResType(this,'mutual')" data-type="mutual">
           <div class="res-type-icon">🤝</div>
           <div class="res-type-label">Mutual</div>
@@ -1174,10 +1171,7 @@ nav{padding:14px 24px;display:flex;align-items:center;justify-content:space-betw
         <div class="field-hint">Referee must be a registered CheckRada user. They will receive a nomination alert.</div>
       </div>
 
-      <div id="timerField" style="display:none;">
-        <label class="mf-label">Auto-Resolve At</label>
-        <input class="mf-input" id="cfTimer" type="datetime-local">
-      </div>
+
 
       <label class="mf-label">Resolution Deadline</label>
       <input class="mf-input" id="cfDeadline" type="date">
@@ -1380,6 +1374,7 @@ function loadChallenges() {
         isCreator:         isCreator,
         stake:             Number(c.stakePerPerson),
         cancelRequestedBy: c.cancelRequestedBy || null,
+        rawStatus:         c.status,              // raw API status for PENDING_PAYMENT check
         aliasA:            c.challengerAAlias || null,
         aliasB:            c.challengerBAlias || null,
         batchId:           c.batchId || null,
@@ -1641,7 +1636,18 @@ function challengeCard(c, isMine, isRef = false) {
         <div class="cc-share-row">
           <button class="csh-btn native" onclick="nativeShareChallenge('${c.slug}','${c.code}','${c.q}')">⤴ Share</button>
         </div>
-        ${c.status === 'pending' && c.isCreator ? `
+        ${c.rawStatus === 'PENDING_PAYMENT' && c.isCreator ? `
+          <div class="resolution-alert" style="background:rgba(244,185,66,0.08);border-left:3px solid var(--gold);margin-bottom:8px;">
+            <div class="resolution-alert-icon">⏳</div>
+            <div class="resolution-alert-body">
+              <div class="resolution-alert-title">Payment Pending</div>
+              <div class="resolution-alert-sub">Your M-Pesa payment was not completed. Retry or cancel for a full refund.</div>
+            </div>
+          </div>
+          <button class="btn-sm btn-sm-purple" style="margin-bottom:4px;" onclick="retryPayment('${c.id}')">📱 Retry M-Pesa Payment</button>
+          <button class="btn-sm btn-sm-ghost" style="margin-bottom:4px;" onclick="topUpAndComplete('${c.id}', ${c.stake}, ${c.pool})">💳 Top Up & Complete</button>
+          <button class="btn-sm" style="border:1px solid rgba(206,17,38,0.25);color:#b91c1c;background:rgba(206,17,38,0.05);border-radius:8px;padding:7px 12px;font-size:0.72rem;cursor:pointer;width:100%;" onclick="cancelPendingPaymentChallenge('${c.id}')">✕ Cancel (Full Refund)</button>
+        ` : c.status === 'pending' && c.isCreator ? `
           <button class="btn-sm btn-sm-ghost" style="margin-bottom:4px;">Wait for Friend →</button>
           <button class="btn-sm" style="border:1px solid rgba(206,17,38,0.25);color:#b91c1c;background:rgba(206,17,38,0.05);border-radius:8px;padding:7px 12px;font-size:0.72rem;cursor:pointer;width:100%;" onclick="cancelChallenge('${c.id}', true)">✕ Cancel Challenge</button>
         ` : ''}
@@ -1739,6 +1745,43 @@ function switchTab(btn, tab) {
   ['my-challenges','referee','history'].forEach(id => {
     document.getElementById(`tab-${id}`).style.display = id === tab ? '' : 'none';
   });
+}
+
+// ── PENDING PAYMENT ACTIONS ──────────────────────────────────────────────────
+function retryPayment(id) {
+  if (!confirm('Retry M-Pesa payment?\n\nA new M-Pesa prompt will be sent to your phone.')) return;
+  userFetch('/api/challenges/' + id + '/retry-payment', { method: 'POST', body: '{}' })
+    .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
+    .then(function(res) {
+      if (res.ok && res.d.method === 'wallet') {
+        alert('Challenge activated! Your wallet covered the remaining balance.');
+        loadChallenges();
+      } else if (res.ok && res.d.stkMessage) {
+        alert('📱 ' + res.d.stkMessage + '\n\nEnter your PIN to activate the challenge.');
+        loadChallenges();
+      } else {
+        alert('Error: ' + ((res.d && res.d.error) || 'Could not retry payment.'));
+      }
+    }).catch(function() { alert('Network error. Please try again.'); });
+}
+
+function topUpAndComplete(id, stake, poolSoFar) {
+  var shortfall = Math.max(0, stake - poolSoFar);
+  var msg = 'You need to deposit KES ' + shortfall.toLocaleString() + ' more to complete this challenge.\n\n' +
+    'After depositing, return here and click "Retry M-Pesa Payment" or the page will refresh automatically.';
+  if (confirm(msg + '\n\nGo to deposit page now?')) {
+    window.location.href = 'rada-portfolio.html';
+  }
+}
+
+function cancelPendingPaymentChallenge(id) {
+  if (!confirm('Cancel this challenge?\n\nYour wallet balance will be refunded in full — no fee applies since the challenge was never live.')) return;
+  userFetch('/api/challenges/' + id + '/cancel', { method: 'POST', body: '{}' })
+    .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
+    .then(function(res) {
+      if (res.ok) { alert(res.d.message || 'Challenge cancelled. Full refund credited.'); loadChallenges(); }
+      else { alert('Error: ' + ((res.d && res.d.error) || 'Could not cancel.')); }
+    }).catch(function() { alert('Network error. Please try again.'); });
 }
 
 // ── REFEREE ROLE ─────────────────────────────────────────────────────────────
@@ -2035,7 +2078,7 @@ function selectResType(btn, type) {
   document.querySelectorAll('.res-type-btn').forEach(b => b.classList.remove('selected'));
   btn.classList.add('selected');
   document.getElementById('refereeField').classList.toggle('show', type === 'referee');
-  document.getElementById('timerField').style.display = type === 'timer' ? '' : 'none';
+  var tf = document.getElementById('timerField'); if (tf) tf.style.display = type === 'timer' ? '' : 'none';
 }
 
 function generateCode() {
@@ -2550,7 +2593,12 @@ function submitMutual(id, winner) {
   .then(function(res) {
     closeModal('resolveModal');
     if (res.ok) {
-      showNotifToast('✅ Resolution submitted!', 'Waiting for the other participant to confirm. Once both agree, funds are released at 5% fee.');
+      if (res.d.outcome) {
+        // Both agreed — resolved immediately
+        showNotifToast('🏆 Challenge Resolved!', 'Both parties agreed. Winnings credited to your wallet at 5% fee.');
+      } else {
+        showNotifToast('✅ Resolution submitted!', 'Waiting for the other party to confirm. 5% fee if they agree, 15% if admin intervenes.');
+      }
       loadChallenges();
     } else {
       showNotifToast('❌ Error', res.d.error || 'Could not submit resolution.');

@@ -1,7 +1,11 @@
 // src/app/api/challenges/[id]/confirm/route.ts
 // Mutual consent resolution — each user submits their view of the outcome.
-// If both agree (or referee submits): auto-resolve at 5% fee.
-// If no agreement after 48h: escalate to admin (15% fee).
+// If both agree → auto-resolve immediately at 5% fee.
+// If referee submits → auto-resolve immediately at 5% fee.
+// If parties disagree → 48h window, then escalates to admin (15% fee).
+// IMPORTANT: resolveChallenge() must receive the original challenge object (with
+// userA/userB relations included) — never pass the `updated` object from Prisma
+// update() which does not include relation data.
 //
 // Payout model: winnings credited to CheckRada wallet balance only.
 // Users withdraw to M-Pesa manually via the standard withdrawal flow.
@@ -55,10 +59,9 @@ export async function POST(
   }
 
   // ── REFEREE path — immediate resolution at 5% ────────────────────────────
+  // Referee resolves immediately at 5% — no extra gate needed.
+  // Referee can decline their role via the /referee endpoint which switches to MUTUAL.
   if (isReferee && challenge.validatorType === 'REFEREE') {
-    if (!challenge.refereeAccepted) {
-      return NextResponse.json({ error: 'You must accept the referee nomination first' }, { status: 400 });
-    }
     return resolveChallenge(challenge, outcome, FEE_STANDARD, 'REFEREE');
   }
 
@@ -77,7 +80,7 @@ export async function POST(
 
   // If both parties agree → resolve at standard 5% fee
   if (aConfirm && bConfirm && aConfirm === bConfirm) {
-    return resolveChallenge(updated, aConfirm as any, FEE_STANDARD, 'MUTUAL');
+    return resolveChallenge(challenge, aConfirm as any, FEE_STANDARD, 'MUTUAL');
   }
 
   // If both parties disagree AND 48h window has not yet started, start it now

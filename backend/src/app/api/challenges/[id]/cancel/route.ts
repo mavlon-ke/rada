@@ -47,6 +47,10 @@ export async function POST(
   });
 
   if (!challenge) return NextResponse.json({ error: 'Challenge not found' }, { status: 404 });
+  // Compute participant roles before any status branching
+  const isA = challenge.userAId === user.id;
+  const isB = challenge.userBId === user.id;
+
   if (challenge.status === 'CANCELLED') {
     return NextResponse.json({ error: 'Challenge already cancelled' }, { status: 400 });
   }
@@ -54,8 +58,14 @@ export async function POST(
     return NextResponse.json({ error: 'Cannot cancel a resolved challenge' }, { status: 400 });
   }
 
-  const isA = challenge.userAId === user.id;
-  const isB = challenge.userBId === user.id;
+  // ── PENDING_PAYMENT: full refund, no fee (challenge was never live) ────────
+  if (challenge.status === 'PENDING_PAYMENT') {
+    if (!isA) {
+      return NextResponse.json({ error: 'Only the challenge creator can cancel a pending payment' }, { status: 403 });
+    }
+    return cancelPendingPayment(challenge, user.id);
+  }
+
   if (!isA && !isB) {
     return NextResponse.json({ error: 'You are not a participant in this challenge' }, { status: 403 });
   }
@@ -75,6 +85,55 @@ export async function POST(
   if (agree === false) return refuseCancel(challenge, user.id);
   if (agree === true)  return acceptCancel(challenge, user.id);
   return initiateCancel(challenge, user.id, isA);
+}
+
+// ── PENDING_PAYMENT: full refund, no fee ─────────────────────────────────────
+// Challenge was never live (B never joined, M-Pesa never confirmed).
+// Full wallet refund — no 5% fee since the challenge was never accepted.
+async function cancelPendingPayment(challenge: any, requesterId: string) {
+  const walletPaid = Number(challenge.totalPool);  // what was deducted from wallet
+
+  await prisma.$transaction(async (tx: any) => {
+    // Cancel any pending M-Pesa transaction for this challenge
+    await tx.transaction.updateMany({
+      where: { challengeId: challenge.id, status: 'PENDING', type: 'CHALLENGE_STAKE' },
+      data:  { status: 'CANCELLED', description: 'Challenge cancelled before M-Pesa confirmed' },
+    });
+
+    // Refund full wallet portion
+    if (walletPaid > 0) {
+      const upd = await tx.user.update({
+        where: { id: requesterId },
+        data:  { balanceKes: { increment: walletPaid } },
+      });
+      await tx.transaction.create({
+        data: {
+          userId:      requesterId,
+          challengeId: challenge.id,
+          type:        'REFUND',
+          amountKes:   walletPaid,
+          balAfter:    Number(upd.balanceKes),
+          status:      'SUCCESS',
+          description: 'Full refund — challenge cancelled before M-Pesa payment confirmed',
+        },
+      });
+    }
+
+    await tx.marketChallenge.update({
+      where: { id: challenge.id },
+      data:  { status: 'CANCELLED', cancelRequestedBy: requesterId },
+    });
+  });
+
+  return NextResponse.json({
+    success: true,
+    status:  'CANCELLED',
+    refund:  walletPaid,
+    fee:     0,
+    message: walletPaid > 0
+      ? 'Challenge cancelled. KES ' + walletPaid.toLocaleString() + ' refunded in full (no fee).'
+      : 'Challenge cancelled.',
+  });
 }
 
 // ── PENDING_JOIN: 5% fee on A's stake ──────────────────────────────────────────
