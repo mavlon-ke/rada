@@ -1125,61 +1125,24 @@ nav{padding:14px 24px;display:flex;align-items:center;justify-content:space-betw
       <label class="mf-label">The Challenge Question</label>
       <input class="mf-input" id="cfQuestion" placeholder="e.g. Will I beat Kamau in the 5km Parkrun this Saturday?">
 
-      <!-- Challenger A -->
-      <div class="mf-row">
-        <div>
-          <label class="mf-label">Your Name (Challenger A)</label>
-          <input class="mf-input" id="cfNameA" placeholder="Your name">
-        </div>
-        <div>
-          <label class="mf-label">Your Phone Number</label>
-          <div style="position:relative">
-            <input class="mf-input" id="cfPhoneA" placeholder="07XX XXX XXX" maxlength="12" oninput="validatePhone('cfPhoneA','phoneStatusA')">
-            <span id="phoneStatusA" class="phone-status"></span>
-          </div>
-        </div>
+      <!-- Multi-row friends section -->
+      <label class="mf-label" style="margin-top:16px;">Challenge Friends <span style="font-weight:400;color:var(--text-dim);font-size:0.68rem;">(up to 100 · each can have a different stake)</span></label>
+      <div id="friendRowsContainer" style="max-height:340px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding-right:2px;margin-bottom:8px;">
+        <!-- Friend rows injected by JS -->
       </div>
+      <button type="button" id="addFriendBtn" onclick="addFriendRow()"
+        style="width:100%;padding:9px;border:1.5px dashed rgba(109,40,217,0.3);border-radius:10px;background:transparent;color:var(--purple);font-size:0.75rem;font-weight:600;cursor:pointer;margin-bottom:12px;">
+        + Add Another Friend
+      </button>
 
-      <!-- Challenger B -->
-      <div class="mf-row">
-        <div>
-          <label class="mf-label">Friend's Name (Challenger B)</label>
-          <input class="mf-input" id="cfNameB" placeholder="Friend's name">
+      <!-- Live summary (shown when ≥1 valid row) -->
+      <div id="challengeSummary" style="display:none;background:rgba(109,40,217,0.06);border:1px solid rgba(109,40,217,0.15);border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:0.72rem;">
+        <div style="font-weight:700;color:var(--purple);margin-bottom:6px;" id="summaryTitle">1 Challenge · KES 0 total</div>
+        <div style="display:flex;gap:16px;flex-wrap:wrap;">
+          <span style="color:var(--text-dim);">Wallet: <strong id="summaryWallet" style="color:var(--text);">KES 0</strong></span>
+          <span id="summaryMpesaRow" style="display:none;color:var(--text-dim);">M-Pesa: <strong id="summaryMpesa" style="color:var(--purple);">KES 0</strong></span>
         </div>
-        <div>
-          <label class="mf-label">Friend's Phone Number</label>
-          <div style="position:relative">
-            <input class="mf-input" id="cfPhoneB" placeholder="07XX XXX XXX" maxlength="12" oninput="validatePhone('cfPhoneB','phoneStatusB')">
-            <span id="phoneStatusB" class="phone-status"></span>
-          </div>
-          <div class="field-hint">Must be a registered CheckRada user</div>
-        </div>
-      </div>
-
-      <label class="mf-label">Stake Per Person</label>
-      <div class="stake-display">
-        <div class="sd-row">
-          <span class="sd-label">Each stakes</span>
-          <div class="stake-input-wrap">
-            <span class="stake-input-prefix">KES</span>
-            <input type="number" class="stake-direct-input" id="stakeDirectInput"
-              min="20" max="20000" value="500" placeholder="500"
-              oninput="syncStakeFromInput(this.value)"
-              onblur="clampStake(this)">
-          </div>
-        </div>
-        <input type="range" class="stake-range" id="stakeRangeF" min="20" max="20000" step="20" value="500" oninput="updateFriendStake(this.value)">
-        <div class="stake-limits"><span>KES 20 min</span><span>KES 20,000 max</span></div>
-      </div>
-
-      <div class="fee-preview" id="feePreview">
-        <div class="fp-row"><span class="fp-dimmed">Total pool</span><span id="fpPool">KES 1,000</span></div>
-        <div class="fp-row"><span class="fp-dimmed">Forecasting fee (5%)</span><span id="fpFee">KES 50</span></div>
-        <div class="fp-row"><span class="fp-dimmed fp-bold" style="color:var(--ke-green)">Winner receives</span><span id="fpWinner" style="color:var(--ke-green);font-family:var(--mono)">KES 950</span></div>
-        <div class="fp-row fp-dimmed" style="font-size:0.65rem;color:var(--text-dim);border:none;padding-top:4px;margin-top:0;">
-          <span>If tie: each refunded KES <span id="fpTie">490</span> (KES 10 processing fee each)</span>
-          <span>Dispute fee: 15%</span>
-        </div>
+        <div id="summarySkipped" style="display:none;margin-top:4px;color:#b45309;font-size:0.68rem;"></div>
       </div>
 
       <label class="mf-label">Resolution Type</label>
@@ -1199,7 +1162,7 @@ nav{padding:14px 24px;display:flex;align-items:center;justify-content:space-betw
       </div>
 
       <div class="referee-note">
-        <strong>Referee:</strong> A trusted third party (must be a registered CheckRada user) who judges the outcome. Only the Referee can release funds — no collusion possible. Referee earns no fee but builds their Integrity Score.
+        <strong>Referee:</strong> A trusted third party (must be a registered CheckRada user) who judges the outcome. Only the Referee can release funds. Referee earns no fee but builds their Integrity Score.
       </div>
 
       <div class="referee-field show" id="refereeField">
@@ -1208,7 +1171,7 @@ nav{padding:14px 24px;display:flex;align-items:center;justify-content:space-betw
           <input class="mf-input" id="cfReferee" placeholder="07XX XXX XXX" maxlength="12" oninput="validatePhone('cfReferee','phoneStatusRef')">
           <span id="phoneStatusRef" class="phone-status"></span>
         </div>
-        <div class="field-hint">Referee must be a registered CheckRada user. They will receive an SMS nomination alert.</div>
+        <div class="field-hint">Referee must be a registered CheckRada user. They will receive a nomination alert.</div>
       </div>
 
       <div id="timerField" style="display:none;">
@@ -1219,10 +1182,17 @@ nav{padding:14px 24px;display:flex;align-items:center;justify-content:space-betw
       <label class="mf-label">Resolution Deadline</label>
       <input class="mf-input" id="cfDeadline" type="date">
 
-      <button class="btn-create" id="createBtn" onclick="createChallenge()">Create Challenge &amp; Pay via M-Pesa →</button>
+      <!-- Creator nickname at bottom -->
+      <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);">
+        <label class="mf-label">Your Nickname <span style="font-weight:400;color:var(--text-dim);">(optional)</span></label>
+        <input class="mf-input" id="cfAliasA" placeholder="e.g. The Challenger, Wanjiku FC">
+        <div class="field-hint">Shown on the challenge card instead of your display name. Leave blank to use your name.</div>
+      </div>
+
+      <button class="btn-create" id="createBtn" onclick="createChallenges()">Create Challenge &amp; Pay →</button>
       <div id="challengeWalletBreakdown" style="text-align:center;font-size:0.65rem;color:#9284b8;margin:6px 0 4px;min-height:16px;line-height:1.5;"></div>
       <div style="background:rgba(244,185,66,0.10);border:1px solid rgba(244,185,66,0.3);border-radius:8px;padding:9px 12px;margin-top:10px;font-size:0.68rem;color:#92400e;line-height:1.6;">
-        ⚠️ <strong>5% fee applies if:</strong> your friend doesn't accept — or if you cancel before they do. This fee is non-refundable.
+        ⚠️ <strong>5% fee applies if:</strong> a friend doesn't accept — or if you cancel before they do. This fee is non-refundable.
       </div>
       <div style="text-align:center;font-size:0.62rem;color:var(--text-dim);margin-top:8px;line-height:1.5;">
         Peer-to-Peer Escrow · Funds held securely until resolution · By creating you agree to CheckRada Social Escrow Terms
@@ -1410,6 +1380,9 @@ function loadChallenges() {
         isCreator:         isCreator,
         stake:             Number(c.stakePerPerson),
         cancelRequestedBy: c.cancelRequestedBy || null,
+        aliasA:            c.challengerAAlias || null,
+        aliasB:            c.challengerBAlias || null,
+        batchId:           c.batchId || null,
       };
     }).filter(function(c) { return c.status !== 'resolved' && c.status !== 'cancelled'; });
 
@@ -1539,7 +1512,7 @@ function challengeCard(c, isMine, isRef = false) {
         <div>
           <div class="cc-ref-label">Referee</div>
           <div class="cc-ref-name">${c.referee.name}</div>
-          <div class="cc-ref-sub">${c.resType === 'referee' ? 'Only they can resolve' : 'Mutual consent mode'}</div>
+          <div class="cc-ref-sub">Only the referee can resolve this challenge</div>
         </div>
        </div>`
     : `<div class="cc-referee">
@@ -1547,7 +1520,7 @@ function challengeCard(c, isMine, isRef = false) {
         <div>
           <div class="cc-ref-label">Resolution</div>
           <div class="cc-ref-name">Mutual Consent</div>
-          <div class="cc-ref-sub">Both parties must agree on winner</div>
+          <div class="cc-ref-sub">Both parties must agree — 5% fee if mutual, 15% if admin</div>
         </div>
        </div>`;
 
@@ -1584,7 +1557,8 @@ function challengeCard(c, isMine, isRef = false) {
 
   // Mutual resolution — visible to both participants during 48h window
   // Show mutual resolve button on any ACTIVE or PENDING_RESOLUTION mutual challenge
-  const showMutual = isMine && c.resType === 'mutual' && (c.status === 'open' || c.status === 'resolving');
+  // When referee is appointed, only they can resolve — challengers don't get mutual/admin buttons
+  const showMutual = isMine && c.resType !== 'referee' && (c.status === 'open' || c.status === 'resolving');
   // If already in resolving state, check if this user has already submitted
   const myId = (JSON.parse(localStorage.getItem('rada_user') || '{}') || {}).id;
   const iAmA = c.a && c.aId === myId;
@@ -1603,7 +1577,7 @@ function challengeCard(c, isMine, isRef = false) {
   // Admin intervention — visible only after first 24h of the 48h window
   // i.e. hoursLeft <= 24 (meaning 24h have already passed since the window opened)
   const windowOpenedHoursAgo = hoursLeft !== null ? 48 - hoursLeft : null;
-  const showAdminBtn = isMine && hoursLeft !== null && hoursLeft > 0
+  const showAdminBtn = isMine && c.resType !== 'referee' && hoursLeft !== null && hoursLeft > 0
                        && windowOpenedHoursAgo !== null && windowOpenedHoursAgo >= 24;
   const adminBtn = showAdminBtn
     ? `<button class="btn-admin-intervene" onclick="requestAdminIntervention('${c.id}', this)">
@@ -1678,9 +1652,18 @@ function challengeCard(c, isMine, isRef = false) {
         ${cancelBtn}
       </div>`
     : `<div class="cc-actions">
+        <div style="background:rgba(109,40,217,0.08);border:1.5px solid rgba(109,40,217,0.2);border-radius:10px;padding:9px 12px;margin-bottom:8px;text-align:center;">
+          <div style="font-size:0.78rem;font-weight:800;color:var(--purple);">⚖️ You are the Referee</div>
+          <div style="font-size:0.65rem;color:var(--text-dim);margin-top:2px;">Only you can resolve this challenge. Your integrity score is on the line.</div>
+        </div>
         ${resAlert}
-        <button class="btn-sm btn-sm-purple" onclick="openResolveModal('${c.id}')">⚖️ Resolve</button>
-        <button class="btn-sm btn-sm-ghost">View Details</button>
+        ${c.status === 'open' ? `<button class="btn-sm btn-sm-purple" onclick="openResolveModal('${c.id}')">⚖️ Submit Ruling</button>` : ''}
+        ${c.status === 'pending' ? `
+          <button class="btn-sm btn-sm-purple" style="margin-bottom:4px;" onclick="acceptRefereeRole('${c.id}')">✓ Accept Referee Role</button>
+          <button class="btn-sm" style="border:1px solid rgba(206,17,38,0.25);color:#b91c1c;background:rgba(206,17,38,0.05);border-radius:8px;padding:7px 12px;font-size:0.72rem;cursor:pointer;width:100%;" onclick="declineRefereeRole('${c.id}')">✕ Decline (Switches to Mutual)</button>
+        ` : `
+          <button class="btn-sm btn-sm-ghost" style="color:#b91c1c;border-color:rgba(206,17,38,0.2);" onclick="declineRefereeRole('${c.id}')">✕ Decline Role (Switches to Mutual)</button>
+        `}
       </div>`;
 
   return `
@@ -1703,12 +1686,12 @@ function challengeCard(c, isMine, isRef = false) {
       <div class="cc-participants">
         <div class="cc-participant">
           <div class="cc-p-role">Challenger A</div>
-          <div class="cc-p-name">${c.a.name}</div>
+          <div class="cc-p-name">${c.aliasA || c.a.name}</div>
           <div class="cc-p-stake">KES ${c.a.stake.toLocaleString()}</div>
         </div>
         <div class="cc-participant" style="border-color:${c.status === 'open' || isRef ? 'rgba(109,40,217,0.14)' : 'var(--border)'}">
-          <div class="cc-p-role">Challenger B</div>
-          <div class="cc-p-name">${c.b.name}</div>
+          <div class="cc-p-role">Opponent</div>
+          <div class="cc-p-name">${c.status === 'pending' ? (c.aliasB || 'Awaiting opponent') : (c.aliasB || c.b.name)}</div>
           <div class="cc-p-stake">${c.status === 'pending' ? '<span style="color:var(--gold)">Awaiting stake</span>' : `KES ${c.b.stake.toLocaleString()}`}</div>
         </div>
       </div>
@@ -1756,6 +1739,27 @@ function switchTab(btn, tab) {
   ['my-challenges','referee','history'].forEach(id => {
     document.getElementById(`tab-${id}`).style.display = id === tab ? '' : 'none';
   });
+}
+
+// ── REFEREE ROLE ─────────────────────────────────────────────────────────────
+function acceptRefereeRole(id) {
+  if (!confirm('Accept the referee role?\n\nYou will judge the outcome. Both challengers will be notified.')) return;
+  userFetch('/api/challenges/' + id + '/referee', { method: 'POST', body: JSON.stringify({ action: 'ACCEPT' }) })
+    .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
+    .then(function(res) {
+      if (res.ok) { alert('Referee role accepted. Both challengers have been notified.'); loadChallenges(); }
+      else { alert('Error: ' + (res.d.error || 'Could not accept.')); }
+    }).catch(function() { alert('Network error.'); });
+}
+
+function declineRefereeRole(id) {
+  if (!confirm('Decline the referee role?\n\nThis switches the challenge to Mutual Consent resolution.\n\n5% fee if both agree · 15% if admin intervenes\n\nBoth challengers will be notified.')) return;
+  userFetch('/api/challenges/' + id + '/referee', { method: 'POST', body: JSON.stringify({ action: 'DECLINE' }) })
+    .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
+    .then(function(res) {
+      if (res.ok) { alert('Referee role declined. Challenge switched to Mutual Consent. Challengers notified.'); loadChallenges(); }
+      else { alert('Error: ' + (res.d.error || 'Could not decline.')); }
+    }).catch(function() { alert('Network error.'); });
 }
 
 // ── CANCEL FLOW ──────────────────────────────────────────────────────────────
@@ -1818,6 +1822,171 @@ function refuseCancel(id) {
       if (res.ok) { alert('Cancel refused. Admin has been notified and will review within 12 hours.'); loadChallenges(); }
       else { alert('Error: ' + (res.d.error || 'Could not process.')); }
     }).catch(function() { alert('Network error. Please try again.'); });
+}
+
+// ── MULTI-ROW FRIEND FORM ────────────────────────────────────────────────────
+var friendRowCount = 0;
+var friendTimers   = {};
+var MAX_FRIENDS    = 100;
+var walletBalance  = Number((JSON.parse(localStorage.getItem('rada_user') || '{}') || {}).balanceKes)      || 0;
+var bonusBalance   = Number((JSON.parse(localStorage.getItem('rada_user') || '{}') || {}).bonusBalanceKes) || 0;
+
+function addFriendRow() {
+  var container = document.getElementById('friendRowsContainer');
+  if (!container) return;
+  var existing = container.querySelectorAll('.friend-row').length;
+  if (existing >= MAX_FRIENDS) { alert('Maximum ' + MAX_FRIENDS + ' friends per challenge.'); return; }
+  friendRowCount++;
+  var id  = friendRowCount;
+  var num = existing + 1;
+  var div = document.createElement('div');
+  div.className = 'friend-row';
+  div.setAttribute('data-row-id', id);
+  div.style.cssText = 'background:var(--bg3);border-radius:10px;padding:10px 12px;border:1px solid var(--border);';
+  div.innerHTML =
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">' +
+      '<span style="font-size:0.72rem;font-weight:700;color:var(--purple);" class="friend-row-num">Friend ' + num + '</span>' +
+      (existing > 0
+        ? '<button type="button" onclick="removeFriendRow(' + id + ')" style="background:none;border:none;color:var(--text-dim);font-size:0.9rem;cursor:pointer;padding:0 4px;">✕</button>'
+        : '') +
+    '</div>' +
+    '<div style="position:relative;margin-bottom:6px;">' +
+      '<input class="mf-input friend-phone" id="phone-' + id + '" placeholder="07XX XXX XXX" maxlength="12" style="padding-right:28px;" oninput="debouncedValidatePhone(' + id + ')">' +
+      '<span class="phone-status" id="phoneStatus-' + id + '" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:0.72rem;"></span>' +
+    '</div>' +
+    '<input class="mf-input" id="nick-' + id + '" placeholder="Nickname (optional)" style="margin-bottom:6px;">' +
+    '<div style="display:flex;align-items:center;gap:6px;">' +
+      '<span style="font-size:0.72rem;color:var(--text-dim);white-space:nowrap;">Stake KES</span>' +
+      '<input type="number" class="mf-input" id="stake-' + id + '" min="20" max="20000" value="500" oninput="updateChallengeSummary()" style="flex:1;">' +
+    '</div>';
+  container.appendChild(div);
+  updateChallengeSummary();
+  updateCreateBtnLabel();
+}
+
+function removeFriendRow(id) {
+  var row = document.querySelector('.friend-row[data-row-id="' + id + '"]');
+  if (row) row.remove();
+  clearTimeout(friendTimers[id]);
+  delete friendTimers[id];
+  renumberFriendRows();
+  updateChallengeSummary();
+  updateCreateBtnLabel();
+}
+
+function renumberFriendRows() {
+  document.querySelectorAll('.friend-row').forEach(function(row, idx) {
+    var label = row.querySelector('.friend-row-num');
+    if (label) label.textContent = 'Friend ' + (idx + 1);
+  });
+}
+
+function debouncedValidatePhone(rowId) {
+  clearTimeout(friendTimers[rowId]);
+  var statusEl = document.getElementById('phoneStatus-' + rowId);
+  if (statusEl) { statusEl.textContent = '…'; statusEl.style.color = 'var(--text-dim)'; }
+  friendTimers[rowId] = setTimeout(function() { validateFriendPhone(rowId); }, 500);
+}
+
+function validateFriendPhone(rowId) {
+  var input    = document.getElementById('phone-' + rowId);
+  var statusEl = document.getElementById('phoneStatus-' + rowId);
+  if (!input || !input.value.trim()) {
+    if (statusEl) { statusEl.textContent = ''; statusEl.removeAttribute('data-valid'); }
+    updateChallengeSummary();
+    return;
+  }
+  var phone = input.value.trim();
+  userFetch('/api/referrals/validate', {
+    method: 'POST',
+    body:   JSON.stringify({ code: phone }),
+  }).then(function(r) { return r.json(); })
+  .then(function(d) {
+    // Validate endpoint returns {valid, referrerName} — we check if it's a registered user
+    // A valid phone = user exists (valid=true OR has a name means registered)
+    // For phones not yet validated as referral codes, check the user-check endpoint
+    var valid = !!(d && d.valid);
+    if (statusEl) {
+      statusEl.textContent = valid ? '✓' : '✗';
+      statusEl.style.color = valid ? 'var(--ke-green)' : 'var(--ke-red)';
+      statusEl.setAttribute('data-valid', valid ? 'true' : 'false');
+    }
+    updateChallengeSummary();
+  }).catch(function() {
+    // On network error, mark as pending — backend will validate on submit
+    if (statusEl) { statusEl.textContent = '?'; statusEl.style.color = 'var(--gold)'; statusEl.setAttribute('data-valid', 'pending'); }
+    updateChallengeSummary();
+  });
+}
+
+function getValidFriends() {
+  var rows = document.querySelectorAll('.friend-row');
+  var valid = [], skipped = 0;
+  rows.forEach(function(row) {
+    var id       = row.getAttribute('data-row-id');
+    var phoneEl  = document.getElementById('phone-'       + id);
+    var nickEl   = document.getElementById('nick-'        + id);
+    var stakeEl  = document.getElementById('stake-'       + id);
+    var statusEl = document.getElementById('phoneStatus-' + id);
+    var phone    = phoneEl  ? phoneEl.value.trim()          : '';
+    var dv       = statusEl ? statusEl.getAttribute('data-valid') : '';
+    if (phone && dv !== 'false') {
+      valid.push({
+        phone:          phone,
+        nickname:       nickEl  ? nickEl.value.trim()        : '',
+        stakePerPerson: stakeEl ? (parseInt(stakeEl.value) || 500) : 500,
+      });
+    } else if (phone && dv === 'false') {
+      skipped++;
+    }
+  });
+  return { valid: valid, skipped: skipped };
+}
+
+function updateChallengeSummary() {
+  var result   = getValidFriends();
+  var friends  = result.valid;
+  var summaryEl = document.getElementById('challengeSummary');
+  var titleEl   = document.getElementById('summaryTitle');
+  var walletEl  = document.getElementById('summaryWallet');
+  var mpesaEl   = document.getElementById('summaryMpesa');
+  var mpesaRow  = document.getElementById('summaryMpesaRow');
+  var skippedEl = document.getElementById('summarySkipped');
+
+  if (!friends.length) { if (summaryEl) summaryEl.style.display = 'none'; return; }
+  if (summaryEl) summaryEl.style.display = 'block';
+
+  var remReal = walletBalance, remBonus = bonusBalance, totalWallet = 0, totalMpesa = 0;
+  var totalStake = 0;
+  friends.forEach(function(f) {
+    var r = Math.min(remReal,  f.stakePerPerson);
+    var b = Math.min(remBonus, Math.max(0, f.stakePerPerson - r));
+    var w = r + b;
+    var m = Math.max(0, f.stakePerPerson - w);
+    remReal -= r; remBonus -= b;
+    totalWallet += w; totalMpesa += m;
+    totalStake  += f.stakePerPerson;
+  });
+
+  var n = friends.length;
+  if (titleEl)  titleEl.textContent  = n + ' Challenge' + (n > 1 ? 's' : '') + ' · KES ' + totalStake.toLocaleString() + ' total';
+  if (walletEl) walletEl.textContent = 'KES ' + totalWallet.toLocaleString();
+  if (mpesaEl)  mpesaEl.textContent  = 'KES ' + totalMpesa.toLocaleString();
+  if (mpesaRow) mpesaRow.style.display = totalMpesa > 0 ? '' : 'none';
+  if (skippedEl) {
+    skippedEl.style.display = result.skipped > 0 ? '' : 'none';
+    if (result.skipped > 0) skippedEl.textContent = result.skipped + ' unregistered number(s) will be skipped.';
+  }
+  updateCreateBtnLabel();
+}
+
+function updateCreateBtnLabel() {
+  var btn = document.getElementById('createBtn');
+  if (!btn) return;
+  var n = getValidFriends().valid.length;
+  btn.textContent = n < 1
+    ? 'Create Challenge & Pay →'
+    : 'Create ' + n + ' Challenge' + (n > 1 ? 's' : '') + ' & Pay →';
 }
 
 // ── CREATE FLOW ───────────────────────────────────────────────────────────────
@@ -1926,90 +2095,96 @@ function updateChallengeWalletBtn() {
   if (breakdown) breakdown.textContent = breakdownText;
 }
 
-function createChallenge() {
-  // Auth guard
+function createChallenges() {
   if (!isLoggedIn) {
     alert('Please log in to create a challenge.');
     window.location.href = 'rada-auth.html';
     return;
   }
 
-  const q  = document.getElementById('cfQuestion').value.trim();
-  const dl = document.getElementById('cfDeadline').value;
-  const phoneB = document.getElementById('cfPhoneB') ? document.getElementById('cfPhoneB').value.trim() : '';
+  var question = (document.getElementById('cfQuestion') || {}).value || '';
+  var deadline = (document.getElementById('cfDeadline') || {}).value || '';
+  var referee  = (document.getElementById('cfReferee')  || {}).value || '';
+  var aliasA   = (document.getElementById('cfAliasA')   || {}).value || '';
+  var resType  = ((document.querySelector('.res-type-btn.selected') || {}).dataset || {}).type || 'mutual';
 
-  if (!q)     { return alert('Please enter a challenge question.'); }
-  if (!dl)    { return alert('Please set an event deadline.'); }
-  if (!phoneB){ return alert("Please enter your friend's phone number (must be a registered CheckRada user)."); }
-  if (resolutionType === 'referee' && !document.getElementById('cfReferee').value.trim()) {
-    return alert('Please enter the Referee\'s phone number.');
+  if (!question || question.trim().length < 10) {
+    return alert('Please enter a challenge question (at least 10 characters).');
+  }
+  if (!deadline) { return alert('Please set a resolution deadline.'); }
+  if (resType === 'referee' && !referee.trim()) {
+    return alert("Please enter the Referee's phone number.");
+  }
+
+  var friendsResult = getValidFriends();
+  var friends = friendsResult.valid;
+  if (!friends.length) {
+    return alert("Please add at least one friend's phone number.");
   }
 
   var btn       = document.getElementById('createBtn');
   var breakdown = document.getElementById('challengeWalletBreakdown');
-  var walletPays = parseInt(btn.dataset.walletPays || 0);
-  var mpesaPays  = parseInt(btn.dataset.mpesaPays  || friendStake || 500);
+  if (btn) { btn.disabled = true; btn.textContent = 'Creating...'; }
 
-  btn.disabled = true;
-
-  var refereePhone = resolutionType === 'referee'
-    ? (document.getElementById('cfReferee') ? document.getElementById('cfReferee').value.trim() : '')
-    : '';
-  var challengerBPhone = phoneB.replace(/\D/g, '');
-  if (challengerBPhone.startsWith('0')) challengerBPhone = '254' + challengerBPhone.slice(1);
-
-  var body = {
-    question:         q,
-    stakePerPerson:   friendStake || 500,
-    eventExpiresAt:   new Date(dl).toISOString(),
-    challengerBPhone: challengerBPhone,
-    resolutionType:   resolutionType ? resolutionType.toUpperCase() : 'MUTUAL',
-    walletAmountKes:  walletPays,
-    mpesaAmountKes:   mpesaPays,
+  var payload = {
+    question:         question.trim(),
+    friends:          friends,
+    eventExpiresAt:   new Date(deadline + 'T23:59:00').toISOString(),
+    resolutionType:   resType.toUpperCase(),
+    refereePhone:     referee.trim() || undefined,
+    challengerAAlias: aliasA.trim()  || undefined,
     isPublic:         false,
   };
-  if (refereePhone) {
-    var rp = refereePhone.replace(/\D/g, '');
-    body.refereePhone = rp.startsWith('0') ? '254' + rp.slice(1) : rp;
-  }
 
-  userFetch('/api/challenges', {
+  userFetch('/api/challenges/batch', {
     method: 'POST',
-    body:   JSON.stringify(body),
+    body:   JSON.stringify(payload),
   })
   .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
   .then(function(res) {
-    btn.disabled = false;
-    if (res.ok && res.d.success && res.d.accessCode) {
-      var code           = res.d.accessCode;
-      var mpesaPending   = res.d.payment && res.d.payment.mpesaRequired > 0;
-      var stkMsg         = res.d.stkMessage;
+    if (btn) btn.disabled = false;
+    if (res.ok && res.d.success && res.d.created && res.d.created.length > 0) {
+      var created  = res.d.created;
+      var skipped  = res.d.skipped || [];
+      var mpesaPending = res.d.payment && res.d.payment.totalMpesa > 0;
+      var stkMsg   = res.d.stkMessage;
+      var n        = created.length;
 
-      document.getElementById('generatedCode').textContent = code;
-      if (document.getElementById('challengeCode2')) document.getElementById('challengeCode2').textContent = code;
       if (breakdown) breakdown.textContent = '';
 
-      // Update success view title and sub based on payment state
       var ssTitle = document.querySelector('#successView .ss-title');
       var ssSub   = document.querySelector('#successView .ss-sub');
-      if (mpesaPending) {
-        if (ssTitle) ssTitle.textContent = 'Check Your Phone';
-        if (ssSub)   ssSub.innerHTML =
-          '<strong>📱 ' + (stkMsg || 'M-Pesa prompt sent') + '</strong><br><br>' +
-          'Enter your M-Pesa PIN to activate the challenge. ' +
-          'Your friend will be notified automatically once payment is confirmed.<br><br>' +
-          '<span style="color:var(--text-dim);font-size:0.8em;">Challenge code (valid once payment confirms):</span>';
+      var codeEl  = document.getElementById('generatedCode');
+      var code2   = document.getElementById('challengeCode2');
+
+      if (n === 1) {
+        if (codeEl) codeEl.textContent = created[0].accessCode;
+        if (code2)  code2.textContent  = created[0].accessCode;
+        if (mpesaPending) {
+          if (ssTitle) ssTitle.textContent = 'Check Your Phone';
+          if (ssSub) ssSub.innerHTML = '<strong>📱 ' + (stkMsg || 'M-Pesa prompt sent') + '</strong><br><br>Enter your PIN to activate the challenge.';
+        } else {
+          if (ssTitle) ssTitle.textContent = 'Challenge Created!';
+          if (ssSub) ssSub.textContent = 'Share the code with your friend — they must accept and stake to go live.';
+        }
       } else {
-        if (ssTitle) ssTitle.textContent = 'Challenge Created! Share the Code.';
-        if (ssSub)   ssSub.textContent =
-          'Your stake has been locked. Share the invite code or link with your opponent — they must stake their side before the challenge is live.';
+        if (codeEl) codeEl.textContent = created[0].accessCode + ' +' + (n - 1) + ' more';
+        if (code2)  code2.textContent  = created[0].accessCode;
+        var codeList = created.map(function(ch) {
+          return (ch.friendPhone || '') + ': <strong>' + ch.accessCode + '</strong> · KES ' + (ch.stake || '').toLocaleString();
+        }).join('<br>');
+        if (ssTitle) ssTitle.textContent = n + ' Challenges Created!';
+        if (ssSub) ssSub.innerHTML =
+          (mpesaPending ? '<strong>📱 ' + (stkMsg || 'M-Pesa prompt sent for combined payment') + '</strong><br><br>' : '') +
+          'Share each code with the respective friend:<br><br>' + codeList +
+          (skipped.length ? '<br><br><span style="color:#b45309;font-size:0.8em;">⚠ ' + skipped.length + ' skipped: ' + skipped.map(function(s){return s.phone;}).join(', ') + '</span>' : '');
       }
 
       document.getElementById('formView').style.display = 'none';
       document.getElementById('successView').style.display = 'block';
       loadChallenges();
     } else {
-      btn.textContent = 'Create Challenge';
+      if (btn) btn.textContent = 'Create Challenge & Pay →';
       var err = res.d && res.d.error;
       var msg = 'Could not create challenge.';
       if (typeof err === 'string') { msg = err; }
@@ -2021,8 +2196,7 @@ function createChallenge() {
     }
   })
   .catch(function() {
-    btn.disabled = false;
-    btn.textContent = 'Create Challenge';
+    if (btn) { btn.disabled = false; btn.textContent = 'Create Challenge & Pay →'; }
     alert('Network error. Please try again.');
   });
 }
@@ -2030,21 +2204,22 @@ function createChallenge() {
 
 
 
-
-
-
 function resetForm() {
   document.getElementById('formView').style.display = 'block';
   document.getElementById('successView').style.display = 'none';
+  // Reset friend rows to single empty row
+  var container = document.getElementById('friendRowsContainer');
+  if (container) { container.innerHTML = ''; friendRowCount = 0; }
+  addFriendRow();
+  updateCreateBtnLabel();
+  // Reset other fields
+  var q = document.getElementById('cfQuestion'); if (q) q.value = '';
+  var r = document.getElementById('cfReferee');  if (r) r.value = '';
+  var a = document.getElementById('cfAliasA');   if (a) a.value = '';
+  var btn = document.getElementById('createBtn');
+  if (btn) { btn.disabled = false; btn.textContent = 'Create Challenge & Pay →'; }
   var el = document.getElementById('inlineCreateCard');
   if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  document.getElementById('cfQuestion').value = '';
-  document.getElementById('cfNameA').value = '';
-  document.getElementById('cfNameB').value = '';
-  if (document.getElementById('cfPhoneB')) document.getElementById('cfPhoneB').value = '';
-  document.getElementById('cfReferee').value = '';
-  document.getElementById('createBtn').disabled = false;
-  document.getElementById('createBtn').textContent = 'Create Challenge & Pay via M-Pesa →';
 }
 
 // ── JOIN VIA CODE ─────────────────────────────────────────────────────────────
@@ -3094,6 +3269,8 @@ function showToast(msg, duration) {
 
 // ── Init on page load ─────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', function() {
+  // Initialise multi-row friend form with one empty row
+  addFriendRow();
   initCarousel();
 });
 </script>

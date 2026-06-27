@@ -158,7 +158,11 @@ async function handleChargeSuccess(data: any) {
   console.log(`[Paystack Webhook] ✅ Deposit confirmed: KES ${amountKes} for user ${transaction.userId}`);
 }
 
-// ─── Challenge stake confirmation ────────────────────────────────────────────
+// ─── Challenge stake confirmation (single + batch) ────────────────────────────
+// Handles both single-challenge and batch M-Pesa payments.
+// For batch: the transaction links to the first challenge; batchId identifies the rest.
+// Uses stakePerPerson - totalPool to determine M-Pesa portion per challenge.
+
 async function handleChallengeStakeSuccess(data: any) {
   const reference = data.reference;
   const pendingTx = await prisma.transaction.findFirst({
@@ -170,67 +174,88 @@ async function handleChallengeStakeSuccess(data: any) {
     return;
   }
   if (pendingTx.status === 'SUCCESS') return;
+
   const verified = await verifyTransaction(reference);
   if (verified.status !== 'success') return;
+
   const expectedKobo = Math.round(Number(pendingTx.amountKes) * 100);
   if (data.amount !== expectedKobo || verified.amount !== expectedKobo) {
     console.error('[Webhook] AMOUNT MISMATCH on challenge stake:', reference);
     return;
   }
-  const mpesaAmount = Number(pendingTx.amountKes);
-  const challengeId = pendingTx.challengeId;
-  const challenge = await prisma.$transaction(async (tx: any) => {
-    const ch = await tx.marketChallenge.update({
-      where: { id: challengeId },
-      data:  { totalPool: { increment: mpesaAmount }, status: 'PENDING_JOIN' },
-      include: {
-        userA:   { select: { id: true, name: true, phone: true } },
-        userB:   { select: { id: true, name: true, phone: true } },
-        referee: { select: { id: true, name: true, phone: true } },
-      },
-    });
-    await tx.transaction.update({
-      where: { id: pendingTx.id },
-      data:  { status: 'SUCCESS', description: 'Challenge M-Pesa payment confirmed: KES ' + mpesaAmount },
-    });
-    return ch;
+
+  await prisma.transaction.update({
+    where: { id: pendingTx.id },
+    data:  { status: 'SUCCESS', description: 'Challenge M-Pesa payment confirmed: KES ' + Number(pendingTx.amountKes) },
   });
+
+  const firstChallenge = await prisma.marketChallenge.findUnique({
+    where:   { id: pendingTx.challengeId },
+    include: {
+      userA:   { select: { id: true, name: true, phone: true } },
+      userB:   { select: { id: true, name: true, phone: true } },
+      referee: { select: { id: true, name: true, phone: true } },
+    },
+  });
+  if (!firstChallenge) return;
+
+  const toActivate = firstChallenge.batchId
+    ? await prisma.marketChallenge.findMany({
+        where: { batchId: firstChallenge.batchId, status: 'PENDING_PAYMENT' },
+        include: {
+          userA:   { select: { id: true, name: true, phone: true } },
+          userB:   { select: { id: true, name: true, phone: true } },
+          referee: { select: { id: true, name: true, phone: true } },
+        },
+      })
+    : [firstChallenge];
+
   if (pendingTx.user) {
+    const challengeWord = toActivate.length > 1 ? toActivate.length + ' challenges' : 'challenge';
     void createNotification({
       userId:  pendingTx.user.id,
       type:    'DEPOSIT_CONFIRMED',
       title:   'Challenge payment confirmed',
-      message: 'Your KES ' + mpesaAmount.toLocaleString() + ' M-Pesa payment was confirmed. Share the code: ' + challenge.accessCode,
+      message: 'Your KES ' + Number(pendingTx.amountKes).toLocaleString() + ' M-Pesa payment confirmed. ' + challengeWord + ' now active.',
       link:    '/rada-friends.html',
     });
   }
-  if (challenge.userBId && challenge.userA) {
-    void createNotification({
-      userId:  challenge.userBId,
-      type:    'CHALLENGE_OPPONENT_STAKED',
-      title:   "You've been challenged!",
-      message: displayName(challenge.userA.name, challenge.userA.phone) + ' challenged you: "' + challenge.question.slice(0, 70) + '". Stake: KES ' + Number(challenge.stakePerPerson).toLocaleString() + '. Code: ' + challenge.accessCode,
-      link:    '/join/' + challenge.accessCode,
-      whatsapp: {
-        template:   'CHALLENGE_OPPONENT_STAKED',
-        parameters: [displayName(challenge.userA.name, challenge.userA.phone), String(Number(challenge.stakePerPerson).toLocaleString())],
-      },
+
+  for (const ch of toActivate) {
+    const mpesaForThis = Math.max(0, Number(ch.stakePerPerson) - Number(ch.totalPool));
+    await prisma.marketChallenge.update({
+      where: { id: ch.id },
+      data:  { totalPool: { increment: mpesaForThis }, status: 'PENDING_JOIN' },
     });
+
+    if (ch.userBId && ch.userA) {
+      void createNotification({
+        userId:  ch.userBId,
+        type:    'CHALLENGE_OPPONENT_STAKED',
+        title:   "You've been challenged!",
+        message: displayName(ch.userA.name, ch.userA.phone) + ' challenged you: "' + ch.question.slice(0, 70) + '". Stake: KES ' + Number(ch.stakePerPerson).toLocaleString() + '. Code: ' + ch.accessCode,
+        link:    '/join/' + ch.accessCode,
+        whatsapp: {
+          template:   'CHALLENGE_OPPONENT_STAKED',
+          parameters: [displayName(ch.userA.name, ch.userA.phone), String(Number(ch.stakePerPerson).toLocaleString())],
+        },
+      });
+    }
+    if (ch.refereeId && ch.userA) {
+      void createNotification({
+        userId:  ch.refereeId,
+        type:    'REFEREE_NOMINATED',
+        title:   "You've been nominated as referee",
+        message: displayName(ch.userA.name, ch.userA.phone) + ' nominated you to referee a challenge. Code: ' + ch.accessCode,
+        link:    '/rada-friends.html',
+        whatsapp: {
+          template:   'REFEREE_NOMINATED',
+          parameters: [displayName(ch.userA.name, ch.userA.phone)],
+        },
+      });
+    }
+    console.log('[Webhook] Challenge activated: ' + ch.id + ' (KES ' + mpesaForThis + ' M-Pesa)');
   }
-  if (challenge.refereeId && challenge.userA) {
-    void createNotification({
-      userId:  challenge.refereeId,
-      type:    'REFEREE_NOMINATED',
-      title:   "You've been nominated as referee",
-      message: displayName(challenge.userA.name, challenge.userA.phone) + ' nominated you to referee a challenge. Code: ' + challenge.accessCode,
-      link:    '/rada-friends.html',
-      whatsapp: {
-        template:   'REFEREE_NOMINATED',
-        parameters: [displayName(challenge.userA.name, challenge.userA.phone)],
-      },
-    });
-  }
-  console.log('[Webhook] Challenge stake confirmed: KES ' + mpesaAmount + ' for ' + challengeId);
 }
 
 // ─── Transfer success handler ─────────────────────────────────────────────────

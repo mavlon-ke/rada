@@ -136,6 +136,9 @@ userBId         String?
   userBConfirm    ChallengeOutcome?
   isPublic           Boolean          @default(false)
   cancelRequestedBy  String?                                   // userId of whoever first requested cancellation
+  challengerAAlias   String?
+  challengerBAlias   String?
+  batchId            String?
   feePercent         Decimal          @default(5) @db.Decimal(5,2)
   platformFeeKes  Decimal          @default(0) @db.Decimal(15,2)
   createdAt       DateTime         @default(now())

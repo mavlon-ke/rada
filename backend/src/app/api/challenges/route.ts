@@ -30,6 +30,8 @@ const CreateSchema = z.object({
   challengerBPhone:  z.string().min(10).max(15),
   isPublic:          z.boolean().default(false),
   resolutionType:    z.enum(['REFEREE', 'MUTUAL', 'TIMER']).default('MUTUAL'),
+  challengerAAlias:  z.string().max(40).optional(),   // optional nickname for creator
+  challengerBAlias:  z.string().max(40).optional(),   // optional nickname for opponent
   // Wallet-first: frontend sends how much to use from wallet vs M-Pesa
   walletAmountKes:   z.number().min(0).optional(),  // amount from real + bonus wallet
   mpesaAmountKes:    z.number().min(0).optional(),  // amount via M-Pesa STK push
@@ -57,6 +59,7 @@ export async function POST(req: NextRequest) {
   const {
     stakePerPerson, eventExpiresAt,
     refereePhone, challengerBPhone, isPublic, resolutionType,
+    challengerAAlias, challengerBAlias,
     walletAmountKes, mpesaAmountKes,
   } = parsed.data;
 
@@ -170,10 +173,12 @@ export async function POST(req: NextRequest) {
       data: {
         question,
         accessCode,
-        userAId:        user.id,
-        userBId:        challengerB.id,
+        userAId:          user.id,
+        userBId:          challengerB.id,
         refereeId,
         stakePerPerson,
+        challengerAAlias: challengerAAlias || null,
+        challengerBAlias: challengerBAlias || null,
         totalPool:      walletTotal,  // only wallet portion confirmed; M-Pesa adds to pool on callback
         validatorType:  refereeId ? 'REFEREE' : (resolutionType === 'TIMER' ? 'TIMER' : 'MUTUAL'),
         eventExpiresAt: new Date(eventExpiresAt),
