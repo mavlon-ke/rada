@@ -1134,7 +1134,7 @@ nav{padding:14px 24px;display:flex;align-items:center;justify-content:space-betw
     <div id="formView" class="create-card-body">
 
       <label class="mf-label">The Challenge Question</label>
-      <input class="mf-input" id="cfQuestion" placeholder="e.g. Will I beat Kamau in the 5km Parkrun this Saturday?">
+      <input class="mf-input" id="cfQuestion" placeholder="e.g. Will I beat John to the Office on Monday?">
 
       <!-- Multi-row friends section -->
       <label class="mf-label" style="margin-top:16px;">Challenge Friends <span style="font-weight:400;color:var(--text-dim);font-size:0.68rem;">(up to 100 · each can have a different stake)</span></label>
@@ -2205,7 +2205,7 @@ function addFriendRow() {
       '<input class="mf-input friend-phone" id="phone-' + id + '" placeholder="07XX XXX XXX (optional)" maxlength="12" style="padding-right:28px;" oninput="debouncedValidatePhone(' + id + ')">' +
       '<span class="phone-status" id="phoneStatus-' + id + '" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:0.72rem;"></span>' +
     '</div>' +
-    '<div id="lockStatus-' + id + '" style="font-size:0.65rem;color:var(--ke-green);margin-bottom:6px;min-height:14px;"></div>' +
+    '<div id="lockStatus-' + id + '" style="font-size:0.65rem;color:var(--ke-green);margin-bottom:6px;min-height:6px;"></div>' +
     '<div style="font-size:0.63rem;color:var(--text-dim);margin-bottom:6px;margin-top:-4px;">Leave blank to create an open challenge — anyone with the code can join.</div>' +
     '<input class="mf-input" id="nick-' + id + '" placeholder="Nickname (optional)" style="margin-bottom:6px;">' +
     '<div style="display:flex;align-items:center;gap:6px;">' +
