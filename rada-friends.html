@@ -1379,9 +1379,10 @@ function userFetch(path, options) {
 }
 
 // ── DATA ─────────────────────────────────────────────────────────────────────
-var MY_CHALLENGES = [];
-var REF_QUEUE     = [];
-var HISTORY       = [];
+var MY_CHALLENGES   = [];
+var REF_QUEUE       = [];
+var HISTORY         = [];
+var currentResolveId = null;  // set when resolve modal opens
 // DEMO_REGISTERED declared in shared block below — removed stub to avoid SyntaxError
 
 function loadChallenges() {
@@ -2674,6 +2675,7 @@ function joinChallenge() {
 
 // ── RESOLVE MODAL ─────────────────────────────────────────────────────────────
 function openResolveModal(challengeId) {
+  currentResolveId = challengeId;   // store for submitRuling
   const c = [...REF_QUEUE, ...MY_CHALLENGES].find(x => x.id === challengeId) || REF_QUEUE[0];
   document.getElementById('resModalQ').textContent = c.q || 'Challenge question';
   document.getElementById('resBtn1').textContent = (c.a?.name?.split(' ')[0] || 'A') + ' Won';
@@ -2697,15 +2699,31 @@ function openResolveModal(challengeId) {
   document.getElementById('resolveModal').classList.add('open');
 }
 function submitRuling(side) {
-  const labels = {A:'Challenger A wins', B:'Challenger B wins', TIE:'It\'s a Tie — both refunded'};
-  const confirmMsg = side === 'TIE'
-    ? 'Confirm Tie? Both parties will be refunded minus KES 10 processing fee each.'
-    : `Confirm ${labels[side]}? This is irreversible. M-Pesa B2C payout will be triggered.`;
-  if (!confirm(confirmMsg)) return;
+  if (!currentResolveId) { alert('Error: no challenge selected. Please try again.'); return; }
+  var outcome = side === 'A' ? 'USER_A' : side === 'B' ? 'USER_B' : 'TIE';
+  var labels  = { USER_A: 'Challenger A wins', USER_B: 'Challenger B wins', TIE: "It's a Tie" };
+  var msg = side === 'TIE'
+    ? 'Confirm Tie?\n\nBoth parties will each receive back 47.5% of their stake (5% fee). This is final.'
+    : 'Confirm: ' + labels[outcome] + '?\n\nWinnings are credited to the winner\'s CheckRada wallet. This is final and irreversible.';
+  if (!confirm(msg)) return;
   closeModal('resolveModal');
-  setTimeout(() => {
-    alert(`✓ Ruling submitted: ${labels[side]}.\n\nM-Pesa payout triggered. Funds will arrive within 2 minutes.`);
-  }, 300);
+  userFetch('/api/challenges/' + currentResolveId + '/confirm', {
+    method: 'POST',
+    body:   JSON.stringify({ outcome: outcome }),
+  })
+  .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
+  .then(function(res) {
+    if (res.ok && res.d.outcome) {
+      showNotifToast('⚖️ Ruling Submitted!', 'Challenge resolved — ' + labels[res.d.outcome] + '. Winnings credited to wallet.');
+      loadChallenges();
+    } else if (res.ok) {
+      showNotifToast('✅ Submitted', 'Ruling recorded.');
+      loadChallenges();
+    } else {
+      alert('Error: ' + ((res.d && res.d.error) || 'Could not submit ruling.'));
+    }
+  })
+  .catch(function() { alert('Network error. Please try again.'); });
 }
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
