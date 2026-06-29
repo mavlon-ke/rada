@@ -190,19 +190,32 @@ export async function POST(req: NextRequest) {
     const balAfterReal  = currentReal  - actualRealUsed;
     const balAfterBonus = currentBonus - actualBonusUsed;
 
-    // Log wallet deduction transaction
-    if (actualWalletTotal > 0) {
+    // Log wallet deduction — two separate records for precise refund tracking.
+    // CHALLENGE_STAKE = real balance used; BONUS_USED = bonus balance used.
+    // cancelPendingPayment reads these by type to refund each to the correct bucket.
+    if (actualRealUsed > 0) {
       await tx.transaction.create({
         data: {
           userId:      user.id,
           challengeId: ch.id,
-          type:        actualBonusUsed > 0 ? 'BONUS_USED' : 'CHALLENGE_STAKE',
-          amountKes:   -actualWalletTotal,
+          type:        'CHALLENGE_STAKE',
+          amountKes:   -actualRealUsed,
           balAfter:    balAfterReal,
           status:      'SUCCESS',
-          description: actualBonusUsed > 0
-            ? `Challenge stake: KES ${actualRealUsed} wallet + KES ${actualBonusUsed} bonus for "${question.slice(0, 50)}"`
-            : `Challenge stake: KES ${actualWalletTotal} from wallet for "${question.slice(0, 50)}"`,
+          description: `Challenge stake (real balance): KES ${actualRealUsed} for "${question.slice(0, 50)}"`,
+        },
+      });
+    }
+    if (actualBonusUsed > 0) {
+      await tx.transaction.create({
+        data: {
+          userId:      user.id,
+          challengeId: ch.id,
+          type:        'BONUS_USED',
+          amountKes:   -actualBonusUsed,
+          balAfter:    balAfterBonus,
+          status:      'SUCCESS',
+          description: `Challenge stake (bonus balance): KES ${actualBonusUsed} for "${question.slice(0, 50)}"`,
         },
       });
     }

@@ -196,47 +196,83 @@ async function cancelHalfStaked(challenge: any, stakedSide: 'A' | 'B', requester
 // Challenge was never live (B never joined, M-Pesa never confirmed).
 // Full wallet refund — no 5% fee since the challenge was never accepted.
 async function cancelPendingPayment(challenge: any, requesterId: string) {
-  const walletPaid = Number(challenge.totalPool);  // what was deducted from wallet
+  // Look up wallet transactions by type BEFORE the transaction block.
+  // Two separate records were created at stake time: CHALLENGE_STAKE (real) + BONUS_USED (bonus).
+  // This lets us refund each portion to the correct balance bucket.
+  const walletTxns = await prisma.transaction.findMany({
+    where: {
+      challengeId: challenge.id,
+      userId:      requesterId,
+      status:      'SUCCESS',
+      amountKes:   { lt: 0 },
+      type:        { in: ['CHALLENGE_STAKE', 'BONUS_USED'] },
+    },
+  });
+
+  let realRefund  = 0;
+  let bonusRefund = 0;
+  for (const t of walletTxns) {
+    const amt = Math.abs(Number(t.amountKes));
+    if (t.type === 'CHALLENGE_STAKE') realRefund  += amt;
+    else if (t.type === 'BONUS_USED') bonusRefund += amt;
+  }
+  const totalRefund = realRefund + bonusRefund;
+
+  // Use atomic updateMany with status guard to prevent double-cancel race condition.
+  // If two concurrent requests both pass the outer status check, only the first
+  // to commit this UPDATE will match (count === 1). The second gets count === 0
+  // and throws, rolling back the entire transaction safely.
+  let cancellationSucceeded = false;
 
   await prisma.$transaction(async (tx: any) => {
-    // Cancel any pending M-Pesa transaction for this challenge
+    const guard = await tx.marketChallenge.updateMany({
+      where: { id: challenge.id, status: 'PENDING_PAYMENT' },
+      data:  { status: 'CANCELLED', cancelRequestedBy: requesterId },
+    });
+    if (guard.count === 0) throw new Error('ALREADY_CANCELLED');
+
+    // Cancel any pending M-Pesa transaction
     await tx.transaction.updateMany({
       where: { challengeId: challenge.id, status: 'PENDING', type: 'CHALLENGE_STAKE' },
       data:  { status: 'FAILED', description: 'Challenge cancelled before M-Pesa confirmed' },
     });
 
-    // Refund full wallet portion
-    if (walletPaid > 0) {
+    // Refund each portion to its correct balance bucket
+    if (totalRefund > 0) {
+      const refundData: any = {};
+      if (realRefund  > 0) refundData.balanceKes      = { increment: realRefund  };
+      if (bonusRefund > 0) refundData.bonusBalanceKes = { increment: bonusRefund };
+
       const upd = await tx.user.update({
         where: { id: requesterId },
-        data:  { balanceKes: { increment: walletPaid } },
+        data:  refundData,
       });
       await tx.transaction.create({
         data: {
           userId:      requesterId,
           challengeId: challenge.id,
           type:        'REFUND',
-          amountKes:   walletPaid,
+          amountKes:   totalRefund,
           balAfter:    Number(upd.balanceKes),
           status:      'SUCCESS',
-          description: 'Full refund — challenge cancelled before M-Pesa payment confirmed',
+          description: `Full refund — challenge cancelled. Real: KES ${realRefund}, Bonus: KES ${bonusRefund}`,
         },
       });
     }
 
-    await tx.marketChallenge.update({
-      where: { id: challenge.id },
-      data:  { status: 'CANCELLED', cancelRequestedBy: requesterId },
-    });
+    cancellationSucceeded = true;
+  }).catch((err: any) => {
+    if (err.message === 'ALREADY_CANCELLED') return; // idempotent — silently succeed
+    throw err;
   });
 
   return NextResponse.json({
     success: true,
     status:  'CANCELLED',
-    refund:  walletPaid,
+    refund:  cancellationSucceeded ? totalRefund : 0,
     fee:     0,
-    message: walletPaid > 0
-      ? 'Challenge cancelled. KES ' + walletPaid.toLocaleString() + ' refunded in full (no fee).'
+    message: cancellationSucceeded && totalRefund > 0
+      ? `Challenge cancelled. KES ${totalRefund.toLocaleString()} refunded in full — KES ${realRefund} to wallet, KES ${bonusRefund} to bonus balance.`
       : 'Challenge cancelled.',
   });
 }
