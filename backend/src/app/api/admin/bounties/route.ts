@@ -7,7 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { requireAdmin, adminUnauthorized, logAdminAction } from '@/lib/auth/admin';
 
-import { initiateTransfer, createTransferRecipient, normalisePhone as formatPhone } from '@/lib/paystack/paystack.service';
+
 
 // Fallback minimum payout if PlatformConfig.bountyMinPayoutKes is missing (singleton row deleted).
 // The admin-tunable value lives in platform_config; this constant is just a safety net.
@@ -73,31 +73,21 @@ export async function POST(req: NextRequest) {
       data:  { paidOut: { increment: payoutKes }, lastPaidAt: new Date() },
     });
 
-    // Log transaction
+    // Log transaction — bounty credited to wallet; creator withdraws via standard flow
     await tx.transaction.create({
       data: {
         userId:      bounty.creatorId,
         type:        'CREATOR_BOUNTY',
         amountKes:   payoutKes,
         balAfter:    Number(updated.balanceKes),
-        status:      'PENDING',
-        description: `Creator bounty — "${bounty.market.title.slice(0, 60)}"`,
+        status:      'SUCCESS',
+        description: `Creator bounty credited to wallet — "${bounty.market.title.slice(0, 60)}"`,
       },
     });
   });
-
-  // Paystack transfer to creator's phone
-const recipient = await createTransferRecipient({
-  name:     bounty.creator.name ?? bounty.creator.phone,
-  phone:    formatPhone(bounty.creator.phone),
-  bankCode: 'MPesa',
-});
-await initiateTransfer({
-  amountKes:     payoutKes,
-  recipientCode: recipient.recipient_code,
-  reference:     `CKR-BNT-${bounty.marketId.slice(0,8).toUpperCase()}`,
-  reason:        'CheckRada Creator Bounty',
-});
+  // Bounty credited to wallet — creator withdraws via the standard withdrawal flow.
+  // Direct M-Pesa transfer removed: it was double-paying (wallet credit + live transfer
+  // for the same amount). Withdrawal flow handles reconciliation correctly.
 
   await logAdminAction(admin.id, 'BOUNTY_PAID', `bounty:${bountyId}`, {
     creatorPhone: bounty.creator.phone,

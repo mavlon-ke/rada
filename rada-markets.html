@@ -1084,6 +1084,17 @@ nav {
 <!-- Google Analytics GA4 -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-C7QXV6BHCN"></script>
 <script>
+
+// ── HTML escaping helper — prevents stored-XSS via innerHTML ────────────────
+function esc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
@@ -1647,8 +1658,8 @@ function renderMarkets(data) {
         ${m.imageUrl ? `<div class="card-thumb"><img src="${m.imageUrl}" alt="" loading="lazy" onerror="this.parentElement.style.display='none'"></div>` : ''}
         <div class="card-title-content">
           <div class="card-category"><div class="cat-dot"></div>${m.cat}</div>
-          ${m.creator ? `<div class="creator-badge">💡 ${m.creator} · Creator</div>` : ''}
-          <div class="card-question">${m.q}</div>
+          ${m.creator ? `<div class="creator-badge">💡 ${esc(m.creator)} · Creator</div>` : ''}
+          <div class="card-question">${esc(m.q)}</div>
         </div>
       </div>
         <div class="prob-bar-wrap">
@@ -1666,7 +1677,7 @@ function renderMarkets(data) {
         <div class="card-actions">
           <button class="btn-yes" onclick="event.stopPropagation();openForecast('${m.id}','YES')">YES</button>
           <button class="btn-no"  onclick="event.stopPropagation();openForecast('${m.id}','NO')">NO</button>
-          <button class="card-multi-btn" id="multibtn_${m.id}" data-q="${m.q.slice(0,80)}" onclick="event.stopPropagation();toggleMultiAdd('${m.id}',this.dataset.q,${m.yes})">+ Multi</button>
+          <button class="card-multi-btn" id="multibtn_${m.id}" data-q="${esc(m.q.slice(0,80))}" onclick="event.stopPropagation();toggleMultiAdd('${m.id}',this.dataset.q,${m.yes})">+ Multi</button>
         </div>
         <button class="card-share-btn" onclick="event.stopPropagation();smartShare('${m.id}','${m.slug}',this)">⤴ Share</button>
       </div>
@@ -1718,7 +1729,7 @@ function renderTrending() {
           </div>
           <div style="margin-bottom:6px;">${trendBadges(m)}</div>
           ${m.creator ? `<div class="creator-badge">💡 ${m.creator} · Creator</div>` : ''}
-          <div class="card-question">${m.q}</div>
+          <div class="card-question">${esc(m.q)}</div>
         </div>
       </div>
         <div class="prob-bar-wrap">
@@ -1736,7 +1747,7 @@ function renderTrending() {
         <div class="card-actions">
           <button class="btn-yes" onclick="event.stopPropagation();openForecast('${m.id}','YES')">YES</button>
           <button class="btn-no"  onclick="event.stopPropagation();openForecast('${m.id}','NO')">NO</button>
-          <button class="card-multi-btn" id="multibtn_${m.id}" data-q="${m.q.slice(0,80)}" onclick="event.stopPropagation();toggleMultiAdd('${m.id}',this.dataset.q,${m.yes})">+ Multi</button>
+          <button class="card-multi-btn" id="multibtn_${m.id}" data-q="${esc(m.q.slice(0,80))}" onclick="event.stopPropagation();toggleMultiAdd('${m.id}',this.dataset.q,${m.yes})">+ Multi</button>
         </div>
         <button class="card-share-btn" onclick="event.stopPropagation();smartShare('${m.id}','${m.slug}',this)">⤴ Share</button>
       </div>

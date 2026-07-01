@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/db/prisma';
 import { requireAuth } from '@/lib/auth/session';
+import { sanitizeText } from '@/lib/security/middleware';
 import { generateUniqueSlug, buildMarketShareUrl } from '@/lib/market/slug';
 import { maskPhone, displayName }                  from '@/lib/user/display-name';
 
@@ -156,24 +157,37 @@ export async function POST(req: NextRequest) {
   const parsed = CreateMarketSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
-  const { title, description, category, closesAt, imageUrl, sourceNote } = parsed.data;
+  // Only ADMIN role may create markets directly.
+  // Regular users submit proposals via POST /api/markets/propose (moderated flow).
+  const userWithRole = await prisma.user.findUnique({
+    where:  { id: user.id },
+    select: { role: true },
+  });
+  if (!userWithRole || userWithRole.role !== 'ADMIN') {
+    return NextResponse.json({ error: 'Admin access required to create markets directly. Use the proposal flow instead.' }, { status: 403 });
+  }
+
+  const safeTitle       = sanitizeText(parsed.data.title);
+  const safeDescription = sanitizeText(parsed.data.description);
+  const safeSourceNote  = parsed.data.sourceNote ? sanitizeText(parsed.data.sourceNote) : undefined;
+  const { category, closesAt, imageUrl } = parsed.data;
 
   if (new Date(closesAt) <= new Date()) {
     return NextResponse.json({ error: 'closesAt must be in the future' }, { status: 400 });
   }
 
-  // Auto-generate unique slug from title
-  const slug = await generateUniqueSlug(title);
+  // Auto-generate unique slug from sanitized title
+  const slug = await generateUniqueSlug(safeTitle);
 
   const market = await prisma.market.create({
     data: {
       slug,
-      title,
-      description,
+      title:       safeTitle,
+      description: safeDescription,
       category,
       closesAt:   new Date(closesAt),
       imageUrl,
-      sourceNote,
+      sourceNote:  safeSourceNote,
       creatorId:  user.id,
       yesPool:    1000,
       noPool:     1000,

@@ -55,8 +55,10 @@ export async function POST(req: NextRequest) {
   const parsed = Schema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
-  const { pairs, eventExpiresAt, refereeAlias } = parsed.data;
-  const question = sanitizeText(parsed.data.question);
+  const { pairs, eventExpiresAt } = parsed.data;
+  const question      = sanitizeText(parsed.data.question);
+  const refereeAlias  = parsed.data.refereeAlias
+    ? sanitizeText(parsed.data.refereeAlias) : undefined;
 
   if (new Date(eventExpiresAt) <= new Date()) {
     return NextResponse.json({ error: 'Event expiry must be in the future' }, { status: 400 });
@@ -104,8 +106,8 @@ export async function POST(req: NextRequest) {
     valid.push({
       pairIndex:      i + 1,
       stakePerPerson: p.stakePerPerson,
-      nicknameA:      p.nicknameA,
-      nicknameB:      p.nicknameB,
+      nicknameA:      p.nicknameA ? sanitizeText(p.nicknameA) : undefined,
+      nicknameB:      p.nicknameB ? sanitizeText(p.nicknameB) : undefined,
       userAId:        foundA.id,
       userBId:        foundB.id,
       userAName:      foundA.name,

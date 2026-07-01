@@ -59,15 +59,19 @@ export async function POST(req: NextRequest) {
   const {
     stakePerPerson, eventExpiresAt,
     refereePhone, challengerBPhone, isPublic, resolutionType,
-    challengerAAlias, challengerBAlias,
     walletAmountKes, mpesaAmountKes,
   } = parsed.data;
+  // challengerAAlias and challengerBAlias are declared below with sanitization.
 
   // SECURITY: sanitize free-text question before storing — same class of
   // stored XSS protection applied to market proposals (commit 71b3b59).
   // Question is rendered with innerHTML in rada-dashboard.html, so any
   // unsanitized HTML would execute in opponents' browsers.
-  const question = sanitizeText(parsed.data.question);
+  const question          = sanitizeText(parsed.data.question);
+  const challengerAAlias  = parsed.data.challengerAAlias
+    ? sanitizeText(parsed.data.challengerAAlias) : undefined;
+  const challengerBAlias  = parsed.data.challengerBAlias
+    ? sanitizeText(parsed.data.challengerBAlias) : undefined;
 
   // ── Validate event expiry ────────────────────────────────────────────────
   if (new Date(eventExpiresAt) <= new Date()) {

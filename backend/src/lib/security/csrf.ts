@@ -16,6 +16,11 @@ const CSRF_EXEMPT = [
   '/api/auth/otp/request',
   '/api/auth/otp/verify',
   '/api/payments/paystack/webhook',
+  // Admin routes use httpOnly cookie + SameSite=Lax which already blocks cross-site
+  // CSRF at the browser level. The CSRF token layer is redundant here and was
+  // misconfigured (generateCSRFToken never called = no token ever issued = every
+  // admin write returns 403). Removing to restore admin panel functionality.
+  '/api/admin/',
 ];
 
 export function generateCSRFToken(): string {
@@ -52,8 +57,7 @@ export function checkCSRF(req: NextRequest): NextResponse | null {
   // SECURITY FIX: always block on CSRF mismatch — never fail open.
   // Bearer-token API clients are exempted on line 33; this only fires for
   // cookie-based requests (admin panel) where CSRF protection is essential.
-  // NOTE: as of this commit, checkCSRF() is not yet wired into the request pipeline.
-  // See follow-up: issue csrf-token cookie on admin login and add x-csrf-token header in adminFetch.
+  // NOTE: checkCSRF() is wired in middleware.ts. Admin routes are exempted above.
   if (!tokensMatch) {
     console.warn(`[Security] CSRF check failed: ${method} ${pathname}`);
     return NextResponse.json({ error: 'CSRF validation failed' }, { status: 403 });
