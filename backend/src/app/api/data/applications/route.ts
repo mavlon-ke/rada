@@ -23,7 +23,7 @@ const ApplicationSchema = z.object({
   website:        z.string().url().optional().or(z.literal('')),
   planInterest:   z.enum(['lite', 'pro', 'enterprise']),
   useCase:        z.string().min(1).max(100),
-  useDescription: z.string().min(10).max(1000),
+  useDescription: z.string().min(2).max(1000),
   dataVolume:     z.string().optional(),
 });
 
@@ -33,8 +33,13 @@ function generateRefNumber(): string {
 }
 
 export const POST = withErrorHandling(async (req: NextRequest) => {
-  const body = await req.json();
-  const data = ApplicationSchema.parse(body);
+  const body   = await req.json();
+  const parsed = ApplicationSchema.safeParse(body);
+  if (!parsed.success) {
+    const msg = parsed.error.issues.map(i => i.message).join(', ');
+    return NextResponse.json({ error: msg }, { status: 400 });
+  }
+  const data = parsed.data;
 
   const sanitised = {
     ...data,

@@ -169,6 +169,7 @@ export async function POST(req: NextRequest) {
   const createdChallenges: any[] = [];
 
   // ── Atomic transaction: deduct wallet + create all challenges ─────────────
+  // Timeout increased from default 5s to handle batch challenge creation under load.
   await prisma.$transaction(async (tx: any) => {
     // Deduct total wallet portion
     const updateData: any = {};
@@ -229,7 +230,7 @@ export async function POST(req: NextRequest) {
 
       createdChallenges.push({ ...ch, friend: alloc });
     }
-  });
+  }, { timeout: 30000 });
 
   // ── Single M-Pesa STK push for combined shortfall ────────────────────────
   let stkMessage: string | null = null;

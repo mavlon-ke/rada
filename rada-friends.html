@@ -2086,8 +2086,16 @@ function createRefereeChallenges() {
       document.getElementById('refereeSuccessView').style.display = 'block';
       loadChallenges();
     } else {
-      var err = res.d && (res.d.error || 'Could not create challenges.');
-      alert('Error: ' + (typeof err === 'string' ? err : JSON.stringify(err)));
+      var errMsg = res.d && res.d.error;
+      var skipped = res.d && res.d.skipped;
+      if (typeof errMsg !== 'string') errMsg = 'Could not create challenges.';
+      var fullMsg = 'Error: ' + errMsg;
+      if (skipped && skipped.length) {
+        fullMsg += '\n\nSkipped pairs:\n' + skipped.map(function(s) {
+          return 'Pair ' + (s.pair || '?') + ': ' + s.reason;
+        }).join('\n');
+      }
+      alert(fullMsg);
     }
   }).catch(function() {
     if (btn) { btn.disabled = false; btn.textContent = 'Create Challenges as Referee →'; }
@@ -2317,7 +2325,12 @@ function updateChallengeSummary() {
   var mpesaRow  = document.getElementById('summaryMpesaRow');
   var skippedEl = document.getElementById('summarySkipped');
 
-  if (!friends.length) { if (summaryEl) summaryEl.style.display = 'none'; return; }
+  if (!friends.length) {
+    if (summaryEl) summaryEl.style.display = 'none';
+    var bd = document.getElementById('challengeWalletBreakdown');
+    if (bd) bd.textContent = '';
+    return;
+  }
   if (summaryEl) summaryEl.style.display = 'block';
 
   var remReal = walletBalance, remBonus = bonusBalance, totalWallet = 0, totalMpesa = 0;
@@ -2342,6 +2355,19 @@ function updateChallengeSummary() {
     if (result.skipped > 0) skippedEl.textContent = result.skipped + ' unregistered number(s) will be skipped.';
   }
   updateCreateBtnLabel();
+
+  // Sync the payment breakdown line under the create button
+  var breakdown = document.getElementById('challengeWalletBreakdown');
+  if (breakdown) {
+    if (totalStake === 0) {
+      breakdown.textContent = '';
+    } else if (totalMpesa > 0) {
+      breakdown.textContent = 'KES ' + totalWallet.toLocaleString() + ' from wallet + KES ' + totalMpesa.toLocaleString() + ' via M-Pesa';
+    } else {
+      breakdown.textContent = 'KES ' + totalWallet.toLocaleString() + ' from wallet · No M-Pesa needed';
+    }
+  }
+
 }
 
 function updateCreateBtnLabel() {
@@ -2485,6 +2511,10 @@ function createChallenges() {
   if (!friends.length) {
     return alert("Please add at least one friend's phone number.");
   }
+  var invalidStake = friends.filter(function(f) { return f.stakePerPerson < 20; });
+  if (invalidStake.length) {
+    return alert('Minimum stake is KES 20 per friend. Please update the stake amount.');
+  }
 
   var btn       = document.getElementById('createBtn');
   var breakdown = document.getElementById('challengeWalletBreakdown');
@@ -2552,11 +2582,17 @@ function createChallenges() {
     } else {
       if (btn) btn.textContent = 'Create Challenge & Pay →';
       var err = res.d && res.d.error;
+      var skippedFriends = res.d && res.d.skipped;
       var msg = 'Could not create challenge.';
       if (typeof err === 'string') { msg = err; }
       else if (err && err.fieldErrors) {
         var f = Object.keys(err.fieldErrors)[0];
         if (f && err.fieldErrors[f][0]) msg = err.fieldErrors[f][0];
+      }
+      if (skippedFriends && skippedFriends.length) {
+        msg += '\n\nSkipped:\n' + skippedFriends.map(function(s) {
+          return (s.phone || 'open') + ': ' + s.reason;
+        }).join('\n');
       }
       alert('Error: ' + msg);
     }
