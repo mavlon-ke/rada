@@ -10,6 +10,8 @@ import { requireAdmin } from '@/lib/auth/admin';
 import { sanitizeText } from '@/lib/security/middleware';
 import { withErrorHandling } from '@/lib/security/route-guard';
 
+export const dynamic = 'force-dynamic'; // always query DB fresh — never cache
+
 const ApplicationSchema = z.object({
   firstName:      z.string().min(1).max(50),
   lastName:       z.string().min(1).max(50),

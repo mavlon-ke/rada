@@ -2745,8 +2745,19 @@ function loadDataApplications() {
   if (list) list.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text-dim);">Loading applications...</div>';
 
   adminFetch('/api/data/applications')
-  .then(function(r) { return r.json(); })
+  .then(function(r) {
+    if (!r.ok) {
+      return r.json().then(function(errData) {
+        throw new Error('API error ' + r.status + ': ' + (errData.error || 'Unknown error'));
+      });
+    }
+    return r.json();
+  })
   .then(function(d) {
+    if (!d.applications) {
+      if (list) list.innerHTML = '<div style="text-align:center;color:#b45309;padding:30px;font-size:0.78rem;">Unexpected response from server. Please refresh.</div>';
+      return;
+    }
     allDataApps = (d.applications || []).map(function(a) {
       return {
         id:          a.id,
