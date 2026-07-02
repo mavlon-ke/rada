@@ -515,7 +515,7 @@ function submitDataSignup(e) {
   e.preventDefault();
 
   // Basic validation
-  var required = ['firstName','lastName','email','phone','city','country','orgName','orgType','jobTitle','planSelect','useCase','useDescription'];
+  var required = ['firstName','lastName','email','phone','city','country','orgType','planSelect','useCase','useDescription'];
   var missing = false;
   required.forEach(function(id) {
     var el = document.getElementById(id);

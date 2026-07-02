@@ -17,9 +17,9 @@ const ApplicationSchema = z.object({
   mobile:         z.string().min(9).max(15),
   city:           z.string().min(1).max(100),
   country:        z.string().min(1).max(100),
-  orgName:        z.string().min(1).max(200),
+  orgName:        z.string().max(200).default(''),   // optional — individuals may leave blank
   orgType:        z.string().min(1).max(100),
-  jobTitle:       z.string().min(1).max(100),
+  jobTitle:       z.string().max(100).default(''),   // optional — not all applicants have a formal title
   website:        z.string().url().optional().or(z.literal('')),
   planInterest:   z.enum(['lite', 'pro', 'enterprise']),
   useCase:        z.string().min(1).max(100),
