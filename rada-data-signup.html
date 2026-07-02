@@ -515,7 +515,7 @@ function submitDataSignup(e) {
   e.preventDefault();
 
   // Basic validation
-  var required = ['firstName','lastName','email','phone','city','country','orgType','planSelect','useCase','useDescription'];
+  var required = ['firstName','lastName','email','phone','city','country','orgName','orgType','jobTitle','planSelect','useCase','useDescription'];
   var missing = false;
   required.forEach(function(id) {
     var el = document.getElementById(id);
@@ -532,7 +532,10 @@ function submitDataSignup(e) {
   } else {
     document.getElementById('agreeWrap').style.outline = '';
   }
-  if (missing) return;
+  if (missing) {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    return;
+  }
 
   // Collect data
   var payload = {

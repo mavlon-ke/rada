@@ -36,7 +36,21 @@ export const POST = withErrorHandling(async (req: NextRequest) => {
   const body   = await req.json();
   const parsed = ApplicationSchema.safeParse(body);
   if (!parsed.success) {
-    const msg = parsed.error.issues.map(i => i.message).join(', ');
+    const fieldLabels: Record<string, string> = {
+      firstName:      'First Name',    lastName:  'Last Name',
+      email:          'Email',         mobile:    'Phone Number',
+      city:           'City',          country:   'Country',
+      orgName:        'Organisation Name',
+      orgType:        'Organisation Type',
+      jobTitle:       'Job Title',
+      useCase:        'Use Case',
+      useDescription: 'Intended Use Description',
+    };
+    const msg = parsed.error.issues.map(i => {
+      const field = i.path[0] ? String(i.path[0]) : '';
+      const label = fieldLabels[field] || field;
+      return label ? label + ': ' + i.message : i.message;
+    }).join(' | ');
     return NextResponse.json({ error: msg }, { status: 400 });
   }
   const data = parsed.data;
