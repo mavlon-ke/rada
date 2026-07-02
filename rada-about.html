@@ -704,7 +704,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--font); min-
 document.querySelectorAll('[data-share]').forEach(btn => {
   btn.addEventListener('click', () => {
     const url  = 'https://checkrada.co.ke';
-    const text = 'Discover Rada — Kenya's incentivised crowd intelligence platform. Forecast real events, earn via M-Pesa! 🇰🇪';
+    const text = 'Discover Rada — Kenya\'s incentivised crowd intelligence platform. Forecast real events, earn via M-Pesa! 🇰🇪';
     if (navigator.share) {
       navigator.share({ title: 'CheckRada — Crowd Intelligence', text, url }).catch(() => {});
     } else {
