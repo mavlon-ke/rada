@@ -1429,7 +1429,7 @@ function loadChallenges() {
         bId:       c.userB ? c.userB.id : null,
         a:         { name: c.userA && c.userA.name ? c.userA.name : 'Player A', stake: Number(c.stakePerPerson) },
         b:         { name: c.userB && c.userB.name ? c.userB.name : 'Player B', stake: Number(c.stakePerPerson) },
-        referee:   c.refereePhone ? { name: 'Referee', phone: '+' + c.refereePhone } : null,
+        referee:   c.referee ? { name: c.referee.name || 'Referee', id: c.referee.id } : null,
         status:    c.status === 'ACTIVE'             ? 'open'
                  : c.status === 'PENDING_JOIN'        ? 'pending'
                  : c.status === 'PENDING_BOTH'        ? 'pending_both'
@@ -1460,14 +1460,24 @@ function loadChallenges() {
     }).filter(function(c) { return c.status !== 'resolved' && c.status !== 'cancelled'; });
 
     HISTORY = all.filter(function(c) { return c.status === 'RESOLVED' || c.status === 'CANCELLED'; }).map(function(c) {
+      var myId   = radaUser && radaUser.id ? radaUser.id : null;
+      var iAmA   = c.userA && c.userA.id === myId;
+      var winner = c.winner; // 'USER_A', 'USER_B', 'TIE', or null
+      var iWon   = (iAmA && winner === 'USER_A') || (!iAmA && winner === 'USER_B');
+      var isTie  = winner === 'TIE';
+      var pool   = Number(c.totalPool);
+      var winnerSide = isTie ? 'TIE' : (iWon ? 'A' : 'B');
       return {
-        id:       c.id,
-        q:        c.question,
-        a:        { name: c.userA && c.userA.name ? c.userA.name : 'Player A', stake: Number(c.stakePerPerson) },
-        b:        { name: c.userB && c.userB.name ? c.userB.name : 'Player B', stake: Number(c.stakePerPerson) },
-        status:   c.status === 'CANCELLED' ? 'cancelled' : 'resolved',
-        payout:   'KES ' + Math.round(Number(c.totalPool) * 0.95).toLocaleString(),
-        deadline: c.eventExpiresAt ? new Date(c.eventExpiresAt).toLocaleDateString('en-KE') : '—',
+        id:          c.id,
+        q:           c.question,
+        a:           { name: c.userA && c.userA.name ? c.userA.name : 'Player A', stake: Number(c.stakePerPerson) },
+        b:           { name: c.userB && c.userB.name ? c.userB.name : 'Player B', stake: Number(c.stakePerPerson) },
+        status:      c.status === 'CANCELLED' ? 'cancelled' : (isTie ? 'tie' : 'resolved'),
+        winner_side: winnerSide,
+        payout:      iWon  ? 'KES ' + Math.round(pool * 0.95).toLocaleString()
+                   : isTie ? 'KES ' + Math.round(pool * 0.475).toLocaleString() + ' (Tie)'
+                   : '—',
+        deadline:    c.eventExpiresAt ? new Date(c.eventExpiresAt).toLocaleDateString('en-KE') : '—',
       };
     });
 
