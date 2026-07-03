@@ -1466,7 +1466,7 @@ function loadChallenges() {
       var iWon   = (iAmA && winner === 'USER_A') || (!iAmA && winner === 'USER_B');
       var isTie  = winner === 'TIE';
       var pool   = Number(c.totalPool);
-      var winnerSide = isTie ? 'TIE' : (iWon ? 'A' : 'B');
+      var winnerSide = !winner ? null : isTie ? 'TIE' : (iWon ? 'A' : 'B');
       return {
         id:          c.id,
         q:           c.question,
@@ -1474,7 +1474,8 @@ function loadChallenges() {
         b:           { name: c.userB && c.userB.name ? c.userB.name : 'Player B', stake: Number(c.stakePerPerson) },
         status:      c.status === 'CANCELLED' ? 'cancelled' : (isTie ? 'tie' : 'resolved'),
         winner_side: winnerSide,
-        payout:      iWon  ? 'KES ' + Math.round(pool * 0.95).toLocaleString()
+        payout:      !winner ? 'KES ' + Math.round(pool * 0.95).toLocaleString()
+                   : iWon  ? 'KES ' + Math.round(pool * 0.95).toLocaleString()
                    : isTie ? 'KES ' + Math.round(pool * 0.475).toLocaleString() + ' (Tie)'
                    : '—',
         deadline:    c.eventExpiresAt ? new Date(c.eventExpiresAt).toLocaleDateString('en-KE') : '—',
@@ -1826,7 +1827,9 @@ function challengeCard(c, isMine, isRef = false) {
 }
 
 function historyCard(c) {
-  const won = c.status === 'resolved' && c.winner_side === 'A';
+  const won      = c.status === 'resolved' && c.winner_side === 'A';
+  const lost     = c.status === 'resolved' && c.winner_side === 'B';
+  const unknown  = c.status === 'resolved' && !c.winner_side;
   return `
     <div class="challenge-card" style="opacity:0.8">
       <div class="cc-header">
@@ -1834,6 +1837,8 @@ function historyCard(c) {
           ? `<span class="cc-badge" style="background:rgba(107,114,128,0.1);color:#6b7280;border:1px solid rgba(107,114,128,0.2);">✕ Cancelled</span>`
           : c.status === 'tie'
           ? `<span class="cc-badge badge-pending">🤝 Tie</span>`
+          : unknown
+          ? `<span class="cc-badge" style="background:rgba(107,114,128,0.1);color:#6b7280;border:1px solid rgba(107,114,128,0.2);">✓ Resolved</span>`
           : `<span class="cc-badge ${won ? 'badge-open' : 'badge-disputed'}">${won ? '✓ Won' : '✗ Lost'}</span>`}
         <span class="cc-code">${c.deadline}</span>
       </div>
