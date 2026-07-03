@@ -1438,6 +1438,7 @@ function loadChallenges() {
                  : c.status === 'PENDING_RESOLUTION'  ? 'resolving'
                  : c.status === 'DISPUTED'            ? 'disputed'
                  : c.status === 'RESOLVED'            ? 'resolved'
+                 : c.status === 'CANCELLED'           ? 'cancelled'
                  : 'pending',
         aConfirm:  c.userAConfirm || null,
         bConfirm:  c.userBConfirm || null,
@@ -1743,6 +1744,11 @@ function challengeCard(c, isMine, isRef = false) {
           <button class="btn-sm btn-sm-purple" style="margin-bottom:4px;" onclick="retryPayment('${c.id}')">📱 Retry M-Pesa Payment</button>
           <button class="btn-sm btn-sm-ghost" style="margin-bottom:4px;" onclick="topUpAndComplete('${c.id}', ${c.stake}, ${c.pool})">💳 Top Up & Complete</button>
           <button class="btn-sm" style="border:1px solid rgba(206,17,38,0.25);color:#b91c1c;background:rgba(206,17,38,0.05);border-radius:8px;padding:7px 12px;font-size:0.72rem;cursor:pointer;width:100%;" onclick="cancelPendingPaymentChallenge('${c.id}')">✕ Cancel (Full Refund)</button>
+        ` : c.status === 'cancelled' ? `
+          <div style="text-align:center;padding:10px;background:rgba(206,17,38,0.06);border-radius:10px;border:1px solid rgba(206,17,38,0.15);">
+            <div style="font-size:0.78rem;font-weight:700;color:#b91c1c;">✕ Challenge Cancelled</div>
+            <div style="font-size:0.65rem;color:var(--text-dim);margin-top:3px;">This challenge was cancelled.</div>
+          </div>
         ` : c.status === 'pending' && c.isCreator ? `
           <button class="btn-sm btn-sm-ghost" style="margin-bottom:4px;">Wait for Friend →</button>
           <button class="btn-sm" style="border:1px solid rgba(206,17,38,0.25);color:#b91c1c;background:rgba(206,17,38,0.05);border-radius:8px;padding:7px 12px;font-size:0.72rem;cursor:pointer;width:100%;" onclick="cancelChallenge('${c.id}', true)">✕ Cancel Challenge</button>

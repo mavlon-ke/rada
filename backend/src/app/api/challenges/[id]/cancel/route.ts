@@ -326,10 +326,6 @@ async function cancelPendingJoin(challenge: any, requesterId: string, isA: boole
       title:   '❌ Challenge declined',
       message: displayName(challenge.userB.name, challenge.userB.phone) + ' declined your challenge. KES ' + refund.toLocaleString() + ' refunded. KES ' + fee + ' processing fee applied.',
       link:    '/rada-friends.html',
-      whatsapp: {
-        template:   'CHALLENGE_RESOLUTION_WARNING',
-        parameters: [challenge.question.slice(0, 50)],
-      },
     });
   }
 
