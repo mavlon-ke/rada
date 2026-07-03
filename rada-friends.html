@@ -1462,7 +1462,7 @@ function loadChallenges() {
     HISTORY = all.filter(function(c) { return c.status === 'RESOLVED' || c.status === 'CANCELLED'; }).map(function(c) {
       var myId   = radaUser && radaUser.id ? radaUser.id : null;
       var iAmA   = c.userA && c.userA.id === myId;
-      var winner = c.winner; // 'USER_A', 'USER_B', 'TIE', or null
+      var winner = c.resolution || c.winner; // 'USER_A', 'USER_B', 'TIE', or null
       var iWon   = (iAmA && winner === 'USER_A') || (!iAmA && winner === 'USER_B');
       var isTie  = winner === 'TIE';
       var pool   = Number(c.totalPool);
@@ -1596,7 +1596,8 @@ function challengeCard(c, isMine, isRef = false) {
 
   const pctFilled = c.status === 'open' || isRef ? 100 : 50;
 
-  const refBlock = c.referee
+  const refBlock = isRef ? ''
+    : c.referee
     ? `<div class="cc-referee">
         <div class="cc-ref-icon">⚖️</div>
         <div>
