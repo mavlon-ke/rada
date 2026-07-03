@@ -1,10 +1,10 @@
 // src/app/api/challenges/[id]/confirm/route.ts
-// Mutual consent resolution ? each user submits their view of the outcome.
-// If both agree ? auto-resolve immediately at 5% fee.
-// If referee submits ? auto-resolve immediately at 5% fee.
-// If parties disagree ? 48h window, then escalates to admin (15% fee).
+// Mutual consent resolution — each user submits their view of the outcome.
+// If both agree → auto-resolve immediately at 5% fee.
+// If referee submits → auto-resolve immediately at 5% fee.
+// If parties disagree → 48h window, then escalates to admin (15% fee).
 // IMPORTANT: resolveChallenge() must receive the original challenge object (with
-// userA/userB relations included) ? never pass the `updated` object from Prisma
+// userA/userB relations included) — never pass the `updated` object from Prisma
 // update() which does not include relation data.
 //
 // Payout model: winnings credited to CheckRada wallet balance only.
@@ -16,8 +16,8 @@ import { prisma } from '@/lib/db/prisma';
 import { requireAuth } from '@/lib/auth/session';
 import { createNotification } from '@/lib/notifications';
 
-const FEE_STANDARD = 0.05;  // 5%  ? mutual/referee resolution
-const FEE_DISPUTE  = 0.15;  // 15% ? admin intervention
+const FEE_STANDARD = 0.05;  // 5%  — mutual/referee resolution
+const FEE_DISPUTE  = 0.15;  // 15% — admin intervention
 
 const Schema = z.object({
   outcome: z.enum(['USER_A', 'USER_B', 'TIE']),
@@ -58,14 +58,14 @@ export async function POST(
     return NextResponse.json({ error: 'You are not a participant in this challenge' }, { status: 403 });
   }
 
-  // ?? REFEREE path ? immediate resolution at 5% ????????????????????????????
-  // Referee resolves immediately at 5% ? no extra gate needed.
+  // ── REFEREE path — immediate resolution at 5% ────────────────────────────
+  // Referee resolves immediately at 5% — no extra gate needed.
   // Referee can decline their role via the /referee endpoint which switches to MUTUAL.
   if (isReferee && challenge.validatorType === 'REFEREE') {
     return resolveChallenge(challenge, outcome, FEE_STANDARD, 'REFEREE');
   }
 
-  // ?? MUTUAL path ? record this user's confirmation ????????????????????????
+  // ── MUTUAL path — record this user's confirmation ────────────────────────
   const updateData: Record<string, string> = {};
   if (isUserA) updateData.userAConfirm = outcome;
   if (isUserB) updateData.userBConfirm = outcome;
@@ -78,7 +78,7 @@ export async function POST(
   const aConfirm = isUserA ? outcome : updated.userAConfirm;
   const bConfirm = isUserB ? outcome : updated.userBConfirm;
 
-  // If both parties agree ? resolve at standard 5% fee
+  // If both parties agree → resolve at standard 5% fee
   if (aConfirm && bConfirm && aConfirm === bConfirm) {
     return resolveChallenge(challenge, aConfirm as any, FEE_STANDARD, 'MUTUAL');
   }
@@ -97,7 +97,7 @@ export async function POST(
     await createNotification({
       userId:  otherUser.id,
       type:    'CHALLENGE_RESOLUTION_WINDOW',
-      title:   '? Opponent submitted a result',
+      title:   '⏳ Opponent submitted a result',
       message: `Your opponent submitted their result for "${challenge.question.slice(0, 50)}...". Confirm or dispute within 48h to keep the 5% fee.`,
       link:    `/rada-friends.html`,
       whatsapp: {
@@ -116,7 +116,7 @@ export async function POST(
   });
 }
 
-// ?? Shared resolution logic ????????????????????????????????????????????????????
+// ── Shared resolution logic ────────────────────────────────────────────────────
 async function resolveChallenge(
   challenge: any,
   outcome: 'USER_A' | 'USER_B' | 'TIE',
@@ -142,14 +142,13 @@ async function resolveChallenge(
     payouts = [{ userId: winnerId, phone: winnerPhone, amountKes: netPool }];
   }
 
-  // Atomic DB update ? wallet credit only
+  // Atomic DB update — wallet credit only
   await prisma.$transaction(async (tx) => {
     await tx.marketChallenge.update({
       where: { id: challenge.id },
       data: {
         status:         'RESOLVED',
         resolution:     outcome,
-        winner:         outcome,
         feePercent:     feeRate * 100,
         platformFeeKes: feeKes,
         resolvedAt:     new Date(),
@@ -169,13 +168,13 @@ async function resolveChallenge(
           amountKes:   p.amountKes,
           balAfter:    Number(updated.balanceKes),
           status:      'SUCCESS', // wallet credit is the completed payout
-          description: `Challenge payout (${outcome}) ? ${method} resolution. Fee: KES ${feeKes} (${feeRate * 100}%). Credited to CheckRada wallet.`,
+          description: `Challenge payout (${outcome}) — ${method} resolution. Fee: KES ${feeKes} (${feeRate * 100}%). Credited to CheckRada wallet.`,
         },
       });
     }
   });
 
-  // No Paystack transfer ? winnings are in the user's CheckRada wallet.
+  // No Paystack transfer — winnings are in the user's CheckRada wallet.
   // Users withdraw to M-Pesa via the standard withdrawal flow at their convenience.
 
   // Record platform revenue for the challenge fee
@@ -185,40 +184,14 @@ async function resolveChallenge(
         challengeId: challenge.id,
         type:        'CHALLENGE_FEE',
         amountKes:   feeKes,
-        description: `Challenge fee (${feeRate * 100}%) ? ${method} resolution. Question: "${challenge.question.slice(0, 60)}"`,
+        description: `Challenge fee (${feeRate * 100}%) — ${method} resolution. Question: "${challenge.question.slice(0, 60)}"`,
       },
     });
   }
 
   console.log(`[CHALLENGE RESOLVE] Challenge ${challenge.id} resolved as ${outcome} via ${method}. Fee: KES ${feeKes}. Net: KES ${netPool}.`);
 
-    // Notify all parties of the resolution result
-  const q50 = challenge.question.slice(0, 50);
-  if (outcome === 'TIE') {
-    const half = Math.floor(netPool / 2);
-    if (challenge.userAId) void createNotification({ userId: challenge.userAId,
-      type: 'CHALLENGE_OPPONENT_STAKED', title: 'Tie - Funds Refunded',
-      message: '"' + q50 + '" ended in a tie. KES ' + half.toLocaleString() + ' refunded to your CheckRada wallet.',
-      link: '/rada-friends.html' });
-    if (challenge.userBId) void createNotification({ userId: challenge.userBId,
-      type: 'CHALLENGE_OPPONENT_STAKED', title: 'Tie - Funds Refunded',
-      message: '"' + q50 + '" ended in a tie. KES ' + half.toLocaleString() + ' refunded to your CheckRada wallet.',
-      link: '/rada-friends.html' });
-  } else {
-    const winnerId   = outcome === 'USER_A' ? challenge.userAId : challenge.userBId;
-    const loserId    = outcome === 'USER_A' ? challenge.userBId : challenge.userAId;
-    const winnerName = outcome === 'USER_A' ? (challenge.userA?.name || 'your opponent') : (challenge.userB?.name || 'your opponent');
-    if (winnerId) void createNotification({ userId: winnerId,
-      type: 'CHALLENGE_OPPONENT_STAKED', title: 'You Won!',
-      message: 'You won "' + q50 + '". KES ' + netPool.toLocaleString() + ' credited to your CheckRada wallet.',
-      link: '/rada-friends.html' });
-    if (loserId) void createNotification({ userId: loserId,
-      type: 'CHALLENGE_RESOLUTION_WARNING', title: 'Challenge Settled',
-      message: '"' + q50 + '" has been resolved. ' + winnerName + ' won this round.',
-      link: '/rada-friends.html' });
-  }
-
-return NextResponse.json({
+  return NextResponse.json({
     success:    true,
     outcome,
     method,
