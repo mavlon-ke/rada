@@ -25,6 +25,15 @@ import {
   normalisePhone,
 } from '@/lib/paystack/paystack.service';
 
+
+// dbPhone: strips leading + for DB lookups.
+// normalisePhone() from paystack.service returns "+254XXXXXXXXX" (Paystack format).
+// Users are stored as "254XXXXXXXXX" (no +) from the auth flow.
+// Use dbPhone() for prisma.user.findUnique({ where: { phone } }) calls.
+// Use normalisePhone() only for M-Pesa STK push / Paystack API calls.
+function dbPhone(phone: string): string {
+  return normalisePhone(phone).replace(/^\+/, '');
+}
 const MAX_FRIENDS = 100;
 const MIN_STAKE   = 20;
 const MAX_STAKE   = 20000;
@@ -74,7 +83,7 @@ export async function POST(req: NextRequest) {
   // ── Validate referee ──────────────────────────────────────────────────────
   let refereeId: string | undefined;
   if (refereePhone) {
-    const refUser = await prisma.user.findUnique({ where: { phone: normalisePhone(refereePhone) } });
+    const refUser = await prisma.user.findUnique({ where: { phone: dbPhone(refereePhone) } });
     if (!refUser) return NextResponse.json({ error: 'Referee is not a registered CheckRada user.' }, { status: 400 });
     if (refUser.id === user.id) return NextResponse.json({ error: 'You cannot be your own referee' }, { status: 400 });
     refereeId = refUser.id;
@@ -105,8 +114,8 @@ export async function POST(req: NextRequest) {
       continue;
     }
 
-    const normPhone = normalisePhone(f.phone);
-    if (normPhone === normalisePhone(user.phone)) {
+    const normPhone = dbPhone(f.phone);
+    if (normPhone === dbPhone(user.phone)) {
       skipped.push({ phone: f.phone, reason: 'Cannot challenge yourself' });
       continue;
     }

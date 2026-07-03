@@ -20,6 +20,11 @@ import {
 } from '@/lib/paystack/paystack.service';
 
 const MAX_STAKE = 20000;  // KES 20,000 per person (Social Challenge cap)
+
+// dbPhone: strips leading + for DB lookups (users stored as 254XXXXXXXXX, not +254XXXXXXXXX).
+function dbPhone(phone: string): string {
+  return normalisePhone(phone).replace(/^\+/, '');
+}
 const MIN_STAKE = 20;     // KES 20 minimum
 
 const CreateSchema = z.object({
@@ -79,7 +84,7 @@ export async function POST(req: NextRequest) {
   }
 
   // ── Validate Challenger B ────────────────────────────────────────────────
-  const normalisedPhoneB = normalisePhone(challengerBPhone);
+  const normalisedPhoneB = dbPhone(challengerBPhone);
   const challengerB = await prisma.user.findUnique({ where: { phone: normalisedPhoneB } });
   if (!challengerB) {
     return NextResponse.json({
@@ -93,7 +98,7 @@ export async function POST(req: NextRequest) {
   // ── Validate referee ─────────────────────────────────────────────────────
   let refereeId: string | undefined;
   if (refereePhone) {
-    const normalisedRefPhone = normalisePhone(refereePhone);
+    const normalisedRefPhone = dbPhone(refereePhone);
     const refUser = await prisma.user.findUnique({ where: { phone: normalisedRefPhone } });
     if (!refUser) {
       return NextResponse.json({

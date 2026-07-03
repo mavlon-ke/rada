@@ -17,6 +17,11 @@ import { displayName }        from '@/lib/user/display-name';
 import { sanitizeText }       from '@/lib/security/middleware';
 import { normalisePhone }     from '@/lib/paystack/paystack.service';
 
+
+// dbPhone: strips leading + for DB lookups (users stored as 254XXXXXXXXX, not +254XXXXXXXXX).
+function dbPhone(phone: string): string {
+  return normalisePhone(phone).replace(/^\+/, '');
+}
 const MAX_PAIRS = 100;
 const MIN_STAKE = 20;
 const MAX_STAKE = 20000;
@@ -81,9 +86,9 @@ export async function POST(req: NextRequest) {
 
   for (let i = 0; i < pairs.length; i++) {
     const p = pairs[i];
-    const normA = normalisePhone(p.phoneA);
-    const normB = normalisePhone(p.phoneB);
-    const normR = normalisePhone(user.phone);
+    const normA = dbPhone(p.phoneA);
+    const normB = dbPhone(p.phoneB);
+    const normR = dbPhone(user.phone);
 
     if (normA === normR || normB === normR) {
       skipped.push({ pair: i + 1, reason: 'Referee cannot be a challenger' });

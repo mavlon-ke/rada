@@ -13,6 +13,7 @@ import { requireAuth }        from '@/lib/auth/session';
 import { createNotification } from '@/lib/notifications';
 import { displayName }        from '@/lib/user/display-name';
 import { normalisePhone } from '@/lib/paystack/paystack.service';
+import { withErrorHandling } from '@/lib/security/route-guard';
 
 // ── Referee challenge join (PENDING_BOTH / PENDING_A / PENDING_B) ──────────────
 // A and B join independently using the same code.
@@ -151,7 +152,7 @@ async function handleRefereeJoin(challenge: any, user: any, freshUser: any) {
   });
 }
 
-export async function GET(
+export const GET = withErrorHandling(async function GET(
   _req: NextRequest,
   { params }: { params: { code: string } }
 ) {
@@ -190,9 +191,9 @@ export async function GET(
     isLocked:         !!challenge.userBId,
     isRefCreated,
   });
-}
+});
 
-export async function POST(
+export const POST = withErrorHandling(async function POST(
   req: NextRequest,
   { params }: { params: { code: string } }
 ) {
@@ -329,4 +330,4 @@ export async function POST(
       walletUsed: walletTotal,
     },
   });
-}
+});
