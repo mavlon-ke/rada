@@ -26,11 +26,7 @@ import {
 } from '@/lib/paystack/paystack.service';
 
 
-// dbPhone: strips leading + for DB lookups.
-// normalisePhone() from paystack.service returns "+254XXXXXXXXX" (Paystack format).
-// Users are stored as "254XXXXXXXXX" (no +) from the auth flow.
-// Use dbPhone() for prisma.user.findUnique({ where: { phone } }) calls.
-// Use normalisePhone() only for M-Pesa STK push / Paystack API calls.
+// dbPhone: strips leading + for DB lookups (users stored as 254XXXXXXXXX, not +254XXXXXXXXX).
 function dbPhone(phone: string): string {
   return normalisePhone(phone).replace(/^\+/, '');
 }
@@ -177,8 +173,17 @@ export async function POST(req: NextRequest) {
   let totalBonusUsed = allocations.reduce((s, a) => s + a.bonusUsed, 0);
   const createdChallenges: any[] = [];
 
+  // ── Pre-generate access codes BEFORE the transaction ─────────────────────
+  // generateAccessCode() uses the outer prisma client. Calling it inside the
+  // $transaction would try to acquire a second connection from the pool while
+  // the transaction already holds the only one (Supabase free tier: limit=1).
+  // That causes "Timed out fetching a new connection" → 500 error.
+  const preGeneratedCodes: string[] = [];
+  for (const alloc of allocations) {
+    preGeneratedCodes.push(await generateAccessCode());
+  }
+
   // ── Atomic transaction: deduct wallet + create all challenges ─────────────
-  // Timeout increased from default 5s to handle batch challenge creation under load.
   await prisma.$transaction(async (tx: any) => {
     // Deduct total wallet portion
     const updateData: any = {};
@@ -188,8 +193,9 @@ export async function POST(req: NextRequest) {
       await tx.user.update({ where: { id: user.id }, data: updateData });
     }
 
-    for (const alloc of allocations) {
-      const accessCode = await generateAccessCode();
+    for (let i = 0; i < allocations.length; i++) {
+      const alloc      = allocations[i];
+      const accessCode = preGeneratedCodes[i];
       const ch = await tx.marketChallenge.create({
         data: {
           question,

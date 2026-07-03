@@ -133,10 +133,18 @@ export async function POST(req: NextRequest) {
   const refName = displayName(user.name, user.phone);
   const created: any[] = [];
 
+  // ── Pre-generate access codes BEFORE the transaction ─────────────────────
+  // Avoids nested connection pool deadlock (Supabase free tier: connection limit=1).
+  const preGeneratedCodes: string[] = [];
+  for (const v of valid) {
+    preGeneratedCodes.push(await generateAccessCode());
+  }
+
   // ── Create all challenges (no wallet deduction — R pays nothing) ──────────
   await prisma.$transaction(async (tx: any) => {
-    for (const v of valid) {
-      const accessCode = await generateAccessCode();
+    for (let i = 0; i < valid.length; i++) {
+      const v          = valid[i];
+      const accessCode = preGeneratedCodes[i];
       const ch = await tx.marketChallenge.create({
         data: {
           question,
@@ -157,7 +165,7 @@ export async function POST(req: NextRequest) {
       });
       created.push({ ...ch, pair: v });
     }
-  });
+  }, { timeout: 30000 });
 
   // ── Blind notifications: A and B do not know who the other party is ───────
   for (const ch of created) {
