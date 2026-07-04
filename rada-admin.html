@@ -2745,7 +2745,6 @@ function loadDataApplications() {
   currentStatusFilter = 'all';
   var list = document.getElementById('dataAppsList');
   console.log('[DA] list:', list ? 'FOUND' : 'NULL');
-  console.log('[DA] panel:', document.getElementById('panel-dataapps') ? document.getElementById('panel-dataapps').style.display : 'MISSING');
   if (list) list.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text-dim);">Loading applications...</div>';
 
   adminFetch('/api/data/applications')
@@ -2762,7 +2761,7 @@ function loadDataApplications() {
       if (list) list.innerHTML = '<div style="text-align:center;color:#b45309;padding:30px;font-size:0.78rem;">Unexpected response from server. Please refresh.</div>';
       return;
     }
-    console.log('[DA] apps from API:', d.applications.length);
+    console.log('[DA] apps:', d.applications.length);
     allDataApps = (d.applications || []).map(function(a) {
       return {
         id:          a.id,
@@ -2830,7 +2829,7 @@ function renderDataApps() {
     return;
   }
 
-  console.log('[DA] filtered:', filtered.length, 'about to set innerHTML');
+  console.log('[DA] filtered:', filtered.length);
   try {
     var cards = filtered.slice().reverse().map(function(app) {
     var planColors = { lite: '#6d28d9', pro: '#2563eb', enterprise: '#c97d0a' };
@@ -2881,11 +2880,17 @@ function renderDataApps() {
       '</div>' +
     '</div>';
     });
-    list.innerHTML = cards.join('');
-    console.log('[DA] innerHTML set, length:', list.innerHTML.length, 'panel:', document.getElementById('panel-dataapps').style.display);
+    var banner = '<div style="position:relative;z-index:99999;background:red;color:white;font-size:18px;font-weight:bold;padding:16px;margin-bottom:8px;border-radius:6px;">' + filtered.length + ' APPLICATIONS FOUND</div>';
+    list.style.cssText = 'display:block!important;visibility:visible!important;opacity:1!important;height:auto!important;overflow:visible!important;';
+    list.innerHTML = banner + cards.join('');
+    console.log('[DA] set done, innerHTML.length:', list.innerHTML.length);
+    setTimeout(function() {
+      var p = document.getElementById('panel-dataapps');
+      console.log('[DA] 500ms later — panel:', p ? p.style.display : 'GONE', 'list visible:', list.offsetHeight > 0);
+    }, 500);
   } catch(err) {
-    console.error('[DA] CARD BUILD ERROR:', err.message, err.stack);
-    list.innerHTML = '<div style="padding:20px;color:red;font-weight:bold;">RENDER ERROR: ' + err.message + '</div>';
+    console.error('[DA] ERROR:', err.message);
+    list.innerHTML = '<div style="background:red;color:white;padding:20px;font-size:16px;">ERROR: ' + err.message + '</div>';
   }
 
   // Event delegation for approve/reject
