@@ -2760,9 +2760,6 @@ function loadDataApplications() {
       if (list) list.innerHTML = '<div style="text-align:center;color:#b45309;padding:30px;font-size:0.78rem;">Unexpected response from server. Please refresh.</div>';
       return;
     }
-    // Diagnostic: show raw count in panel title before rendering
-    var titleEl = document.querySelector('#panel-dataapps .page-title');
-    if (titleEl) titleEl.textContent = '📊 Data Applications (' + d.applications.length + ' records)';
     allDataApps = (d.applications || []).map(function(a) {
       return {
         id:          a.id,
@@ -2830,7 +2827,17 @@ function renderDataApps() {
     return;
   }
 
+  // DIAGNOSTIC: simple card to confirm rendering works
   list.innerHTML = filtered.slice().reverse().map(function(app) {
+    return '<div style="border:2px solid #6d28d9;border-radius:8px;padding:12px;margin-bottom:8px;background:#f0edff;">' +
+      '<div style="font-weight:800;color:#1a1035;margin-bottom:4px;">' + (app.firstName || '') + ' ' + (app.lastName || '') + ' — ' + (app.plan || '') + '</div>' +
+      '<div style="font-size:0.72rem;color:#5b21b6;">' + (app.email || '') + ' · ' + (app.status || '') + '</div>' +
+      '<div style="font-size:0.68rem;color:#9284b8;margin-top:4px;">Ref: ' + (app.ref || '—') + '</div>' +
+    '</div>';
+  }).join('');
+  // END DIAGNOSTIC
+  if (false) { // original card builder preserved below
+  list.innerHTML = filtered.slice().reverse().map(function(app_orig) {
     var planColors = { lite: '#6d28d9', pro: '#2563eb', enterprise: '#c97d0a' };
     var color = planColors[app.plan] || '#6d28d9';
     var date = app.submittedAt ? new Date(app.submittedAt).toLocaleDateString('en-KE', { day:'numeric', month:'short', year:'numeric' }) : 'Unknown date';
@@ -2879,6 +2886,7 @@ function renderDataApps() {
       '</div>' +
     '</div>';
   }).join('');
+  } // end if(false)
 
   // Event delegation for approve/reject
   list.onclick = function(e) {
