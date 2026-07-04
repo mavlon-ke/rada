@@ -2741,12 +2741,11 @@ function loadActivityFeed(containerId) {
 var allDataApps = [];
 
 function loadDataApplications() {
-  console.log('[DATAAPPS] loadDataApplications called');
   currentDataFilter   = 'all';
   currentStatusFilter = 'all';
   var list = document.getElementById('dataAppsList');
-  console.log('[DATAAPPS] list element:', list ? 'FOUND' : 'NULL');
-  console.log('[DATAAPPS] panel display:', document.getElementById('panel-dataapps') ? document.getElementById('panel-dataapps').style.display : 'PANEL NOT FOUND');
+  console.log('[DA] list:', list ? 'FOUND' : 'NULL');
+  console.log('[DA] panel:', document.getElementById('panel-dataapps') ? document.getElementById('panel-dataapps').style.display : 'MISSING');
   if (list) list.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text-dim);">Loading applications...</div>';
 
   adminFetch('/api/data/applications')
@@ -2763,7 +2762,7 @@ function loadDataApplications() {
       if (list) list.innerHTML = '<div style="text-align:center;color:#b45309;padding:30px;font-size:0.78rem;">Unexpected response from server. Please refresh.</div>';
       return;
     }
-    console.log('[DATAAPPS] applications received:', d.applications.length);
+    console.log('[DA] apps from API:', d.applications.length);
     allDataApps = (d.applications || []).map(function(a) {
       return {
         id:          a.id,
@@ -2814,9 +2813,7 @@ function filterDataApps(value, type, btn) {
 }
 
 function renderDataApps() {
-  console.log('[DATAAPPS] renderDataApps called, allDataApps:', allDataApps.length);
   var list = document.getElementById('dataAppsList');
-  console.log('[DATAAPPS] render list:', list ? 'FOUND' : 'NULL');
   var count = document.getElementById('dataAppCount');
   if (!list) return;
 
@@ -2833,7 +2830,9 @@ function renderDataApps() {
     return;
   }
 
-  list.innerHTML = filtered.slice().reverse().map(function(app) {
+  console.log('[DA] filtered:', filtered.length, 'about to set innerHTML');
+  try {
+    var cards = filtered.slice().reverse().map(function(app) {
     var planColors = { lite: '#6d28d9', pro: '#2563eb', enterprise: '#c97d0a' };
     var color = planColors[app.plan] || '#6d28d9';
     var date = app.submittedAt ? new Date(app.submittedAt).toLocaleDateString('en-KE', { day:'numeric', month:'short', year:'numeric' }) : 'Unknown date';
@@ -2881,7 +2880,13 @@ function renderDataApps() {
         '<div style="display:flex;gap:6px;">' + approveBtn + rejectBtn + pendingBtn + '</div>' +
       '</div>' +
     '</div>';
-  }).join('');
+    });
+    list.innerHTML = cards.join('');
+    console.log('[DA] innerHTML set, length:', list.innerHTML.length, 'panel:', document.getElementById('panel-dataapps').style.display);
+  } catch(err) {
+    console.error('[DA] CARD BUILD ERROR:', err.message, err.stack);
+    list.innerHTML = '<div style="padding:20px;color:red;font-weight:bold;">RENDER ERROR: ' + err.message + '</div>';
+  }
 
   // Event delegation for approve/reject
   list.onclick = function(e) {
