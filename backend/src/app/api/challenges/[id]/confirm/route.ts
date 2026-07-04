@@ -191,6 +191,32 @@ async function resolveChallenge(
 
   console.log(`[CHALLENGE RESOLVE] Challenge ${challenge.id} resolved as ${outcome} via ${method}. Fee: KES ${feeKes}. Net: KES ${netPool}.`);
 
+  // Notify all parties of the resolution result
+  const q50 = challenge.question.slice(0, 50);
+  if (outcome === 'TIE') {
+    const tieHalf = Math.floor(netPool / 2);
+    if (challenge.userAId) void createNotification({ userId: challenge.userAId,
+      type: 'CHALLENGE_OPPONENT_STAKED', title: 'Tie - Funds Refunded',
+      message: 'Your challenge "' + q50 + '" ended in a tie. KES ' + tieHalf.toLocaleString() + ' has been refunded to your CheckRada wallet.',
+      link: '/rada-friends.html' });
+    if (challenge.userBId) void createNotification({ userId: challenge.userBId,
+      type: 'CHALLENGE_OPPONENT_STAKED', title: 'Tie - Funds Refunded',
+      message: 'Your challenge "' + q50 + '" ended in a tie. KES ' + tieHalf.toLocaleString() + ' has been refunded to your CheckRada wallet.',
+      link: '/rada-friends.html' });
+  } else {
+    const notifWinnerId = outcome === 'USER_A' ? challenge.userAId : challenge.userBId;
+    const notifLoserId  = outcome === 'USER_A' ? challenge.userBId : challenge.userAId;
+    const notifWinName  = outcome === 'USER_A' ? (challenge.userA?.name || 'Challenger') : (challenge.userB?.name || 'Challenger');
+    if (notifWinnerId) void createNotification({ userId: notifWinnerId,
+      type: 'CHALLENGE_OPPONENT_STAKED', title: 'You Won!',
+      message: 'You won the challenge "' + q50 + '". KES ' + netPool.toLocaleString() + ' has been credited to your CheckRada wallet.',
+      link: '/rada-friends.html' });
+    if (notifLoserId) void createNotification({ userId: notifLoserId,
+      type: 'CHALLENGE_RESOLUTION_WARNING', title: 'Challenge Settled',
+      message: 'Your challenge "' + q50 + '" has been resolved. ' + notifWinName + ' won this round.',
+      link: '/rada-friends.html' });
+  }
+
   return NextResponse.json({
     success:    true,
     outcome,
