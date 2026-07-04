@@ -2741,13 +2741,8 @@ function loadActivityFeed(containerId) {
 var allDataApps = [];
 
 function loadDataApplications() {
-  // Reset filters so stale state never hides applications
   currentDataFilter   = 'all';
   currentStatusFilter = 'all';
-  // Reset active state on filter buttons
-  document.querySelectorAll('#panel-dataapps .filter-tab').forEach(function(b) {
-    b.classList.toggle('active', b.dataset.value === 'all');
-  });
   var list = document.getElementById('dataAppsList');
   if (list) list.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text-dim);">Loading applications...</div>';
 
@@ -2765,6 +2760,9 @@ function loadDataApplications() {
       if (list) list.innerHTML = '<div style="text-align:center;color:#b45309;padding:30px;font-size:0.78rem;">Unexpected response from server. Please refresh.</div>';
       return;
     }
+    // Diagnostic: show raw count in panel title before rendering
+    var titleEl = document.querySelector('#panel-dataapps .page-title');
+    if (titleEl) titleEl.textContent = '📊 Data Applications (' + d.applications.length + ' records)';
     allDataApps = (d.applications || []).map(function(a) {
       return {
         id:          a.id,
