@@ -2741,6 +2741,13 @@ function loadActivityFeed(containerId) {
 var allDataApps = [];
 
 function loadDataApplications() {
+  // Reset filters so stale state never hides applications
+  currentDataFilter   = 'all';
+  currentStatusFilter = 'all';
+  // Reset active state on filter buttons
+  document.querySelectorAll('#panel-dataapps .filter-tab').forEach(function(b) {
+    b.classList.toggle('active', b.dataset.value === 'all');
+  });
   var list = document.getElementById('dataAppsList');
   if (list) list.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text-dim);">Loading applications...</div>';
 
