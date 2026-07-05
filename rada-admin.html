@@ -1857,6 +1857,43 @@ body::after {
       </div>
     </div>
 
+
+  <!-- DATA APPLICATIONS PANEL -->
+  <div class="panel" id="panel-dataapps">
+    <div class="page-title">📊 Data Applications</div>
+    <div class="page-sub">Review and manage incoming Rada Data API access applications.</div>
+
+    <div class="config-card" style="margin-bottom:16px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+        <div class="config-label">Total Applications</div>
+        <div style="font-size:1.2rem;font-weight:900;color:var(--primary);" id="dataAppCount">0</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="save-btn" style="flex:1;min-width:120px;" onclick="loadDataApplications()">🔄 Refresh</button>
+        <button class="save-btn" style="flex:1;min-width:120px;background:#16a34a;" onclick="exportDataApps()">⬇ Export CSV</button>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
+      <button class="filter-tab active" id="dtab-all" onclick="filterDataApps('all','plan',this)">All Plans</button>
+      <button class="filter-tab" id="dtab-lite" onclick="filterDataApps('lite','plan',this)">Lite</button>
+      <button class="filter-tab" id="dtab-pro" onclick="filterDataApps('pro','plan',this)">Pro</button>
+      <button class="filter-tab" id="dtab-enterprise" onclick="filterDataApps('enterprise','plan',this)">Enterprise</button>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
+      <button class="filter-tab active" id="dtab-status-all" onclick="filterDataApps('all','status',this)" style="background:rgba(109,40,217,0.08);color:#6d28d9;">All Status</button>
+      <button class="filter-tab" id="dtab-pending" onclick="filterDataApps('PENDING','status',this)" style="color:#b45309;">⏳ Pending</button>
+      <button class="filter-tab" id="dtab-approved" onclick="filterDataApps('APPROVED','status',this)" style="color:#16a34a;">✓ Approved</button>
+      <button class="filter-tab" id="dtab-rejected" onclick="filterDataApps('REJECTED','status',this)" style="color:#ce1126;">✗ Rejected</button>
+    </div>
+
+    <div id="dataAppsList">
+      <div style="text-align:center;padding:40px 20px;color:var(--text-dim);font-size:0.78rem;">
+        No applications yet. Applications submitted via the Data sign-up page will appear here.
+      </div>
+    </div>
+  </div>
+
   </div><!-- /content -->
 </div><!-- /main -->
 
@@ -2141,42 +2178,6 @@ body::after {
     </div>
   </div>
 
-
-  <!-- DATA APPLICATIONS PANEL -->
-  <div class="panel" id="panel-dataapps">
-    <div class="page-title">📊 Data Applications</div>
-    <div class="page-sub">Review and manage incoming Rada Data API access applications.</div>
-
-    <div class="config-card" style="margin-bottom:16px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-        <div class="config-label">Total Applications</div>
-        <div style="font-size:1.2rem;font-weight:900;color:var(--primary);" id="dataAppCount">0</div>
-      </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        <button class="save-btn" style="flex:1;min-width:120px;" onclick="loadDataApplications()">🔄 Refresh</button>
-        <button class="save-btn" style="flex:1;min-width:120px;background:#16a34a;" onclick="exportDataApps()">⬇ Export CSV</button>
-      </div>
-    </div>
-
-    <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
-      <button class="filter-tab active" id="dtab-all" onclick="filterDataApps('all','plan',this)">All Plans</button>
-      <button class="filter-tab" id="dtab-lite" onclick="filterDataApps('lite','plan',this)">Lite</button>
-      <button class="filter-tab" id="dtab-pro" onclick="filterDataApps('pro','plan',this)">Pro</button>
-      <button class="filter-tab" id="dtab-enterprise" onclick="filterDataApps('enterprise','plan',this)">Enterprise</button>
-    </div>
-    <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
-      <button class="filter-tab active" id="dtab-status-all" onclick="filterDataApps('all','status',this)" style="background:rgba(109,40,217,0.08);color:#6d28d9;">All Status</button>
-      <button class="filter-tab" id="dtab-pending" onclick="filterDataApps('PENDING','status',this)" style="color:#b45309;">⏳ Pending</button>
-      <button class="filter-tab" id="dtab-approved" onclick="filterDataApps('APPROVED','status',this)" style="color:#16a34a;">✓ Approved</button>
-      <button class="filter-tab" id="dtab-rejected" onclick="filterDataApps('REJECTED','status',this)" style="color:#ce1126;">✗ Rejected</button>
-    </div>
-
-    <div id="dataAppsList">
-      <div style="text-align:center;padding:40px 20px;color:var(--text-dim);font-size:0.78rem;">
-        No applications yet. Applications submitted via the Data sign-up page will appear here.
-      </div>
-    </div>
-  </div>
 
 </div>
 
