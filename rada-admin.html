@@ -2745,7 +2745,6 @@ function loadDataApplications() {
   currentDataFilter   = 'all';
   currentStatusFilter = 'all';
   var list = document.getElementById('dataAppsList');
-  console.log('[DA] list:', list ? 'FOUND' : 'NULL');
   if (list) list.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text-dim);">Loading applications...</div>';
 
   adminFetch('/api/data/applications')
@@ -2762,7 +2761,6 @@ function loadDataApplications() {
       if (list) list.innerHTML = '<div style="text-align:center;color:#b45309;padding:30px;font-size:0.78rem;">Unexpected response from server. Please refresh.</div>';
       return;
     }
-    console.log('[DA] apps:', d.applications.length);
     allDataApps = (d.applications || []).map(function(a) {
       return {
         id:          a.id,
@@ -2830,7 +2828,6 @@ function renderDataApps() {
     return;
   }
 
-  console.log('[DA] filtered:', filtered.length);
   try {
     var cards = filtered.slice().reverse().map(function(app) {
     var planColors = { lite: '#6d28d9', pro: '#2563eb', enterprise: '#c97d0a' };
@@ -2853,50 +2850,47 @@ function renderDataApps() {
       ? '<button class="act-btn act-gray" style="font-size:0.7rem;" data-action="pending-app" data-id="' + (app.id||'') + '">Reset</button>'
       : '';
 
+    // Org line — show every category the applicant provided: org name, org type, job title
+    var orgParts = [app.orgName, app.orgType, app.jobTitle].filter(function(v) { return v; }).map(esc);
+
     return '<div class="config-card" style="margin-bottom:10px;">' +
       '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap;">' +
-        '<span style="background:' + color + '22;color:' + color + ';border:1px solid ' + color + '44;border-radius:6px;padding:2px 9px;font-size:0.58rem;font-weight:800;text-transform:uppercase;">' + (app.plan || 'lite') + '</span>' +
+        '<span style="background:' + color + '22;color:' + color + ';border:1px solid ' + color + '44;border-radius:6px;padding:2px 9px;font-size:0.58rem;font-weight:800;text-transform:uppercase;">' + esc(app.plan || 'lite') + '</span>' +
         statusBadge +
         '<span style="font-size:0.62rem;color:var(--text-dim);margin-left:auto;">' + date + '</span>' +
       '</div>' +
-      '<div style="font-size:0.82rem;font-weight:800;color:var(--text);margin-bottom:2px;">' + (app.firstName || '') + ' ' + (app.lastName || '') + '</div>' +
-      '<div style="font-size:0.68rem;color:var(--text-mid);margin-bottom:6px;">' + (app.orgName || app.orgType || '') + (app.jobTitle ? ' · ' + app.jobTitle : '') + '</div>' +
+      '<div style="font-size:0.82rem;font-weight:800;color:var(--text);margin-bottom:2px;">' + esc((app.firstName || '') + ' ' + (app.lastName || '')) + '</div>' +
+      '<div style="font-size:0.68rem;color:var(--text-mid);margin-bottom:6px;">' + (orgParts.length ? orgParts.join(' · ') : '—') + '</div>' +
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:0.62rem;color:var(--text-dim);margin-bottom:8px;">' +
-        '<div>📧 ' + (app.email || '—') + '</div>' +
-        '<div>📱 ' + (app.phone || '—') + '</div>' +
-        '<div>🌍 ' + (app.city || '') + (app.country ? ', ' + app.country : '') + '</div>' +
-        '<div>📊 ' + (app.useCase || '—') + '</div>' +
+        '<div>📧 ' + esc(app.email || '—') + '</div>' +
+        '<div>📱 ' + esc(app.phone || '—') + '</div>' +
+        '<div>🌍 ' + esc((app.city || '') + (app.country ? ', ' + app.country : '')) + '</div>' +
+        '<div>📊 Use case: ' + esc(app.useCase || '—') + '</div>' +
+        (app.dataVolume ? '<div>📦 Data volume: ' + esc(app.dataVolume) + '</div>' : '') +
         (app.website ? '<div style="grid-column:1/-1">🔗 <a href="' + esc(app.website) + '" target="_blank" style="color:var(--primary)">' + esc(app.website) + '</a></div>' : '') +
       '</div>' +
-      '<div style="font-size:0.62rem;color:var(--text-dim);background:var(--bg3);border-radius:7px;padding:8px 10px;margin-bottom:10px;line-height:1.5;">' +
+      '<div class="data-app-desc" style="font-size:0.62rem;color:var(--text-dim);background:var(--bg3);border-radius:7px;padding:8px 10px;margin-bottom:10px;line-height:1.5;">' +
         (app.useDesc
           ? (app.useDesc.length > 200
-              ? '<span class="desc-short">' + app.useDesc.slice(0, 200) + '...</span><span class="desc-full" style="display:none;">' + app.useDesc + '</span><span style="color:#6d28d9;cursor:pointer;font-weight:700;font-size:0.6rem;" data-action="expand-desc"> Read more</span>'
-              : app.useDesc)
+              ? '<span class="desc-short">' + esc(app.useDesc.slice(0, 200)) + '...</span><span class="desc-full" style="display:none;">' + esc(app.useDesc) + '</span><span style="color:#6d28d9;cursor:pointer;font-weight:700;font-size:0.6rem;" data-action="expand-desc"> Read more</span>'
+              : esc(app.useDesc))
           : '—') +
       '</div>' +
       '<div style="display:flex;justify-content:space-between;align-items:center;">' +
-        '<span style="font-size:0.55rem;color:var(--text-dim);">Ref: ' + (app.ref || '—') + '</span>' +
+        '<span style="font-size:0.55rem;color:var(--text-dim);">Ref: ' + esc(app.ref || '—') + '</span>' +
         '<div style="display:flex;gap:6px;">' + approveBtn + rejectBtn + pendingBtn + '</div>' +
       '</div>' +
     '</div>';
     });
-    var banner = '<div style="position:relative;z-index:99999;background:red;color:white;font-size:18px;font-weight:bold;padding:16px;margin-bottom:8px;border-radius:6px;">' + filtered.length + ' APPLICATIONS FOUND</div>';
-    list.style.cssText = 'display:block!important;visibility:visible!important;opacity:1!important;height:auto!important;overflow:visible!important;';
-    list.innerHTML = banner + cards.join('');
-    console.log('[DA] set done, innerHTML.length:', list.innerHTML.length);
-    setTimeout(function() {
-      var p = document.getElementById('panel-dataapps');
-      console.log('[DA] 500ms later — panel:', p ? p.style.display : 'GONE', 'list visible:', list.offsetHeight > 0);
-    }, 500);
+    list.innerHTML = cards.join('');
   } catch(err) {
-    console.error('[DA] ERROR:', err.message);
-    list.innerHTML = '<div style="background:red;color:white;padding:20px;font-size:16px;">ERROR: ' + err.message + '</div>';
+    console.error('renderDataApps error:', err);
+    list.innerHTML = '<div style="text-align:center;color:#ce1126;padding:30px;font-size:0.78rem;">Failed to render applications. Please refresh.</div>';
   }
 
   // Event delegation for approve/reject
   list.onclick = function(e) {
-    var btn = e.target.closest('button[data-action]');
+    var btn = e.target.closest('[data-action]');
     if (!btn) return;
     var action = btn.dataset.action;
     var id     = btn.dataset.id;
