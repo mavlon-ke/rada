@@ -42,9 +42,17 @@ export const POST = withErrorHandling(async (req: NextRequest) => {
 
   // ── In-flight guard (C-4 fix) ─────────────────────────────────────────────
   // Reject if a withdrawal is already in progress for this user.
-  // Prevents simultaneous duplicate withdrawals from a double-tap.
+  // Scoped to the last 10 minutes — Daraja B2C completes in seconds; anything
+  // older than 10 minutes is definitively stuck (network failure, prior payment
+  // provider migration) and must not block new attempts.
+  const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
   const existing = await prisma.transaction.findFirst({
-    where: { userId: user.id, type: 'WITHDRAWAL', status: 'PENDING' },
+    where: {
+      userId:    user.id,
+      type:      'WITHDRAWAL',
+      status:    'PENDING',
+      createdAt: { gte: tenMinutesAgo },
+    },
   });
   if (existing) {
     return NextResponse.json(
