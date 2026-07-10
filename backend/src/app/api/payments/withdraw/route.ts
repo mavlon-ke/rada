@@ -1,28 +1,23 @@
 // src/app/api/payments/withdraw/route.ts
-// Withdrawal via Paystack Transfer (M-Pesa)
+// Withdrawal via Safaricom Daraja B2C (Business to Customer).
 //
-// Fee model: processing fee deducted FROM the withdrawal amount.
-// User enters amount to withdraw from wallet.
-// Wallet is debited the full entered amount.
-// M-Pesa receives: amountKes - paystackFee.
-// User can always withdraw their full wallet balance.
+// Full amount entered by user is sent directly to their M-Pesa.
+// No processing fee — Daraja B2C has no per-transaction charge to the user.
 //
-// Fee bands (Paystack Kenya transfer pricing):
-//   KES 100  – 1,500:  KES 20 flat  → user receives amountKes - 20
-//   KES 1,501 – 20,000: KES 40 flat → user receives amountKes - 40
-//   KES 20,001 – 70,000: KES 60 flat → user receives amountKes - 60
+// In-flight guard: rejects if a PENDING withdrawal already exists for this user,
+// preventing duplicate withdrawals from simultaneous requests.
+//
+// Confirmation arrives asynchronously via:
+//   POST /api/payments/daraja/b2c-result/[DARAJA_CALLBACK_SECRET]
+// Timeout handled via:
+//   POST /api/payments/daraja/b2c-timeout/[DARAJA_CALLBACK_SECRET]
 
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
-import { prisma } from '@/lib/db/prisma';
-import { requireAuth } from '@/lib/auth/session';
-import { withErrorHandling } from '@/lib/security/route-guard';
-import {
-  createTransferRecipient,
-  initiateTransfer,
-  generateReference,
-  normalisePhoneForTransfer,
-} from '@/lib/paystack/paystack.service';
+import { z }                         from 'zod';
+import { prisma }                    from '@/lib/db/prisma';
+import { requireAuth }               from '@/lib/auth/session';
+import { withErrorHandling }         from '@/lib/security/route-guard';
+import { b2cTransfer, generateDarajaRef, darajaPhone } from '@/lib/daraja/daraja.service';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,13 +25,6 @@ const WithdrawSchema = z.object({
   amountKes: z.number().min(100).max(70000),
   phone:     z.string().min(9).max(15),
 });
-
-// Paystack Kenya transfer fee bands
-function getPaystackFee(amountKes: number): number {
-  if (amountKes <= 1500)  return 20;
-  if (amountKes <= 20000) return 40;
-  return 60;
-}
 
 export const POST = withErrorHandling(async (req: NextRequest) => {
   const user = await requireAuth(req);
@@ -49,20 +37,23 @@ export const POST = withErrorHandling(async (req: NextRequest) => {
   }
 
   const { amountKes, phone } = parsed.data;
-  const paystackFee   = getPaystackFee(amountKes);
-  const transferAmount = amountKes - paystackFee; // amount sent to M-Pesa
-  const formattedPhone = normalisePhoneForTransfer(phone);
-  const reference      = generateReference('WIT');
+  const normPhone  = darajaPhone(phone);
+  const accountRef = generateDarajaRef('CRW'); // 11-char reference
 
-  // Guard: transfer amount must be positive
-  if (transferAmount <= 0) {
+  // ── In-flight guard (C-4 fix) ─────────────────────────────────────────────
+  // Reject if a withdrawal is already in progress for this user.
+  // Prevents simultaneous duplicate withdrawals from a double-tap.
+  const existing = await prisma.transaction.findFirst({
+    where: { userId: user.id, type: 'WITHDRAWAL', status: 'PENDING' },
+  });
+  if (existing) {
     return NextResponse.json(
-      { error: `Withdrawal amount too small. Minimum is KES ${paystackFee + 1} after the KES ${paystackFee} processing fee.` },
+      { error: 'A withdrawal is already being processed. Please wait for it to complete.' },
       { status: 400 }
     );
   }
 
-  // Atomic balance check + deduct full amountKes from wallet
+  // ── Atomic balance check + debit ─────────────────────────────────────────
   const result = await prisma.$transaction(async (tx: any) => {
     const freshUser = await tx.user.findUnique({ where: { id: user.id } });
 
@@ -85,54 +76,47 @@ export const POST = withErrorHandling(async (req: NextRequest) => {
         type:        'WITHDRAWAL',
         amountKes:   -amountKes,
         balAfter:    newBalance,
-        phone:       formattedPhone,
-        mpesaRef:    reference,
+        phone:       normPhone,
+        mpesaRef:    accountRef, // updated to OriginatorConversationID after B2C call
         status:      'PENDING',
-        description: `Withdrawal of KES ${amountKes.toLocaleString()} from wallet. M-Pesa processing fee KES ${paystackFee} deducted — KES ${transferAmount.toLocaleString()} sent to ${formattedPhone}.`,
+        description: `Withdrawal of KES ${amountKes.toLocaleString()} to M-Pesa ${normPhone}`,
       },
     });
 
-    return { transaction, freshUser };
+    return { transaction, newBalance };
   });
 
+  // ── Fire B2C transfer ────────────────────────────────────────────────────
   try {
-    // Create transfer recipient (07XXXXXXXX format)
-    const recipient = await createTransferRecipient({
-      name:     user.name ?? `User ${formattedPhone}`,
-      phone:    formattedPhone,
-      bankCode: 'MPesa',
+    const b2cResult = await b2cTransfer({
+      amountKes,
+      phone:     normPhone,
+      reference: accountRef,
     });
 
-    // Send transferAmount (amountKes minus fee) to M-Pesa
-    const transfer = await initiateTransfer({
-      amountKes:     transferAmount,
-      recipientCode: recipient.recipient_code,
-      reference,
-      reason: 'CheckRada Withdrawal',
-    });
-
-    // NOTE: We deliberately do NOT overwrite mpesaRef with transfer.transfer_code.
-    // Paystack's transfer.success webhook sends data.reference = our CKR-WIT-...
-    // reference. The webhook handler looks up the DB row by that field. If we
-    // overwrite mpesaRef with the TRF_... transfer_code, the webhook lookup
-    // silently fails and the row stays PENDING forever (which is what caused
-    // the May 2026 withdrawal-notification bug).
-    //
-    // If you ever need the Paystack transfer_code for reconciliation, query
-    // Paystack's transferList API with the CKR-WIT-... reference.
+    // Update mpesaRef to OriginatorConversationID — used by B2C callback for lookup
+    try {
+      await prisma.transaction.update({
+        where: { id: result.transaction.id },
+        data:  { mpesaRef: b2cResult.OriginatorConversationID },
+      });
+    } catch (updateErr: any) {
+      console.error(
+        `[Withdraw] CRITICAL: mpesaRef update failed for transaction ${result.transaction.id}. ` +
+        `accountRef=${accountRef} OriginatorConversationID=${b2cResult.OriginatorConversationID}. ` +
+        `Error: ${updateErr.message}`
+      );
+    }
 
     return NextResponse.json({
-      success:        true,
-      message:        `KES ${transferAmount.toLocaleString()} will be sent to your M-Pesa shortly.`,
+      success:       true,
+      message:       `KES ${amountKes.toLocaleString()} is being sent to your M-Pesa. You will receive an M-Pesa confirmation shortly.`,
       amountKes,
-      paystackFee,
-      transferAmount,
-      reference,
-      transactionId:  result.transaction.id,
+      transactionId: result.transaction.id,
     });
 
   } catch (err: any) {
-    // Refund full amountKes on failure
+    // B2C failed — refund wallet atomically
     await prisma.$transaction(async (tx: any) => {
       await tx.user.update({
         where: { id: user.id },
@@ -140,13 +124,15 @@ export const POST = withErrorHandling(async (req: NextRequest) => {
       });
       await tx.transaction.update({
         where: { id: result.transaction.id },
-        data:  { status: 'FAILED' },
+        data:  { status: 'FAILED', description: `Withdrawal failed: ${err.message}` },
       });
+    }).catch((refundErr: any) => {
+      console.error('[Withdraw] CRITICAL: refund also failed:', refundErr.message);
     });
 
-    console.error('[Withdraw] Paystack error:', err.message);
+    console.error('[Withdraw] B2C error:', err.message);
     return NextResponse.json(
-      { error: 'Withdrawal failed. Your balance has been restored.' },
+      { error: 'Withdrawal could not be initiated. Your balance has been restored.' },
       { status: 500 }
     );
   }

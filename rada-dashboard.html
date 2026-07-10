@@ -969,17 +969,10 @@ nav{padding:14px 24px;display:flex;align-items:center;justify-content:space-betw
     <div class="modal-handle" onclick="closeModal('withdrawModal')"></div>
     <div class="modal-head">
       <div class="modal-title" style="color:var(--ke-red)">↓ Withdraw to M-Pesa</div>
-      <div class="modal-sub">Funds sent to your registered M-Pesa number. M-Pesa processing fee applies.</div>
+      <div class="modal-sub">Enter the amount you wish to withdraw to your M-Pesa.</div>
     </div>
     <div class="modal-body">
-      <!-- Fee schedule info -->
-      <div style="background:rgba(109,40,217,0.06);border:1px solid rgba(109,40,217,0.15);border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:0.72rem;color:var(--text-mid);">
-        <div style="font-weight:700;color:var(--text);margin-bottom:4px;">M-Pesa Processing Fees</div>
-        <div style="display:flex;justify-content:space-between;margin-bottom:2px;"><span>KES 100 – 1,500</span><span style="font-family:var(--mono);color:var(--text);">KES 20</span></div>
-        <div style="display:flex;justify-content:space-between;margin-bottom:2px;"><span>KES 1,501 – 20,000</span><span style="font-family:var(--mono);color:var(--text);">KES 40</span></div>
-        <div style="display:flex;justify-content:space-between;"><span>KES 20,001 – 70,000</span><span style="font-family:var(--mono);color:var(--text);">KES 60</span></div>
-        <div style="margin-top:6px;font-size:0.68rem;color:var(--text-dim);">Passed through at zero CheckRada markup.</div>
-      </div>
+
       <div style="background:var(--bg3);border-radius:10px;padding:14px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;">
         <span style="font-size:0.78rem;color:var(--text-mid);">Available balance</span>
         <span style="font-family:var(--mono);font-size:1.1rem;font-weight:700;color:var(--ke-green);" id="withdrawAvailBal">KES —</span>
@@ -993,12 +986,8 @@ nav{padding:14px 24px;display:flex;align-items:center;justify-content:space-betw
       <label class="mf-label">Amount to Withdraw (min KES 100, max KES 70,000)</label>
       <input class="mf-input" id="withdrawAmount" type="number" placeholder="Enter amount (min KES 100)" min="100" max="70000" oninput="calcWithdraw()">
       <div id="withdrawCalc" style="background:var(--bg3);border-radius:10px;padding:12px 14px;margin-bottom:16px;display:none;">
-        <div style="display:flex;justify-content:space-between;font-size:0.78rem;margin-bottom:4px;">
-          <span style="color:var(--text-dim)">M-Pesa processing fee</span>
-          <span id="wFee" style="font-family:var(--mono)">KES —</span>
-        </div>
-        <div style="display:flex;justify-content:space-between;font-size:0.85rem;font-weight:700;padding-top:8px;border-top:1px solid var(--border);">
-          <span style="color:var(--ke-green)">You receive</span>
+        <div style="display:flex;justify-content:space-between;font-size:0.85rem;font-weight:700;">
+          <span style="color:var(--ke-green)">Amount to withdraw</span>
           <span id="wReceive" style="font-family:var(--mono);color:var(--ke-green)">KES —</span>
         </div>
       </div>
@@ -1246,11 +1235,7 @@ function calcWithdraw() {
   const amt = parseFloat(document.getElementById('withdrawAmount').value);
   const calc = document.getElementById('withdrawCalc');
   if (!amt || amt < 100) { calc.style.display = 'none'; return; }
-  // Paystack flat fee bands — zero CheckRada markup
-  var fee = amt <= 1500 ? 20 : amt <= 20000 ? 40 : 60;
-  const receive = amt - fee;
-  document.getElementById('wFee').textContent = 'KES ' + fee;
-  document.getElementById('wReceive').textContent = `KES ${receive.toLocaleString()}`;
+  document.getElementById('wReceive').textContent = 'KES ' + amt.toLocaleString();
   calc.style.display = '';
 }
 function submitWithdraw() {
@@ -1291,8 +1276,6 @@ function submitWithdraw() {
     if (btn) { btn.disabled = false; btn.textContent = '↓ Withdraw to M-Pesa'; }
     closeModal('withdrawModal');
     if (res.ok) {
-      // Use flat fee from response or recalculate
-      var paystackFee = res.d.paystackFee || (amt <= 1500 ? 20 : amt <= 20000 ? 40 : 60);
       var newBal = Math.max(0, balance - amt);
       if (radaUser) {
         radaUser.balanceKes = newBal;
@@ -1304,7 +1287,7 @@ function submitWithdraw() {
       if (mTopBal) mTopBal.textContent = 'KES ' + newBal.toLocaleString();
       var accBal = document.getElementById('accUserBal');
       if (accBal) accBal.textContent = '● KES ' + newBal.toLocaleString() + ' available';
-      alert('✓ KES ' + (res.d.transferAmount || (amt - paystackFee)).toLocaleString() + ' sent to your M-Pesa!' + '\n(KES ' + amt.toLocaleString() + ' deducted from wallet, includes KES ' + paystackFee + ' M-Pesa fee)' + '\nRef: ' + (res.d.reference || '—'));
+      alert('✓ KES ' + amt.toLocaleString() + ' is being sent to your M-Pesa.\n\nYour wallet has been debited. You will receive an M-Pesa confirmation shortly.');
     } else {
       alert('Withdrawal failed: ' + (res.d.error || 'Please try again.'));
     }
@@ -1376,6 +1359,18 @@ function radaDashShare() {
 // ── Auth state ────────────────────────────────────────────────────────────────
 var API_BASE = 'https://api.checkrada.co.ke';
 
+function esc(s) {
+  if (s == null) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+function safeUrl(u) {
+  if (!u) return '#';
+  var s = String(u);
+  if (s.indexOf(':') === -1 || s[0] === '/' || s[0] === '#' || s[0] === '.') return s;
+  if (s.indexOf('https://') === 0 || s.indexOf('http://') === 0) return s;
+  return '#';
+}
+
 var radaUser = null;
 try { radaUser = JSON.parse(localStorage.getItem('rada_user') || 'null'); } catch(e) {}
 var isLoggedIn = !!(radaUser && localStorage.getItem('rada_token'));
@@ -1416,7 +1411,7 @@ function loadMyForecasts() {
       var closes  = market.closesAt ? ' · Closes ' + new Date(market.closesAt).toLocaleDateString('en-KE',{month:'short',day:'numeric'}) : '';
       var catLine = (market.category || '') + (status !== 'OPEN' ? ' · Closed' : closes);
       return '<div class="pt-row">' +
-        '<div><div class="pt-market">' + (market.title || '—') + '</div><div class="pt-cat">' + catLine + '</div></div>' +
+        '<div><div class="pt-market">' + esc(market.title || '—') + '</div><div class="pt-cat">' + esc(catLine) + '</div></div>' +
         '<div class="pt-side side-' + side.toLowerCase() + '">' + side + '</div>' +
         '<div class="pt-stake">KES ' + staked.toLocaleString() + '</div>' +
         '<div><span class="status-badge ' + bCls + '">' + bTxt + '</span></div>' +
@@ -1456,17 +1451,17 @@ function loadMyChallenges() {
         ? '<span class="fc-pill" style="background:var(--gold-dim);color:var(--gold);">⚠ Dispute Window</span>'
         : isR ? '<span class="fc-pill" style="color:var(--ke-green);">✓ Settled</span>'
         : '<span class="fc-pill" style="color:var(--ke-green);">● Active</span>';
-      var refPill = c.referee ? '<span class="fc-pill">Referee: ' + (c.referee.name || c.referee.phone) + '</span>' : '<span class="fc-pill">No Referee</span>';
+      var refPill = c.referee ? '<span class="fc-pill">Referee: ' + esc(c.referee.name || c.referee.phone || '') + '</span>' : '<span class="fc-pill">No Referee</span>';
       var acts = isD
         ? '<button class="btn-sm btn-green" data-nav="rada-friends.html">Resolve Now (5%)</button><button class="btn-sm btn-ghost" data-nav="rada-friends.html">View Details</button>'
         : isR ? '<button class="btn-sm btn-ghost" data-nav="rada-friends.html">View Receipt</button>'
         : '<button class="btn-sm btn-ghost" data-share="1">Share</button><button class="btn-sm btn-ghost" data-nav="rada-friends.html">View Details</button>';
       if (isD && db) {
         var h2 = Math.floor(expMs/3600000), m2 = Math.floor((expMs%3600000)/60000), s2 = Math.floor((expMs%60000)/1000);
-        banners.push('<div class="dispute-banner"><div class="db-icon">⏳</div><div class="db-body"><div class="db-label">Friends Challenge — Dispute Window Open</div>"' + c.question + '" · Awaiting mutual agreement. Agree now at <strong>5% fee</strong> or admin resolves at <strong>15% fee</strong>.</div><div><div class="db-countdown">' + String(h2).padStart(2,'0') + ':' + String(m2).padStart(2,'0') + ':' + String(s2).padStart(2,'0') + '</div><div class="db-countdown-sub">remaining</div></div></div>');
+        banners.push('<div class="dispute-banner"><div class="db-icon">⏳</div><div class="db-body"><div class="db-label">Friends Challenge — Dispute Window Open</div>"' + esc(c.question) + '" · Awaiting mutual agreement. Agree now at <strong>5% fee</strong> or admin resolves at <strong>15% fee</strong>.</div><div><div class="db-countdown">' + String(h2).padStart(2,'0') + ':' + String(m2).padStart(2,'0') + ':' + String(s2).padStart(2,'0') + '</div><div class="db-countdown-sub">remaining</div></div></div>');
       }
       return '<div class="fc-card' + (isD ? '" style="border-color:rgba(244,185,66,0.2);"' : isR ? '" style="opacity:0.65;"' : '"') + '>' +
-        '<div class="fc-header"><div class="fc-q">"' + c.question + '"</div><div class="fc-timer"><div class="fc-timer-val" style="color:' + timeColor + '">' + timeStr + '</div><div class="fc-timer-label">' + (isR ? '+KES ' + Math.round(pool*0.85).toLocaleString() : 'remaining') + '</div></div></div>' +
+        '<div class="fc-header"><div class="fc-q">"' + esc(c.question) + '"</div><div class="fc-timer"><div class="fc-timer-val" style="color:' + timeColor + '">' + timeStr + '</div><div class="fc-timer-label">' + (isR ? '+KES ' + Math.round(pool*0.85).toLocaleString() : 'remaining') + '</div></div></div>' +
         '<div class="fc-info">' + pillSt + '<span class="fc-pill">Pool: KES ' + pool.toLocaleString() + '</span>' + refPill + (isD ? '<span class="fc-pill">Fee: 5% → 15%</span>' : '') + '</div>' +
         '<div class="fc-actions">' + acts + '</div>' +
       '</div>';
@@ -1510,7 +1505,7 @@ function loadDashTransactions() {
       var ref   = t.mpesaRef ? ' · Mpesa Ref: ' + t.mpesaRef : '';
       return '<div class="tx-row">' +
         '<div class="tx-icon ' + (bgMap[t.type]||'') + '">' + (icons[t.type]||'💳') + '</div>' +
-        '<div class="tx-body"><div class="tx-desc">' + desc + '</div><div class="tx-sub">' + ago + ref + '</div></div>' +
+        '<div class="tx-body"><div class="tx-desc">' + esc(desc) + '</div><div class="tx-sub">' + ago + esc(ref) + '</div></div>' +
         '<div class="tx-amount ' + (isIn?'pos':'neg') + '">' + amtStr + '</div>' +
       '</div>';
     }).join('');
@@ -1537,8 +1532,8 @@ function loadRefereeQueue() {
         var from = c.userA ? (c.userA.name || c.userA.phone) : 'Someone';
         var ago  = c.createdAt ? Math.round((Date.now() - new Date(c.createdAt).getTime())/3600000) + 'h ago' : '';
         return '<div class="ref-item">' +
-          '<div class="ri-from">Nomination from <strong>' + from + '</strong> · ' + ago + '</div>' +
-          '<div class="ri-q">"' + c.question + '"</div>' +
+          '<div class="ri-from">Nomination from <strong>' + esc(from) + '</strong> · ' + ago + '</div>' +
+          '<div class="ri-q">"' + esc(c.question) + '"</div>' +
           '<div class="ri-btns">' +
             '<button class="btn-ref-accept" data-cid="' + c.id + '" data-action="ACCEPT">Accept</button>' +
             '<button class="btn-ref-decline" data-cid="' + c.id + '" data-action="DECLINE">Decline</button>' +
@@ -1747,21 +1742,30 @@ function loadNotifications() {
       CHALLENGE_OPPONENT_STAKED:'🤝', CHALLENGE_RESOLUTION_WINDOW:'⚖️',
       REFEREE_NOMINATED:'⚖️', PROMO:'📢', MARKET_PROBABILITY_SHIFT:'📈'
     };
-    body.innerHTML = notifs.map(n => `
-      <div class="notif-item ${n.read ? '' : 'unread'}" data-notif-id="${n.id}" onclick="tapNotif(event, '${n.id}','${n.link||''}')">
-        <div class="notif-icon">${icons[n.type] || '🔔'}</div>
-        <div class="notif-content">
-          <div class="notif-title-txt">${n.title}</div>
-          <div class="notif-msg-txt">${n.message}</div>
-          <div class="notif-time-txt">${timeAgo(n.createdAt)}</div>
-        </div>
-        ${!n.read ? '<div class="notif-unread-dot"></div>' : ''}
-      </div>`).join('');
+        body.innerHTML = notifs.map(function(n) {
+      return '<div class="notif-item ' + (n.read ? '' : 'unread') + '"'
+        + ' data-notif-id="' + esc(n.id) + '"'
+        + ' data-link="' + esc(safeUrl(n.link)) + '"'
+        + ' onclick="tapNotif(event)">' +
+        '<div class="notif-icon">' + (icons[n.type] || '\uD83D\uDD14') + '</div>' +
+        '<div class="notif-content">' +
+          '<div class="notif-title-txt">' + esc(n.title) + '</div>' +
+          '<div class="notif-msg-txt">' + esc(n.message) + '</div>' +
+          '<div class="notif-time-txt">' + timeAgo(n.createdAt) + '</div>' +
+        '</div>' +
+        (!n.read ? '<div class="notif-unread-dot"></div>' : '') +
+      '</div>';
+    }).join('');
   }).catch(() => {
     body.innerHTML = '<div class="notif-empty">Could not load notifications</div>';
   });
 }
 function tapNotif(event, id, link) {
+  if (id === undefined) {
+    var _tn = event && event.currentTarget;
+    id   = _tn ? (_tn.dataset.notifId || '') : '';
+    link = _tn ? (_tn.dataset.link    || '') : '';
+  }
   closeNotifTray();
 
   // Mark this single notification as read on the backend.
@@ -2083,17 +2087,21 @@ function renderCarousel() {
   var dots  = document.getElementById('promoDots');
   if (!track || !promoSlides.length) return;
 
-  track.innerHTML = promoSlides.map((s, i) => `
-    <div class="promo-slide" style="background:${s.bgColour || '#1a1035'}">
-      ${s.imageUrl ? `<div class="promo-slide-bg" style="background-image:url('${s.imageUrl}')"></div><div class="promo-slide-overlay"></div>` : ''}
-      <div class="promo-slide-content" style="color:#fff;">
-        ${s.tag ? `<div class="promo-slide-tag" style="background:rgba(255,255,255,0.15);color:rgba(255,255,255,0.9)">${s.tag}</div>` : ''}
-        <div class="promo-slide-title">${s.title}</div>
-        ${s.subtitle ? `<div class="promo-slide-sub">${s.subtitle}</div>` : ''}
-        ${s.ctaText ? `<button class="promo-slide-cta" style="background:#6d28d9;color:#fff;" onclick="promoCtaClick('${s.ctaLink || '#'}')">${s.ctaText}</button>` : ''}
-      </div>
-      <button class="promo-dismiss" onclick="dismissPromo()">✕</button>
-    </div>`).join('');
+  track.innerHTML = promoSlides.map(function(s, i) {
+    var safeBg  = (s.bgColour && /^#[0-9a-fA-F]{3,8}$/.test(s.bgColour)) ? s.bgColour : '#1a1035';
+    var safeImg = safeUrl(s.imageUrl);
+    var safeCta = safeUrl(s.ctaLink);
+    return '<div class="promo-slide" style="background:' + safeBg + '">' +
+      (safeImg !== '#' ? '<div class="promo-slide-bg" style="background-image:url(' + JSON.stringify(safeImg) + ')"></div><div class="promo-slide-overlay"></div>' : '') +
+      '<div class="promo-slide-content" style="color:#fff;">' +
+        (s.tag    ? '<div class="promo-slide-tag" style="background:rgba(255,255,255,0.15);color:rgba(255,255,255,0.9)">' + esc(s.tag) + '</div>' : '') +
+        '<div class="promo-slide-title">' + esc(s.title || '') + '</div>' +
+        (s.subtitle ? '<div class="promo-slide-sub">' + esc(s.subtitle) + '</div>' : '') +
+        (s.ctaText  ? '<button class="promo-slide-cta" style="background:#6d28d9;color:#fff;" data-cta="' + esc(safeCta) + '" onclick="promoCtaClick(this.dataset.cta)">' + esc(s.ctaText) + '</button>' : '') +
+      '</div>' +
+      '<button class="promo-dismiss" onclick="dismissPromo()">✕</button>' +
+    '</div>';
+  }).join('');
 
   if (dots) {
     dots.innerHTML = promoSlides.map((_, i) =>

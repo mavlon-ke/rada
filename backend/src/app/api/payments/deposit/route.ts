@@ -1,25 +1,28 @@
 // src/app/api/payments/deposit/route.ts
-// Deposit via Paystack — M-Pesa STK Push or Card
-// Replaces: Safaricom Daraja direct integration
+// M-Pesa deposit via Safaricom Daraja STK Push (Lipa Na M-Pesa Online).
+//
+// Flow:
+//   1. Validate request and authenticate user
+//   2. Create PENDING transaction with temporary accountRef as mpesaRef
+//   3. Fire STK Push → Safaricom returns CheckoutRequestID
+//   4. Update transaction.mpesaRef = CheckoutRequestID (callback lookup key)
+//   5. Return success — user sees M-Pesa prompt on their phone
+//
+// Confirmation arrives asynchronously via:
+//   POST /api/payments/daraja/stk-callback/[DARAJA_CALLBACK_SECRET]
 
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
-import { prisma } from '@/lib/db/prisma';
-import { requireAuth } from '@/lib/auth/session';
-import { withErrorHandling } from '@/lib/security/route-guard';
-import {
-  chargeMpesa,
-  initializeTransaction,
-  generateReference,
-  normalisePhone,
-} from '@/lib/paystack/paystack.service';
+import { z }                         from 'zod';
+import { prisma }                    from '@/lib/db/prisma';
+import { requireAuth }               from '@/lib/auth/session';
+import { withErrorHandling }         from '@/lib/security/route-guard';
+import { stkPush, generateDarajaRef, darajaPhone } from '@/lib/daraja/daraja.service';
 
 export const dynamic = 'force-dynamic';
 
 const DepositSchema = z.object({
   amountKes: z.number().int().min(10).max(70000),
   phone:     z.string().min(9).max(15),
-  method:    z.enum(['mpesa', 'card']).default('mpesa'),
 });
 
 export const POST = withErrorHandling(async (req: NextRequest) => {
@@ -32,85 +35,67 @@ export const POST = withErrorHandling(async (req: NextRequest) => {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const { amountKes, phone, method } = parsed.data;
-  const reference  = generateReference('DEP');
-  const formattedPhone = normalisePhone(phone);
+  const { amountKes, phone } = parsed.data;
+  const normPhone  = darajaPhone(phone);
+  const accountRef = generateDarajaRef('CRD'); // 11-char reference — used as AccountReference
 
-  // Paystack requires an email — use phone-based synthetic email as fallback
-  const email = `${formattedPhone}@checkrada.co.ke`;
-
-  // Create pending transaction record
+  // Create PENDING record before STK push — ensures a DB record always exists
+  // even if the STK push succeeds but the subsequent mpesaRef update fails.
   const transaction = await prisma.transaction.create({
     data: {
       userId:      user.id,
       type:        'DEPOSIT',
       amountKes,
-      balAfter:    Number(user.balanceKes) + amountKes,
-      phone:       formattedPhone,
-      mpesaRef:    reference,
+      balAfter:    0,           // updated to real value in the STK callback after confirmation
+      phone:       normPhone,
+      mpesaRef:    accountRef,  // temporary — updated to CheckoutRequestID below
       status:      'PENDING',
-      description: `${method === 'card' ? 'Card' : 'M-Pesa'} deposit of KES ${amountKes}`,
+      description: `M-Pesa deposit of KES ${amountKes.toLocaleString()} — awaiting STK confirmation`,
     },
   });
 
   try {
-    if (method === 'mpesa') {
-      // ── M-Pesa STK Push via Paystack ───────────────────────────────────────
-      const result = await chargeMpesa({
-        email,
-        amountKes,
-        phone: formattedPhone,
-        reference,
-        metadata: {
-          userId:        user.id,
-          transactionId: transaction.id,
-          platform:      'checkrada',
-        },
-      });
-
-      return NextResponse.json({
-        success:       true,
-        method:        'mpesa',
-        reference,
-        transactionId: transaction.id,
-        message:       result.display_text || 'Check your phone for the M-Pesa prompt.',
-        status:        result.status,
-      });
-
-    } else {
-      // ── Card payment — return Paystack authorization URL ───────────────────
-      const result = await initializeTransaction({
-        email,
-        amountKes,
-        reference,
-        callbackUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/api/payments/paystack/callback`,
-        metadata: {
-          userId:        user.id,
-          transactionId: transaction.id,
-          platform:      'checkrada',
-        },
-      });
-
-      return NextResponse.json({
-        success:           true,
-        method:            'card',
-        reference,
-        transactionId:     transaction.id,
-        authorization_url: result.authorization_url,
-        message:           'Redirecting to secure payment page.',
-      });
-    }
-
-  } catch (err: any) {
-    // Mark transaction as failed
-    await prisma.transaction.update({
-      where: { id: transaction.id },
-      data:  { status: 'FAILED' },
+    const stkResult = await stkPush({
+      amountKes,
+      phone:            normPhone,
+      accountReference: accountRef,
+      transactionDesc:  'CheckRada Dep', // max 13 chars
     });
 
-    console.error('[Deposit] Paystack error:', err.message);
+    // Update mpesaRef to CheckoutRequestID — this is what the STK callback sends
+    // and what the callback handler uses to look up and credit this transaction.
+    try {
+      await prisma.transaction.update({
+        where: { id: transaction.id },
+        data:  { mpesaRef: stkResult.CheckoutRequestID },
+      });
+    } catch (updateErr: any) {
+      // Non-fatal: STK push is already in flight. Log both refs so admin can reconcile
+      // manually if the callback cannot find the transaction.
+      console.error(
+        `[Deposit] CRITICAL: mpesaRef update failed for transaction ${transaction.id}. ` +
+        `accountRef=${accountRef} CheckoutRequestID=${stkResult.CheckoutRequestID}. ` +
+        `Error: ${updateErr.message}`
+      );
+    }
+
+    return NextResponse.json({
+      success:       true,
+      transactionId: transaction.id,
+      reference:     accountRef,
+      message:       stkResult.CustomerMessage || 'Check your phone for the M-Pesa prompt.',
+    });
+
+  } catch (err: any) {
+    // STK push failed — mark transaction failed (do not leave it PENDING)
+    await prisma.transaction.update({
+      where: { id: transaction.id },
+      data:  { status: 'FAILED', description: `STK Push failed: ${err.message}` },
+    }).catch(() => {});
+
+    console.error('[Deposit] STK Push error:', err.message);
     return NextResponse.json(
-      { error: err.message || 'Payment initiation failed. Please try again.' },
+      { error: err.message || 'Could not initiate M-Pesa payment. Please try again.' },
       { status: 500 }
     );
   }

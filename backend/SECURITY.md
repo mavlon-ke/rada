@@ -39,13 +39,13 @@ Applied to all API responses:
 - Content-Security-Policy: (see middleware.ts)
 
 ### Callback Verification
-Kopokopo callbacks are verified using HMAC-SHA256 signature.
+Daraja STK and B2C callbacks are verified via DARAJA_CALLBACK_SECRET embedded in the callback URL path.
 Never accept a payment without verifying the signature.
 
 ## Incident Response
 If a security breach is suspected:
 1. Immediately rotate JWT_SECRET on Railway (forces all users to re-login)
-2. Rotate Kopokopo API keys
+2. Rotate DARAJA_CONSUMER_KEY, DARAJA_CONSUMER_SECRET, and DARAJA_CALLBACK_SECRET
 3. Notify users via SMS within 72 hours (Kenya Data Protection Act 2019 requirement)
 4. Document the incident
 5. Report to Kenya Data Commissioner if personal data was compromised

@@ -1,15 +1,10 @@
 // src/app/api/admin/transactions/[id]/retry/route.ts
-// POST — retry a failed PAYOUT transaction via Paystack
+// POST — retry a failed PAYOUT or CHALLENGE_PAYOUT transaction via Daraja B2C.
 
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db/prisma';
+import { prisma }                    from '@/lib/db/prisma';
 import { requireAdmin, adminUnauthorized, logAdminAction } from '@/lib/auth/admin';
-import {
-  createTransferRecipient,
-  initiateTransfer,
-  normalisePhone as formatPhone,
-  generateReference,
-} from '@/lib/paystack/paystack.service';
+import { b2cTransfer, generateDarajaRef, darajaPhone }     from '@/lib/daraja/daraja.service';
 
 export async function POST(
   req: NextRequest,
@@ -33,49 +28,41 @@ export async function POST(
     return NextResponse.json({ error: 'Transaction already succeeded' }, { status: 400 });
   }
 
-  const phone      = txn.phone || txn.user?.phone;
-  const amountKes  = Number(txn.amountKes);
+  const rawPhone  = txn.phone || txn.user?.phone;
+  const amountKes = Math.abs(Number(txn.amountKes));
 
-  if (!phone) {
+  if (!rawPhone) {
     return NextResponse.json({ error: 'No phone number on transaction to send payout' }, { status: 400 });
   }
 
+  const accountRef = generateDarajaRef('CRW');
+  const phone      = darajaPhone(rawPhone);
+
   try {
-    const reference = generateReference('TRF');
-
-    const recipient = await createTransferRecipient({
-      name:     txn.user?.name || phone,
-      phone:    formatPhone(phone),
-      bankCode: 'MPesa',
-    });
-
-    const transfer = await initiateTransfer({
+    const b2cResult = await b2cTransfer({
       amountKes,
-      recipientCode: recipient.recipient_code,
-      reference,
-      reason: `Retry payout — original txn ${txn.id}`,
+      phone,
+      reference: accountRef,
+      occasion:  `Retry payout — original txn ${txn.id}`,
     });
 
-    // Update original transaction to SUCCESS.
-    // mpesaRef intentionally NOT updated — keep the original CKR-... reference
-    // so any webhook flow or audit trail referencing it remains valid.
     await prisma.transaction.update({
       where: { id: params.id },
-      data: {
-        status: 'SUCCESS',
+      data:  {
+        status:   'SUCCESS',
+        mpesaRef: b2cResult.OriginatorConversationID,
       },
     });
 
     await logAdminAction(
       admin.id, 'PAYOUT_RETRY_SUCCESS', params.id,
-      { phone, amountKes, reference },
+      { phone, amountKes, originatorConvId: b2cResult.OriginatorConversationID },
       req
     );
 
     return NextResponse.json({
-      success:   true,
-      reference: transfer.transfer_code || reference,
-      message:   `KES ${amountKes} retry payout initiated to ${phone}`,
+      success: true,
+      message: `KES ${amountKes} retry payout initiated to ${phone}`,
     });
 
   } catch (err: any) {
@@ -86,7 +73,7 @@ export async function POST(
     );
 
     return NextResponse.json(
-      { error: 'Retry failed: ' + (err.message || 'Paystack error') },
+      { error: 'Retry failed: ' + (err.message || 'Daraja error') },
       { status: 500 }
     );
   }

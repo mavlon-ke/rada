@@ -13,17 +13,13 @@ import { requireAuth } from '@/lib/auth/session';
 import { randomInt } from 'crypto';
 import { createNotification } from '@/lib/notifications';
 import { displayName }        from '@/lib/user/display-name';
-import {
-  chargeMpesa,
-  generateReference,
-  normalisePhone,
-} from '@/lib/paystack/paystack.service';
+import { stkPush, generateDarajaRef, darajaPhone } from '@/lib/daraja/daraja.service';
 
 const MAX_STAKE = 20000;  // KES 20,000 per person (Social Challenge cap)
 
-// dbPhone: strips leading + for DB lookups (users stored as 254XXXXXXXXX, not +254XXXXXXXXX).
+// dbPhone: normalises to 254XXXXXXXXX for DB lookups (same as darajaPhone output).
 function dbPhone(phone: string): string {
-  return normalisePhone(phone).replace(/^\+/, '');
+  return darajaPhone(phone);
 }
 const MIN_STAKE = 20;     // KES 20 minimum
 
@@ -35,11 +31,10 @@ const CreateSchema = z.object({
   challengerBPhone:  z.string().min(10).max(15),
   isPublic:          z.boolean().default(false),
   resolutionType:    z.enum(['REFEREE', 'MUTUAL', 'TIMER']).default('MUTUAL'),
-  challengerAAlias:  z.string().max(40).optional(),   // optional nickname for creator
-  challengerBAlias:  z.string().max(40).optional(),   // optional nickname for opponent
-  // Wallet-first: frontend sends how much to use from wallet vs M-Pesa
-  walletAmountKes:   z.number().min(0).optional(),  // amount from real + bonus wallet
-  mpesaAmountKes:    z.number().min(0).optional(),  // amount via M-Pesa STK push
+  challengerAAlias:  z.string().max(40).optional(),
+  challengerBAlias:  z.string().max(40).optional(),
+  walletAmountKes:   z.number().min(0).optional(),
+  mpesaAmountKes:    z.number().min(0).optional(),
 });
 
 async function generateAccessCode(): Promise<string> {
@@ -66,24 +61,17 @@ export async function POST(req: NextRequest) {
     refereePhone, challengerBPhone, isPublic, resolutionType,
     walletAmountKes, mpesaAmountKes,
   } = parsed.data;
-  // challengerAAlias and challengerBAlias are declared below with sanitization.
 
-  // SECURITY: sanitize free-text question before storing — same class of
-  // stored XSS protection applied to market proposals (commit 71b3b59).
-  // Question is rendered with innerHTML in rada-dashboard.html, so any
-  // unsanitized HTML would execute in opponents' browsers.
   const question          = sanitizeText(parsed.data.question);
   const challengerAAlias  = parsed.data.challengerAAlias
     ? sanitizeText(parsed.data.challengerAAlias) : undefined;
   const challengerBAlias  = parsed.data.challengerBAlias
     ? sanitizeText(parsed.data.challengerBAlias) : undefined;
 
-  // ── Validate event expiry ────────────────────────────────────────────────
   if (new Date(eventExpiresAt) <= new Date()) {
     return NextResponse.json({ error: 'Event expiry must be in the future' }, { status: 400 });
   }
 
-  // ── Validate Challenger B ────────────────────────────────────────────────
   const normalisedPhoneB = dbPhone(challengerBPhone);
   const challengerB = await prisma.user.findUnique({ where: { phone: normalisedPhoneB } });
   if (!challengerB) {
@@ -95,37 +83,29 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'You cannot challenge yourself' }, { status: 400 });
   }
 
-  // ── Validate referee ─────────────────────────────────────────────────────
   let refereeId: string | undefined;
   if (refereePhone) {
     const normalisedRefPhone = dbPhone(refereePhone);
     const refUser = await prisma.user.findUnique({ where: { phone: normalisedRefPhone } });
     if (!refUser) {
-      return NextResponse.json({
-        error: 'Referee is not a registered CheckRada user.',
-      }, { status: 400 });
+      return NextResponse.json({ error: 'Referee is not a registered CheckRada user.' }, { status: 400 });
     }
     if (refUser.id === user.id)         return NextResponse.json({ error: 'You cannot be your own referee' }, { status: 400 });
     if (refUser.id === challengerB.id)  return NextResponse.json({ error: 'Referee cannot be one of the challengers' }, { status: 400 });
     refereeId = refUser.id;
   }
 
-  // ── Wallet-first payment logic ───────────────────────────────────────────
-  // Read fresh balances
   const freshUser = await prisma.user.findUnique({ where: { id: user.id } });
   if (!freshUser) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
   const realBal  = Number(freshUser.balanceKes);
   const bonusBal = Number(freshUser.bonusBalanceKes);
-  const totalAvailable = realBal + bonusBal;
 
-  // Calculate how much from each source
   const realUsed  = Math.min(realBal,  stakePerPerson);
   const bonusUsed = Math.min(bonusBal, Math.max(0, stakePerPerson - realUsed));
   const walletTotal = realUsed + bonusUsed;
   const mpesaRequired = Math.max(0, stakePerPerson - walletTotal);
 
-  // If caller provided explicit amounts, validate they add up to the stake
   if (walletAmountKes !== undefined && mpesaAmountKes !== undefined) {
     const provided = walletAmountKes + mpesaAmountKes;
     if (Math.abs(provided - stakePerPerson) > 1) {
@@ -133,20 +113,15 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // Must have enough combined balance + M-Pesa to cover stake
-  // (if mpesaRequired > 0, the M-Pesa callback will credit the account before stake fires)
-  // For wallet-only or partial wallet — validate wallet covers its portion
   if (walletTotal < stakePerPerson && mpesaRequired === 0) {
     return NextResponse.json({ error: 'Insufficient balance. Please deposit first.' }, { status: 400 });
   }
 
   const accessCode = await generateAccessCode();
 
-  // Hoisted outside transaction so they're accessible for STK push rollback
   let actualRealUsedOut  = 0;
   let actualBonusUsedOut = 0;
 
-  // ── Atomic transaction ────────────────────────────────────────────────────
   const challenge = await prisma.$transaction(async (tx) => {
     const u = await tx.user.findUnique({ where: { id: user.id } });
     if (!u) throw new Error('User not found');
@@ -156,24 +131,14 @@ export async function POST(req: NextRequest) {
     const actualRealUsed  = Math.min(currentReal,  walletTotal);
     const actualBonusUsed = Math.min(currentBonus, Math.max(0, walletTotal - actualRealUsed));
     const actualWalletTotal = actualRealUsed + actualBonusUsed;
-    // Expose to outer scope for STK push rollback
     actualRealUsedOut  = actualRealUsed;
     actualBonusUsedOut = actualBonusUsed;
 
-    // Validate sufficient wallet funds for the wallet portion
-    if (actualWalletTotal < walletTotal) {
-      throw new Error('Insufficient balance');
-    }
+    if (actualWalletTotal < walletTotal) throw new Error('Insufficient balance');
 
-    // Deduct from real balance first
     const updateData: any = {};
-    if (actualRealUsed > 0) {
-      updateData.balanceKes = { decrement: actualRealUsed };
-    }
-    // Deduct from bonus balance
-    if (actualBonusUsed > 0) {
-      updateData.bonusBalanceKes = { decrement: actualBonusUsed };
-    }
+    if (actualRealUsed  > 0) updateData.balanceKes      = { decrement: actualRealUsed  };
+    if (actualBonusUsed > 0) updateData.bonusBalanceKes = { decrement: actualBonusUsed };
     if (Object.keys(updateData).length > 0) {
       await tx.user.update({ where: { id: user.id }, data: updateData });
     }
@@ -188,20 +153,17 @@ export async function POST(req: NextRequest) {
         stakePerPerson,
         challengerAAlias: challengerAAlias || null,
         challengerBAlias: challengerBAlias || null,
-        totalPool:      walletTotal,  // only wallet portion confirmed; M-Pesa adds to pool on callback
-        validatorType:  refereeId ? 'REFEREE' : (resolutionType === 'TIMER' ? 'TIMER' : 'MUTUAL'),
-        eventExpiresAt: new Date(eventExpiresAt),
+        totalPool:        walletTotal,
+        validatorType:    refereeId ? 'REFEREE' : (resolutionType === 'TIMER' ? 'TIMER' : 'MUTUAL'),
+        eventExpiresAt:   new Date(eventExpiresAt),
         isPublic,
-        status:         mpesaRequired > 0 ? 'PENDING_PAYMENT' : 'PENDING_JOIN',
+        status:           mpesaRequired > 0 ? 'PENDING_PAYMENT' : 'PENDING_JOIN',
       },
     });
 
     const balAfterReal  = currentReal  - actualRealUsed;
     const balAfterBonus = currentBonus - actualBonusUsed;
 
-    // Log wallet deduction — two separate records for precise refund tracking.
-    // CHALLENGE_STAKE = real balance used; BONUS_USED = bonus balance used.
-    // cancelPendingPayment reads these by type to refund each to the correct bucket.
     if (actualRealUsed > 0) {
       await tx.transaction.create({
         data: {
@@ -232,52 +194,50 @@ export async function POST(req: NextRequest) {
     return ch;
   });
 
-  // ── Trigger M-Pesa STK Push for wallet shortfall ────────────────────────
-  // When the user's wallet doesn't fully cover the stake, we trigger an STK push
-  // for the shortfall. The webhook (charge.success) will move the challenge from
-  // PENDING_PAYMENT → PENDING_JOIN and notify Challenger B once payment is confirmed.
-  // On STK push failure: challenge is cancelled and wallet portion is refunded.
+  // ── M-Pesa STK Push for wallet shortfall (Daraja) ────────────────────────
   let stkMessage: string | null = null;
 
   if (mpesaRequired > 0) {
-    const ref          = generateReference('CHG');
-    const formattedPhone = normalisePhone(freshUser.phone);
-    const email        = `${formattedPhone.replace('+', '')}@checkrada.co.ke`;
+    const accountRef = generateDarajaRef('CRC');
+    const phone      = darajaPhone(freshUser.phone);
 
     try {
-      // Record the pending M-Pesa payment — webhook identifies it by mpesaRef
-      await prisma.transaction.create({
+      const pending = await prisma.transaction.create({
         data: {
           userId:      user.id,
           challengeId: challenge.id,
           type:        'CHALLENGE_STAKE',
           amountKes:   mpesaRequired,
           balAfter:    Number(freshUser.balanceKes) - actualRealUsedOut,
-          phone:       formattedPhone,
-          mpesaRef:    ref,
+          phone,
+          mpesaRef:    accountRef,
           status:      'PENDING',
           description: `Challenge M-Pesa payment: KES ${mpesaRequired} for "${question.slice(0, 50)}"`,
         },
       });
 
-      const stkResult = await chargeMpesa({
-        email,
-        amountKes:  mpesaRequired,
-        phone:      formattedPhone,
-        reference:  ref,
-        metadata: {
-          userId:      user.id,
-          challengeId: challenge.id,
-          platform:    'checkrada',
-          paymentType: 'challenge_stake',
-        },
+      const stkResult = await stkPush({
+        amountKes:        mpesaRequired,
+        phone,
+        accountReference: accountRef,
+        transactionDesc:  'CheckRada Chg',
       });
 
-      stkMessage = stkResult.display_text || 'Check your phone for an M-Pesa prompt.';
+      // Update mpesaRef to CheckoutRequestID for STK callback lookup
+      await prisma.transaction.update({
+        where: { id: pending.id },
+        data:  { mpesaRef: stkResult.CheckoutRequestID },
+      }).catch((err: any) => {
+        console.error(
+          `[Challenge] CRITICAL: mpesaRef update failed tx=${pending.id} ` +
+          `accountRef=${accountRef} CheckoutRequestID=${stkResult.CheckoutRequestID} err=${err.message}`
+        );
+      });
+
+      stkMessage = stkResult.CustomerMessage || 'Check your phone for an M-Pesa prompt.';
       console.log(`[Challenge] STK Push sent for challenge ${challenge.id} — KES ${mpesaRequired}`);
 
     } catch (stkErr: any) {
-      // STK push failed — cancel the challenge and refund the wallet portion
       console.error('[Challenge] STK Push failed:', stkErr.message);
 
       await prisma.$transaction(async (tx) => {
@@ -302,15 +262,11 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // ── Notifications ─────────────────────────────────────────────────────────
-  // Challenger B is only notified once the challenge is PENDING_JOIN.
-  // When mpesaRequired > 0, Challenger B will be notified from the webhook
-  // after M-Pesa confirms — otherwise they'd try to join a PENDING_PAYMENT challenge.
   if (mpesaRequired === 0) {
     await createNotification({
       userId:  challengerB.id,
       type:    'CHALLENGE_OPPONENT_STAKED',
-      title:   '⚡ You\'ve been challenged!',
+      title:   "⚡ You've been challenged!",
       message: `${displayName(user.name, user.phone)} challenged you on "${question.slice(0, 70)}..." Stake: KES ${stakePerPerson.toLocaleString()}. Code: ${accessCode}`,
       link:    `/join/${accessCode}`,
       whatsapp: {
@@ -326,7 +282,7 @@ export async function POST(req: NextRequest) {
       await createNotification({
         userId:  referee.id,
         type:    'REFEREE_NOMINATED',
-        title:   '⚖ You\'ve been nominated as referee',
+        title:   "⚖ You've been nominated as referee",
         message: `${displayName(user.name, user.phone)} nominated you to referee "${question.slice(0, 60)}..." Code: ${accessCode}`,
         link:    `/rada-friends.html`,
         whatsapp: {
@@ -343,7 +299,7 @@ export async function POST(req: NextRequest) {
     accessCode,
     shareUrl:       `${process.env.NEXT_PUBLIC_BASE_URL}/join/${accessCode}`,
     isPublic,
-    stkMessage,               // null when no M-Pesa needed; STK prompt text otherwise
+    stkMessage,
     payment: {
       walletUsed:    walletTotal,
       realUsed:      realUsed,

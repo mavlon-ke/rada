@@ -3,20 +3,14 @@
 //
 // Recalculates at current wallet balance:
 //   - If wallet now covers remaining shortfall → completes immediately (no M-Pesa)
-//   - If still shortfall → cancels old pending tx, fires fresh STK push
-//
-// The remaining shortfall = stakePerPerson - totalPool (what wallet has already covered).
+//   - If still shortfall → cancels old pending tx, fires fresh Daraja STK push
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma }             from '@/lib/db/prisma';
 import { requireAuth }        from '@/lib/auth/session';
 import { createNotification } from '@/lib/notifications';
 import { displayName }        from '@/lib/user/display-name';
-import {
-  chargeMpesa,
-  generateReference,
-  normalisePhone,
-} from '@/lib/paystack/paystack.service';
+import { stkPush, generateDarajaRef, darajaPhone } from '@/lib/daraja/daraja.service';
 
 export async function POST(
   req: NextRequest,
@@ -42,11 +36,10 @@ export async function POST(
   }
 
   const stake     = Number(challenge.stakePerPerson);
-  const paidSoFar = Number(challenge.totalPool);  // wallet portion already deducted
+  const paidSoFar = Number(challenge.totalPool);
   const remaining = Math.max(0, stake - paidSoFar);
 
   if (remaining === 0) {
-    // Already fully paid — just activate
     await prisma.marketChallenge.update({
       where: { id: challenge.id },
       data:  { status: 'PENDING_JOIN' },
@@ -54,25 +47,23 @@ export async function POST(
     return NextResponse.json({ success: true, method: 'wallet', message: 'Challenge activated!' });
   }
 
-  // Read fresh balances
   const freshUser = await prisma.user.findUnique({
     where:  { id: user.id },
-    select: { balanceKes: true, bonusBalanceKes: true, phone: true },
+    select: { balanceKes: true, bonusBalanceKes: true, phone: true, name: true },
   });
   if (!freshUser) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
-  const realBal  = Number(freshUser.balanceKes);
-  const bonusBal = Number(freshUser.bonusBalanceKes);
+  const realBal         = Number(freshUser.balanceKes);
+  const bonusBal        = Number(freshUser.bonusBalanceKes);
   const walletAvailable = realBal + bonusBal;
 
-  // Cancel any existing pending CHALLENGE_STAKE tx for this challenge
-  // so the old Paystack reference can't accidentally activate the challenge later
+  // Cancel any prior PENDING CHALLENGE_STAKE for this challenge
   await prisma.transaction.updateMany({
     where: { challengeId: challenge.id, status: 'PENDING', type: 'CHALLENGE_STAKE' },
     data:  { status: 'FAILED', description: 'Superseded by retry payment request' },
   });
 
-  // ── Wallet now covers remaining shortfall → complete immediately ───────────
+  // ── Wallet now covers shortfall → complete immediately ─────────────────────
   if (walletAvailable >= remaining) {
     let actualRealUsed  = 0;
     let actualBonusUsed = 0;
@@ -84,15 +75,13 @@ export async function POST(
       actualRealUsed  = Math.min(curReal,  remaining);
       actualBonusUsed = Math.min(curBonus, Math.max(0, remaining - actualRealUsed));
 
-      const updateData: any = {};
-      if (actualRealUsed  > 0) updateData.balanceKes      = { decrement: actualRealUsed  };
-      if (actualBonusUsed > 0) updateData.bonusBalanceKes = { decrement: actualBonusUsed };
-
-      // Guard: race condition could leave pool underfunded — fail fast
       if (actualRealUsed + actualBonusUsed < remaining) {
         throw new Error('Insufficient balance — please top up and retry');
       }
 
+      const updateData: any = {};
+      if (actualRealUsed  > 0) updateData.balanceKes      = { decrement: actualRealUsed  };
+      if (actualBonusUsed > 0) updateData.bonusBalanceKes = { decrement: actualBonusUsed };
       if (Object.keys(updateData).length > 0) {
         await tx.user.update({ where: { id: user.id }, data: updateData });
       }
@@ -115,7 +104,6 @@ export async function POST(
       });
     });
 
-    // Notify B now that challenge is PENDING_JOIN
     if (challenge.userBId && challenge.userB) {
       void createNotification({
         userId:  challenge.userBId,
@@ -147,43 +135,43 @@ export async function POST(
     });
   }
 
-  // ── Still a shortfall → fire fresh STK push for remaining amount ──────────
-  const ref            = generateReference('CHG');
-  const formattedPhone = normalisePhone(freshUser.phone);
-  const email          = formattedPhone.replace('+', '') + '@checkrada.co.ke';
+  // ── Still a shortfall → fresh Daraja STK push ─────────────────────────────
+  const accountRef = generateDarajaRef('CRC');
+  const phone      = darajaPhone(freshUser.phone);
 
   try {
-    await prisma.transaction.create({
+    const pending = await prisma.transaction.create({
       data: {
         userId:      user.id,
         challengeId: challenge.id,
         type:        'CHALLENGE_STAKE',
         amountKes:   remaining,
         balAfter:    realBal,
-        phone:       formattedPhone,
-        mpesaRef:    ref,
+        phone,
+        mpesaRef:    accountRef,
         status:      'PENDING',
         description: 'Challenge payment retry (M-Pesa): KES ' + remaining + ' for "' + challenge.question.slice(0, 50) + '"',
       },
     });
 
-    const stkResult = await chargeMpesa({
-      email,
-      amountKes:  remaining,
-      phone:      formattedPhone,
-      reference:  ref,
-      metadata: {
-        userId:      user.id,
-        challengeId: challenge.id,
-        platform:    'checkrada',
-        paymentType: 'challenge_stake_retry',
-      },
+    const stkResult = await stkPush({
+      amountKes:        remaining,
+      phone,
+      accountReference: accountRef,
+      transactionDesc:  'CheckRada Retry',
+    });
+
+    await prisma.transaction.update({
+      where: { id: pending.id },
+      data:  { mpesaRef: stkResult.CheckoutRequestID },
+    }).catch((err: any) => {
+      console.error(`[RetryPayment] mpesaRef update failed: ${err.message}`);
     });
 
     return NextResponse.json({
       success:    true,
       method:     'mpesa',
-      stkMessage: stkResult.display_text || 'Check your phone for an M-Pesa prompt — KES ' + remaining + '.',
+      stkMessage: stkResult.CustomerMessage || 'Check your phone for an M-Pesa prompt — KES ' + remaining + '.',
       remaining,
     });
   } catch (err: any) {

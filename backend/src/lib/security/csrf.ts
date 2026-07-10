@@ -11,11 +11,14 @@ const PROTECTED_METHODS = ['POST', 'PUT', 'PATCH', 'DELETE'];
 
 // CSRF-exempt endpoints:
 // - OTP routes: pre-auth, no session cookie to validate against
-// - Paystack webhook: external POST signed with Paystack secret, no CSRF token possible
+// - Daraja callbacks: external POSTs from Safaricom — no CSRF token possible.
+//   Security is provided by the DARAJA_CALLBACK_SECRET embedded in each callback URL path.
 const CSRF_EXEMPT = [
   '/api/auth/otp/request',
   '/api/auth/otp/verify',
-  '/api/payments/paystack/webhook',
+  '/api/payments/daraja/stk-callback',
+  '/api/payments/daraja/b2c-result',
+  '/api/payments/daraja/b2c-timeout',
   // Admin routes use httpOnly cookie + SameSite=Lax which already blocks cross-site
   // CSRF at the browser level. The CSRF token layer is redundant here and was
   // misconfigured (generateCSRFToken never called = no token ever issued = every

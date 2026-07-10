@@ -15,12 +15,12 @@ import { requireAuth }        from '@/lib/auth/session';
 import { createNotification } from '@/lib/notifications';
 import { displayName }        from '@/lib/user/display-name';
 import { sanitizeText }       from '@/lib/security/middleware';
-import { normalisePhone }     from '@/lib/paystack/paystack.service';
+import { darajaPhone } from '@/lib/daraja/daraja.service';
 
 
 // dbPhone: strips leading + for DB lookups (users stored as 254XXXXXXXXX, not +254XXXXXXXXX).
 function dbPhone(phone: string): string {
-  return normalisePhone(phone).replace(/^\+/, '');
+  return darajaPhone(phone);
 }
 const MAX_PAIRS = 100;
 const MIN_STAKE = 20;
