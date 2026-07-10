@@ -292,21 +292,37 @@ async function handleStkFailure(checkoutRequestId: string, reason: string) {
           where: { batchId: challenge.batchId, status: 'PENDING_PAYMENT' },
           data:  { status: 'CANCELLED' },
         });
+
+        // Refund total wallet deduction across ALL batch challenges.
+        // Each challenge.totalPool holds its individual wallet share.
+        // Bug if only firstChallenge.totalPool is used — must sum them all.
+        const batchChallenges = await prisma.marketChallenge.findMany({
+          where:  { batchId: challenge.batchId },
+          select: { totalPool: true },
+        });
+        const walletRefund = batchChallenges.reduce(
+          (sum: number, ch: any) => sum + Number(ch.totalPool), 0
+        );
+        if (walletRefund > 0) {
+          await prisma.user.update({
+            where: { id: transaction.userId },
+            data:  { balanceKes: { increment: walletRefund } },
+          });
+        }
       } else {
         await prisma.marketChallenge.update({
-          where: { id: transaction.challengeId },
+          where: { id: transaction.challengeId! },
           data:  { status: 'CANCELLED' },
         });
-      }
 
-      // Refund wallet portion: challenge.totalPool holds what was deducted from
-      // the wallet before the STK push was sent (M-Pesa shortfall was not paid).
-      const walletRefund = Number(challenge.totalPool);
-      if (walletRefund > 0) {
-        await prisma.user.update({
-          where: { id: transaction.userId },
-          data:  { balanceKes: { increment: walletRefund } },
-        });
+        // Single challenge — refund its wallet portion only
+        const walletRefund = Number(challenge.totalPool);
+        if (walletRefund > 0) {
+          await prisma.user.update({
+            where: { id: transaction.userId },
+            data:  { balanceKes: { increment: walletRefund } },
+          });
+        }
       }
     }
 
@@ -316,6 +332,17 @@ async function handleStkFailure(checkoutRequestId: string, reason: string) {
       title:   '⚠️ M-Pesa payment not completed',
       message: 'Your challenge payment was not completed. Any amount deducted from your wallet has been refunded.',
       link:    '/rada-friends.html',
+    });
+  }
+
+  // Notify user of failed deposit (challenge notifications already sent above)
+  if (transaction.type === 'DEPOSIT') {
+    void createNotification({
+      userId:  transaction.userId,
+      type:    'DEPOSIT_CONFIRMED',
+      title:   '⚠️ Deposit not completed',
+      message: 'Your M-Pesa payment was not completed. No funds were deducted from your M-Pesa. Please try again.',
+      link:    '/rada-dashboard.html',
     });
   }
 
