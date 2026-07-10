@@ -275,7 +275,7 @@ export async function b2cTransfer(params: B2CParams): Promise<B2CResult> {
 
   let res: Response;
   try {
-    res = await fetch(`${DARAJA_BASE}/mpesa/b2c/v3/paymentrequest`, {
+    res = await fetch(`${DARAJA_BASE}/mpesa/b2c/v1/paymentrequest`, {
       method:  'POST',
       headers: {
         Authorization:  `Bearer ${token}`,
