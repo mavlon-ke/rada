@@ -12,7 +12,6 @@ import { prisma }             from '@/lib/db/prisma';
 import { requireAuth }        from '@/lib/auth/session';
 import { createNotification } from '@/lib/notifications';
 import { displayName }        from '@/lib/user/display-name';
-import { normalisePhone } from '@/lib/paystack/paystack.service';
 import { withErrorHandling } from '@/lib/security/route-guard';
 
 // ── Referee challenge join (PENDING_BOTH / PENDING_A / PENDING_B) ──────────────
