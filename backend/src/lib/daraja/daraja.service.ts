@@ -268,6 +268,16 @@ export async function b2cTransfer(params: B2CParams): Promise<B2CResult> {
     );
   }
 
+  // Diagnostic: confirms exact values being sent without printing secrets
+  console.log('[Daraja B2C Diag]',
+    `InitiatorName="${initiatorName}" (len=${initiatorName.length})`,
+    `| SecCred len=${securityCred.length}`,
+    `| SecCred starts="${securityCred.slice(0,4)}" ends="${securityCred.slice(-4)}"`,
+    `| SecCred hasWhitespace=${/\s/.test(securityCred)}`,
+    `| PartyA(ShortCode)="${SHORT_CODE}"`,
+    `| PartyB(Phone)="${darajaPhone(params.phone)}"`,
+  );
+
   const token      = await getDarajaToken();
   const phone      = darajaPhone(params.phone);
   const resultUrl  = `${API_BASE}/api/payments/daraja/b2c-result/${CALLBACK_SECRET}`;
