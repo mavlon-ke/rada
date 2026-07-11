@@ -314,8 +314,9 @@ export async function b2cTransfer(params: B2CParams): Promise<B2CResult> {
   const data = await res.json();
 
   if (!res.ok || data.ResponseCode !== '0') {
-    const msg = data.errorMessage || data.ResponseDescription || 'B2C transfer failed';
-    console.error(`[Daraja] B2C failed (${res.status}):`, msg);
+    // Log full Safaricom response to diagnose exact rejection reason
+    console.error(`[Daraja B2C Full Response] status=${res.status} body=${JSON.stringify(data)}`);
+    const msg = data.errorMessage || data.ResponseDescription || data.ResultDesc || 'B2C transfer failed';
     throw new Error(msg);
   }
 
