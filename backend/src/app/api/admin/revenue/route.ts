@@ -5,12 +5,8 @@ import { requireAdmin, adminUnauthorized } from '@/lib/auth/admin';
 
 export const dynamic = 'force-dynamic';
 
-// Paystack withdrawal fee schedule — calculated dynamically from transaction amounts
-function paystackFee(amountKes: number): number {
-  if (amountKes <= 1500)  return 20;
-  if (amountKes <= 20000) return 40;
-  return 60;
-}
+// Processing fee per withdrawal — Daraja B2C has no per-transaction fee.
+const processingFee = (_amountKes: number) => 0;
 
 function dateWhere(from?: string | null, to?: string | null) {
   if (!from && !to) return undefined;
@@ -101,29 +97,38 @@ export async function GET(req: NextRequest) {
     const tradeAvg   = tradeCount > 0 ? tradeTotal / tradeCount : 0;
 
     // ── 5. LIQUIDITY — all time ──────────────────────────────────────────────
-    const [depAgg, wdAgg] = await Promise.all([
+    // Real M-Pesa only. Admin manual adjustments are stored as DEPOSIT/WITHDRAWAL
+    // type but are internal wallet corrections — NOT real M-Pesa money flows.
+    // Deposits: description startsWith 'M-Pesa deposit' (STK Push confirmed)
+    // Withdrawals: amountKes < 0 (admin debit adjustments have positive amountKes)
+    const [depAgg, wdAgg, adminCredAgg, adminDebAgg] = await Promise.all([
       prisma.transaction.aggregate({
-        where: { type: 'DEPOSIT',    status: 'SUCCESS' },
+        where: { type: 'DEPOSIT', status: 'SUCCESS', description: { startsWith: 'M-Pesa deposit' } },
         _sum: { amountKes: true }, _count: { id: true },
       }),
       prisma.transaction.aggregate({
-        where: { type: 'WITHDRAWAL', status: 'SUCCESS' },
+        where: { type: 'WITHDRAWAL', status: 'SUCCESS', amountKes: { lt: 0 } },
+        _sum: { amountKes: true }, _count: { id: true },
+      }),
+      // Admin credits (transparency — not M-Pesa backed)
+      prisma.transaction.aggregate({
+        where: { type: 'DEPOSIT', status: 'SUCCESS', description: { startsWith: 'Admin' } },
+        _sum: { amountKes: true }, _count: { id: true },
+      }),
+      // Admin debits (transparency — not real M-Pesa outflows)
+      prisma.transaction.aggregate({
+        where: { type: 'WITHDRAWAL', status: 'SUCCESS', amountKes: { gt: 0 } },
         _sum: { amountKes: true }, _count: { id: true },
       }),
     ]);
 
-    const totalDeposits    = Number(depAgg._sum.amountKes ?? 0);
+    const totalDeposits    = Number(depAgg._sum.amountKes     ?? 0);
     const totalWithdrawals = Math.abs(Number(wdAgg._sum.amountKes ?? 0));
     const netCash          = totalDeposits - totalWithdrawals;
-
-    // Paystack fees from all completed withdrawals
-    const allWdTxns = await prisma.transaction.findMany({
-      where:  { type: 'WITHDRAWAL', status: 'SUCCESS' },
-      select: { amountKes: true },
-    });
-    const totalPaystackFees = allWdTxns.reduce(
-      (sum, t) => sum + paystackFee(Math.abs(Number(t.amountKes))), 0
-    );
+    const adminCredits     = Number(adminCredAgg._sum.amountKes ?? 0);
+    const adminDebits      = Number(adminDebAgg._sum.amountKes  ?? 0);
+    const netAdminAdjust   = adminCredits - adminDebits;
+    const totalPaystackFees = 0; // Daraja B2C has no per-transaction fee
 
     // ── 6. LIQUIDITY — current snapshot ─────────────────────────────────────
     const [walletAgg, bonusAgg, pendingDepAgg, pendingWdAgg] = await Promise.all([
@@ -143,31 +148,53 @@ export async function GET(req: NextRequest) {
     const bonusBalances      = Number(bonusAgg._sum.bonusBalanceKes ?? 0);
     const pendingDeposits    = Number(pendingDepAgg._sum.amountKes  ?? 0);
     const pendingWithdrawals = Math.abs(Number(pendingWdAgg._sum.amountKes ?? 0));
-    const liquidityGap       = netCash - walletLiability;
+
+    // Full platform liability = wallets + active market pools + active challenge pools
+    const [marketPoolAgg, challengePoolAgg] = await Promise.all([
+      prisma.market.aggregate({
+        where: { status: { in: ['OPEN', 'CLOSED'] } },
+        _sum:  { totalVolume: true },
+      }),
+      prisma.marketChallenge.aggregate({
+        where: { status: { notIn: ['RESOLVED', 'CANCELLED'] } },
+        _sum:  { totalPool: true },
+      }),
+    ]);
+    const marketPools    = Number(marketPoolAgg._sum.totalVolume  ?? 0);
+    const challengePools = Number(challengePoolAgg._sum.totalPool ?? 0);
+    const totalLiability = walletLiability + marketPools + challengePools;
+
+    // liquidityGap: positive = solvent surplus, negative = platform is underfunded
+    const liquidityGap = netCash - totalLiability;
 
     // ── 7. DEPOSITS & WITHDRAWALS — period filter ────────────────────────────
     const periodDW = dateWhere(periodFrom, periodTo);
     const [pDepAgg, pWdAgg] = await Promise.all([
+      // Real M-Pesa deposits only in period
       prisma.transaction.aggregate({
-        where: { type: 'DEPOSIT',    status: 'SUCCESS', ...(periodDW ? { createdAt: periodDW } : {}) },
+        where: {
+          type:        'DEPOSIT',
+          status:      'SUCCESS',
+          description: { startsWith: 'M-Pesa deposit' },
+          ...(periodDW ? { createdAt: periodDW } : {}),
+        },
         _sum: { amountKes: true }, _count: { id: true },
       }),
+      // Real M-Pesa withdrawal debits only in period
       prisma.transaction.aggregate({
-        where: { type: 'WITHDRAWAL', status: 'SUCCESS', ...(periodDW ? { createdAt: periodDW } : {}) },
+        where: {
+          type:      'WITHDRAWAL',
+          status:    'SUCCESS',
+          amountKes: { lt: 0 },
+          ...(periodDW ? { createdAt: periodDW } : {}),
+        },
         _sum: { amountKes: true }, _count: { id: true },
       }),
     ]);
 
-    const periodDepTotal = Number(pDepAgg._sum.amountKes ?? 0);
-    const periodWdTotal  = Math.abs(Number(pWdAgg._sum.amountKes ?? 0));
-
-    const periodWdTxns = await prisma.transaction.findMany({
-      where:  { type: 'WITHDRAWAL', status: 'SUCCESS', ...(periodDW ? { createdAt: periodDW } : {}) },
-      select: { amountKes: true },
-    });
-    const periodPaystackFees = periodWdTxns.reduce(
-      (sum, t) => sum + paystackFee(Math.abs(Number(t.amountKes))), 0
-    );
+    const periodDepTotal     = Number(pDepAgg._sum.amountKes ?? 0);
+    const periodWdTotal      = Math.abs(Number(pWdAgg._sum.amountKes ?? 0));
+    const periodPaystackFees = 0; // Daraja B2C: no per-transaction fee
 
     // ── 8. MONTHLY BREAKDOWN — adaptive grouping ─────────────────────────────
     const monthSince = monthFrom ? new Date(monthFrom) : new Date(Date.now() - 180 * 86400000);
@@ -251,16 +278,21 @@ export async function GET(req: NextRequest) {
       feeRate, cutRate,
       // Trade volume
       tradeTotal, tradeCount, tradeAvg,
-      // Liquidity all-time
-      totalDeposits, depCount: depAgg._count.id,
-      totalWithdrawals, wdCount: wdAgg._count.id,
+      // Liquidity all-time (real M-Pesa only — admin adjustments excluded)
+      totalDeposits,    depCount:      depAgg._count.id,
+      totalWithdrawals, wdCount:       wdAgg._count.id,
       netCash, totalPaystackFees,
-      // Liquidity snapshot
+      // Admin manual wallet adjustments (tracked separately for transparency)
+      adminCredits,  adminCredCount: adminCredAgg._count.id,
+      adminDebits,   adminDebCount:  adminDebAgg._count.id,
+      netAdminAdjust,
+      // Full platform liability and snapshot
       walletLiability, bonusBalances,
-      pendingDeposits,  pendingDepCount: pendingDepAgg._count.id,
-      pendingWithdrawals, pendingWdCount: pendingWdAgg._count.id,
+      marketPools, challengePools, totalLiability,
+      pendingDeposits,    pendingDepCount: pendingDepAgg._count.id,
+      pendingWithdrawals, pendingWdCount:  pendingWdAgg._count.id,
       liquidityGap,
-      // Period
+      // Period cash flow (real M-Pesa only)
       periodDepTotal, periodDepCount: pDepAgg._count.id,
       periodWdTotal,  periodWdCount:  pWdAgg._count.id,
       periodNetFlow:  periodDepTotal - periodWdTotal,
