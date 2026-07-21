@@ -1202,7 +1202,7 @@ body::after {
     ═══════════════════════════════════════════════════════════════════════ -->
     <div class="panel" id="panel-payouts">
       <div class="page-title">Payout Management</div>
-      <div class="page-sub">Monitor and retry market payouts via Paystack M-Pesa</div>
+      <div class="page-sub">Monitor and retry market payouts via M-Pesa (Daraja)</div>
       <div class="stat-row">
         <div class="stat-card"><div class="stat-label">Paid Out (All Time)</div><div class="stat-val green" id="pyTotalPaid">—</div></div>
         <div class="stat-card"><div class="stat-label">Successful Payouts</div><div class="stat-val green" id="pySuccessCount">—</div></div>
@@ -3809,7 +3809,7 @@ function loadPayoutsPanel() {
 }
 
 function retryPayout(txnId, user, amount) {
-  if (!confirm('Retry payout of KES ' + Number(amount).toLocaleString() + ' to ' + user + '?\n\nThis will initiate a new Paystack M-Pesa transfer.')) return;
+  if (!confirm('Retry payout of KES ' + Number(amount).toLocaleString() + ' to ' + user + '?\n\nThis will initiate a new Daraja M-Pesa transfer.')) return;
 
   adminFetch('/api/admin/transactions/' + txnId + '/retry', {
     method: 'POST',
@@ -4353,7 +4353,7 @@ function loadBounties() {
 }
 
 function payBounty(bountyId, creator, amount) {
-  if (!confirm('Pay KES ' + Number(amount).toLocaleString() + ' to ' + creator + '?\n\nThis will credit their wallet and trigger a Paystack M-Pesa transfer.')) return;
+  if (!confirm('Pay KES ' + Number(amount).toLocaleString() + ' to ' + creator + '?\n\nThis will credit their wallet and trigger a Daraja M-Pesa transfer.')) return;
 
   adminFetch('/api/admin/bounties', {
     method: 'POST',
