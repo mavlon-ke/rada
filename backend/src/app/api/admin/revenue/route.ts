@@ -224,9 +224,24 @@ export async function GET(req: NextRequest) {
       }),
     ]);
 
-    const periodDepTotal     = Number(pDepAgg._sum.amountKes ?? 0);
-    const periodWdTotal      = Math.abs(Number(pWdAgg._sum.amountKes ?? 0));
-    const periodPaystackFees = 0; // Daraja B2C: no per-transaction fee
+    const periodDepTotal = Number(pDepAgg._sum.amountKes ?? 0);
+    const periodWdTotal  = Math.abs(Number(pWdAgg._sum.amountKes ?? 0));
+
+    // B2C fees for this specific period — apply tariff to each withdrawal
+    const periodWdAmounts = await prisma.transaction.findMany({
+      where: {
+        type:      'WITHDRAWAL',
+        status:    'SUCCESS',
+        amountKes: { lt: 0 },
+        ...(periodDW ? { createdAt: periodDW } : {}),
+      },
+      select: { amountKes: true },
+    });
+    const periodB2cFees     = periodWdAmounts.reduce(
+      (sum, t) => sum + b2cFee(Number(t.amountKes)), 0
+    );
+    const periodB2cFeeCount = periodWdAmounts.length;
+    const periodPaystackFees = 0; // kept for backward compat
 
     // ── 8. MONTHLY BREAKDOWN — adaptive grouping ─────────────────────────────
     const monthSince = monthFrom ? new Date(monthFrom) : new Date(Date.now() - 180 * 86400000);
@@ -292,7 +307,7 @@ export async function GET(req: NextRequest) {
     const recent = await prisma.platformRevenue.findMany({
       where:   { type: { in: ['FORECASTING_FEE', 'MARKET_SURPLUS', 'CHALLENGE_FEE'] } },
       orderBy: { createdAt: 'desc' },
-      take:    20,
+      take:    50,
       include: { market: { select: { title: true } } },
     });
 
@@ -330,6 +345,7 @@ export async function GET(req: NextRequest) {
       periodDepTotal, periodDepCount: pDepAgg._count.id,
       periodWdTotal,  periodWdCount:  pWdAgg._count.id,
       periodNetFlow:  periodDepTotal - periodWdTotal,
+      periodB2cFees, periodB2cFeeCount,
       periodPaystackFees,
       // Monthly
       monthly, groupBy,

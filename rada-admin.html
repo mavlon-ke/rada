@@ -193,6 +193,8 @@ body::after {
 
 /* ── STAT ROW ── */
 .stat-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 24px; }
+@media(max-width:900px){ .stat-row { grid-template-columns: repeat(2,1fr); } }
+@media(max-width:480px){ .stat-row { grid-template-columns: 1fr; } }
 
 .stat-card {
   background: #ffffff; border: 1px solid rgba(109,40,217,0.10); box-shadow: 0 2px 10px rgba(0,0,0,0.05);
@@ -1319,7 +1321,7 @@ body::after {
         <button class="topbar-btn" onclick="loadRevenuePanel()">&#x1F504; Refresh</button>
       </div>
       <div style="font-size:0.7rem;font-weight:700;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;margin-bottom:8px;">Gross Revenue &#x2014; All Time</div>
-      <div class="stats-grid" style="margin-bottom:8px;">
+      <div class="stat-row" style="margin-bottom:8px;">
         <div class="stat-card"><div class="stat-label">Forecasting Fees</div><div class="stat-val green" id="revFees">&#x2014;</div><div class="stat-change" id="revFeesCount" style="color:var(--text-dim);">&#x2014; trades</div></div>
         <div class="stat-card"><div class="stat-label">Market Surplus</div><div class="stat-val green" id="revSurplus">&#x2014;</div><div class="stat-change" id="revSurplusCount" style="color:var(--text-dim);">&#x2014; markets</div></div>
         <div class="stat-card"><div class="stat-label">Challenge Fees</div><div class="stat-val green" id="revChallenge">&#x2014;</div><div class="stat-change" id="revChallengeCount" style="color:var(--text-dim);">&#x2014; challenges</div></div>
@@ -1357,7 +1359,7 @@ body::after {
         </div>
       </div>
       <div style="font-size:0.7rem;font-weight:700;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;margin-bottom:8px;">Liquidity &#x2014; All Time</div>
-      <div class="stats-grid" style="margin-bottom:8px;">
+      <div class="stat-row" style="margin-bottom:8px;">
         <div class="stat-card"><div class="stat-label">Total Deposits Ever</div><div class="stat-val" id="revDepTotal">&#x2014;</div><div class="stat-change" id="revDepTotalCount" style="color:var(--text-dim);">&#x2014; transactions</div></div>
         <div class="stat-card"><div class="stat-label">Total Withdrawals Ever</div><div class="stat-val" id="revWdTotal">&#x2014;</div><div class="stat-change" id="revWdTotalCount" style="color:var(--text-dim);">&#x2014; transactions</div></div>
         <div class="stat-card"><div class="stat-label">Net Cash Position</div><div class="stat-val" id="revNetCash">&#x2014;</div><div class="stat-change" style="color:var(--text-dim);">Deposits &#x2212; Withdrawals</div></div>
@@ -1396,7 +1398,7 @@ body::after {
           <div style="display:flex;justify-content:space-between;padding:9px 8px 9px 0;border-bottom:1px solid var(--border);"><span style="font-size:0.82rem;color:var(--text-dim);">Deposits</span><div style="text-align:right;"><div style="font-family:var(--mono);font-weight:700;color:#166534;" id="revPeriodDep">&#x2014;</div><div style="font-size:0.68rem;color:var(--text-dim);" id="revPeriodDepCount">&#x2014;</div></div></div>
           <div style="display:flex;justify-content:space-between;padding:9px 0 9px 8px;border-bottom:1px solid var(--border);"><span style="font-size:0.82rem;color:var(--text-dim);">Withdrawals</span><div style="text-align:right;"><div style="font-family:var(--mono);font-weight:700;color:#ce1126;" id="revPeriodWd">&#x2014;</div><div style="font-size:0.68rem;color:var(--text-dim);" id="revPeriodWdCount">&#x2014;</div></div></div>
           <div style="display:flex;justify-content:space-between;padding:9px 8px 9px 0;border-bottom:1px solid var(--border);"><span style="font-size:0.82rem;color:var(--text-dim);">Net Flow</span><span style="font-family:var(--mono);font-weight:700;" id="revPeriodNet">&#x2014;</span></div>
-          <div style="display:flex;justify-content:space-between;padding:9px 0 9px 8px;border-bottom:1px solid var(--border);"><span style="font-size:0.82rem;color:var(--text-dim);">B2C Withdrawal Fees</span><span style="font-family:var(--mono);font-weight:700;color:#9284b8;" id="revPeriodFees">&#x2014;</span></div>
+          <div style="display:flex;justify-content:space-between;padding:9px 0 9px 8px;border-bottom:1px solid var(--border);"><span style="font-size:0.82rem;color:var(--text-dim);">B2C Withdrawal Fees</span><div style="text-align:right;"><div style="font-family:var(--mono);font-weight:700;color:#9284b8;" id="revPeriodFees">&#x2014;</div><div style="font-size:0.68rem;color:var(--text-dim);" id="revPeriodFeesCount">&#x2014;</div></div></div>
         </div>
       </div>
       <div class="table-wrap" style="margin-bottom:24px;">
@@ -1418,9 +1420,31 @@ body::after {
         <tbody id="revTopMarketsBody"><tr><td colspan="3" style="text-align:center;color:var(--text-dim);padding:20px;">Loading...</td></tr></tbody></table>
       </div>
       <div class="table-wrap">
-        <div class="table-head"><div class="table-title">Recent Revenue Records</div></div>
-        <table class="data-table"><thead><tr><th>Date</th><th>Type</th><th>Market</th><th>Amount</th></tr></thead>
-        <tbody id="revRecentBody"><tr><td colspan="4" style="text-align:center;color:var(--text-dim);padding:20px;">Loading...</td></tr></tbody></table>
+        <div class="table-head">
+          <div class="table-title">Recent Revenue Records</div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <select id="revRecentTypeFilter" class="search-input" style="font-size:0.78rem;padding:5px 8px;width:160px;" onchange="filterRecentRecords()">
+              <option value="">All Types</option>
+              <option value="FORECASTING_FEE">Forecasting Fee</option>
+              <option value="MARKET_SURPLUS">Market Surplus</option>
+              <option value="CHALLENGE_FEE">Challenge Fee</option>
+            </select>
+            <input type="text" id="revRecentMarketFilter" class="search-input" placeholder="Filter by market..." style="font-size:0.78rem;width:180px;" oninput="filterRecentRecords()">
+            <input type="number" id="revRecentMinAmt" class="search-input" placeholder="Min KES" style="font-size:0.78rem;width:90px;" oninput="filterRecentRecords()">
+            <input type="number" id="revRecentMaxAmt" class="search-input" placeholder="Max KES" style="font-size:0.78rem;width:90px;" oninput="filterRecentRecords()">
+            <button class="topbar-btn" onclick="document.getElementById('revRecentTypeFilter').value='';document.getElementById('revRecentMarketFilter').value='';document.getElementById('revRecentMinAmt').value='';document.getElementById('revRecentMaxAmt').value='';filterRecentRecords();">Clear</button>
+            <span style="font-size:0.72rem;color:var(--text-dim);" id="revRecentCount"></span>
+          </div>
+        </div>
+        <table class="data-table">
+          <thead><tr>
+            <th class="sortable-col" onclick="sortRecentRecords('date')" style="cursor:pointer;user-select:none;">Date <span id="revSortDate"></span></th>
+            <th class="sortable-col" onclick="sortRecentRecords('type')" style="cursor:pointer;user-select:none;">Type <span id="revSortType"></span></th>
+            <th>Market</th>
+            <th class="sortable-col" onclick="sortRecentRecords('amount')" style="cursor:pointer;user-select:none;">Amount <span id="revSortAmount"></span></th>
+          </tr></thead>
+          <tbody id="revRecentBody"><tr><td colspan="4" style="text-align:center;color:var(--text-dim);padding:20px;">Loading...</td></tr></tbody>
+        </table>
       </div>
     </div>
 
@@ -5105,6 +5129,73 @@ function clearRevFilter(fromId, toId, reloadFn) {
   if (f) f.value = ''; if (t) t.value = ''; if (reloadFn) reloadFn();
 }
 
+// ── Recent Revenue Records — client-side filtering and sorting ────────────────
+window.revAllRecords = [];
+window.revSortCol    = 'date';
+window.revSortDir    = 'desc';
+
+function sortRecentRecords(col) {
+  if (window.revSortCol === col) {
+    window.revSortDir = window.revSortDir === 'asc' ? 'desc' : 'asc';
+  } else {
+    window.revSortCol = col;
+    window.revSortDir = col === 'amount' ? 'desc' : 'asc';
+  }
+  filterRecentRecords();
+}
+
+function filterRecentRecords() {
+  var typeF   = (document.getElementById('revRecentTypeFilter')  || {}).value   || '';
+  var mktF    = ((document.getElementById('revRecentMarketFilter')|| {}).value   || '').trim().toLowerCase();
+  var minAmt  = parseFloat((document.getElementById('revRecentMinAmt') || {}).value || '') || null;
+  var maxAmt  = parseFloat((document.getElementById('revRecentMaxAmt') || {}).value || '') || null;
+  var lbl     = {FORECASTING_FEE:'Forecasting Fee', MARKET_SURPLUS:'Market Surplus', CHALLENGE_FEE:'Challenge Fee'};
+  var fmt2    = function(n) { return 'KES ' + Math.round(Number(n||0)).toLocaleString(); };
+
+  var records = (window.revAllRecords || []).filter(function(r) {
+    if (typeF  && r.type !== typeF)                                  return false;
+    if (mktF   && !(r.marketTitle||'').toLowerCase().includes(mktF)) return false;
+    if (minAmt !== null && r.amountKes < minAmt)                     return false;
+    if (maxAmt !== null && r.amountKes > maxAmt)                     return false;
+    return true;
+  });
+
+  // Sort
+  var col = window.revSortCol, dir = window.revSortDir === 'asc' ? 1 : -1;
+  records.sort(function(a, b) {
+    if (col === 'date')   return dir * (new Date(a.createdAt) - new Date(b.createdAt));
+    if (col === 'type')   return dir * (a.type||'').localeCompare(b.type||'');
+    if (col === 'amount') return dir * (a.amountKes - b.amountKes);
+    return 0;
+  });
+
+  // Sort indicators
+  ['date','type','amount'].forEach(function(c) {
+    var el = document.getElementById('revSort' + c.charAt(0).toUpperCase() + c.slice(1));
+    if (el) el.textContent = c === col ? (dir === 1 ? ' ▲' : ' ▼') : '';
+  });
+
+  // Count
+  var countEl = document.getElementById('revRecentCount');
+  if (countEl) countEl.textContent = records.length + ' of ' + (window.revAllRecords||[]).length + ' records';
+
+  var rb = document.getElementById('revRecentBody');
+  if (!rb) return;
+  if (!records.length) {
+    rb.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-dim);padding:16px;">No records match filters</td></tr>';
+    return;
+  }
+  rb.innerHTML = records.map(function(r) {
+    var when = new Date(r.createdAt).toLocaleDateString('en-KE', {day:'numeric', month:'short', year:'numeric'});
+    return '<tr>'
+      + '<td style="font-size:0.78rem;color:var(--text-dim);">' + when + '</td>'
+      + '<td>' + esc(lbl[r.type] || r.type) + '</td>'
+      + '<td style="font-size:0.78rem;max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="' + esc(r.marketTitle||'') + '">' + esc(r.marketTitle || '—') + '</td>'
+      + '<td style="font-family:var(--mono);color:var(--ke-green);font-weight:700;">' + fmt2(r.amountKes) + '</td>'
+      + '</tr>';
+  }).join('');
+}
+
 function loadRevenuePanel() {
   var fmt = function(n) { return 'KES ' + Math.round(Number(n||0)).toLocaleString(); };
   var s   = function(id, v) { var el = document.getElementById(id); if (el) el.textContent = v; };
@@ -5146,8 +5237,9 @@ function loadRevenuePanel() {
     if (gapEl) { gapEl.textContent = fmt(gap); gapEl.style.color = gap >= 0 ? '#166534' : '#ce1126'; }
     var tb = document.getElementById('revTopMarketsBody');
     if (tb) { tb.innerHTML = !d.topMarkets||!d.topMarkets.length ? '<tr><td colspan="3" style="text-align:center;color:var(--text-dim);padding:16px;">No market revenue yet</td></tr>' : d.topMarkets.map(function(m) { return '<tr><td style="font-size:0.78rem;max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="'+esc(m.title)+'">'+esc(m.title||'—')+'</td><td><span class="badge">'+esc(m.status||'—')+'</span></td><td style="font-family:var(--mono);color:var(--ke-green);font-weight:700">'+fmt(m.revenue)+'</td></tr>'; }).join(''); }
-    var rb = document.getElementById('revRecentBody');
-    if (rb) { var lbl = {FORECASTING_FEE:'Forecasting Fee',MARKET_SURPLUS:'Market Surplus',CHALLENGE_FEE:'Challenge Fee'}; rb.innerHTML = !d.recent||!d.recent.length ? '<tr><td colspan="4" style="text-align:center;color:var(--text-dim);padding:16px;">No records yet</td></tr>' : d.recent.map(function(r) { var when = new Date(r.createdAt).toLocaleDateString('en-KE',{day:'numeric',month:'short',year:'numeric'}); return '<tr><td style="font-size:0.78rem;color:var(--text-dim)">'+when+'</td><td>'+esc(lbl[r.type]||r.type)+'</td><td style="font-size:0.78rem">'+esc(r.marketTitle||'—')+'</td><td style="font-family:var(--mono);color:var(--ke-green);font-weight:700">'+fmt(r.amountKes)+'</td></tr>'; }).join(''); }
+    window.revAllRecords = d.recent || [];
+    window.revSortCol = 'date'; window.revSortDir = 'desc';
+    filterRecentRecords();
     loadRevenueLiquidity(); loadRevenueMonthly();
   }).catch(function(err) { console.error('loadRevenuePanel:', err); });
 }
@@ -5165,7 +5257,9 @@ function loadRevenueLiquidity() {
     s('revPeriodWd', fmt(d.periodWdTotal)); s('revPeriodWdCount', (d.periodWdCount||0).toLocaleString() + ' withdrawals');
     var net = d.periodNetFlow || 0, netEl = document.getElementById('revPeriodNet');
     if (netEl) { netEl.textContent = (net >= 0 ? '+' : '') + fmt(net); netEl.style.color = net >= 0 ? '#166534' : '#ce1126'; }
-    s('revPeriodFees', 'KES ' + (d.periodPaystackFees||0).toLocaleString());
+    var pb2c = d.periodB2cFees || 0;
+    s('revPeriodFees', 'KES ' + Math.round(pb2c).toLocaleString());
+    s('revPeriodFeesCount', (d.periodB2cFeeCount||0) + ' withdrawal' + (d.periodB2cFeeCount===1?'':'s'));
   }).catch(function(err) { console.error('loadRevenueLiquidity:', err); });
 }
 
