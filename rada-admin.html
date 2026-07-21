@@ -5306,7 +5306,7 @@ function loadRevenuePanel() {
     s('revVolAvg', 'KES ' + Math.round(d.tradeAvg||0).toLocaleString() + ' avg');
     s('revDepTotal', fmt(d.totalDeposits)); s('revDepTotalCount', (d.depCount||0).toLocaleString() + ' transactions');
     s('revWdTotal', fmt(d.totalWithdrawals)); s('revWdTotalCount', (d.wdCount||0).toLocaleString() + ' transactions');
-    s('revPaystackFees', fmt(d.totalPaystackFees));
+    s('revPaystackFees', fmt(d.costB2cFees || 0));
     var ncEl = document.getElementById('revNetCash');
     if (ncEl) { ncEl.textContent = fmt(d.netCash); ncEl.style.color = d.netCash >= 0 ? '#166534' : '#ce1126'; }
     s('revWalletLiability', fmt(d.walletLiability)); s('revBonusBalances', fmt(d.bonusBalances));
