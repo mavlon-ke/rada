@@ -16,34 +16,37 @@
 //
 // CURRENT STATE:
 //   All traffic → Daraja (Safaricom, Kenya, KES).
-//   Deposits: STK Push (Lipa Na M-Pesa Online).
+//   Deposits:    STK Push (Lipa Na M-Pesa Online).
 //   Withdrawals: B2C (Business to Customer, v1).
-//   Callbacks: /api/payments/daraja/stk-callback, b2c-result, b2c-timeout.
+//   Callbacks:   /api/payments/daraja/stk-callback, b2c-result, b2c-timeout.
 //
 // FUTURE STATE (PawaPay activation):
 //   Uncomment entries in COUNTRY_PROVIDER (types.ts).
 //   Add pawapay.provider.ts.
 //   Update resolveProvider() below.
-//
-// ── Re-exports ─────────────────────────────────────────────────────────────────
-// All names are re-exported with identical signatures so existing route imports
-// compile without any function-call changes — only the import path changes.
 
+// ── Value imports (runtime functions) ────────────────────────────────────────
 import {
-  darajaPhone      as _darajaPhone,
+  darajaPhone       as _darajaPhone,
   generateDarajaRef as _generateDarajaRef,
-  stkPush          as _stkPush,
-  stkQuery         as _stkQuery,
-  b2cTransfer      as _b2cTransfer,
+  stkPush           as _stkPush,
+  stkQuery          as _stkQuery,
+  b2cTransfer       as _b2cTransfer,
 } from '@/lib/daraja/daraja.service';
 
-export type {
+// ── Type imports (compile-time only, erased at build) ────────────────────────
+// Separate import type statement — required by isolatedModules: true in tsconfig
+import type {
   StkPushParams,
   StkPushResult,
   StkQueryResult,
   B2CParams,
   B2CResult,
 } from '@/lib/daraja/daraja.service';
+
+// ── Re-export types for consumers ────────────────────────────────────────────
+// Routes that import from payment.service get full type coverage
+export type { StkPushParams, StkPushResult, StkQueryResult, B2CParams, B2CResult };
 
 // ── Provider resolver ─────────────────────────────────────────────────────────
 // Reads currency/country to route to the correct payment provider.
@@ -55,62 +58,53 @@ function resolveProvider(country?: string, _currency?: string): ProviderName {
   // Future: uncomment and expand when PawaPay is activated
   // if (_currency && ['TZS','UGX','RWF','GHS','ZMW'].includes(_currency)) return 'pawapay';
   // if (country   && ['TZ','UG','RW','GH','ZM','MW'].includes(country))    return 'pawapay';
-  void country; // suppress unused-param warning until routing is active
+  void country; // suppress unused-param lint warning until routing is active
   return 'daraja';
 }
 
 // ── Phone normalisation ───────────────────────────────────────────────────────
-// Produces E.164-like format without + prefix (254XXXXXXXXX for Kenya).
-// Used by routes for DB lookups and payment provider calls.
-// Exported with both the original name (backward compat) and an alias.
+// Produces 254XXXXXXXXX format for Kenya. Pass-through for other country codes.
+// Exported under both names: original (backward compat) and generic alias.
 
 export function darajaPhone(phone: string): string {
   return _darajaPhone(phone);
 }
 
-// Alias for use in future provider-agnostic code
 export const normalisePhone = darajaPhone;
 
 // ── Reference generation ──────────────────────────────────────────────────────
-// Generates an 11-char alphanumeric reference (prefix + 8 hex chars).
-// Prefix encodes transaction type: CRD=Deposit, CRW=Withdrawal, CRC=Challenge.
+// 11-char alphanumeric reference: prefix (3) + 8 hex chars.
+// CRD = CheckRada Deposit · CRW = Withdrawal · CRC = Challenge
 
 export function generateDarajaRef(prefix: 'CRD' | 'CRW' | 'CRC'): string {
   return _generateDarajaRef(prefix);
 }
 
 // ── Deposit initiation ────────────────────────────────────────────────────────
-// Routes call this to initiate a deposit STK Push (or equivalent for other providers).
-// Returns providerRef (CheckoutRequestID) which is stored as transaction.mpesaRef.
+// Initiates an STK Push (Daraja) or equivalent (future providers).
+// CheckoutRequestID is returned and stored as transaction.mpesaRef.
 
-export async function stkPush(
-  params: Parameters<typeof _stkPush>[0]
-): Promise<StkPushResult> {
+export async function stkPush(params: StkPushParams): Promise<StkPushResult> {
   const provider = resolveProvider();
   if (provider === 'daraja') return _stkPush(params);
-  // if (provider === 'pawapay') return pawapayDeposit(adaptToPawaPay(params));
+  // if (provider === 'pawapay') return pawapayDeposit(params);
   throw new Error(`[PaymentService] No deposit handler for provider: ${provider}`);
 }
 
 // ── STK Query ─────────────────────────────────────────────────────────────────
 // Polls Daraja for the status of a pending STK Push.
-// Only relevant for Daraja — PawaPay uses webhooks exclusively.
 
-export async function stkQuery(
-  checkoutRequestId: string
-): Promise<StkQueryResult> {
+export async function stkQuery(checkoutRequestId: string): Promise<StkQueryResult> {
   return _stkQuery(checkoutRequestId);
 }
 
 // ── Withdrawal initiation ─────────────────────────────────────────────────────
-// Routes call this to initiate a withdrawal B2C (or equivalent for other providers).
-// Returns providerRef (OriginatorConversationID) stored as transaction.mpesaRef.
+// Initiates a B2C transfer (Daraja) or equivalent (future providers).
+// OriginatorConversationID is returned and stored as transaction.mpesaRef.
 
-export async function b2cTransfer(
-  params: Parameters<typeof _b2cTransfer>[0]
-): Promise<B2CResult> {
+export async function b2cTransfer(params: B2CParams): Promise<B2CResult> {
   const provider = resolveProvider();
   if (provider === 'daraja') return _b2cTransfer(params);
-  // if (provider === 'pawapay') return pawapayDisbursement(adaptToPawaPay(params));
+  // if (provider === 'pawapay') return pawapayDisbursement(params);
   throw new Error(`[PaymentService] No withdrawal handler for provider: ${provider}`);
 }
