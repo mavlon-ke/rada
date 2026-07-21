@@ -1332,6 +1332,7 @@ body::after {
           <div style="display:flex;justify-content:space-between;padding:9px 0 9px 8px;border-bottom:1px solid var(--border);"><span style="font-size:0.82rem;color:var(--text-dim);">&#x1F381; Referral Rewards</span><span style="font-family:var(--mono);font-size:0.82rem;color:#ce1126;" id="revCostReferral">&#x2014;</span></div>
           <div style="display:flex;justify-content:space-between;padding:9px 8px 9px 0;border-bottom:1px solid var(--border);"><span style="font-size:0.82rem;color:var(--text-dim);">&#x1F3C5; Creator Bounty Paid</span><span style="font-family:var(--mono);font-size:0.82rem;color:#ce1126;" id="revCostBounty">&#x2014;</span></div>
           <div style="display:flex;justify-content:space-between;padding:9px 0 9px 8px;border-bottom:1px solid var(--border);"><span style="font-size:0.82rem;color:var(--text-dim);">&#x1F451; Creator Royalty Paid</span><span style="font-family:var(--mono);font-size:0.82rem;color:#ce1126;" id="revCostRoyalty">&#x2014;</span></div>
+          <div style="display:flex;justify-content:space-between;padding:9px 8px 9px 0;border-bottom:1px solid var(--border);"><span style="font-size:0.82rem;color:var(--text-dim);">&#x1F4F1; M-Pesa B2C Transfer Fees</span><span style="font-family:var(--mono);font-size:0.82rem;color:#ce1126;" id="revCostB2c">&#x2014;</span></div>
           <div style="display:flex;justify-content:space-between;padding:10px 8px 4px 0;grid-column:1/-1;border-top:2px solid var(--border);"><span style="font-size:0.85rem;font-weight:700;">Total Costs</span><span style="font-family:var(--mono);font-size:0.85rem;font-weight:700;color:#ce1126;" id="revCostTotal">&#x2014;</span></div>
         </div>
       </div>
@@ -1360,17 +1361,29 @@ body::after {
         <div class="stat-card"><div class="stat-label">Total Deposits Ever</div><div class="stat-val" id="revDepTotal">&#x2014;</div><div class="stat-change" id="revDepTotalCount" style="color:var(--text-dim);">&#x2014; transactions</div></div>
         <div class="stat-card"><div class="stat-label">Total Withdrawals Ever</div><div class="stat-val" id="revWdTotal">&#x2014;</div><div class="stat-change" id="revWdTotalCount" style="color:var(--text-dim);">&#x2014; transactions</div></div>
         <div class="stat-card"><div class="stat-label">Net Cash Position</div><div class="stat-val" id="revNetCash">&#x2014;</div><div class="stat-change" style="color:var(--text-dim);">Deposits &#x2212; Withdrawals</div></div>
-        <div class="stat-card"><div class="stat-label">Paystack Fees Absorbed</div><div class="stat-val" id="revPaystackFees">&#x2014;</div><div class="stat-change" style="color:var(--text-dim);">All-time withdrawal cost</div></div>
+        <div class="stat-card"><div class="stat-label">Processing Fees</div><div class="stat-val" id="revPaystackFees">&#x2014;</div><div class="stat-change" style="color:var(--text-dim);">KES 0 — Daraja B2C has no fee</div></div>
       </div>
       <div style="font-size:0.7rem;font-weight:700;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;margin:20px 0 8px;">Liquidity &#x2014; Current Snapshot</div>
       <div class="table-card" style="margin-bottom:8px;padding:16px 20px;">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;">
           <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 8px 10px 0;border-bottom:1px solid var(--border);"><div><div style="font-size:0.82rem;color:var(--text-dim);">Wallet Liability</div><div style="font-size:0.68rem;color:var(--text-dim);">if everyone withdraws now</div></div><span style="font-family:var(--mono);font-size:0.9rem;font-weight:700;color:#ce1126;" id="revWalletLiability">&#x2014;</span></div>
           <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0 10px 8px;border-bottom:1px solid var(--border);"><div><div style="font-size:0.82rem;color:var(--text-dim);">Bonus Balances</div><div style="font-size:0.68rem;color:var(--text-dim);">promotional credits, not real KES</div></div><span style="font-family:var(--mono);font-size:0.9rem;font-weight:700;color:var(--amber);" id="revBonusBalances">&#x2014;</span></div>
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 8px 10px 0;border-bottom:1px solid var(--border);"><div><div style="font-size:0.82rem;color:var(--text-dim);">Pending Deposits</div><div style="font-size:0.68rem;color:var(--text-dim);">M-Pesa initiated, not confirmed</div></div><span style="font-family:var(--mono);font-size:0.9rem;font-weight:700;color:var(--primary);" id="revPendingDep">&#x2014;</span></div>
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0 10px 8px;border-bottom:1px solid var(--border);"><div><div style="font-size:0.82rem;color:var(--text-dim);">Pending Withdrawals</div><div style="font-size:0.68rem;color:var(--text-dim);">deducted from wallets, not sent</div></div><span style="font-family:var(--mono);font-size:0.9rem;font-weight:700;color:#ce1126;" id="revPendingWd">&#x2014;</span></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 8px 10px 0;border-bottom:1px solid var(--border);"><div><div style="font-size:0.82rem;color:var(--text-dim);">Pending Deposits</div><div style="font-size:0.68rem;color:var(--text-dim);">M-Pesa initiated (last 2 hrs) — older STK pushes are stale</div></div><span style="font-family:var(--mono);font-size:0.9rem;font-weight:700;color:var(--primary);" id="revPendingDep">&#x2014;</span></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0 10px 8px;border-bottom:1px solid var(--border);"><div><div style="font-size:0.82rem;color:var(--text-dim);">Pending Withdrawals</div><div style="font-size:0.68rem;color:var(--text-dim);">In-flight (last 10 min) — deducted from wallets, not yet sent</div></div><span style="font-family:var(--mono);font-size:0.9rem;font-weight:700;color:#ce1126;" id="revPendingWd">&#x2014;</span></div>
         </div>
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0 4px;margin-top:8px;border-top:2px solid var(--border);"><div><div style="font-size:0.85rem;font-weight:700;">Liquidity Gap</div><div style="font-size:0.68rem;color:var(--text-dim);">Net Cash &#x2212; Wallet Liability.</div></div><div style="font-family:var(--mono);font-size:1.2rem;font-weight:800;" id="revLiquidityGap">&#x2014;</div></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0 4px;margin-top:8px;border-top:2px solid var(--border);"><div><div style="font-size:0.85rem;font-weight:700;">Liquidity Gap</div><div style="font-size:0.68rem;color:var(--text-dim);">Net Cash &#x2212; Total Liability (wallets + markets + challenges).</div></div><div style="font-family:var(--mono);font-size:1.2rem;font-weight:800;" id="revLiquidityGap">&#x2014;</div></div>
+          </div>
+          <div style="margin-top:10px;padding:10px;background:rgba(206,17,38,0.05);border:1px solid rgba(206,17,38,0.15);border-radius:8px;">
+            <div style="font-size:0.7rem;font-weight:700;color:var(--text-dim);margin-bottom:8px;">TOTAL PLATFORM LIABILITY BREAKDOWN</div>
+            <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);"><span style="font-size:0.78rem;color:var(--text-dim);">User Wallets</span><span style="font-family:var(--mono);font-size:0.82rem;font-weight:700;color:#ce1126;" id="revLiabWallets">—</span></div>
+            <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);"><span style="font-size:0.78rem;color:var(--text-dim);">Active Market Pools</span><span style="font-family:var(--mono);font-size:0.82rem;font-weight:700;color:#ce1126;" id="revMarketPools">—</span></div>
+            <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);"><span style="font-size:0.78rem;color:var(--text-dim);">Active Challenge Pools</span><span style="font-family:var(--mono);font-size:0.82rem;font-weight:700;color:#ce1126;" id="revChallengePools">—</span></div>
+            <div style="display:flex;justify-content:space-between;padding:6px 0 2px;"><span style="font-size:0.82rem;font-weight:700;">Total Liability</span><span style="font-family:var(--mono);font-size:0.9rem;font-weight:800;color:#ce1126;" id="revTotalLiability">—</span></div>
+          </div>
+          <div style="margin-top:8px;padding:8px;background:rgba(109,40,217,0.06);border:1px solid rgba(109,40,217,0.15);border-radius:8px;">
+            <div style="font-size:0.7rem;font-weight:700;color:var(--text-dim);margin-bottom:4px;">ADMIN MANUAL ADJUSTMENTS</div>
+            <div style="font-size:0.75rem;color:var(--text-dim);" id="revAdminAdjust">—</div>
+          </div>
       </div>
       <div style="font-size:0.7rem;font-weight:700;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;margin:20px 0 8px;">Deposits &amp; Withdrawals &#x2014; Period</div>
       <div class="table-card" style="margin-bottom:24px;padding:16px 20px;">
@@ -1384,9 +1397,9 @@ body::after {
           <div style="display:flex;justify-content:space-between;padding:9px 8px 9px 0;border-bottom:1px solid var(--border);"><span style="font-size:0.82rem;color:var(--text-dim);">Deposits</span><div style="text-align:right;"><div style="font-family:var(--mono);font-weight:700;color:#166534;" id="revPeriodDep">&#x2014;</div><div style="font-size:0.68rem;color:var(--text-dim);" id="revPeriodDepCount">&#x2014;</div></div></div>
           <div style="display:flex;justify-content:space-between;padding:9px 0 9px 8px;border-bottom:1px solid var(--border);"><span style="font-size:0.82rem;color:var(--text-dim);">Withdrawals</span><div style="text-align:right;"><div style="font-family:var(--mono);font-weight:700;color:#ce1126;" id="revPeriodWd">&#x2014;</div><div style="font-size:0.68rem;color:var(--text-dim);" id="revPeriodWdCount">&#x2014;</div></div></div>
           <div style="display:flex;justify-content:space-between;padding:9px 8px 9px 0;border-bottom:1px solid var(--border);"><span style="font-size:0.82rem;color:var(--text-dim);">Net Flow</span><span style="font-family:var(--mono);font-weight:700;" id="revPeriodNet">&#x2014;</span></div>
-          <div style="display:flex;justify-content:space-between;padding:9px 0 9px 8px;border-bottom:1px solid var(--border);"><span style="font-size:0.82rem;color:var(--text-dim);">Paystack Fees</span><span style="font-family:var(--mono);font-weight:700;color:#9284b8;" id="revPeriodFees">&#x2014;</span></div>
+          <div style="display:flex;justify-content:space-between;padding:9px 0 9px 8px;border-bottom:1px solid var(--border);"><span style="font-size:0.82rem;color:var(--text-dim);">Processing Fees</span><span style="font-family:var(--mono);font-weight:700;color:#9284b8;" id="revPeriodFees">&#x2014;</span></div>
         </div>
-        <div style="font-size:0.68rem;color:var(--text-dim);margin-top:10px;">* Paystack fees: &#x2264;KES 1,500 = KES 20 &#x2044; &#x2264;KES 20,000 = KES 40 &#x2044; &gt;KES 20,000 = KES 60 per withdrawal</div>
+        <div style="font-size:0.68rem;color:var(--text-dim);margin-top:10px;">* Daraja B2C withdrawals have no per-transaction processing fee.</div>
       </div>
       <div class="table-wrap" style="margin-bottom:24px;">
         <div class="table-head">
@@ -5109,10 +5122,11 @@ function loadRevenuePanel() {
     s('revTotal', fmt(d.grossTotal));
     s('revCostSuggestion', '- ' + fmt(d.costSuggestion)); s('revCostReferral', '- ' + fmt(d.costReferral));
     s('revCostBounty', '- ' + fmt(d.costBounty)); s('revCostRoyalty', '- ' + fmt(d.costRoyalty));
+    s('revCostB2c', '- ' + fmt(d.costB2cFees||0) + ' (' + (d.b2cFeeCount||0) + ' withdrawals)');
     s('revCostTotal', '- ' + fmt(d.totalCosts));
     var net = d.netRevenue || 0, netEl = document.getElementById('revNetRevenue');
     if (netEl) { netEl.textContent = fmt(net); netEl.style.color = net >= 0 ? '#166534' : '#ce1126'; }
-    s('revNetBreakdown', fmt(d.grossTotal) + ' gross − ' + fmt(d.costSuggestion) + ' suggestion − ' + fmt(d.costReferral) + ' referral − ' + fmt(d.costBounty) + ' bounties − ' + fmt(d.costRoyalty) + ' royalties');
+    s('revNetBreakdown', fmt(d.grossTotal) + ' gross − ' + fmt(d.costSuggestion) + ' suggestion − ' + fmt(d.costReferral) + ' referral − ' + fmt(d.costBounty) + ' bounties − ' + fmt(d.costRoyalty) + ' royalties − ' + fmt(d.costB2cFees||0) + ' M-Pesa B2C fees');
     s('revRateNote', 'Fee: ' + ((d.feeRate||0.05)*100).toFixed(1) + '% per trade  ·  Resolution cut: ' + ((d.cutRate||0.20)*100).toFixed(1) + '% of pool');
     s('revVolTotal', fmt(d.tradeTotal)); s('revVolCount', (d.tradeCount||0).toLocaleString() + ' trades');
     s('revVolAvg', 'KES ' + Math.round(d.tradeAvg||0).toLocaleString() + ' avg');
@@ -5122,7 +5136,13 @@ function loadRevenuePanel() {
     var ncEl = document.getElementById('revNetCash');
     if (ncEl) { ncEl.textContent = fmt(d.netCash); ncEl.style.color = d.netCash >= 0 ? '#166534' : '#ce1126'; }
     s('revWalletLiability', fmt(d.walletLiability)); s('revBonusBalances', fmt(d.bonusBalances));
-    s('revPendingDep', fmt(d.pendingDeposits) + ' (' + (d.pendingDepCount||0) + ')');
+    s('revLiabWallets', fmt(d.walletLiability||0));
+    s('revMarketPools', fmt(d.marketPools||0)); s('revChallengePools', fmt(d.challengePools||0));
+    s('revTotalLiability', fmt(d.totalLiability||0));
+    s('revPendingDep', fmt(d.pendingDeposits) + ' (' + (d.pendingDepCount||0) + ' active)');
+    // Admin adjustments visibility
+    var adjEl = document.getElementById('revAdminAdjust');
+    if (adjEl) adjEl.textContent = 'Credits: ' + fmt(d.adminCredits||0) + ' (' + (d.adminCredCount||0) + ') · Debits: ' + fmt(d.adminDebits||0) + ' (' + (d.adminDebCount||0) + ') · Net: KES ' + Math.round(d.netAdminAdjust||0).toLocaleString();
     s('revPendingWd', fmt(d.pendingWithdrawals) + ' (' + (d.pendingWdCount||0) + ')');
     var gap = d.liquidityGap || 0, gapEl = document.getElementById('revLiquidityGap');
     if (gapEl) { gapEl.textContent = fmt(gap); gapEl.style.color = gap >= 0 ? '#166534' : '#ce1126'; }

@@ -5,14 +5,22 @@ import { requireAdmin, adminUnauthorized } from '@/lib/auth/admin';
 
 export const dynamic = 'force-dynamic';
 
-// Processing fee per withdrawal — Daraja B2C has no per-transaction fee.
-const processingFee = (_amountKes: number) => 0;
-
 function dateWhere(from?: string | null, to?: string | null) {
   if (!from && !to) return undefined;
   const gte = from ? new Date(from)                          : undefined;
   const lte = to   ? new Date(to + 'T23:59:59.999Z')        : undefined;
   return { ...(gte ? { gte } : {}), ...(lte ? { lte } : {}) };
+}
+
+// B2C Registered User tariff — Safaricom Business cost per withdrawal (Business Bouquet plan)
+// Customer pays KES 0 on all bands; business (CheckRada) pays these amounts:
+function b2cFee(amountKes: number): number {
+  const amt = Math.abs(amountKes);
+  if (amt <=   100) return  0;
+  if (amt <= 1_500) return  4;
+  if (amt <= 5_000) return  8;
+  if (amt <= 20_000) return 10;
+  return 12; // KES 20,001–150,000
 }
 
 export async function GET(req: NextRequest) {
@@ -73,8 +81,20 @@ export async function GET(req: NextRequest) {
     const costReferral   = Number(referralAgg._sum.amountKes ?? 0);
     const costBounty     = Number(bountyAgg._sum.amountKes   ?? 0);
     const costRoyalty    = Math.abs(Number(royaltyAgg._sum.amountKes ?? 0));
-    const totalCosts     = costSuggestion + costReferral + costBounty + costRoyalty;
-    const netRevenue     = grossTotal - totalCosts;
+
+    // B2C transfer fees — Safaricom charges CheckRada per disbursement withdrawal
+    // Fetches individual withdrawal amounts to apply the banded tariff table
+    const wdAmounts = await prisma.transaction.findMany({
+      where:  { type: 'WITHDRAWAL', status: 'SUCCESS', amountKes: { lt: 0 } },
+      select: { amountKes: true },
+    });
+    const costB2cFees = wdAmounts.reduce(
+      (sum, t) => sum + b2cFee(Number(t.amountKes)), 0
+    );
+    const b2cFeeCount = wdAmounts.length;
+
+    const totalCosts = costSuggestion + costReferral + costBounty + costRoyalty + costB2cFees;
+    const netRevenue = grossTotal - totalCosts;
 
     // ── 3. PLATFORM CONFIG — current rates ───────────────────────────────────
     const config = await prisma.platformConfig.findUnique({ where: { id: 'singleton' } });
@@ -92,9 +112,10 @@ export async function GET(req: NextRequest) {
       _sum:   { amountKes: true },
       _count: { id: true },
     });
-    const tradeTotal = Number(tradeAgg._sum.amountKes ?? 0);
+    // TRADE_BUY amountKes is a negative wallet debit — take absolute value for display
+    const tradeTotal = Math.abs(Number(tradeAgg._sum.amountKes ?? 0));
     const tradeCount = tradeAgg._count.id;
-    const tradeAvg   = tradeCount > 0 ? tradeTotal / tradeCount : 0;
+    const tradeAvg   = tradeCount > 0 ? Math.round(tradeTotal / tradeCount) : 0;
 
     // ── 5. LIQUIDITY — all time ──────────────────────────────────────────────
     // Real M-Pesa only. Admin manual adjustments are stored as DEPOSIT/WITHDRAWAL
@@ -134,12 +155,23 @@ export async function GET(req: NextRequest) {
     const [walletAgg, bonusAgg, pendingDepAgg, pendingWdAgg] = await Promise.all([
       prisma.user.aggregate({ _sum: { balanceKes:      true } }),
       prisma.user.aggregate({ _sum: { bonusBalanceKes: true } }),
+      // Pending deposits: last 2 hours only — STK Push expires within minutes.
+      // Older PENDING records are stale (cancelled / timed-out) and not real obligations.
       prisma.transaction.aggregate({
-        where: { type: 'DEPOSIT',    status: 'PENDING' },
+        where: {
+          type:      'DEPOSIT',
+          status:    'PENDING',
+          createdAt: { gte: new Date(Date.now() - 2 * 60 * 60 * 1000) },
+        },
         _sum: { amountKes: true }, _count: { id: true },
       }),
+      // Pending withdrawals: last 10 minutes only — Daraja B2C completes within minutes.
       prisma.transaction.aggregate({
-        where: { type: 'WITHDRAWAL', status: 'PENDING' },
+        where: {
+          type:      'WITHDRAWAL',
+          status:    'PENDING',
+          createdAt: { gte: new Date(Date.now() - 10 * 60 * 1000) },
+        },
         _sum: { amountKes: true }, _count: { id: true },
       }),
     ]);
@@ -271,7 +303,9 @@ export async function GET(req: NextRequest) {
       totalChallenge, challengeCount: challengeAgg._count.id,
       grossTotal,
       // Costs
-      costSuggestion, costReferral, costBounty, costRoyalty, totalCosts,
+      costSuggestion, costReferral, costBounty, costRoyalty,
+      costB2cFees, b2cFeeCount,
+      totalCosts,
       // Net
       netRevenue,
       // Config
