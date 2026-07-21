@@ -85,7 +85,7 @@ export function generateDarajaRef(prefix: 'CRD' | 'CRW' | 'CRC'): string {
 
 export async function stkPush(
   params: Parameters<typeof _stkPush>[0]
-): ReturnType<typeof _stkPush> {
+): Promise<StkPushResult> {
   const provider = resolveProvider();
   if (provider === 'daraja') return _stkPush(params);
   // if (provider === 'pawapay') return pawapayDeposit(adaptToPawaPay(params));
@@ -98,7 +98,7 @@ export async function stkPush(
 
 export async function stkQuery(
   checkoutRequestId: string
-): ReturnType<typeof _stkQuery> {
+): Promise<StkQueryResult> {
   return _stkQuery(checkoutRequestId);
 }
 
@@ -108,7 +108,7 @@ export async function stkQuery(
 
 export async function b2cTransfer(
   params: Parameters<typeof _b2cTransfer>[0]
-): ReturnType<typeof _b2cTransfer> {
+): Promise<B2CResult> {
   const provider = resolveProvider();
   if (provider === 'daraja') return _b2cTransfer(params);
   // if (provider === 'pawapay') return pawapayDisbursement(adaptToPawaPay(params));
