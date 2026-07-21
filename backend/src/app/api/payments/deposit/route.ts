@@ -16,7 +16,7 @@ import { z }                         from 'zod';
 import { prisma }                    from '@/lib/db/prisma';
 import { requireAuth }               from '@/lib/auth/session';
 import { withErrorHandling }         from '@/lib/security/route-guard';
-import { stkPush, generateDarajaRef, darajaPhone } from '@/lib/daraja/daraja.service';
+import { stkPush, generateDarajaRef, darajaPhone } from '@/lib/payments/payment.service';
 
 export const dynamic = 'force-dynamic';
 

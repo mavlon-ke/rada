@@ -16,7 +16,7 @@ import { requireAuth }        from '@/lib/auth/session';
 import { createNotification } from '@/lib/notifications';
 import { displayName }        from '@/lib/user/display-name';
 import { sanitizeText }       from '@/lib/security/middleware';
-import { stkPush, generateDarajaRef, darajaPhone } from '@/lib/daraja/daraja.service';
+import { stkPush, generateDarajaRef, darajaPhone } from '@/lib/payments/payment.service';
 
 // dbPhone: normalises to 254XXXXXXXXX for DB lookups.
 function dbPhone(phone: string): string {

@@ -10,7 +10,7 @@ import { prisma }             from '@/lib/db/prisma';
 import { requireAuth }        from '@/lib/auth/session';
 import { createNotification } from '@/lib/notifications';
 import { displayName }        from '@/lib/user/display-name';
-import { stkPush, generateDarajaRef, darajaPhone } from '@/lib/daraja/daraja.service';
+import { stkPush, generateDarajaRef, darajaPhone } from '@/lib/payments/payment.service';
 
 export async function POST(
   req: NextRequest,

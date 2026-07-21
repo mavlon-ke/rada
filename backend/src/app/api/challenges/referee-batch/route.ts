@@ -15,7 +15,7 @@ import { requireAuth }        from '@/lib/auth/session';
 import { createNotification } from '@/lib/notifications';
 import { displayName }        from '@/lib/user/display-name';
 import { sanitizeText }       from '@/lib/security/middleware';
-import { darajaPhone } from '@/lib/daraja/daraja.service';
+import { darajaPhone } from '@/lib/payments/payment.service';
 
 
 // dbPhone: strips leading + for DB lookups (users stored as 254XXXXXXXXX, not +254XXXXXXXXX).

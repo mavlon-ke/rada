@@ -4,7 +4,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma }                    from '@/lib/db/prisma';
 import { requireAdmin, adminUnauthorized, logAdminAction } from '@/lib/auth/admin';
-import { b2cTransfer, generateDarajaRef, darajaPhone }     from '@/lib/daraja/daraja.service';
+import { b2cTransfer, generateDarajaRef, darajaPhone }     from '@/lib/payments/payment.service';
 
 export async function POST(
   req: NextRequest,

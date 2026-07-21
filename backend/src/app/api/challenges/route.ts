@@ -13,7 +13,7 @@ import { requireAuth } from '@/lib/auth/session';
 import { randomInt } from 'crypto';
 import { createNotification } from '@/lib/notifications';
 import { displayName }        from '@/lib/user/display-name';
-import { stkPush, generateDarajaRef, darajaPhone } from '@/lib/daraja/daraja.service';
+import { stkPush, generateDarajaRef, darajaPhone } from '@/lib/payments/payment.service';
 
 const MAX_STAKE = 20000;  // KES 20,000 per person (Social Challenge cap)
 
