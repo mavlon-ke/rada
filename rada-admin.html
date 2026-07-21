@@ -1361,7 +1361,7 @@ body::after {
         <div class="stat-card"><div class="stat-label">Total Deposits Ever</div><div class="stat-val" id="revDepTotal">&#x2014;</div><div class="stat-change" id="revDepTotalCount" style="color:var(--text-dim);">&#x2014; transactions</div></div>
         <div class="stat-card"><div class="stat-label">Total Withdrawals Ever</div><div class="stat-val" id="revWdTotal">&#x2014;</div><div class="stat-change" id="revWdTotalCount" style="color:var(--text-dim);">&#x2014; transactions</div></div>
         <div class="stat-card"><div class="stat-label">Net Cash Position</div><div class="stat-val" id="revNetCash">&#x2014;</div><div class="stat-change" style="color:var(--text-dim);">Deposits &#x2212; Withdrawals</div></div>
-        <div class="stat-card"><div class="stat-label">Processing Fees</div><div class="stat-val" id="revPaystackFees">&#x2014;</div><div class="stat-change" style="color:var(--text-dim);">KES 0 — Daraja B2C has no fee</div></div>
+        <div class="stat-card"><div class="stat-label">B2C Withdrawal Fees</div><div class="stat-val" id="revPaystackFees">&#x2014;</div><div class="stat-change" style="color:var(--text-dim);">Calculated per Safaricom tariff</div></div>
       </div>
       <div style="font-size:0.7rem;font-weight:700;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;margin:20px 0 8px;">Liquidity &#x2014; Current Snapshot</div>
       <div class="table-card" style="margin-bottom:8px;padding:16px 20px;">
@@ -1384,7 +1384,6 @@ body::after {
             <div style="font-size:0.7rem;font-weight:700;color:var(--text-dim);margin-bottom:4px;">ADMIN MANUAL ADJUSTMENTS</div>
             <div style="font-size:0.75rem;color:var(--text-dim);" id="revAdminAdjust">—</div>
           </div>
-      </div>
       <div style="font-size:0.7rem;font-weight:700;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;margin:20px 0 8px;">Deposits &amp; Withdrawals &#x2014; Period</div>
       <div class="table-card" style="margin-bottom:24px;padding:16px 20px;">
         <div style="display:flex;gap:8px;align-items:center;margin-bottom:16px;flex-wrap:wrap;">
@@ -1397,9 +1396,8 @@ body::after {
           <div style="display:flex;justify-content:space-between;padding:9px 8px 9px 0;border-bottom:1px solid var(--border);"><span style="font-size:0.82rem;color:var(--text-dim);">Deposits</span><div style="text-align:right;"><div style="font-family:var(--mono);font-weight:700;color:#166534;" id="revPeriodDep">&#x2014;</div><div style="font-size:0.68rem;color:var(--text-dim);" id="revPeriodDepCount">&#x2014;</div></div></div>
           <div style="display:flex;justify-content:space-between;padding:9px 0 9px 8px;border-bottom:1px solid var(--border);"><span style="font-size:0.82rem;color:var(--text-dim);">Withdrawals</span><div style="text-align:right;"><div style="font-family:var(--mono);font-weight:700;color:#ce1126;" id="revPeriodWd">&#x2014;</div><div style="font-size:0.68rem;color:var(--text-dim);" id="revPeriodWdCount">&#x2014;</div></div></div>
           <div style="display:flex;justify-content:space-between;padding:9px 8px 9px 0;border-bottom:1px solid var(--border);"><span style="font-size:0.82rem;color:var(--text-dim);">Net Flow</span><span style="font-family:var(--mono);font-weight:700;" id="revPeriodNet">&#x2014;</span></div>
-          <div style="display:flex;justify-content:space-between;padding:9px 0 9px 8px;border-bottom:1px solid var(--border);"><span style="font-size:0.82rem;color:var(--text-dim);">Processing Fees</span><span style="font-family:var(--mono);font-weight:700;color:#9284b8;" id="revPeriodFees">&#x2014;</span></div>
+          <div style="display:flex;justify-content:space-between;padding:9px 0 9px 8px;border-bottom:1px solid var(--border);"><span style="font-size:0.82rem;color:var(--text-dim);">B2C Withdrawal Fees</span><span style="font-family:var(--mono);font-weight:700;color:#9284b8;" id="revPeriodFees">&#x2014;</span></div>
         </div>
-        <div style="font-size:0.68rem;color:var(--text-dim);margin-top:10px;">* Daraja B2C withdrawals have no per-transaction processing fee.</div>
       </div>
       <div class="table-wrap" style="margin-bottom:24px;">
         <div class="table-head">
