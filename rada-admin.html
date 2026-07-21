@@ -1201,33 +1201,57 @@ body::after {
          PANEL: PAYOUTS
     ═══════════════════════════════════════════════════════════════════════ -->
     <div class="panel" id="panel-payouts">
-      <div class="page-title">Payout Management</div>
-      <div class="page-sub">Monitor and retry market payouts via M-Pesa (Daraja)</div>
-      <div class="stat-row">
+      <div class="page-head">
+        <div>
+          <div class="page-title">Payout Management</div>
+          <div class="page-sub">Market and challenge payouts credited to user wallets via M-Pesa (Daraja)</div>
+        </div>
+        <button class="topbar-btn primary" onclick="loadPayoutsPanel()">🔄 Refresh</button>
+      </div>
+      <div class="stat-row" style="margin-bottom:20px;">
         <div class="stat-card"><div class="stat-label">Paid Out (All Time)</div><div class="stat-val green" id="pyTotalPaid">—</div></div>
         <div class="stat-card"><div class="stat-label">Successful Payouts</div><div class="stat-val green" id="pySuccessCount">—</div></div>
         <div class="stat-card"><div class="stat-label">Failed Payouts</div><div class="stat-val red" id="pyFailedCount">—</div><div class="stat-change down" id="pyFailedNote">Needs retry</div></div>
         <div class="stat-card"><div class="stat-label">Pending</div><div class="stat-val amber" id="pyPendingCount">—</div></div>
       </div>
-      <div class="table-card" style="box-shadow:0 2px 12px rgba(0,0,0,0.05);margin-bottom:16px;">
-        <div class="table-header">
-          <div class="table-title">❌ Failed Payouts — Needs Retry</div>
-          <button class="topbar-btn primary" onclick="loadPayoutsPanel()">🔄 Refresh</button>
-        </div>
-        <table class="tbl">
-          <thead><tr><th>User</th><th>Amount</th><th>Description</th><th>Date</th><th>Action</th></tr></thead>
-          <tbody id="failedPayoutsBody"><tr><td colspan="5" style="text-align:center;color:var(--text-dim);padding:20px;">Loading...</td></tr></tbody>
-        </table>
+
+      <!-- Filter toolbar -->
+      <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:12px;">
+        <button class="filter-tab active" id="pyTab-all"      onclick="pySetStatus('all',this)">All</button>
+        <button class="filter-tab"        id="pyTab-SUCCESS"  onclick="pySetStatus('SUCCESS',this)">✅ Successful</button>
+        <button class="filter-tab"        id="pyTab-FAILED"   onclick="pySetStatus('FAILED',this)" style="color:#ce1126;">❌ Failed</button>
+        <button class="filter-tab"        id="pyTab-PENDING"  onclick="pySetStatus('PENDING',this)">⏳ Pending</button>
+        <span style="color:var(--border);padding:0 2px;">|</span>
+        <select id="pyTypeFilter" class="search-input" style="font-size:0.78rem;padding:5px 8px;width:160px;" onchange="renderPayouts()">
+          <option value="">All Types</option>
+          <option value="PAYOUT">Market Payout</option>
+          <option value="CHALLENGE_PAYOUT">Challenge Payout</option>
+        </select>
+        <input type="text" id="pyUserFilter" class="search-input" placeholder="Search user..." style="font-size:0.78rem;width:160px;" oninput="renderPayouts()">
+        <input type="date" id="pyDateFrom" class="search-input" style="font-size:0.78rem;width:136px;" onchange="renderPayouts()">
+        <span style="font-size:0.78rem;color:var(--text-dim);">to</span>
+        <input type="date" id="pyDateTo" class="search-input" style="font-size:0.78rem;width:136px;" onchange="renderPayouts()">
+        <button class="topbar-btn" onclick="pyClearFilters()">Clear</button>
+        <span style="font-size:0.72rem;color:var(--text-dim);margin-left:4px;" id="pyRecordCount"></span>
       </div>
+
+      <!-- Unified payouts table -->
       <div class="table-card" style="box-shadow:0 2px 12px rgba(0,0,0,0.05);">
-        <div class="table-header">
-          <div class="table-title">✅ Recent Successful Payouts</div>
-        </div>
         <table class="tbl">
-          <thead><tr><th>User</th><th>Amount</th><th>M-Pesa Ref</th><th>Description</th><th>Date</th></tr></thead>
-          <tbody id="successPayoutsBody"><tr><td colspan="5" style="text-align:center;color:var(--text-dim);padding:20px;">Loading...</td></tr></tbody>
+          <thead><tr>
+            <th>User</th>
+            <th>Amount</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Date</th>
+            <th id="pyActionHead">Action</th>
+          </tr></thead>
+          <tbody id="payoutsTableBody"><tr><td colspan="6" style="text-align:center;color:var(--text-dim);padding:20px;">Loading...</td></tr></tbody>
         </table>
       </div>
+      <!-- Hidden legacy IDs for JS compat -->
+      <span id="failedPayoutsBody" style="display:none"></span>
+      <span id="successPayoutsBody" style="display:none"></span>
     </div>
 
 
@@ -3740,77 +3764,135 @@ function executeDeleteUser() {
 // ── PAYOUTS PANEL ─────────────────────────────────────────────────────────────
 
 function loadPayoutsPanel() {
-  var failedBody  = document.getElementById('failedPayoutsBody');
-  var successBody = document.getElementById('successPayoutsBody');
-  if (failedBody)  failedBody.innerHTML  = '<tr><td colspan="5" style="text-align:center;color:var(--text-dim);padding:20px;">Loading...</td></tr>';
-  if (successBody) successBody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-dim);padding:20px;">Loading...</td></tr>';
+  var body = document.getElementById('payoutsTableBody');
+  if (body) body.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-dim);padding:20px;">Loading...</td></tr>';
 
   adminFetch('/api/admin/transactions?type=PAYOUT,CHALLENGE_PAYOUT&limit=200')
   .then(function(r) { return r.json(); })
   .then(function(d) {
-    var txns    = d.transactions || [];
-    var failed  = txns.filter(function(t) { return t.status === 'FAILED'; });
-    var success = txns.filter(function(t) { return t.status === 'SUCCESS'; });
-    var pending = txns.filter(function(t) { return t.status === 'PENDING'; });
-    var totalPaid = success.reduce(function(s, t) { return s + Number(t.amountKes); }, 0);
+    window.pyAllTxns = d.transactions || [];
+    var all     = window.pyAllTxns;
+    var failed  = all.filter(function(t) { return t.status === 'FAILED'; });
+    var success = all.filter(function(t) { return t.status === 'SUCCESS'; });
+    var pending = all.filter(function(t) { return t.status === 'PENDING'; });
+    var totalPaid = success.reduce(function(s,t) { return s + Number(t.amountKes); }, 0);
 
-    // Update stat cards
     var s = function(id, v) { var el = document.getElementById(id); if (el) el.textContent = v; };
     s('pyTotalPaid',    'KES ' + Math.round(totalPaid).toLocaleString());
-    s('pySuccessCount', success.length);
-    s('pyFailedCount',  failed.length);
-    s('pyPendingCount', pending.length);
+    s('pySuccessCount', success.length.toLocaleString());
+    s('pyFailedCount',  failed.length.toLocaleString());
+    s('pyPendingCount', pending.length.toLocaleString());
     s('pyFailedNote',   failed.length > 0 ? failed.length + ' need retry' : 'None — all clear');
 
-    // Failed payouts table
-    if (failedBody) {
-      failedBody.innerHTML = failed.length === 0
-        ? '<tr><td colspan="5" style="text-align:center;color:var(--green);padding:20px;">✓ No failed payouts</td></tr>'
-        : failed.map(function(t) {
-            var ago  = timeAgo(t.createdAt);
-            var user = t.user ? (t.user.name || t.user.phone) : '—';
-            return '<tr>' +
-              '<td style="font-weight:600">' + esc(user) + '</td>' +
-              '<td class="mono" style="color:var(--red)">KES ' + Number(t.amountKes).toLocaleString() + '</td>' +
-              '<td style="font-size:0.72rem;color:var(--text-dim);max-width:200px">' + (t.description || '—').slice(0,80) + '</td>' +
-              '<td class="mono" style="color:var(--text-dim)">' + ago + '</td>' +
-              '<td><button class="act-btn act-green" data-action="retry-payout" data-id="' + t.id + '" data-user="' + user + '" data-amount="' + Number(t.amountKes) + '">↺ Retry</button></td>' +
-            '</tr>';
-          }).join('');
-      failedBody.onclick = function(e) {
-        var btn = e.target.closest('button[data-action="retry-payout"]');
-        if (!btn) return;
-        retryPayout(btn.dataset.id, btn.dataset.user, btn.dataset.amount);
-      };
-    }
+    // Highlight Failed tab if there are failed payouts
+    var failTab = document.getElementById('pyTab-FAILED');
+    if (failTab) failTab.style.color = failed.length > 0 ? '#ce1126' : '';
 
-    // Successful payouts table
-    if (successBody) {
-      successBody.innerHTML = success.length === 0
-        ? '<tr><td colspan="5" style="text-align:center;color:var(--text-dim);padding:20px;">No successful payouts yet</td></tr>'
-        : success.slice(0, 20).map(function(t) {
-            var ago  = timeAgo(t.createdAt);
-            var user = t.user ? (t.user.name || t.user.phone) : '—';
-            return '<tr>' +
-              '<td style="font-weight:600">' + esc(user) + '</td>' +
-              '<td class="mono" style="color:var(--green)">KES ' + Number(t.amountKes).toLocaleString() + '</td>' +
-              '<td class="mono" style="color:var(--text-dim)">' + (t.mpesaRef || '—') + '</td>' +
-              '<td style="font-size:0.72rem;color:var(--text-dim);max-width:200px">' + (t.description || '—').slice(0,80) + '</td>' +
-              '<td class="mono" style="color:var(--text-dim)">' + ago + '</td>' +
-            '</tr>';
-          }).join('');
-    }
+    renderPayouts();
   })
   .catch(function(err) {
     console.error('loadPayoutsPanel:', err);
-    var failedBody = document.getElementById('failedPayoutsBody');
-    if (failedBody) failedBody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#ce1126;padding:20px;">Failed to load payouts. Check connection.</td></tr>';
+    var body = document.getElementById('payoutsTableBody');
+    if (body) body.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#ce1126;padding:20px;">Failed to load. Check connection.</td></tr>';
   });
+}
+
+function pySetStatus(status, btn) {
+  window.pyStatusFilter = status;
+  document.querySelectorAll('.filter-tab[id^="pyTab-"]').forEach(function(b) { b.classList.remove('active'); });
+  if (btn) btn.classList.add('active');
+  // Show/hide Action column header based on whether failed payouts visible
+  var head = document.getElementById('pyActionHead');
+  if (head) head.style.display = (status === 'all' || status === 'FAILED' || status === 'PENDING') ? '' : 'none';
+  renderPayouts();
+}
+
+function pyClearFilters() {
+  window.pyStatusFilter = 'all';
+  document.querySelectorAll('.filter-tab[id^="pyTab-"]').forEach(function(b) { b.classList.remove('active'); });
+  var allTab = document.getElementById('pyTab-all');
+  if (allTab) allTab.classList.add('active');
+  var tf = document.getElementById('pyTypeFilter');  if (tf) tf.value = '';
+  var uf = document.getElementById('pyUserFilter');  if (uf) uf.value = '';
+  var df = document.getElementById('pyDateFrom');    if (df) df.value = '';
+  var dt = document.getElementById('pyDateTo');      if (dt) dt.value = '';
+  renderPayouts();
+}
+
+function renderPayouts() {
+  var statusF = window.pyStatusFilter || 'all';
+  var typeF   = (document.getElementById('pyTypeFilter')  || {}).value || '';
+  var userF   = ((document.getElementById('pyUserFilter') || {}).value || '').trim().toLowerCase();
+  var dateFrom = (document.getElementById('pyDateFrom')   || {}).value || '';
+  var dateTo   = (document.getElementById('pyDateTo')     || {}).value || '';
+
+  var records = (window.pyAllTxns || []).filter(function(t) {
+    if (statusF !== 'all' && t.status !== statusF) return false;
+    if (typeF   && t.type !== typeF) return false;
+    if (userF) {
+      var u = t.user ? (t.user.name || t.user.phone || '').toLowerCase() : '';
+      if (!u.includes(userF)) return false;
+    }
+    if (dateFrom || dateTo) {
+      var d = new Date(t.createdAt);
+      if (dateFrom && d < new Date(dateFrom)) return false;
+      if (dateTo   && d > new Date(dateTo + 'T23:59:59Z')) return false;
+    }
+    return true;
+  });
+
+  var countEl = document.getElementById('pyRecordCount');
+  if (countEl) countEl.textContent = records.length + ' of ' + (window.pyAllTxns||[]).length + ' records';
+
+  var body = document.getElementById('payoutsTableBody');
+  if (!body) return;
+
+  if (!records.length) {
+    body.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-dim);padding:20px;">'
+      + (statusF === 'FAILED' ? '✓ No failed payouts' : 'No records match filters') + '</td></tr>';
+    return;
+  }
+
+  var typeLabel = { PAYOUT: 'Market', CHALLENGE_PAYOUT: 'Challenge' };
+  var statusBadge = {
+    SUCCESS: '<span style="color:#166534;font-size:0.7rem;font-weight:700;">✓ OK</span>',
+    FAILED:  '<span style="color:#ce1126;font-size:0.7rem;font-weight:700;">✗ Failed</span>',
+    PENDING: '<span style="color:#b45309;font-size:0.7rem;font-weight:700;">⏳ Pending</span>',
+  };
+
+  body.innerHTML = records.map(function(t) {
+    var user    = t.user ? (t.user.name || t.user.phone) : '—';
+    var amt     = Number(t.amountKes);
+    var type    = typeLabel[t.type] || t.type;
+    var desc    = (t.description || '—').slice(0, 90);
+    var badge   = statusBadge[t.status] || esc(t.status);
+    var action  = '';
+    if (t.status === 'FAILED') {
+      // Use data-attributes — safe alternative to inline onclick string interpolation
+      action = '<button class="act-btn act-green" data-action="retry-payout" data-id="' + esc(t.id) + '" data-user="' + esc(user) + '" data-amount="' + amt + '">↺ Retry</button>';
+    } else if (t.status === 'PENDING') {
+      action = '<span style="font-size:0.7rem;color:var(--text-dim);">In progress</span>';
+    }
+    return '<tr>'
+      + '<td style="font-weight:600;">' + esc(user) + '</td>'
+      + '<td class="mono" style="color:' + (amt >= 0 ? 'var(--ke-green)' : '#ce1126') + ';font-weight:700;">KES ' + Math.round(amt).toLocaleString() + ' ' + badge + '</td>'
+      + '<td><span style="font-size:0.75rem;background:rgba(109,40,217,0.08);color:var(--primary);padding:2px 7px;border-radius:20px;">' + esc(type) + '</span></td>'
+      + '<td style="font-size:0.72rem;color:var(--text-dim);max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="' + esc(t.description||'') + '">' + esc(desc) + '</td>'
+      + '<td class="mono" style="color:var(--text-dim);font-size:0.78rem;">' + timeAgo(t.createdAt) + '</td>'
+      + '<td>' + action + '</td>'
+      + '</tr>';
+  }).join('');
+
+  // Event delegation: handles retry clicks via data-attributes (safer than inline onclick)
+  body.onclick = function(e) {
+    var btn = e.target.closest('button[data-action="retry-payout"]');
+    if (!btn) return;
+    retryPayout(btn.dataset.id, btn.dataset.user, Number(btn.dataset.amount));
+  };
 }
 
 function retryPayout(txnId, user, amount) {
   if (!confirm('Retry payout of KES ' + Number(amount).toLocaleString() + ' to ' + user + '?\n\nThis will initiate a new Daraja M-Pesa transfer.')) return;
-
   adminFetch('/api/admin/transactions/' + txnId + '/retry', {
     method: 'POST',
     body:   JSON.stringify({}),
@@ -3821,11 +3903,12 @@ function retryPayout(txnId, user, amount) {
       showToast('✓ Retry initiated. Ref: ' + (res.d.reference || '—'));
       loadPayoutsPanel();
     } else {
-      alert('Retry failed: ' + (res.d.error || 'Paystack error. Check logs.'));
+      alert('Retry failed: ' + (res.d.error || 'Error. Check logs.'));
     }
   })
   .catch(function() { alert('Network error. Please try again.'); });
 }
+
 
 function timeAgo(isoStr) {
   if (!isoStr) return '—';
@@ -5131,6 +5214,8 @@ function clearRevFilter(fromId, toId, reloadFn) {
 
 // ── Recent Revenue Records — client-side filtering and sorting ────────────────
 window.revAllRecords = [];
+window.pyAllTxns     = [];
+window.pyStatusFilter = 'all';
 window.revSortCol    = 'date';
 window.revSortDir    = 'desc';
 
