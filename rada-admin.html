@@ -731,6 +731,7 @@ body::after {
 .up-loading{text-align:center;color:var(--text-dim);padding:24px;font-size:0.82rem;}
 /* fix existing tables on mobile */
 .table-card{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+.table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
 .tbl,.data-table{min-width:600px;}
 
 </style>
@@ -817,6 +818,9 @@ body::after {
     </button>
     <button class="nav-item" onclick="showPanel('revenue', this)">
       <span class="nav-icon">◈</span><span>Platform Revenue</span>
+    </button>
+    <button class="nav-item" onclick="showPanel('revenue-analytics', this)">
+      <span class="nav-icon">📊</span><span>Revenue Analytics</span>
     </button>
   </div>
 
@@ -1424,6 +1428,17 @@ body::after {
           <div style="display:flex;justify-content:space-between;padding:9px 8px 9px 0;border-bottom:1px solid var(--border);"><span style="font-size:0.82rem;color:var(--text-dim);">Net Flow</span><span style="font-family:var(--mono);font-weight:700;" id="revPeriodNet">&#x2014;</span></div>
           <div style="display:flex;justify-content:space-between;padding:9px 0 9px 8px;border-bottom:1px solid var(--border);"><span style="font-size:0.82rem;color:var(--text-dim);">B2C Withdrawal Fees</span><div style="text-align:right;"><div style="font-family:var(--mono);font-weight:700;color:#9284b8;" id="revPeriodFees">&#x2014;</div><div style="font-size:0.68rem;color:var(--text-dim);" id="revPeriodFeesCount">&#x2014;</div></div></div>
         </div>
+      </div>
+    </div>
+
+    <!-- PANEL: REVENUE ANALYTICS -->
+    <div id="panel-revenue-analytics" class="panel" style="display:none;">
+      <div class="page-head">
+        <div>
+          <div class="page-title">Revenue Analytics</div>
+          <div class="page-sub">Monthly breakdown &middot; Top markets &middot; Revenue records</div>
+        </div>
+        <button class="topbar-btn" onclick="loadRevenueAnalytics()">&#x1F504; Refresh</button>
       </div>
       <div class="table-wrap" style="margin-bottom:24px;">
         <div class="table-head">
@@ -3064,7 +3079,8 @@ function showPanel(id, btn) {
   if (id === 'admin-log')     { loadAdminLogStats(); loadActivityFeed('adminLogBody'); }
   if (id === 'b2b')           { loadB2BAnalytics(); }
   if (id === 'bounties')      { loadBounties(); }
-  if (id === 'revenue')      { loadRevenuePanel(); }
+  if (id === 'revenue')           { loadRevenuePanel(); }
+  if (id === 'revenue-analytics')   { loadRevenueAnalytics(); }
   if (id === 'blacklist')    { loadBlacklistPanel(); }
   if (id === 'create-market') {
     var d = new Date(); d.setDate(d.getDate() + 30);
@@ -5320,12 +5336,8 @@ function loadRevenuePanel() {
     s('revPendingWd', fmt(d.pendingWithdrawals) + ' (' + (d.pendingWdCount||0) + ')');
     var gap = d.liquidityGap || 0, gapEl = document.getElementById('revLiquidityGap');
     if (gapEl) { gapEl.textContent = fmt(gap); gapEl.style.color = gap >= 0 ? '#166534' : '#ce1126'; }
-    var tb = document.getElementById('revTopMarketsBody');
-    if (tb) { tb.innerHTML = !d.topMarkets||!d.topMarkets.length ? '<tr><td colspan="3" style="text-align:center;color:var(--text-dim);padding:16px;">No market revenue yet</td></tr>' : d.topMarkets.map(function(m) { return '<tr><td style="font-size:0.78rem;max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="'+esc(m.title)+'">'+esc(m.title||'—')+'</td><td><span class="badge">'+esc(m.status||'—')+'</span></td><td style="font-family:var(--mono);color:var(--ke-green);font-weight:700">'+fmt(m.revenue)+'</td></tr>'; }).join(''); }
-    window.revAllRecords = d.recent || [];
-    window.revSortCol = 'date'; window.revSortDir = 'desc';
-    filterRecentRecords();
-    loadRevenueLiquidity(); loadRevenueMonthly();
+    window.revAllRecords = d.recent || []; // pre-cached; rendered by Revenue Analytics panel
+    loadRevenueLiquidity(); // loadRevenueMonthly() and filterRecentRecords() now in Revenue Analytics panel
   }).catch(function(err) { console.error('loadRevenuePanel:', err); });
 }
 
@@ -5346,6 +5358,45 @@ function loadRevenueLiquidity() {
     s('revPeriodFees', 'KES ' + Math.round(pb2c).toLocaleString());
     s('revPeriodFeesCount', (d.periodB2cFeeCount||0) + ' withdrawal' + (d.periodB2cFeeCount===1?'':'s'));
   }).catch(function(err) { console.error('loadRevenueLiquidity:', err); });
+}
+
+function loadRevenueAnalytics() {
+  // Pre-populate tables with loading state
+  var tb  = document.getElementById('revTopMarketsBody');
+  var rb  = document.getElementById('revRecentBody');
+  var mb  = document.getElementById('revMonthlyBody');
+  if (tb) tb.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--text-dim);padding:20px;">Loading...</td></tr>';
+  if (rb) rb.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-dim);padding:20px;">Loading...</td></tr>';
+  if (mb) mb.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-dim);padding:20px;">Loading...</td></tr>';
+  var lbl = { FORECASTING_FEE: 'Forecasting Fee', MARKET_SURPLUS: 'Market Surplus', CHALLENGE_FEE: 'Challenge Fee' };
+
+  adminFetch('/api/admin/revenue')
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    // ── Top Markets ────────────────────────────────────────────────────────
+    if (tb) {
+      var statusBadge = { RESOLVED:'<span style="color:#166534;font-size:0.7rem;font-weight:700;">RESOLVED</span>', OPEN:'<span style="color:#1d4ed8;font-size:0.7rem;">OPEN</span>', CLOSED:'<span style="color:#b45309;font-size:0.7rem;">CLOSED</span>' };
+      tb.innerHTML = !d.topMarkets || !d.topMarkets.length
+        ? '<tr><td colspan="3" style="text-align:center;color:var(--text-dim);padding:16px;">No data yet</td></tr>'
+        : d.topMarkets.map(function(m) {
+            return '<tr><td style="font-size:0.82rem;max-width:320px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="' + esc(m.title) + '">' + esc(m.title) + '</td>'
+              + '<td>' + (statusBadge[m.status] || esc(m.status)) + '</td>'
+              + '<td style="font-family:var(--mono);font-weight:700;color:var(--ke-green);">KES ' + Math.round(Number(m.revenue)).toLocaleString() + '</td></tr>';
+          }).join('');
+    }
+    // ── Recent Revenue Records ─────────────────────────────────────────────
+    window.revAllRecords = d.recent || [];
+    window.revSortCol    = 'date';
+    window.revSortDir    = 'desc';
+    filterRecentRecords();
+    // ── Revenue Breakdown (month table — own API call with date filter) ────
+    loadRevenueMonthly();
+  })
+  .catch(function(err) {
+    console.error('loadRevenueAnalytics:', err);
+    if (tb) tb.innerHTML = '<tr><td colspan="3" style="text-align:center;color:#ce1126;padding:16px;">Failed to load</td></tr>';
+    if (rb) rb.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#ce1126;padding:16px;">Failed to load</td></tr>';
+  });
 }
 
 function loadRevenueMonthly() {
