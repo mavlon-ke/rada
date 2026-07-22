@@ -6,10 +6,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { createNotification } from '@/lib/notifications';
 import { requireAdmin, adminUnauthorized } from '@/lib/auth/admin';
+import { withErrorHandling } from '@/lib/security/route-guard';
 
 // POST endpoint — admin-only. All internal call sites use createNotification() lib directly.
 // This HTTP endpoint is kept for admin-panel programmatic use only.
-export async function POST(req: NextRequest) {
+export const POST = withErrorHandling(async function POST(req: NextRequest) {
   const admin = await requireAdmin(req);
   if (!admin) return adminUnauthorized();
 
@@ -20,4 +21,4 @@ export async function POST(req: NextRequest) {
   }
   const notification = await createNotification({ userId, type, title, message, link });
   return NextResponse.json({ notification }, { status: 201 });
-}
+});

@@ -3,6 +3,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { requireAdmin, adminUnauthorized } from '@/lib/auth/admin';
 import { z } from 'zod';
+import { withErrorHandling } from '@/lib/security/route-guard';
+
+export const dynamic = 'force-dynamic';
 
 const ConfigSchema = z.object({
   active:            z.boolean(),
@@ -12,7 +15,7 @@ const ConfigSchema = z.object({
   minTradeKes:       z.number().min(0).max(10000),
 });
 
-export async function GET(req: NextRequest) {
+export const GET = withErrorHandling(async function GET(req: NextRequest) {
   const admin = await requireAdmin(req);
   if (!admin) return adminUnauthorized();
 
@@ -21,9 +24,9 @@ export async function GET(req: NextRequest) {
     config = await prisma.referralConfig.create({ data: { id: 'singleton' } });
   }
   return NextResponse.json({ config });
-}
+});
 
-export async function POST(req: NextRequest) {
+export const POST = withErrorHandling(async function POST(req: NextRequest) {
   const admin = await requireAdmin(req);
   if (!admin) return adminUnauthorized();
 
@@ -40,4 +43,4 @@ export async function POST(req: NextRequest) {
   });
 
   return NextResponse.json({ config });
-}
+});

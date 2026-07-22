@@ -24,6 +24,9 @@ import { z } from 'zod';
 import { prisma } from '@/lib/db/prisma';
 import { requireAdmin, adminUnauthorized } from '@/lib/auth/admin';
 import { createNotification } from '@/lib/notifications';
+import { withErrorHandling } from '@/lib/security/route-guard';
+
+export const dynamic = 'force-dynamic';
 
 const DEFAULT_RESOLUTION_CUT_RATE   = 0.20;  // fallback if PlatformConfig missing
 const DEFAULT_FORECASTING_FEE_RATE  = 0.05;
@@ -33,7 +36,7 @@ const Schema = z.object({
   sourceNote: z.string().optional(),
 });
 
-export async function POST(
+export const POST = withErrorHandling(async function POST(
   req: NextRequest,
   { params }: { params: { marketId: string } }
 ) {
@@ -295,4 +298,4 @@ export async function POST(
       total:            totalFeesCollected + marketSurplus - creatorRoyaltyPaid,
     },
   });
-}
+});

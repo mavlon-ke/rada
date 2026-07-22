@@ -20,8 +20,9 @@
 
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
+import { withErrorHandling } from '@/lib/security/route-guard';
 
-export async function GET() {
+export const GET = withErrorHandling(async function GET() {
   const config = await prisma.platformConfig.findUnique({
     where: { id: 'singleton' },
   });
@@ -39,4 +40,4 @@ export async function GET() {
       'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
     },
   });
-}
+});

@@ -5,10 +5,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { requireAdmin, adminUnauthorized, logAdminAction } from '@/lib/auth/admin';
 import { generateUniqueSlug, buildMarketShareUrl } from '@/lib/market/slug';
+import { withErrorHandling } from '@/lib/security/route-guard';
+
+export const dynamic = 'force-dynamic';
 
 const NINETY_DAYS_MS = 90 * 24 * 60 * 60 * 1000;
 
-export async function POST(
+export const POST = withErrorHandling(async function POST(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
@@ -94,6 +97,11 @@ export async function POST(
         },
       });
 
+      // L-6: Suggestion rewards are tracked via Transaction (type: SUGGESTION_REWARD)
+      // and correctly appear in costSuggestion in the revenue route.
+      // PlatformRevenue has no SUGGESTION_REWARD RevenueType variant — adding a
+      // negative FORECASTING_FEE entry would corrupt totalFees. Not added here.
+
       return { market };
     });
 
@@ -122,4 +130,4 @@ export async function POST(
     const message = err instanceof Error ? err.message : 'Internal server error';
     return NextResponse.json({ error: message }, { status: 500 });
   }
-}
+});

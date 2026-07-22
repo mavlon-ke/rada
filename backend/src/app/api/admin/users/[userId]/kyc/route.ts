@@ -3,6 +3,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/db/prisma';
 import { requireAdmin, adminUnauthorized } from '@/lib/auth/admin';
+import { withErrorHandling } from '@/lib/security/route-guard';
+
+export const dynamic = 'force-dynamic';
 
 
 const Schema = z.object({
@@ -10,7 +13,7 @@ const Schema = z.object({
   reason: z.string().optional(),
 });
 
-export async function POST(
+export const POST = withErrorHandling(async function POST(
   req: NextRequest,
   { params }: { params: { userId: string } }
 ) {
@@ -35,4 +38,4 @@ export async function POST(
 
  
   return NextResponse.json({ success: true, userId: params.userId, kycStatus: newStatus });
-}
+});

@@ -16,6 +16,9 @@ import { z } from 'zod';
 import { prisma } from '@/lib/db/prisma';
 import { requireAdmin, adminUnauthorized, logAdminAction } from '@/lib/auth/admin';
 import { invalidateWhatsappConfigCache } from '@/lib/whatsapp/whatsapp-notifications';
+import { withErrorHandling } from '@/lib/security/route-guard';
+
+export const dynamic = 'force-dynamic';
 
 // All fields optional — admin can update one toggle at a time.
 const Schema = z.object({
@@ -33,7 +36,7 @@ const Schema = z.object({
 
 // ─── GET — read current config ────────────────────────────────────────────────
 
-export async function GET(req: NextRequest) {
+export const GET = withErrorHandling(async function GET(req: NextRequest) {
   const admin = await requireAdmin(req);
   if (!admin) return adminUnauthorized();
 
@@ -51,11 +54,11 @@ export async function GET(req: NextRequest) {
   }
 
   return NextResponse.json(config);
-}
+});
 
 // ─── POST — update one or more toggles ────────────────────────────────────────
 
-export async function POST(req: NextRequest) {
+export const POST = withErrorHandling(async function POST(req: NextRequest) {
   const admin = await requireAdmin(req);
   if (!admin) return adminUnauthorized();
 
@@ -104,4 +107,4 @@ export async function POST(req: NextRequest) {
   );
 
   return NextResponse.json({ success: true, config: updated });
-}
+});

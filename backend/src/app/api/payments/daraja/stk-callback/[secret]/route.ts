@@ -6,8 +6,10 @@
 //   (who received this URL in the STK Push request) knows the full path.
 //   Secret is validated on every request before any processing.
 //
-// IDEMPOTENCY: All credit operations are guarded by 'status: PENDING' checks.
-//   A duplicate callback for the same CheckoutRequestID is silently ignored.
+// IDEMPOTENCY: All credit operations use a status-guarded updateMany pattern.
+//   prisma.transaction.updateMany({ where: { id, status: 'PENDING' } })
+//   PostgreSQL row-level locking ensures only ONE concurrent callback wins
+//   the race. If count === 0, the callback was already processed and is ignored.
 //
 // AMOUNT VERIFICATION: Callback amount is cross-checked against the DB record.
 //   Mismatches are logged and the transaction is left PENDING for manual review.
@@ -113,12 +115,30 @@ export const POST = withErrorHandling(async (
 async function handleDepositSuccess(transaction: any, mpesaReceipt: string) {
   const amountKes = Number(transaction.amountKes);
 
+  // ── C-3 FIX: Status-guarded atomic claim ─────────────────────────────────
+  // updateMany with status: 'PENDING' in the WHERE acquires a Postgres row-level
+  // lock. Only ONE concurrent callback wins (count=1). The second gets count=0
+  // and returns immediately — wallet is never credited twice.
+  const claimed = await prisma.transaction.updateMany({
+    where: { id: transaction.id, status: 'PENDING' },
+    data:  {
+      status:      'SUCCESS',
+      description: `M-Pesa deposit of KES ${amountKes.toLocaleString()} confirmed. Receipt: ${mpesaReceipt}`,
+    },
+  });
+
+  if (claimed.count === 0) {
+    console.warn('[Daraja STK] C-3: Duplicate deposit callback ignored for transaction:', transaction.id);
+    return; // already processed by a concurrent callback
+  }
+
+  // ── Exactly ONE callback reaches here — safe to credit wallet ─────────────
   await prisma.$transaction(async (tx: any) => {
-    const freshUser  = await tx.user.findUnique({ where: { id: transaction.userId } });
+    const freshUser = await tx.user.findUnique({ where: { id: transaction.userId } });
     if (!freshUser) {
       // User was deleted after initiating the deposit — log and abort cleanly.
-      // Wallet cannot be credited. Transaction stays PENDING for manual admin review.
-      console.error(`[Daraja STK] Deposit for deleted user ${transaction.userId} — tx ${transaction.id} left PENDING`);
+      // Transaction is already SUCCESS (claimed above). No wallet to credit.
+      console.error(`[Daraja STK] Deposit for deleted user ${transaction.userId} — wallet credit skipped`);
       return;
     }
     const newBalance = Number(freshUser.balanceKes) + amountKes;
@@ -128,13 +148,10 @@ async function handleDepositSuccess(transaction: any, mpesaReceipt: string) {
       data:  { balanceKes: { increment: amountKes } },
     });
 
+    // Update balAfter now that we know the post-credit balance
     await tx.transaction.update({
       where: { id: transaction.id },
-      data:  {
-        status:      'SUCCESS',
-        balAfter:    newBalance,
-        description: `M-Pesa deposit of KES ${amountKes.toLocaleString()} confirmed. Receipt: ${mpesaReceipt}`,
-      },
+      data:  { balAfter: newBalance },
     });
 
     await tx.notification.create({
@@ -166,14 +183,21 @@ async function handleDepositSuccess(transaction: any, mpesaReceipt: string) {
 async function handleChallengeStakeSuccess(transaction: any, mpesaReceipt: string) {
   const amountKes = Number(transaction.amountKes);
 
-  // Mark the M-Pesa payment transaction as SUCCESS
-  await prisma.transaction.update({
-    where: { id: transaction.id },
+  // ── C-4 FIX: Status-guarded atomic claim ─────────────────────────────────
+  // Same pattern as C-3 — only ONE concurrent callback proceeds to activate
+  // the challenge. The second duplicate callback gets count=0 and returns.
+  const claimed = await prisma.transaction.updateMany({
+    where: { id: transaction.id, status: 'PENDING' },
     data:  {
       status:      'SUCCESS',
       description: `Challenge M-Pesa payment confirmed: KES ${amountKes}. Receipt: ${mpesaReceipt}`,
     },
   });
+
+  if (claimed.count === 0) {
+    console.warn('[Daraja STK] C-4: Duplicate challenge stake callback ignored for transaction:', transaction.id);
+    return; // already processed by a concurrent callback
+  }
 
   if (!transaction.challengeId) {
     console.warn('[Daraja STK] Challenge stake missing challengeId:', transaction.id);
@@ -262,22 +286,28 @@ async function handleChallengeStakeSuccess(transaction: any, mpesaReceipt: strin
 // ─── STK failure / cancellation ───────────────────────────────────────────────
 
 async function handleStkFailure(checkoutRequestId: string, reason: string) {
-  const transaction = await prisma.transaction.findFirst({
+  // ── C-3/C-4 FIX: Status-guarded atomic claim on failure path ─────────────
+  // Prevents a failure callback racing with a success callback or duplicate
+  // failure callbacks from both running the challenge cancellation + refund.
+  const claimed = await prisma.transaction.updateMany({
     where: { mpesaRef: checkoutRequestId, status: 'PENDING' },
-  });
-
-  if (!transaction) {
-    // Already processed or unknown — nothing to do
-    return;
-  }
-
-  await prisma.transaction.update({
-    where: { id: transaction.id },
     data:  {
       status:      'FAILED',
       description: `M-Pesa payment not completed: ${reason.slice(0, 100)}`,
     },
   });
+
+  if (claimed.count === 0) {
+    console.warn('[Daraja STK] Failure callback ignored — transaction already processed for:', checkoutRequestId);
+    return; // success callback already ran, or duplicate failure
+  }
+
+  // Look up the transaction (now FAILED) for challenge/notification context
+  const transaction = await prisma.transaction.findFirst({
+    where: { mpesaRef: checkoutRequestId },
+  });
+
+  if (!transaction) return;
 
   // For challenge stakes: cancel the challenge and refund any wallet portion
   if (transaction.type === 'CHALLENGE_STAKE' && transaction.challengeId) {
@@ -294,8 +324,6 @@ async function handleStkFailure(checkoutRequestId: string, reason: string) {
         });
 
         // Refund total wallet deduction across ALL batch challenges.
-        // Each challenge.totalPool holds its individual wallet share.
-        // Bug if only firstChallenge.totalPool is used — must sum them all.
         const batchChallenges = await prisma.marketChallenge.findMany({
           where:  { batchId: challenge.batchId },
           select: { totalPool: true },
@@ -315,7 +343,6 @@ async function handleStkFailure(checkoutRequestId: string, reason: string) {
           data:  { status: 'CANCELLED' },
         });
 
-        // Single challenge — refund its wallet portion only
         const walletRefund = Number(challenge.totalPool);
         if (walletRefund > 0) {
           await prisma.user.update({
@@ -335,7 +362,6 @@ async function handleStkFailure(checkoutRequestId: string, reason: string) {
     });
   }
 
-  // Notify user of failed deposit (challenge notifications already sent above)
   if (transaction.type === 'DEPOSIT') {
     void createNotification({
       userId:  transaction.userId,

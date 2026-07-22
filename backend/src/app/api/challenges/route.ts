@@ -14,6 +14,7 @@ import { randomInt } from 'crypto';
 import { createNotification } from '@/lib/notifications';
 import { displayName }        from '@/lib/user/display-name';
 import { stkPush, generateDarajaRef, darajaPhone } from '@/lib/payments/payment.service';
+import { withErrorHandling } from '@/lib/security/route-guard';
 
 const MAX_STAKE = 20000;  // KES 20,000 per person (Social Challenge cap)
 
@@ -48,7 +49,7 @@ async function generateAccessCode(): Promise<string> {
   return code!;
 }
 
-export async function POST(req: NextRequest) {
+export const POST = withErrorHandling(async function POST(req: NextRequest) {
   const user = await requireAuth(req);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -307,9 +308,9 @@ export async function POST(req: NextRequest) {
       mpesaRequired: mpesaRequired,
     },
   });
-}
+});
 
-export async function GET(req: NextRequest) {
+export const GET = withErrorHandling(async function GET(req: NextRequest) {
   const user = await requireAuth(req);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -337,4 +338,4 @@ export async function GET(req: NextRequest) {
       referee: c.referee ? { ...c.referee, name: displayName(c.referee.name, c.referee.phone) } : null,
     })),
   });
-}
+});

@@ -6,6 +6,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma }                    from '@/lib/db/prisma';
 import { requireAdmin, adminUnauthorized } from '@/lib/auth/admin';
+import { withErrorHandling } from '@/lib/security/route-guard';
+
+export const dynamic = 'force-dynamic';
 
 const DEFAULT_CUT_RATE = 0.20;
 const LIMIT            = 100;
@@ -18,7 +21,7 @@ function dw(from?: string|null, to?: string|null) {
   };
 }
 
-export async function GET(
+export const GET = withErrorHandling(async function GET(
   req: NextRequest,
   { params }: { params: { userId: string } }
 ) {
@@ -399,4 +402,4 @@ export async function GET(
     console.error('[admin/users/detail] error:', err?.message ?? err);
     return NextResponse.json({ error: 'Failed to load user detail', detail: err?.message }, { status: 500 });
   }
-}
+});

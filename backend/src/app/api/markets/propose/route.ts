@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { prisma } from '@/lib/db/prisma';
 import { requireAuth } from '@/lib/auth/session';
 import { sendAdminAlert } from '@/lib/whatsapp/admin-alerts';
+import { withErrorHandling } from '@/lib/security/route-guard';
 
 const Schema = z.object({
   question:         z.string().min(10).max(200),
@@ -18,7 +19,7 @@ const Schema = z.object({
   closesAt:         z.string().datetime().optional().or(z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional()),
 });
 
-export async function POST(req: NextRequest) {
+export const POST = withErrorHandling(async function POST(req: NextRequest) {
   const user = await requireAuth(req);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -66,9 +67,9 @@ export async function POST(req: NextRequest) {
   ]);
 
   return NextResponse.json({ success: true, proposalId: proposal.id });
-}
+});
 
-export async function GET(req: NextRequest) {
+export const GET = withErrorHandling(async function GET(req: NextRequest) {
   const user = await requireAuth(req);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -78,4 +79,4 @@ export async function GET(req: NextRequest) {
   });
 
   return NextResponse.json({ proposals });
-}
+});

@@ -68,7 +68,19 @@ export async function creditRefereeBonusOnDeposit(
   if (totalDeposited < minDeposit) return { credited: false, amountKes: 0 };
 
   // Credit referee bonus and stamp the referral row
-  await prisma.$transaction(async (tx: any) => {
+  // H-5 FIX: Capture $transaction return value — 'return;' inside the callback
+  // only exits the callback, not this function. We need the explicit false/true
+  // result to short-circuit the notification and return value below.
+  const creditedThisTime = await prisma.$transaction(async (tx: any) => {
+    // Atomic claim — updateMany with status:'PENDING' and refereeRewardKes:0
+    // guards against concurrent invocations (e.g. two deposits arriving simultaneously).
+    // Only ONE transaction proceeds to credit the wallet.
+    const claimed = await tx.referral.updateMany({
+      where: { id: referral.id, status: 'PENDING', refereeRewardKes: 0 },
+      data:  { refereeRewardKes: refereeBonus },
+    });
+    if (claimed.count === 0) return false; // duplicate — already credited
+
     const updated = await tx.user.update({
       where: { id: refereeUserId },
       data:  { bonusBalanceKes: { increment: refereeBonus } },
@@ -86,12 +98,15 @@ export async function creditRefereeBonusOnDeposit(
       },
     });
 
-    // Stamp refereeRewardKes — this becomes the deposit-milestone flag for step 3
-    await tx.referral.update({
-      where: { refereeId: refereeUserId },
-      data:  { refereeRewardKes: refereeBonus },
-    });
+    // refereeRewardKes already stamped atomically in the updateMany claim above
+    return true;
   });
+
+  // Short-circuit: duplicate invocation — wallet was already credited
+  if (!creditedThisTime) {
+    console.warn(`[Referral] Duplicate deposit callback — referee bonus already credited for ${refereeUserId}`);
+    return { credited: false, amountKes: 0 };
+  }
 
   // Notify referee (fire-and-forget)
   void createNotification({

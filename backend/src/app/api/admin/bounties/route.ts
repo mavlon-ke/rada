@@ -7,6 +7,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { requireAdmin, adminUnauthorized, logAdminAction } from '@/lib/auth/admin';
 
+export const dynamic = 'force-dynamic';
+
 
 
 // Fallback minimum payout if PlatformConfig.bountyMinPayoutKes is missing (singleton row deleted).

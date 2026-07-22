@@ -15,6 +15,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/db/prisma';
 import { requireAdmin, adminUnauthorized, logAdminAction } from '@/lib/auth/admin';
+import { withErrorHandling } from '@/lib/security/route-guard';
+
+export const dynamic = 'force-dynamic';
 
 const ConfigSchema = z.object({
   forecastingFeeRate:         z.number().min(0),
@@ -26,7 +29,7 @@ const ConfigSchema = z.object({
   bountyMinPayoutKes:         z.number().min(0).max(10_000),
 });
 
-export async function GET(req: NextRequest) {
+export const GET = withErrorHandling(async function GET(req: NextRequest) {
   const admin = await requireAdmin(req);
   if (!admin) return adminUnauthorized();
 
@@ -57,9 +60,9 @@ export async function GET(req: NextRequest) {
       updatedByAdminName:         config.updatedByAdmin?.name ?? null,
     },
   });
-}
+});
 
-export async function POST(req: NextRequest) {
+export const POST = withErrorHandling(async function POST(req: NextRequest) {
   const admin = await requireAdmin(req);
   if (!admin) return adminUnauthorized();
 
@@ -109,4 +112,4 @@ export async function POST(req: NextRequest) {
       updatedByAdminId:           config.updatedByAdminId,
     },
   });
-}
+});

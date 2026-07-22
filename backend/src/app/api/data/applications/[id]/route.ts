@@ -5,13 +5,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/db/prisma';
 import { requireAdmin, adminUnauthorized, logAdminAction } from '@/lib/auth/admin';
+import { withErrorHandling } from '@/lib/security/route-guard';
 
 const Schema = z.object({
   status: z.enum(['APPROVED', 'REJECTED', 'PENDING']),
   notes:  z.string().max(500).optional(),
 });
 
-export async function PATCH(
+export const PATCH = withErrorHandling(async function PATCH(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
@@ -48,4 +49,4 @@ export async function PATCH(
   );
 
   return NextResponse.json({ success: true, application: updated });
-}
+});

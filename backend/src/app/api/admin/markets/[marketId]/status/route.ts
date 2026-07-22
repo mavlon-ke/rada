@@ -16,13 +16,16 @@ import { z } from 'zod';
 import { prisma } from '@/lib/db/prisma';
 import { requireAdmin, adminUnauthorized } from '@/lib/auth/admin';
 import { createNotification } from '@/lib/notifications';
+import { withErrorHandling } from '@/lib/security/route-guard';
+
+export const dynamic = 'force-dynamic';
 
 const Schema = z.object({
   action: z.enum(['PAUSE', 'CANCEL']),
   reason: z.string().max(300).optional(),
 });
 
-export async function POST(
+export const POST = withErrorHandling(async function POST(
   req: NextRequest,
   { params }: { params: { marketId: string } }
 ) {
@@ -194,4 +197,4 @@ export async function POST(
       reason:        voidReason,
     });
   }
-}
+});

@@ -17,8 +17,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma }                    from '@/lib/db/prisma';
 import { requireAuth }               from '@/lib/auth/session';
 import { displayName }               from '@/lib/user/display-name';
+import { withErrorHandling } from '@/lib/security/route-guard';
 
-export async function GET(req: NextRequest) {
+export const GET = withErrorHandling(async function GET(req: NextRequest) {
   const user   = await requireAuth(req);
   const { searchParams } = new URL(req.url);
   const period = searchParams.get('period') ?? '30d';
@@ -124,4 +125,4 @@ export async function GET(req: NextRequest) {
     : null;
 
   return NextResponse.json({ entries, myRank, nextRank });
-}
+});

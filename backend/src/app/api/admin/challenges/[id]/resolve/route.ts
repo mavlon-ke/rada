@@ -8,6 +8,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/db/prisma';
 import { requireAdmin, adminUnauthorized, logAdminAction } from '@/lib/auth/admin';
+import { withErrorHandling } from '@/lib/security/route-guard';
+
+export const dynamic = 'force-dynamic';
 
 const FEE_ADMIN    = 0.15; // 15% when admin must intervene
 const FEE_STANDARD = 0.05; // 5%  — when both parties already agreed
@@ -17,7 +20,7 @@ const Schema = z.object({
   reason:  z.string().optional(),
 });
 
-export async function POST(
+export const POST = withErrorHandling(async function POST(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
@@ -125,22 +128,25 @@ export async function POST(
         await tx.user.update({ where: { id: challenge.userBId }, data: { integrityScore: { decrement: 10 } } });
       }
     }
+
+    // M-5 FIX: platformRevenue.create is inside the $transaction — atomically
+    // committed or rolled back with the wallet credits above.
+    if (feeKes > 0) {
+      await tx.platformRevenue.create({
+        data: {
+          challengeId: challenge.id,
+          type:        'CHALLENGE_FEE',
+          amountKes:   feeKes,
+          description: `Challenge fee (${actualFeeRate * 100}%) — ${actualMethod} resolution via admin. Question: "${challenge.question.slice(0, 60)}"`,
+        },
+      });
+    }
   });
 
   // No Paystack transfer — winnings are in the user's CheckRada wallet.
   // Users withdraw to M-Pesa via the standard withdrawal flow at their convenience.
 
-  // Record platform revenue for the dispute fee
-  if (feeKes > 0) {
-    await prisma.platformRevenue.create({
-      data: {
-        challengeId: challenge.id,
-        type:        'CHALLENGE_FEE',
-        amountKes:   feeKes,
-        description: `Challenge fee (${actualFeeRate * 100}%) — ${actualMethod} resolution via admin. Question: "${challenge.question.slice(0, 60)}"`,
-      },
-    });
-  }
+  // M-5: platformRevenue.create is now inside the $transaction above — removed from here
 
   // Log admin action
   await logAdminAction(admin.id, 'DISPUTE_RESOLVED', `challenge:${challenge.id}`, { outcome, feeKes, reason }, req);
@@ -155,4 +161,4 @@ export async function POST(
     netPool,
     payouts: payouts.map(p => ({ userId: p.userId, amountKes: p.amountKes })),
   });
-}
+});

@@ -46,19 +46,31 @@ export const POST = withErrorHandling(async (
 
   const amountToRefund = Math.abs(Number(transaction.amountKes));
 
-  await prisma.$transaction(async (tx: any) => {
-    await tx.user.update({
-      where: { id: transaction.userId },
-      data:  { balanceKes: { increment: amountToRefund } },
-    });
-    await tx.transaction.update({
-      where: { id: transaction.id },
+  // B2C-TIMEOUT RACE FIX: same updateMany guard as b2c-result.
+  // Two concurrent timeout callbacks can both pass the findFirst above.
+  // Only ONE $transaction wins the status flip — the second gets count=0
+  // and returns without refunding, preventing double-credit.
+  const refunded = await prisma.$transaction(async (tx: any) => {
+    const claimed = await tx.transaction.updateMany({
+      where: { id: transaction.id, status: 'PENDING' },
       data:  {
         status:      'FAILED',
         description: `Withdrawal timed out in M-Pesa queue. KES ${amountToRefund.toLocaleString()} refunded to wallet.`,
       },
     });
+    if (claimed.count === 0) return false; // duplicate callback — already processed
+
+    await tx.user.update({
+      where: { id: transaction.userId },
+      data:  { balanceKes: { increment: amountToRefund } },
+    });
+    return true;
   });
+
+  if (!refunded) {
+    console.warn(`[Daraja B2C Timeout] Duplicate callback ignored for transaction ${transaction.id}`);
+    return NextResponse.json({ ResultCode: 0, ResultDesc: 'Accepted' });
+  }
 
   void createNotification({
     userId:  transaction.userId,

@@ -3,6 +3,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { requireAdmin, adminUnauthorized } from '@/lib/auth/admin';
 import { z } from 'zod';
+import { withErrorHandling } from '@/lib/security/route-guard';
+
+export const dynamic = 'force-dynamic';
 
 const SlideSchema = z.object({
   id:        z.string().optional(),
@@ -23,7 +26,7 @@ const UpsertSchema = z.object({
 });
 
 // GET — return all slides (including inactive) for admin view
-export async function GET(req: NextRequest) {
+export const GET = withErrorHandling(async function GET(req: NextRequest) {
   const admin = await requireAdmin(req);
   if (!admin) return adminUnauthorized();
 
@@ -31,10 +34,10 @@ export async function GET(req: NextRequest) {
     orderBy: { sortOrder: 'asc' },
   });
   return NextResponse.json({ slides });
-}
+});
 
 // POST — upsert all slides (replaces the full set)
-export async function POST(req: NextRequest) {
+export const POST = withErrorHandling(async function POST(req: NextRequest) {
   const admin = await requireAdmin(req);
   if (!admin) return adminUnauthorized();
 
@@ -65,4 +68,4 @@ export async function POST(req: NextRequest) {
 
   const saved = await prisma.carouselSlide.findMany({ orderBy: { sortOrder: 'asc' } });
   return NextResponse.json({ slides: saved });
-}
+});

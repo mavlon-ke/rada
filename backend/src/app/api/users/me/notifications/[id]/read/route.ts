@@ -11,8 +11,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { requireAuth } from '@/lib/auth/session';
+import { withErrorHandling } from '@/lib/security/route-guard';
 
-export async function PATCH(
+export const PATCH = withErrorHandling(async function PATCH(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
@@ -45,4 +46,4 @@ export async function PATCH(
     updated:     result.count,  // 0 if already read or not found, 1 if newly marked read
     unreadCount,
   });
-}
+});

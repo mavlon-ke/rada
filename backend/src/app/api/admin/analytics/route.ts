@@ -12,10 +12,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma }                    from '@/lib/db/prisma';
 import { requireAdmin, adminUnauthorized } from '@/lib/auth/admin';
+import { withErrorHandling } from '@/lib/security/route-guard';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(req: NextRequest) {
+export const GET = withErrorHandling(async function GET(req: NextRequest) {
   const admin = await requireAdmin(req);
   if (!admin) return adminUnauthorized();
 
@@ -162,4 +163,4 @@ export async function GET(req: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

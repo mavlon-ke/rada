@@ -7,9 +7,10 @@ import { prisma } from '@/lib/db/prisma';
 import { requireAuth } from '@/lib/auth/session';
 import { createNotification } from '@/lib/notifications';
 import { displayName } from '@/lib/user/display-name';
+import { withErrorHandling } from '@/lib/security/route-guard';
 
 
-export async function GET(req: NextRequest) {
+export const GET = withErrorHandling(async function GET(req: NextRequest) {
   const user = await requireAuth(req);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -40,10 +41,10 @@ export async function GET(req: NextRequest) {
     ...c,
     rawStatus: c.status,        // keep raw enum for frontend status logic
   })) });
-}
+});
 
 // POST /api/users/me/referee-queue  body: { challengeId, action: 'ACCEPT' | 'DECLINE' }
-export async function POST(req: NextRequest) {
+export const POST = withErrorHandling(async function POST(req: NextRequest) {
   const user = await requireAuth(req);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -89,4 +90,4 @@ export async function POST(req: NextRequest) {
     link:    `/rada-friends.html`,
   });
   return NextResponse.json({ success: true, action: 'DECLINED' });
-}
+});

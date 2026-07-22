@@ -8,6 +8,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
+import { withErrorHandling } from '@/lib/security/route-guard';
 export const dynamic = 'force-dynamic';
 function lmsrPrice(yesPool: number, noPool: number): number {
   const b    = 1000;
@@ -16,7 +17,7 @@ function lmsrPrice(yesPool: number, noPool: number): number {
   return expY / (expY + expN);
 }
 
-export async function GET(req: NextRequest) {
+export const GET = withErrorHandling(async function GET(req: NextRequest) {
   const now       = new Date();
   const since24h  = new Date(now.getTime() - 24 * 60 * 60 * 1000);
   const since48h  = new Date(now.getTime() + 48 * 60 * 60 * 1000); // closesAt < this → closing soon
@@ -85,4 +86,4 @@ export async function GET(req: NextRequest) {
     .slice(0, 5);
 
   return NextResponse.json({ trending, generatedAt: now });
-}
+});

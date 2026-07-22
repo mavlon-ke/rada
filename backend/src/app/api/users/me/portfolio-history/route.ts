@@ -2,8 +2,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { requireAuth } from '@/lib/auth/session';
+import { withErrorHandling } from '@/lib/security/route-guard';
 
-export async function GET(req: NextRequest) {
+export const GET = withErrorHandling(async function GET(req: NextRequest) {
   const user = await requireAuth(req);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -84,4 +85,4 @@ export async function GET(req: NextRequest) {
   }));
 
   return NextResponse.json({ history, chartData, transactions: recentTxns });
-}
+});

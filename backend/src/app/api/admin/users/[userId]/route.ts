@@ -6,7 +6,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/db/prisma';
 import { requireAdmin, adminUnauthorized, logAdminAction } from '@/lib/auth/admin';
+import { sanitizeText } from '@/lib/security/middleware';
 import { sendAdminAlert } from '@/lib/whatsapp/admin-alerts';
+import { withErrorHandling } from '@/lib/security/route-guard';
+
+export const dynamic = 'force-dynamic';
 
 // ─── PATCH /api/admin/users/[userId] ─────────────────────────────────────────
 
@@ -18,7 +22,7 @@ const EditSchema = z.object({
   adjustReason:     z.string().max(200).optional(),
 });
 
-export async function PATCH(
+export const PATCH = withErrorHandling(async function PATCH(
   req: NextRequest,
   { params }: { params: { userId: string } }
 ) {
@@ -45,7 +49,7 @@ export async function PATCH(
   }
 
   const updateData: Record<string, any> = {};
-  if (name      !== undefined) updateData.name      = name;
+  if (name      !== undefined) updateData.name      = sanitizeText(name);
   if (phone     !== undefined) updateData.phone     = phone;
   if (suspended !== undefined) updateData.suspended = suspended;
 
@@ -103,7 +107,7 @@ export async function PATCH(
     success: true,
     user: { ...updated, balanceKes: Number(updated.balanceKes) },
   });
-}
+});
 
 // ─── DELETE /api/admin/users/[userId] ────────────────────────────────────────
 // 1. Sweep wallet to PlatformRevenue (USER_DELETION type)
@@ -120,7 +124,7 @@ const DeleteSchema = z.object({
   reason:    z.string().max(200).optional(),
 });
 
-export async function DELETE(
+export const DELETE = withErrorHandling(async function DELETE(
   req: NextRequest,
   { params }: { params: { userId: string } }
 ) {
@@ -215,4 +219,4 @@ export async function DELETE(
     walletCollected: walletBalance,
     blacklisted:     blacklist,
   });
-}
+});

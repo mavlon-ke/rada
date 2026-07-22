@@ -22,6 +22,7 @@ import { requireAuth } from '@/lib/auth/session';
 import { createNotification } from '@/lib/notifications';
 import { displayName } from '@/lib/user/display-name';
 import { sendAdminAlert } from '@/lib/whatsapp/admin-alerts';
+import { withErrorHandling } from '@/lib/security/route-guard';
 
 const FEE_CANCEL = 0.05;
 
@@ -29,7 +30,7 @@ const Schema = z.object({
   agree: z.boolean().optional(),
 });
 
-export async function POST(
+export const POST = withErrorHandling(async function POST(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
@@ -109,7 +110,7 @@ export async function POST(
   if (agree === false) return refuseCancel(challenge, user.id);
   if (agree === true)  return acceptCancel(challenge, user.id);
   return initiateCancel(challenge, user.id, isA);
-}
+});
 
 // ── PENDING_BOTH: free cancel — nobody has staked ────────────────────────────
 async function cancelPendingBoth(challenge: any, requesterId: string) {

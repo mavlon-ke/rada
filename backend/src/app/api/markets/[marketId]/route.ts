@@ -8,8 +8,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { buildMarketShareUrl } from '@/lib/market/slug';
 import { maskPhone }           from '@/lib/user/display-name';
+import { withErrorHandling } from '@/lib/security/route-guard';
 
-export async function GET(
+export const GET = withErrorHandling(async function GET(
   req: NextRequest,
   { params }: { params: { marketId: string } }
 ) {
@@ -62,4 +63,4 @@ export async function GET(
   }
 
   return response;
-}
+});

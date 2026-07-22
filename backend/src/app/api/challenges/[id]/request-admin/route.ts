@@ -8,11 +8,12 @@ import { prisma } from '@/lib/db/prisma';
 import { requireAuth } from '@/lib/auth/session';
 import { createNotification } from '@/lib/notifications';
 import { sendAdminAlert } from '@/lib/whatsapp/admin-alerts';
+import { withErrorHandling } from '@/lib/security/route-guard';
 
 
 const MIN_HOURS_BEFORE_INTERVENTION = 24; // must wait 24h into the 48h window
 
-export async function POST(
+export const POST = withErrorHandling(async function POST(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
@@ -127,4 +128,4 @@ export async function POST(
     message:     'Admin has been notified and will review within 12 hours. Both participants have been sent an SMS.',
     feeNote:     'A 15% dispute fee will apply to the total pool at resolution.',
   });
-}
+});

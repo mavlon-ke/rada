@@ -8,11 +8,12 @@ import { z } from 'zod';
 import { prisma } from '@/lib/db/prisma';
 import { requireAdmin, adminUnauthorized, logAdminAction } from '@/lib/auth/admin';
 import { normaliseToE164 } from '@/lib/whatsapp/whatsapp-otp';
+import { withErrorHandling } from '@/lib/security/route-guard';
 
 export const dynamic = 'force-dynamic';
 
 // GET — return all blacklisted numbers
-export async function GET(req: NextRequest) {
+export const GET = withErrorHandling(async function GET(req: NextRequest) {
   const admin = await requireAdmin(req);
   if (!admin) return adminUnauthorized();
 
@@ -21,7 +22,7 @@ export async function GET(req: NextRequest) {
   });
 
   return NextResponse.json({ entries, count: entries.length });
-}
+});
 
 // POST — manually add a phone number to the blacklist
 const AddSchema = z.object({
@@ -29,7 +30,7 @@ const AddSchema = z.object({
   reason: z.string().min(1).max(200),
 });
 
-export async function POST(req: NextRequest) {
+export const POST = withErrorHandling(async function POST(req: NextRequest) {
   const admin = await requireAdmin(req);
   if (!admin) return adminUnauthorized();
 
@@ -50,12 +51,12 @@ export async function POST(req: NextRequest) {
   await logAdminAction(admin.id, 'BLACKLIST_ADDED', phone, { reason: parsed.data.reason }, req);
 
   return NextResponse.json({ success: true, entry });
-}
+});
 
 // DELETE — remove a number from the blacklist
 const RemoveSchema = z.object({ phone: z.string() });
 
-export async function DELETE(req: NextRequest) {
+export const DELETE = withErrorHandling(async function DELETE(req: NextRequest) {
   const admin = await requireAdmin(req);
   if (!admin) return adminUnauthorized();
 
@@ -75,4 +76,4 @@ export async function DELETE(req: NextRequest) {
   await logAdminAction(admin.id, 'BLACKLIST_REMOVED', parsed.data.phone, {}, req);
 
   return NextResponse.json({ success: true, message: `${parsed.data.phone} removed from blacklist.` });
-}
+});

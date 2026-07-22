@@ -15,6 +15,7 @@ import { z } from 'zod';
 import { prisma } from '@/lib/db/prisma';
 import { requireAuth } from '@/lib/auth/session';
 import { createNotification } from '@/lib/notifications';
+import { withErrorHandling } from '@/lib/security/route-guard';
 
 const FEE_STANDARD = 0.05;  // 5%  — mutual/referee resolution
 const FEE_DISPUTE  = 0.15;  // 15% — admin intervention
@@ -23,7 +24,7 @@ const Schema = z.object({
   outcome: z.enum(['USER_A', 'USER_B', 'TIE']),
 });
 
-export async function POST(
+export const POST = withErrorHandling(async function POST(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
@@ -114,7 +115,7 @@ export async function POST(
     theirOutcome: isUserA ? bConfirm : aConfirm,
     agreed:       false,
   });
-}
+});
 
 // ── Shared resolution logic ────────────────────────────────────────────────────
 async function resolveChallenge(

@@ -16,6 +16,7 @@ import { createNotification } from '@/lib/notifications';
 import { displayName }        from '@/lib/user/display-name';
 import { sanitizeText }       from '@/lib/security/middleware';
 import { darajaPhone } from '@/lib/payments/payment.service';
+import { withErrorHandling } from '@/lib/security/route-guard';
 
 
 // dbPhone: strips leading + for DB lookups (users stored as 254XXXXXXXXX, not +254XXXXXXXXX).
@@ -52,7 +53,7 @@ async function generateAccessCode(): Promise<string> {
   return code!;
 }
 
-export async function POST(req: NextRequest) {
+export const POST = withErrorHandling(async function POST(req: NextRequest) {
   const user = await requireAuth(req);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -211,4 +212,4 @@ export async function POST(req: NextRequest) {
     batchId,
     totalPairs: created.length,
   });
-}
+});

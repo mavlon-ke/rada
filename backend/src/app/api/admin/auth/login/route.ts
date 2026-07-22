@@ -14,6 +14,8 @@ import { prisma } from '@/lib/db/prisma';
 import { logAdminAction } from '@/lib/auth/admin';
 import { withErrorHandling } from '@/lib/security/route-guard';
 
+export const dynamic = 'force-dynamic';
+
 // SECURITY FIX: admin tokens use a separate secret from user tokens.
 // Compromise of one secret cannot mint tokens for the other trust tier.
 const ADMIN_JWT_SECRET = new TextEncoder().encode(

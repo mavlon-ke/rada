@@ -13,12 +13,13 @@ import { prisma }             from '@/lib/db/prisma';
 import { requireAuth }        from '@/lib/auth/session';
 import { createNotification } from '@/lib/notifications';
 import { displayName }        from '@/lib/user/display-name';
+import { withErrorHandling } from '@/lib/security/route-guard';
 
 const Schema = z.object({
   action: z.enum(['ACCEPT', 'DECLINE']),
 });
 
-export async function POST(
+export const POST = withErrorHandling(async function POST(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
@@ -119,4 +120,4 @@ export async function POST(
     action:  'DECLINED',
     message: 'You have declined the referee role. The challenge will now use mutual consent resolution. Both challengers have been notified.',
   });
-}
+});

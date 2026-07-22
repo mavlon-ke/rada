@@ -1,20 +1,29 @@
 // src/app/api/admin/users/unsuspend-by-phone/route.ts
-// Emergency: unsuspend a user by phone number
-// GET /api/admin/users/unsuspend-by-phone?phone=07XXXXXXXXX&secret=CRON_SECRET
+// Emergency: unsuspend a specific user by phone number.
+// POST /api/admin/users/unsuspend-by-phone
+// Body: { phone: string }
+//
+// Auth: requires valid admin session (requireAdmin).
+// Previously GET with secret in query string — secret was exposed in server
+// logs, browser history, and CDN access logs. Moved to POST + requireAdmin.
+// logAdminAction creates a full audit trail for every use.
 
-import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db/prisma';
+import { NextRequest, NextResponse }                  from 'next/server';
+import { prisma }                                     from '@/lib/db/prisma';
+import { withErrorHandling }                          from '@/lib/security/route-guard';
+import { requireAdmin, adminUnauthorized, logAdminAction } from '@/lib/auth/admin';
 
-export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url);
-  const secret = searchParams.get('secret');
-  const phone  = searchParams.get('phone');
+export const dynamic = 'force-dynamic';
 
-  if (!secret || secret !== process.env.CRON_SECRET) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-  }
+export const POST = withErrorHandling(async function POST(req: NextRequest) {
+  const admin = await requireAdmin(req);
+  if (!admin) return adminUnauthorized();
+
+  const body = await req.json().catch(() => ({}));
+  const phone = body?.phone as string | undefined;
+
   if (!phone) {
-    return NextResponse.json({ error: 'phone required' }, { status: 400 });
+    return NextResponse.json({ error: 'phone required in request body' }, { status: 400 });
   }
 
   const digits = phone.replace(/\D/g, '');
@@ -26,9 +35,17 @@ export async function GET(req: NextRequest) {
     data:  { suspended: false },
   });
 
+  await logAdminAction(
+    admin.id,
+    'UNSUSPEND_USER',
+    `phone:${e164}`,
+    { phone: e164, updated: result.count },
+    req
+  );
+
   return NextResponse.json({
     success: true,
     updated: result.count,
     message: result.count > 0 ? 'User unsuspended.' : 'User not found.',
   });
-}
+});

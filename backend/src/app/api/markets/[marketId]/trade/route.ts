@@ -21,6 +21,7 @@ import { requireAuth } from '@/lib/auth/session';
 import { sharesToReceive, newPools } from '@/lib/market/amm';
 import { createNotification } from '@/lib/notifications';
 import { payReferrerOnFirstTrade, notifyReferrerRewarded } from '@/lib/referrals/referral.service';
+import { withErrorHandling } from '@/lib/security/route-guard';
 
 const DEFAULT_FORECASTING_FEE_RATE      = 0.05;   // fallback if PlatformConfig row missing
 const MAX_CREATOR_ROYALTY_RATE          = 0.05;   // Hard cap: defence-in-depth. Even if DB tampered, never pay >5%.
@@ -33,7 +34,7 @@ const TradeSchema = z.object({
   bonusAmountKes: z.number().min(0).default(0),
 });
 
-export async function POST(
+export const POST = withErrorHandling(async function POST(
   req: NextRequest,
   { params }: { params: { marketId: string } }
 ) {
@@ -82,14 +83,6 @@ export async function POST(
     const freshUser = await tx.user.findUnique({ where: { id: user.id } });
     if (!freshUser) throw new Error('User not found');
 
-    // Validate sufficient balances
-    if (Number(freshUser.balanceKes) < realAmountKes) {
-      throw new Error(`Insufficient real balance. Need KES ${realAmountKes}, have KES ${Number(freshUser.balanceKes)}`);
-    }
-    if (clampedBonus > 0 && Number(freshUser.bonusBalanceKes) < clampedBonus) {
-      throw new Error('Insufficient bonus balance');
-    }
-
     // AMM calculation
     const yesPool = Number(market.yesPool);
     const noPool  = Number(market.noPool);
@@ -97,11 +90,24 @@ export async function POST(
     const pricePerShare = netAmount / shares;
     const { yesPool: newYes, noPool: newNo } = newPools(yesPool, noPool, side, shares);
 
-    // Deduct balances
+    // M-1 FIX: Balance check + debit via WHERE guard — atomic at DB level.
+    // Unlike a read-then-write pattern, updateMany({where:{gte}}) cannot race:
+    // PostgreSQL row-lock ensures only one concurrent trade can deduct if
+    // balance is exactly equal to the stake amount.
     const balanceUpdate: any = {};
-    if (realAmountKes > 0) balanceUpdate.balanceKes = { decrement: realAmountKes };
+    if (realAmountKes > 0) balanceUpdate.balanceKes      = { decrement: realAmountKes };
     if (clampedBonus > 0)  balanceUpdate.bonusBalanceKes = { decrement: clampedBonus };
-    await tx.user.update({ where: { id: user.id }, data: balanceUpdate });
+
+    const whereGuard: any = { id: user.id };
+    if (realAmountKes > 0) whereGuard.balanceKes      = { gte: realAmountKes };
+    if (clampedBonus  > 0) whereGuard.bonusBalanceKes = { gte: clampedBonus };
+
+    const balUpdated = await tx.user.updateMany({ where: whereGuard, data: balanceUpdate });
+    if (balUpdated.count === 0) {
+      throw new Error(
+        `Insufficient balance. Need KES ${realAmountKes} real${clampedBonus > 0 ? ` + KES ${clampedBonus} bonus` : ''}.`
+      );
+    }
 
     // Update market pools
     await tx.market.update({
@@ -249,4 +255,4 @@ export async function POST(
   }
 
   return NextResponse.json({ success: true, ...result });
-}
+});

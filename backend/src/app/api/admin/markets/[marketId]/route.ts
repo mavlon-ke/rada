@@ -5,6 +5,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/db/prisma';
 import { requireAdmin, adminUnauthorized, logAdminAction } from '@/lib/auth/admin';
+import { withErrorHandling } from '@/lib/security/route-guard';
+
+export const dynamic = 'force-dynamic';
 
 const EditSchema = z.object({
   title:       z.string().min(5).max(200).optional(),
@@ -15,7 +18,7 @@ const EditSchema = z.object({
   imageUrl:    z.string().url().optional().or(z.literal('')),
 });
 
-export async function PATCH(
+export const PATCH = withErrorHandling(async function PATCH(
   req: NextRequest,
   { params }: { params: { marketId: string } }
 ) {
@@ -60,4 +63,4 @@ export async function PATCH(
   );
 
   return NextResponse.json({ success: true, market: updated });
-}
+});

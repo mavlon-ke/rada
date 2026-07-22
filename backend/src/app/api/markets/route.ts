@@ -6,10 +6,11 @@ import { requireAuth } from '@/lib/auth/session';
 import { sanitizeText } from '@/lib/security/middleware';
 import { generateUniqueSlug, buildMarketShareUrl } from '@/lib/market/slug';
 import { maskPhone, displayName }                  from '@/lib/user/display-name';
+import { withErrorHandling } from '@/lib/security/route-guard';
 
 // ─── GET /api/markets ─────────────────────────────────────────────────────────
 
-export async function GET(req: NextRequest) {
+export const GET = withErrorHandling(async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const category    = searchParams.get('category');
   const status      = searchParams.get('status') ?? 'OPEN';
@@ -136,7 +137,7 @@ export async function GET(req: NextRequest) {
     total,
     hasMore,
   });
-}
+});
 
 // ─── POST /api/markets ────────────────────────────────────────────────────────
 
@@ -149,7 +150,7 @@ const CreateMarketSchema = z.object({
   sourceNote:  z.string().max(300).optional(),
 });
 
-export async function POST(req: NextRequest) {
+export const POST = withErrorHandling(async function POST(req: NextRequest) {
   const user = await requireAuth(req);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -200,4 +201,4 @@ export async function POST(req: NextRequest) {
     shareUrl:        buildMarketShareUrl(slug, null),
     creatorShareUrl: buildMarketShareUrl(slug, maskPhone(market.creator.phone)),
   }, { status: 201 });
-}
+});

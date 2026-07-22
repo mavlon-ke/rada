@@ -281,11 +281,18 @@ export const POST = withErrorHandling(async function POST(
       await tx.user.update({ where: { id: user.id }, data: updateData });
     }
 
+    // H-4 FIX: status guard prevents two users joining simultaneously.
+    // If another request already set userBId or changed status, this update
+    // fails (Prisma P2025) and the $transaction rolls back — wallet is safe.
     const ch = await tx.marketChallenge.update({
-      where: { id: challenge.id },
+      where: {
+        id:      challenge.id,
+        status:  'PENDING_JOIN', // only join if still open
+        userBId: null,           // only join if not already claimed
+      },
       data: {
         userBId:   user.id,
-        totalPool: { increment: actualWalletTotal },   // stake amount paid, not total balance
+        totalPool: { increment: actualWalletTotal },
         status:    'ACTIVE',
       },
     });

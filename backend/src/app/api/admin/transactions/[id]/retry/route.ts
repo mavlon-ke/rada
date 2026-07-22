@@ -5,8 +5,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma }                    from '@/lib/db/prisma';
 import { requireAdmin, adminUnauthorized, logAdminAction } from '@/lib/auth/admin';
 import { b2cTransfer, generateDarajaRef, darajaPhone }     from '@/lib/payments/payment.service';
+import { withErrorHandling } from '@/lib/security/route-guard';
 
-export async function POST(
+export const dynamic = 'force-dynamic';
+
+export const POST = withErrorHandling(async function POST(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
@@ -77,4 +80,4 @@ export async function POST(
       { status: 500 }
     );
   }
-}
+});

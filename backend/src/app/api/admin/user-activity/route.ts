@@ -13,6 +13,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma }                    from '@/lib/db/prisma';
 import { requireAdmin, adminUnauthorized } from '@/lib/auth/admin';
+import { withErrorHandling } from '@/lib/security/route-guard';
 
 export const dynamic = 'force-dynamic';
 
@@ -79,7 +80,7 @@ function activityColor(type: string): string {
   return colors[type] || 'ai-blue';
 }
 
-export async function GET(req: NextRequest) {
+export const GET = withErrorHandling(async function GET(req: NextRequest) {
   const admin = await requireAdmin(req);
   if (!admin) return adminUnauthorized();
 
@@ -180,4 +181,4 @@ export async function GET(req: NextRequest) {
     console.error('[admin/user-activity] error:', err?.message ?? err);
     return NextResponse.json({ error: 'Failed to load activity' }, { status: 500 });
   }
-}
+});

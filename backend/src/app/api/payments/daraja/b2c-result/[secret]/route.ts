@@ -4,6 +4,9 @@
 // Safaricom sends this for both success (ResultCode 0) and failure (any other code).
 // Lookup key: Result.OriginatorConversationID = transaction.mpesaRef (set at initiation).
 // On failure: wallet is refunded atomically and user is notified.
+//
+// C-5 FIX: Status-guarded updateMany prevents duplicate callbacks from
+// double-refunding the wallet. Only ONE callback wins the race per transaction.
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma }                    from '@/lib/db/prisma';
@@ -38,6 +41,7 @@ export const POST = withErrorHandling(async (
   const { OriginatorConversationID, ResultCode, ResultDesc } = result;
   console.log(`[Daraja B2C] Result — OriginatorConvID: ${OriginatorConversationID} ResultCode: ${ResultCode}`);
 
+  // Look up the transaction — still PENDING at this point
   const transaction = await prisma.transaction.findFirst({
     where: { mpesaRef: OriginatorConversationID, status: 'PENDING' },
   });
@@ -48,19 +52,24 @@ export const POST = withErrorHandling(async (
   }
 
   if (ResultCode === 0) {
-    // ── Success: mark withdrawal complete ──────────────────────────────────
+    // ── Success: C-5 FIX — atomic status flip before marking complete ────────
     const params: Array<{ Key: string; Value?: any }> =
       result.ResultParameters?.ResultParameter ?? [];
     const getParam = (key: string) => params.find((p: any) => p.Key === key)?.Value;
     const receipt  = String(getParam('TransactionReceipt') ?? '');
 
-    await prisma.transaction.update({
-      where: { id: transaction.id },
+    const claimed = await prisma.transaction.updateMany({
+      where: { id: transaction.id, status: 'PENDING' },
       data:  {
         status:      'SUCCESS',
         description: `Withdrawal of KES ${Math.abs(Number(transaction.amountKes)).toLocaleString()} sent to M-Pesa. Receipt: ${receipt}`,
       },
     });
+
+    if (claimed.count === 0) {
+      console.warn('[Daraja B2C] C-5: Duplicate success callback ignored for:', transaction.id);
+      return NextResponse.json({ ResultCode: 0, ResultDesc: 'Accepted' });
+    }
 
     void createNotification({
       userId:  transaction.userId,
@@ -73,22 +82,37 @@ export const POST = withErrorHandling(async (
     console.log(`[Daraja B2C] ✅ Withdrawal confirmed for transaction ${transaction.id}`);
 
   } else {
-    // ── Failure: refund wallet ─────────────────────────────────────────────
+    // ── Failure: C-5 FIX — atomic claim before refunding wallet ─────────────
+    // The updateMany + wallet increment are in one $transaction so if the
+    // status flip gets count=0 (duplicate), the refund is also skipped.
     const amountToRefund = Math.abs(Number(transaction.amountKes));
 
-    await prisma.$transaction(async (tx: any) => {
-      await tx.user.update({
-        where: { id: transaction.userId },
-        data:  { balanceKes: { increment: amountToRefund } },
-      });
-      await tx.transaction.update({
-        where: { id: transaction.id },
+    const refunded = await prisma.$transaction(async (tx: any) => {
+      const claimed = await tx.transaction.updateMany({
+        where: { id: transaction.id, status: 'PENDING' },
         data:  {
           status:      'FAILED',
           description: `Withdrawal failed: ${String(ResultDesc ?? 'Unknown error').slice(0, 100)}. KES ${amountToRefund.toLocaleString()} refunded to wallet.`,
         },
       });
+
+      if (claimed.count === 0) {
+        // Duplicate failure callback — do NOT refund again
+        return false;
+      }
+
+      await tx.user.update({
+        where: { id: transaction.userId },
+        data:  { balanceKes: { increment: amountToRefund } },
+      });
+
+      return true;
     });
+
+    if (!refunded) {
+      console.warn('[Daraja B2C] C-5: Duplicate failure callback ignored for:', transaction.id);
+      return NextResponse.json({ ResultCode: 0, ResultDesc: 'Accepted' });
+    }
 
     void createNotification({
       userId:  transaction.userId,

@@ -4,10 +4,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { z } from 'zod';
+import { withErrorHandling } from '@/lib/security/route-guard';
 
 const Schema = z.object({ code: z.string().min(1).max(20) });
 
-export async function POST(req: NextRequest) {
+export const POST = withErrorHandling(async function POST(req: NextRequest) {
   const body   = await req.json();
   const parsed = Schema.safeParse(body);
   if (!parsed.success) {
@@ -38,4 +39,4 @@ export async function POST(req: NextRequest) {
     referrerRewardKes: Number(config.referrerRewardKes),
     refereeMatchKes:   Number(config.refereeMatchKes),
   });
-}
+});

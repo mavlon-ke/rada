@@ -6,6 +6,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireAdmin } from '@/lib/auth/admin';
 import { prisma } from '@/lib/db/prisma';
+import { withErrorHandling } from '@/lib/security/route-guard';
+
+export const dynamic = 'force-dynamic';
 
 const UpdateSchema = z.object({
   whatsappNumber: z.string().regex(/^[0-9]{9,15}$/, 'Must be digits only, 9-15 chars').or(z.literal('')),
@@ -14,7 +17,7 @@ const UpdateSchema = z.object({
 // We store support config in the same SiteConfig pattern as referral/carousel
 // Using a singleton record with key = 'support'
 
-export async function GET(req: NextRequest) {
+export const GET = withErrorHandling(async function GET(req: NextRequest) {
   const admin = await requireAdmin(req);
   if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -30,9 +33,9 @@ export async function GET(req: NextRequest) {
     // If SiteConfig model doesn't exist yet, return empty
     return NextResponse.json({ whatsappNumber: '' });
   }
-}
+});
 
-export async function POST(req: NextRequest) {
+export const POST = withErrorHandling(async function POST(req: NextRequest) {
   const admin = await requireAdmin(req);
   if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -60,4 +63,4 @@ export async function POST(req: NextRequest) {
       ? `Support WhatsApp set to ${whatsappNumber}`
       : 'Support WhatsApp number cleared',
   });
-}
+});

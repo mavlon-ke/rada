@@ -10,6 +10,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
+import { withErrorHandling } from '@/lib/security/route-guard';
 
 const RETENTION_DAYS = 180;
 
@@ -42,7 +43,7 @@ function checkSecret(req: NextRequest): boolean {
   return !!provided && provided === process.env.CRON_SECRET;
 }
 
-export async function GET(req: NextRequest) {
+export const GET = withErrorHandling(async function GET(req: NextRequest) {
   if (!checkSecret(req)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
@@ -51,9 +52,9 @@ export async function GET(req: NextRequest) {
   } catch (err) {
     return NextResponse.json({ success: false, error: (err as Error).message }, { status: 500 });
   }
-}
+});
 
-export async function POST(req: NextRequest) {
+export const POST = withErrorHandling(async function POST(req: NextRequest) {
   if (!checkSecret(req)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
@@ -62,4 +63,4 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     return NextResponse.json({ success: false, error: (err as Error).message }, { status: 500 });
   }
-}
+});

@@ -136,7 +136,7 @@ export const POST = withErrorHandling(async (req: NextRequest) => {
     httpOnly: true,
     secure:   process.env.NODE_ENV === 'production',
     sameSite: 'lax',
-    maxAge:   86400,
+    maxAge:   7 * 86400, // 7 days — matches JWT expiry (was 24h, caused silent daily logouts)
     path:     '/',
   });
 

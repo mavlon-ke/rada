@@ -11,8 +11,9 @@ import { requireAuth }        from '@/lib/auth/session';
 import { createNotification } from '@/lib/notifications';
 import { displayName }        from '@/lib/user/display-name';
 import { stkPush, generateDarajaRef, darajaPhone } from '@/lib/payments/payment.service';
+import { withErrorHandling } from '@/lib/security/route-guard';
 
-export async function POST(
+export const POST = withErrorHandling(async function POST(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
@@ -179,4 +180,4 @@ export async function POST(
       error: 'Could not initiate M-Pesa payment: ' + err.message + '. Please try again or top up your wallet first.',
     }, { status: 500 });
   }
-}
+});

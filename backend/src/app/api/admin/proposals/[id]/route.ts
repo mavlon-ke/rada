@@ -5,6 +5,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/db/prisma';
 import { requireAdmin, adminUnauthorized, logAdminAction } from '@/lib/auth/admin';
+import { withErrorHandling } from '@/lib/security/route-guard';
+
+export const dynamic = 'force-dynamic';
 
 const Schema = z.object({
   question:         z.string().min(10).max(300).optional(),
@@ -13,7 +16,7 @@ const Schema = z.object({
   whyCareNote:      z.string().max(5000).optional(),
 });
 
-export async function PATCH(
+export const PATCH = withErrorHandling(async function PATCH(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
@@ -49,4 +52,4 @@ export async function PATCH(
   );
 
   return NextResponse.json({ success: true, proposal: updated });
-}
+});

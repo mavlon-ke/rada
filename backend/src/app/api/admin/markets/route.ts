@@ -7,13 +7,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/db/prisma';
 import { requireAdmin, adminUnauthorized, logAdminAction } from '@/lib/auth/admin';
+import { sanitizeText } from '@/lib/security/middleware';
 import { generateUniqueSlug, buildMarketShareUrl } from '@/lib/market/slug';
+import { withErrorHandling } from '@/lib/security/route-guard';
+
+export const dynamic = 'force-dynamic';
 
 // ─── GET /api/admin/markets ───────────────────────────────────────────────────
 // Returns all markets across all statuses for the admin panel table.
 // Supports ?status=OPEN|CLOSED|RESOLVED|CANCELLED and ?category= filters.
 
-export async function GET(req: NextRequest) {
+export const GET = withErrorHandling(async function GET(req: NextRequest) {
   const admin = await requireAdmin(req);
   if (!admin) return adminUnauthorized();
 
@@ -84,7 +88,7 @@ export async function GET(req: NextRequest) {
   });
 
   return NextResponse.json({ markets: enriched, page, limit, total });
-}
+});
 
 // ─── POST /api/admin/markets ──────────────────────────────────────────────────
 // Admin creates a market. Uses admin JWT — does NOT require a user account.
@@ -99,7 +103,7 @@ const CreateMarketSchema = z.object({
   imageUrl:    z.string().url().optional(),
 });
 
-export async function POST(req: NextRequest) {
+export const POST = withErrorHandling(async function POST(req: NextRequest) {
   const admin = await requireAdmin(req);
   if (!admin) return adminUnauthorized();
 
@@ -109,7 +113,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const { title, description, category, closesAt, sourceNote, imageUrl } = parsed.data;
+  const title       = sanitizeText(parsed.data.title);
+  const description = sanitizeText(parsed.data.description);
+  const sourceNote  = parsed.data.sourceNote ? sanitizeText(parsed.data.sourceNote) : undefined;
+  const { category, closesAt, imageUrl } = parsed.data;
 
   if (new Date(closesAt) <= new Date()) {
     return NextResponse.json({ error: 'closesAt must be in the future' }, { status: 400 });
@@ -161,4 +168,4 @@ export async function POST(req: NextRequest) {
       shareUrl: buildMarketShareUrl(slug, null),
     },
   }, { status: 201 });
-}
+});

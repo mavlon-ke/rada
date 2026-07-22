@@ -2,8 +2,9 @@
 // Public endpoint — returns referral programme config for frontend display.
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
+import { withErrorHandling } from '@/lib/security/route-guard';
 export const dynamic = 'force-dynamic';
-export async function GET() {
+export const GET = withErrorHandling(async function GET() {
   let config = await prisma.referralConfig.findUnique({ where: { id: 'singleton' } });
 
   // Create default config if it doesn't exist
@@ -14,4 +15,4 @@ export async function GET() {
   }
 
   return NextResponse.json({ config });
-}
+});

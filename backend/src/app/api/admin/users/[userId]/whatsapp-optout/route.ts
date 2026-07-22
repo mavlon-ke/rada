@@ -15,12 +15,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/db/prisma';
 import { requireAdmin, adminUnauthorized, logAdminAction } from '@/lib/auth/admin';
+import { withErrorHandling } from '@/lib/security/route-guard';
+
+export const dynamic = 'force-dynamic';
 
 const Schema = z.object({
   optedOut: z.boolean(),
 }).strict();
 
-export async function POST(
+export const POST = withErrorHandling(async function POST(
   req: NextRequest,
   { params }: { params: { userId: string } }
 ) {
@@ -76,4 +79,4 @@ export async function POST(
     userId:   params.userId,
     optedOut: parsed.data.optedOut,
   });
-}
+});

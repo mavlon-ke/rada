@@ -7,9 +7,12 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
+import { withErrorHandling } from '@/lib/security/route-guard';
+
+export const dynamic = 'force-dynamic';
 
 
-export async function POST(req: NextRequest) {
+export const POST = withErrorHandling(async function POST(req: NextRequest) {
   // ── Cron auth ────────────────────────────────────────────────────────────
   const secret = req.headers.get('x-cron-secret');
   if (secret !== process.env.CRON_SECRET) {
@@ -60,4 +63,4 @@ export async function POST(req: NextRequest) {
     errors,
     timestamp: now.toISOString(),
   });
-}
+});

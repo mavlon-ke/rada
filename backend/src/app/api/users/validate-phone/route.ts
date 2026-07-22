@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma }      from '@/lib/db/prisma';
 import { displayName } from '@/lib/user/display-name';
+import { withErrorHandling } from '@/lib/security/route-guard';
 
 function normalisePhone(phone: string): string {
   return phone.replace(/\D/g, '').replace(/^0/, '254');
@@ -18,7 +19,7 @@ const Schema = z.object({
   phone: z.string().min(9).max(15),
 });
 
-export async function POST(req: NextRequest) {
+export const POST = withErrorHandling(async function POST(req: NextRequest) {
   const body   = await req.json().catch(() => ({}));
   const parsed = Schema.safeParse(body);
   if (!parsed.success) {
@@ -39,4 +40,4 @@ export async function POST(req: NextRequest) {
     valid: true,
     name:  displayName(user.name, user.phone),
   });
-}
+});

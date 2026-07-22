@@ -2,8 +2,9 @@
 // Public endpoint — returns active, non-expired carousel slides for the frontend.
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
+import { withErrorHandling } from '@/lib/security/route-guard';
 export const dynamic = 'force-dynamic';
-export async function GET() {
+export const GET = withErrorHandling(async function GET() {
   const now = new Date();
 
   const slides = await prisma.carouselSlide.findMany({
@@ -19,4 +20,4 @@ export async function GET() {
   });
 
   return NextResponse.json({ slides });
-}
+});
