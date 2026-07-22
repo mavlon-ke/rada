@@ -1599,8 +1599,7 @@ function refreshUserProfile() {
       var nameEl = document.getElementById('accUserName');
       if (nameEl && merged.name) nameEl.textContent = merged.name;
 
-      // Reward Credits: bonusBalanceKes is the live rewards field
-      // (rewardBalance was a dead schema field — never written, now removed)
+      // Reward Credits: bonusBalanceKes is the live balance field
       var rewEl = document.getElementById('dashRewardBal');
       if (rewEl) rewEl.textContent = 'KES ' + Number(u.bonusBalanceKes || 0).toLocaleString();
     }
@@ -1737,7 +1736,7 @@ function loadNotifications() {
       return '<div class="notif-item ' + (n.read ? '' : 'unread') + '"'
         + ' data-notif-id="' + esc(n.id) + '"'
         + ' data-link="' + esc(safeUrl(n.link)) + '"'
-        + ' onclick="tapNotif(event,\'' + n.id + '\',\'' + (n.link||'') + \')">' +
+        + ' onclick="tapNotif(event,\'' + n.id + '\',\'' + (n.link||'') + '\')">' +
         '<div class="notif-icon">' + (icons[n.type] || '\uD83D\uDD14') + '</div>' +
         '<div class="notif-content">' +
           '<div class="notif-title-txt">' + esc(n.title) + '</div>' +
