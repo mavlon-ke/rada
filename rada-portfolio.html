@@ -1877,9 +1877,9 @@ fetch(API_BASE + '/api/config/referral').then(r => r.json()).then(d => {
 
   // Notification badge
   if (isLoggedIn) {
-    var _notifToken = localStorage.getItem('rada_token') || '';
     fetch(API_BASE + '/api/users/me/notifications', {
-      headers: _notifToken ? { 'Authorization': 'Bearer ' + _notifToken } : {}
+      credentials: 'include',
+      headers: {}
     }).then(r => r.json()).then(d => {
       var count = d.unreadCount || 0;
       document.querySelectorAll('.m-notif-badge').forEach(el => {
@@ -1913,9 +1913,9 @@ function loadNotifications() {
   var body = document.getElementById('notifTrayBody');
   if (!body) return;
   body.innerHTML = '<div class="notif-empty">Loading...</div>';
-  var _lnTok = localStorage.getItem('rada_token') || '';
   fetch(API_BASE + '/api/users/me/notifications', {
-    headers: _lnTok ? { 'Authorization': 'Bearer ' + _lnTok } : {}
+    credentials: 'include',
+    headers: {}
   }).then(r => r.json()).then(d => {
     var notifs = d.notifications || [];
     if (!notifs.length) {
@@ -1952,10 +1952,10 @@ function tapNotif(event, id, link) {
   if (id) {
     var row = (event && event.currentTarget) ||
               document.querySelector('.notif-item[data-notif-id="' + id + '"]');
-    var _tnTok = localStorage.getItem('rada_token') || '';
     fetch(API_BASE + '/api/users/me/notifications/' + encodeURIComponent(id) + '/read', {
       method: 'PATCH',
-      headers: _tnTok ? { 'Authorization': 'Bearer ' + _tnTok } : {}
+      credentials: 'include',
+      headers: {}
     }).then(function(r) { return r.ok ? r.json() : null; }).then(function(d) {
       if (!d) return;
       // Update the badge from authoritative server response.
@@ -1977,10 +1977,10 @@ function tapNotif(event, id, link) {
   if (link) window.location.href = link;
 }
 function markAllRead() {
-  var _mrTok = localStorage.getItem('rada_token') || '';
   fetch(API_BASE + '/api/users/me/notifications/read', {
     method: 'PATCH',
-    headers: _mrTok ? { 'Authorization': 'Bearer ' + _mrTok } : {}
+    credentials: 'include',
+    headers: {}
   })
     .then(() => {
       document.querySelectorAll('.notif-item').forEach(el => el.classList.remove('unread'));
@@ -2511,7 +2511,7 @@ function openReferSheet() {
   if (codeEl) codeEl.textContent = code;
 
   // Load stats from API
-  fetch(API_BASE + '/api/users/me/referrals')
+  fetch(API_BASE + '/api/users/me/referrals', { credentials: 'include' })
     .then(function(r){ return r.json(); })
     .then(function(d) {
       var total    = d.totalReferred || 0;

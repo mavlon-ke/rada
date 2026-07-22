@@ -1099,12 +1099,10 @@ function submitSuggestion() {
   var timeout = setTimeout(function() { controller.abort(); }, 15000);
 
   fetch(API_BASE + '/api/markets/propose', {
-    method:  'POST',
-    signal:  controller.signal,
-    headers: {
-      'Content-Type':  'application/json',
-      'Authorization': 'Bearer ' + (localStorage.getItem('rada_token') || ''),
-    },
+    method:      'POST',
+    signal:      controller.signal,
+    credentials: 'include',
+    headers:     { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       question:         q,
       category:         cat,
@@ -1176,8 +1174,7 @@ function sendStkPush() {
   var amount = parseInt(document.getElementById('depositAmount').value);
   if (!amount || amount < 20) return alert('Minimum deposit is KES 20');
 
-  var token = localStorage.getItem('rada_token') || '';
-  if (!token) { window.location.href = 'rada-auth.html'; return; }
+  if (!radaUser) { window.location.href = 'rada-auth.html'; return; }
 
   var btn = document.getElementById('depositBtn');
   btn.textContent = '⏳ Sending to your phone...';
@@ -1241,8 +1238,7 @@ function submitWithdraw() {
   if (!amt || amt < 100) return alert('Minimum withdrawal is KES 100.');
   if (amt > 70000) return alert('Maximum withdrawal is KES 70,000.');
 
-  var token = localStorage.getItem('rada_token') || '';
-  if (!token) { window.location.href = 'rada-auth.html'; return; }
+  if (!radaUser) { window.location.href = 'rada-auth.html'; return; }
 
   var balance = Number((radaUser && radaUser.balanceKes) || 0);
   if (amt > balance) return alert('Insufficient balance. Available: KES ' + balance.toLocaleString());
@@ -1571,8 +1567,6 @@ loadDashboardData();
 })();
 
 function refreshUserProfile() {
-  var token = localStorage.getItem('rada_token') || '';
-  if (!token) return;
   userFetch('/api/users/me/profile')
   .then(function(r) { return r.json(); })
   .then(function(d) {
@@ -1689,9 +1683,9 @@ fetch(API_BASE + '/api/config/referral').then(r => r.json()).then(d => {
 
   // Notification badge
   if (isLoggedIn) {
-    var _notifToken = localStorage.getItem('rada_token') || '';
+    // _notifToken no longer needed — fetch uses cookie via credentials:include
     fetch(API_BASE + '/api/users/me/notifications', {
-      headers: _notifToken ? { 'Authorization': 'Bearer ' + _notifToken } : {}
+      credentials: 'include'
     }).then(r => r.json()).then(d => {
       var count = d.unreadCount || 0;
       document.querySelectorAll('.m-notif-badge').forEach(el => {
@@ -1725,9 +1719,9 @@ function loadNotifications() {
   var body = document.getElementById('notifTrayBody');
   if (!body) return;
   body.innerHTML = '<div class="notif-empty">Loading...</div>';
-  var _lnTok = localStorage.getItem('rada_token') || '';
   fetch(API_BASE + '/api/users/me/notifications', {
-    headers: _lnTok ? { 'Authorization': 'Bearer ' + _lnTok } : {}
+    credentials: 'include',
+    headers: {}
   }).then(r => r.json()).then(d => {
     var notifs = d.notifications || [];
     if (!notifs.length) {
@@ -1773,10 +1767,10 @@ function tapNotif(event, id, link) {
   if (id) {
     var row = (event && event.currentTarget) ||
               document.querySelector('.notif-item[data-notif-id="' + id + '"]');
-    var _tnTok = localStorage.getItem('rada_token') || '';
     fetch(API_BASE + '/api/users/me/notifications/' + encodeURIComponent(id) + '/read', {
       method: 'PATCH',
-      headers: _tnTok ? { 'Authorization': 'Bearer ' + _tnTok } : {}
+      credentials: 'include',
+      headers: {}
     }).then(function(r) { return r.ok ? r.json() : null; }).then(function(d) {
       if (!d) return;
       // Update the badge from authoritative server response.
@@ -1798,10 +1792,10 @@ function tapNotif(event, id, link) {
   if (link) window.location.href = link;
 }
 function markAllRead() {
-  var _mrTok = localStorage.getItem('rada_token') || '';
   fetch(API_BASE + '/api/users/me/notifications/read', {
     method: 'PATCH',
-    headers: _mrTok ? { 'Authorization': 'Bearer ' + _mrTok } : {}
+    credentials: 'include',
+    headers: {}
   })
     .then(() => {
       document.querySelectorAll('.notif-item').forEach(el => el.classList.remove('unread'));
@@ -2336,7 +2330,7 @@ function openReferSheet() {
   if (codeEl) codeEl.textContent = code;
 
   // Load stats from API
-  fetch(API_BASE + '/api/users/me/referrals')
+  fetch(API_BASE + '/api/users/me/referrals', { credentials: 'include' })
     .then(function(r){ return r.json(); })
     .then(function(d) {
       var total    = d.totalReferred || 0;
