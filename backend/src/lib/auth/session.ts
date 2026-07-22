@@ -7,7 +7,13 @@ const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!);
 
 export async function requireAuth(req: NextRequest) {
   const authHeader = req.headers.get("Authorization");
-  const token = authHeader?.replace("Bearer ", "") ?? req.cookies.get("token")?.value;
+  // Treat an empty or whitespace-only Bearer value as absent so the cookie
+  // fallback fires correctly for sessions that no longer store the token in
+  // localStorage (3.1 fix). "Bearer " with no token → null → cookie used.
+  const bearerToken = authHeader?.startsWith("Bearer ")
+    ? authHeader.slice(7).trim() || null
+    : null;
+  const token = bearerToken ?? req.cookies.get("token")?.value;
 
   if (!token) return null;
 

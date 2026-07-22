@@ -131,7 +131,7 @@ export const POST = withErrorHandling(async (req: NextRequest) => {
               agreedToTerms: true, confirmedAge: true, createdAt: true },
   });
 
-  const res = NextResponse.json({ token, user: freshUser });
+  const res = NextResponse.json({ user: freshUser });
   res.cookies.set('token', token, {
     httpOnly: true,
     secure:   process.env.NODE_ENV === 'production',

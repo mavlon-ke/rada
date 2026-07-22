@@ -554,8 +554,7 @@ function verifyOTP() {
       }
 
       // Store JWT token and user data
-      const { token, user } = res.data;
-      if (token) localStorage.setItem('rada_token', token);
+      const { user } = res.data;
       if (user)  localStorage.setItem('rada_user', JSON.stringify(user));
 
       document.getElementById('step2').style.display = 'none';
@@ -623,17 +622,14 @@ function completeRegistration() {
   // Save compliance to backend, update local cache
   var storedUser = null;
   try { storedUser = JSON.parse(localStorage.getItem('rada_user') || 'null'); } catch(e) {}
-  const token = localStorage.getItem('rada_token') || '';
 
-  // Update compliance on backend (fire and forget — don't block UI)
-  if (token) {
-    fetch(API_BASE + '/api/users/me/profile', {
-      method:      'PATCH',
-      headers:     { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-      credentials: 'include',
-      body:        JSON.stringify({ agreedToTerms: true, confirmedAge: true }),
-    }).catch(function() {});
-  }
+  // Update compliance on backend (fire and forget — uses httpOnly cookie for auth)
+  fetch(API_BASE + '/api/users/me/profile', {
+    method:      'PATCH',
+    headers:     { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body:        JSON.stringify({ agreedToTerms: true, confirmedAge: true }),
+  }).catch(function() {});
 
   // Update local cache
   if (storedUser) {
