@@ -986,6 +986,11 @@ td{padding:14px 16px;font-size:0.8rem;border-bottom:1px solid rgba(109,40,217,0.
 //     appropriate empty/marketing state. This is what allows the creator
 //     page to load for guests reading the marketing copy.
 var API_BASE = 'https://api.checkrada.co.ke';
+function esc(s) {
+  return String(s === null || s === undefined ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
 function userFetch(path, options) {
   var token = localStorage.getItem('rada_token') || '';
   var opts  = Object.assign({}, options || {});
@@ -1617,8 +1622,8 @@ function loadNotifications() {
       <div class="notif-item ${n.read ? '' : 'unread'}" data-notif-id="${n.id}" onclick="tapNotif(event, '${n.id}','${n.link||''}')">
         <div class="notif-icon">${icons[n.type] || '🔔'}</div>
         <div class="notif-content">
-          <div class="notif-title-txt">${n.title}</div>
-          <div class="notif-msg-txt">${n.message}</div>
+          <div class="notif-title-txt">${esc(n.title||'')}</div>
+          <div class="notif-msg-txt">${esc(n.message||'')}</div>
           <div class="notif-time-txt">${timeAgo(n.createdAt)}</div>
         </div>
         ${!n.read ? '<div class="notif-unread-dot"></div>' : ''}
