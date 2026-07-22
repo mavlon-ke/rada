@@ -990,6 +990,11 @@ nav a.active { color: #8b5cf6 !important; background: rgba(109,40,217,0.12) !imp
 <script>
 // ── API helpers (duplicated here so they're available before the shared nav block) ──
 var API_BASE = 'https://api.checkrada.co.ke';
+function esc(s) {
+  return String(s === null || s === undefined ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
 function userFetch(path, options) {
   var token = localStorage.getItem('rada_token') || '';
   var opts  = Object.assign({}, options || {});
@@ -1100,7 +1105,7 @@ function renderPodium(data) {
         ${ranks[i] === 1 ? '<span class="crown">👑</span>' : ''}
         ${t.emoji}
       </div>
-      <div class="podium-name">${t.name}</div>
+      <div class="podium-name">${esc(t.name||'Forecaster')}</div>
       <div class="podium-profit">+KES ${t.profit.toLocaleString()}</div>
       <div class="podium-block">${medals[i]}</div>
     </div>
@@ -1132,7 +1137,7 @@ function renderTable(data) {
         <div class="trader-avatar">${t.emoji}</div>
         <div>
           <div class="trader-name">
-            ${t.name}
+            ${esc(t.name||'Forecaster')}
             ${t.isMe ? '<span class="you-tag">YOU</span>' : ''}
           </div>
           <div class="trader-badges">${t.badges.map(b=>`<span class="mini-badge">${b}</span>`).join('')}</div>
@@ -1313,8 +1318,8 @@ function loadNotifications() {
       <div class="notif-item ${n.read ? '' : 'unread'}" data-notif-id="${n.id}" onclick="tapNotif(event, '${n.id}','${n.link||''}')">
         <div class="notif-icon">${icons[n.type] || '🔔'}</div>
         <div class="notif-content">
-          <div class="notif-title-txt">${n.title}</div>
-          <div class="notif-msg-txt">${n.message}</div>
+          <div class="notif-title-txt">${esc(n.title||'')}</div>
+          <div class="notif-msg-txt">${esc(n.message||'')}</div>
           <div class="notif-time-txt">${timeAgo(n.createdAt)}</div>
         </div>
         ${!n.read ? '<div class="notif-unread-dot"></div>' : ''}

@@ -1300,6 +1300,11 @@ var CHART_DATA = {
   'all': { labels: [], portfolio: [], deposited: [] },
 };
 
+function esc(s) {
+  return String(s === null || s === undefined ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
 function loadPortfolioData() {
   // Init display name section
   initDisplayNameSection();
@@ -1472,7 +1477,7 @@ function renderPositions() {
   const voidedHtml = VOIDED_POSITIONS.map(function(v) {
     return '<div class="position-item" style="opacity:0.75;">' +
       '<div class="pos-top">' +
-        '<div class="pos-market" style="flex:1;font-size:0.78rem;">' + v.market.title + '</div>' +
+        '<div class="pos-market" style="flex:1;font-size:0.78rem;">' + esc(v.market.title||'—') + '</div>' +
         '<span class="pos-badge" style="background:#fef3c7;color:#92400e;border-color:#fde68a;font-size:0.62rem;">VOIDED</span>' +
       '</div>' +
       '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;padding-top:6px;border-top:1px solid var(--border);">' +
@@ -1492,7 +1497,7 @@ function renderPositions() {
 
     return `<div class="position-item">
       <div class="pos-top">
-        <div class="pos-market">${p.market}</div>
+        <div class="pos-market">${esc(p.market||'—')}</div>
         <span class="pos-badge badge-${p.side.toLowerCase()}">${p.side}</span>
       </div>
       <div class="pos-bar-wrap">
@@ -1533,7 +1538,7 @@ function renderTransactions() {
     return `<div class="txn-item">
       <div class="txn-icon ${t.type}">${t.icon}</div>
       <div class="txn-info">
-        <div class="txn-desc">${t.desc}</div>
+        <div class="txn-desc">${esc(t.desc||'—')}</div>
         <div class="txn-meta">${t.date}</div>
       </div>
       <div>
@@ -1931,8 +1936,8 @@ function loadNotifications() {
       <div class="notif-item ${n.read ? '' : 'unread'}" data-notif-id="${n.id}" onclick="tapNotif(event, '${n.id}','${n.link||''}')">
         <div class="notif-icon">${icons[n.type] || '🔔'}</div>
         <div class="notif-content">
-          <div class="notif-title-txt">${n.title}</div>
-          <div class="notif-msg-txt">${n.message}</div>
+          <div class="notif-title-txt">${esc(n.title||'')} </div>
+          <div class="notif-msg-txt">${esc(n.message||'')} </div>
           <div class="notif-time-txt">${timeAgo(n.createdAt)}</div>
         </div>
         ${!n.read ? '<div class="notif-unread-dot"></div>' : ''}
