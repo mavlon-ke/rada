@@ -8,7 +8,7 @@ import { requireAdmin, adminUnauthorized, logAdminAction } from '@/lib/auth/admi
 
 const EditSchema = z.object({
   title:       z.string().min(5).max(200).optional(),
-  description: z.string().min(10).max(2000).optional(),
+  description: z.string().min(10).max(5000).optional(),
   category:    z.enum(['GENERAL','POLITICS','ECONOMY','ENTERTAINMENT','WEATHER','TECH','FRIENDS']).optional(),
   closesAt:    z.string().datetime().optional(),
   sourceNote:  z.string().max(300).optional(),

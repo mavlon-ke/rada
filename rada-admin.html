@@ -1063,7 +1063,8 @@ body::after {
 
             <div class="form-group">
               <label class="form-label">Description / Resolution Criteria *</label>
-              <textarea class="form-textarea" id="mktDesc" placeholder="Describe exactly what conditions would make this market resolve YES vs NO. Include your primary data sources."></textarea>
+              <textarea class="form-textarea" id="mktDesc" maxlength="5000" placeholder="Describe exactly what conditions would make this market resolve YES vs NO. Include your primary data sources." oninput="var c=document.getElementById('mktDescCount');if(c)c.textContent=this.value.length+'/5000';"></textarea>
+              <div style="font-size:0.7rem;color:var(--text-dim);text-align:right;margin-top:2px;"><span id="mktDescCount">0/5000</span></div>
             </div>
 
             <div class="form-row">
@@ -2174,7 +2175,8 @@ body::after {
       </div>
       <div>
         <div class="stat-label" style="margin-bottom:4px;">Description</div>
-        <textarea class="form-textarea" id="editMktDesc" rows="3" placeholder="Describe YES/NO resolution conditions" style="width:100%;box-sizing:border-box;resize:vertical;"></textarea>
+        <textarea class="form-textarea" id="editMktDesc" rows="3" maxlength="5000" placeholder="Describe YES/NO resolution conditions" style="width:100%;box-sizing:border-box;resize:vertical;" oninput="var c=document.getElementById('editMktDescCount');if(c)c.textContent=this.value.length+'/5000';"></textarea>
+      <div style="font-size:0.7rem;color:var(--text-dim);text-align:right;margin-top:2px;"><span id="editMktDescCount">0/5000</span></div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
         <div>
@@ -3115,6 +3117,7 @@ function _populateEditModal(marketId, m) {
   var _tc = document.getElementById('editMktTitleCount');
   if (_tc) _tc.textContent = (m.title || '').length + '/200';
   document.getElementById('editMktDesc').value       = m.description|| m.desc || '';
+  var _edc = document.getElementById('editMktDescCount'); if (_edc) _edc.textContent = (m.description||m.desc||'').length + '/5000';
   document.getElementById('editMktSourceNote').value = m.sourceNote || '';
   document.getElementById('editMktImageUrl').value   = m.imageUrl   || '';
   document.getElementById('editMarketStatus').textContent = '';

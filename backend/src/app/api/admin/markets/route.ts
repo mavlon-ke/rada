@@ -92,7 +92,7 @@ export async function GET(req: NextRequest) {
 
 const CreateMarketSchema = z.object({
   title:       z.string().min(10).max(200),
-  description: z.string().min(20).max(2000),
+  description: z.string().min(10).max(5000),
   category:    z.enum(['GENERAL', 'POLITICS', 'ECONOMY', 'ENTERTAINMENT', 'WEATHER', 'TECH', 'FRIENDS']),
   closesAt:    z.string().datetime(),
   sourceNote:  z.string().max(300).optional(),
