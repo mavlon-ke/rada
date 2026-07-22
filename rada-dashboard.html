@@ -1612,10 +1612,10 @@ function refreshUserProfile() {
   .then(function(d) {
     var s = function(id, v) { var el = document.getElementById(id); if (el) el.textContent = v; };
     var winRate   = Math.round((d.winRate || 0) * 100);
-    var totalWon  = d.totalPnl > 0 ? d.totalPnl : 0;
+    
     var forecasts = d.totalTrades || 0;
     s('dashWinRate',   winRate + '%');
-    s('dashTotalWon',  'KES ' + Math.round(Math.max(0, totalWon)).toLocaleString());
+    s('dashTotalWon',  d.totalWins || 0);
     s('dashForecasts', forecasts);
   })
   .catch(function() {});
