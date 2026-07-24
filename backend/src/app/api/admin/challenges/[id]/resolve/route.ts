@@ -91,8 +91,8 @@ payouts = [
   // Atomic resolution — wallet credit only
   await prisma.$transaction(async (tx) => {
     const claimed = await tx.marketChallenge.updateMany({
-  where: { id: challenge.id, status: { in: ['ACTIVE', 'PENDING_RESOLUTION'] }, resolution: null },
-  data: { status: 'RESOLVED', resolution: outcome, feePercent: feeRate * 100, platformFeeKes: feeKes, resolvedAt: new Date() },
+  where: { id: challenge.id, status: { in: ['ACTIVE', 'PENDING_RESOLUTION', 'DISPUTED'] }, resolution: null },
+  data: { status: 'RESOLVED', resolution: outcome, feePercent: actualFeeRate * 100, platformFeeKes: feeKes, resolvedAt: new Date() },
 });
 if (claimed.count === 0) throw new Error('Challenge already resolved — concurrent resolve blocked');
 
