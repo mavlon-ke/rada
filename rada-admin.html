@@ -2473,7 +2473,7 @@ function renderMarketsTable(data) {
       : m.status === 'CLOSED'
       ? '<span class="badge badge-amber">CLOSED</span>'
       : m.status === 'RESOLVED'
-      ? '<span class="badge badge-blue">RESOLVED</span>'
+      ? '<span class="badge badge-blue">RESOLVED</span>' + (m.outcome ? ' <span class="badge ' + (m.outcome === 'YES' ? 'badge-green' : 'badge-red') + '">' + m.outcome + ' ✓</span>' : '')
       : '<span class="badge badge-gray">' + esc(m.status||'') + '</span>';
 
     var pauseBtn  = m.status === 'OPEN'
