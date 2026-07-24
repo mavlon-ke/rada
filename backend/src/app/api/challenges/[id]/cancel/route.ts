@@ -142,7 +142,15 @@ async function cancelHalfStaked(challenge: any, stakedSide: 'A' | 'B', requester
   const fee    = Math.floor(stake * FEE_CANCEL);
   const refund = stake - fee;
 
+  let cancellationSucceeded = false;
+
   await prisma.$transaction(async (tx: any) => {
+    const claimed = await tx.marketChallenge.updateMany({
+      where: { id: challenge.id, status: challenge.status },
+      data:  { status: 'CANCELLED', cancelRequestedBy: requesterId },
+    });
+    if (claimed.count === 0) throw new Error('ALREADY_CANCELLED');
+
     if (stakedUserId && refund > 0) {
       const upd = await tx.user.update({
         where: { id: stakedUserId },
@@ -160,10 +168,10 @@ async function cancelHalfStaked(challenge: any, stakedSide: 'A' | 'B', requester
         },
       });
     }
-    await tx.marketChallenge.update({
-      where: { id: challenge.id },
-      data:  { status: 'CANCELLED', cancelRequestedBy: requesterId },
-    });
+    cancellationSucceeded = true;
+  }).catch((err: any) => {
+    if (err.message === 'ALREADY_CANCELLED') return;
+    throw err;
   });
 
   if (fee > 0) {
@@ -284,7 +292,15 @@ async function cancelPendingJoin(challenge: any, requesterId: string, isA: boole
   const fee    = Math.floor(stake * FEE_CANCEL);
   const refund = stake - fee;
 
+  let cancellationSucceeded = false;
+
   await prisma.$transaction(async (tx: any) => {
+    const claimed = await tx.marketChallenge.updateMany({
+      where: { id: challenge.id, status: 'PENDING_JOIN' },
+      data:  { status: 'CANCELLED', cancelRequestedBy: requesterId },
+    });
+    if (claimed.count === 0) throw new Error('ALREADY_CANCELLED');
+
     if (challenge.userAId) {
       const upd = await tx.user.update({
         where: { id: challenge.userAId },
@@ -302,10 +318,10 @@ async function cancelPendingJoin(challenge: any, requesterId: string, isA: boole
         },
       });
     }
-    await tx.marketChallenge.update({
-      where: { id: challenge.id },
-      data:  { status: 'CANCELLED', cancelRequestedBy: requesterId },
-    });
+    cancellationSucceeded = true;
+  }).catch((err: any) => {
+    if (err.message === 'ALREADY_CANCELLED') return;
+    throw err;
   });
 
   if (fee > 0) {
@@ -462,11 +478,14 @@ async function executeMutualCancel(challenge: any, reason: string) {
   const aGets = Math.floor(net / 2);
   const bGets = net - aGets;
 
+  let cancellationSucceeded = false;
+
   await prisma.$transaction(async (tx: any) => {
-    await tx.marketChallenge.update({
-      where: { id: challenge.id },
+    const claimed = await tx.marketChallenge.updateMany({
+      where: { id: challenge.id, status: { in: ['ACTIVE', 'PENDING_RESOLUTION'] } },
       data:  { status: 'CANCELLED', cancelRequestedBy: null, resolvedAt: new Date() },
     });
+    if (claimed.count === 0) throw new Error('ALREADY_CANCELLED');
 
     if (challenge.userAId && aGets > 0) {
       const updA = await tx.user.update({
@@ -503,6 +522,10 @@ async function executeMutualCancel(challenge: any, reason: string) {
         },
       });
     }
+    cancellationSucceeded = true;
+  }).catch((err: any) => {
+    if (err.message === 'ALREADY_CANCELLED') return;
+    throw err;
   });
 
   if (fee > 0) {
