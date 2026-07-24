@@ -133,10 +133,10 @@ async function resolveChallenge(
 
   if (outcome === 'TIE') {
     const half = Math.floor(netPool / 2);
-    payouts = [
-      { userId: challenge.userAId, phone: challenge.userA.phone, amountKes: half },
-      { userId: challenge.userBId, phone: challenge.userB.phone, amountKes: half },
-    ];
+payouts = [
+  { userId: challenge.userAId, phone: challenge.userA.phone, amountKes: half },
+  { userId: challenge.userBId, phone: challenge.userB.phone, amountKes: netPool - half },
+];
   } else {
     const winnerId    = outcome === 'USER_A' ? challenge.userAId : challenge.userBId;
     const winnerPhone = outcome === 'USER_A' ? challenge.userA.phone : challenge.userB?.phone;
@@ -145,16 +145,11 @@ async function resolveChallenge(
 
   // Atomic DB update — wallet credit only
   await prisma.$transaction(async (tx) => {
-    await tx.marketChallenge.update({
-      where: { id: challenge.id },
-      data: {
-        status:         'RESOLVED',
-        resolution:     outcome,
-        feePercent:     feeRate * 100,
-        platformFeeKes: feeKes,
-        resolvedAt:     new Date(),
-      },
-    });
+    const claimed = await tx.marketChallenge.updateMany({
+  where: { id: challenge.id, status: { in: ['ACTIVE', 'PENDING_RESOLUTION'] }, resolution: null },
+  data: { status: 'RESOLVED', resolution: outcome, feePercent: feeRate * 100, platformFeeKes: feeKes, resolvedAt: new Date() },
+});
+if (claimed.count === 0) throw new Error('Challenge already resolved — concurrent resolve blocked');
 
     for (const p of payouts.filter(p => p.amountKes > 0)) {
       const updated = await tx.user.update({

@@ -79,10 +79,10 @@ export const POST = withErrorHandling(async function POST(
   let payouts: { userId: string; phone: string; amountKes: number }[] = [];
   if (outcome === 'TIE') {
     const half = Math.floor(netPool / 2);
-    payouts = [
-      { userId: challenge.userAId, phone: challenge.userA.phone, amountKes: half },
-      { userId: challenge.userBId!, phone: challenge.userB!.phone, amountKes: half },
-    ];
+payouts = [
+  { userId: challenge.userAId, phone: challenge.userA.phone, amountKes: half },
+  { userId: challenge.userBId, phone: challenge.userB.phone, amountKes: netPool - half },
+];
   } else {
     const winner = outcome === 'USER_A' ? challenge.userA : challenge.userB!;
     payouts = [{ userId: winner.id, phone: winner.phone, amountKes: netPool }];
@@ -90,16 +90,11 @@ export const POST = withErrorHandling(async function POST(
 
   // Atomic resolution — wallet credit only
   await prisma.$transaction(async (tx) => {
-    await tx.marketChallenge.update({
-      where: { id: challenge.id },
-      data: {
-        status:         'RESOLVED',
-        resolution:     outcome,
-        feePercent:     actualFeeRate * 100,
-        platformFeeKes: feeKes,
-        resolvedAt:     new Date(),
-      },
-    });
+    const claimed = await tx.marketChallenge.updateMany({
+  where: { id: challenge.id, status: { in: ['ACTIVE', 'PENDING_RESOLUTION'] }, resolution: null },
+  data: { status: 'RESOLVED', resolution: outcome, feePercent: feeRate * 100, platformFeeKes: feeKes, resolvedAt: new Date() },
+});
+if (claimed.count === 0) throw new Error('Challenge already resolved — concurrent resolve blocked');
 
     for (const p of payouts.filter(p => p.amountKes > 0)) {
       const updated = await tx.user.update({
