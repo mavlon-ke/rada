@@ -128,16 +128,19 @@ export const POST = withErrorHandling(async function POST(
 
   // ── Atomic resolution transaction ────────────────────────────────────────
   await prisma.$transaction(async (tx) => {
-    // 1. Mark market resolved
-    await tx.market.update({
-      where: { id: market.id },
-      data: {
-        status:     'RESOLVED',
-        outcome,
-        resolvedAt: new Date(),
-        ...(sourceNote ? { sourceNote } : {}),
-      },
-    });
+    // 1. Mark market resolved — status-guarded claim prevents concurrent double-resolve
+const claimed = await tx.market.updateMany({
+  where: { id: market.id, status: 'CLOSED', outcome: null },
+  data: {
+    status:     'RESOLVED',
+    outcome,
+    resolvedAt: new Date(),
+    ...(sourceNote ? { sourceNote } : {}),
+  },
+});
+if (claimed.count === 0) {
+  throw new Error('Market already resolved or not CLOSED — concurrent resolve blocked');
+}
 
     // 2. Credit winners
     for (const p of payouts) {
