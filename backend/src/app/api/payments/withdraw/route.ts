@@ -23,7 +23,7 @@ export const dynamic = 'force-dynamic';
 
 const WithdrawSchema = z.object({
   amountKes: z.number().min(100).max(70000),
-  phone:     z.string().min(9).max(15),
+  // phone removed — withdrawal always goes to the authenticated user's registered M-Pesa number
 });
 
 export const POST = withErrorHandling(async (req: NextRequest) => {
@@ -36,8 +36,8 @@ export const POST = withErrorHandling(async (req: NextRequest) => {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const { amountKes, phone } = parsed.data;
-  const normPhone  = darajaPhone(phone);
+  const { amountKes } = parsed.data;
+  const normPhone  = darajaPhone(user.phone); // always the authenticated user's registered phone
   const accountRef = generateDarajaRef('CRW'); // 11-char reference
 
   // ── In-flight guard (C-4 fix) ─────────────────────────────────────────────
