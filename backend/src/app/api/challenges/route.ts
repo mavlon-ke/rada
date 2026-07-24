@@ -141,7 +141,11 @@ export const POST = withErrorHandling(async function POST(req: NextRequest) {
     if (actualRealUsed  > 0) updateData.balanceKes      = { decrement: actualRealUsed  };
     if (actualBonusUsed > 0) updateData.bonusBalanceKes = { decrement: actualBonusUsed };
     if (Object.keys(updateData).length > 0) {
-      await tx.user.update({ where: { id: user.id }, data: updateData });
+      const whereGuard: any = { id: user.id };
+      if (actualRealUsed  > 0) whereGuard.balanceKes      = { gte: actualRealUsed  };
+      if (actualBonusUsed > 0) whereGuard.bonusBalanceKes = { gte: actualBonusUsed };
+      const balUpdated = await tx.user.updateMany({ where: whereGuard, data: updateData });
+      if (balUpdated.count === 0) throw new Error('Insufficient balance');
     }
 
     const ch = await tx.marketChallenge.create({

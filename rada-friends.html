@@ -1394,6 +1394,7 @@ var MY_CHALLENGES   = [];
 var REF_QUEUE       = [];
 var HISTORY         = [];
 var currentResolveId = null;  // set when resolve modal opens
+var resolvingIds     = new Set();
 // DEMO_REGISTERED declared in shared block below — removed stub to avoid SyntaxError
 
 function loadChallenges() {
@@ -2744,6 +2745,7 @@ function joinChallenge() {
 
 // ── RESOLVE MODAL ─────────────────────────────────────────────────────────────
 function openResolveModal(challengeId) {
+  if (resolvingIds.has(challengeId)) return;
   currentResolveId = challengeId;   // store for submitRuling
   const c = [...REF_QUEUE, ...MY_CHALLENGES].find(x => x.id === challengeId) || REF_QUEUE[0];
   document.getElementById('resModalQ').textContent = c.q || 'Challenge question';
@@ -2769,14 +2771,17 @@ function openResolveModal(challengeId) {
 }
 function submitRuling(side) {
   if (!currentResolveId) { alert('Error: no challenge selected. Please try again.'); return; }
+  if (resolvingIds.has(currentResolveId)) return;
+  var thisId  = currentResolveId;
   var outcome = side === 'A' ? 'USER_A' : side === 'B' ? 'USER_B' : 'TIE';
   var labels  = { USER_A: 'Challenger A wins', USER_B: 'Challenger B wins', TIE: "It's a Tie" };
   var msg = side === 'TIE'
     ? 'Confirm Tie?\n\nBoth parties will each receive back 47.5% of their stake (5% fee). This is final.'
     : 'Confirm: ' + labels[outcome] + '?\n\nWinnings are credited to the winner\'s CheckRada wallet. This is final and irreversible.';
   if (!confirm(msg)) return;
+  resolvingIds.add(thisId);
   closeModal('resolveModal');
-  userFetch('/api/challenges/' + currentResolveId + '/confirm', {
+  userFetch('/api/challenges/' + thisId + '/confirm', {
     method: 'POST',
     body:   JSON.stringify({ outcome: outcome }),
   })
@@ -2792,7 +2797,8 @@ function submitRuling(side) {
       alert('Error: ' + ((res.d && res.d.error) || 'Could not submit ruling.'));
     }
   })
-  .catch(function() { alert('Network error. Please try again.'); });
+  .catch(function() { alert('Network error. Please try again.'); })
+  .finally(function() { resolvingIds.delete(thisId); });
 }
 
 // ── INIT ──────────────────────────────────────────────────────────────────────

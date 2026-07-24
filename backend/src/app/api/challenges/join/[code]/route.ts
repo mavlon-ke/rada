@@ -83,7 +83,11 @@ async function handleRefereeJoin(challenge: any, user: any, freshUser: any) {
     if (actualRealUsed  > 0) updateData.balanceKes      = { decrement: actualRealUsed  };
     if (actualBonusUsed > 0) updateData.bonusBalanceKes = { decrement: actualBonusUsed };
     if (Object.keys(updateData).length > 0) {
-      await tx.user.update({ where: { id: user.id }, data: updateData });
+      const whereGuard: any = { id: user.id };
+      if (actualRealUsed  > 0) whereGuard.balanceKes      = { gte: actualRealUsed  };
+      if (actualBonusUsed > 0) whereGuard.bonusBalanceKes = { gte: actualBonusUsed };
+      const balUpdated = await tx.user.updateMany({ where: whereGuard, data: updateData });
+      if (balUpdated.count === 0) throw new Error('Insufficient balance');
     }
 
     const ch = await tx.marketChallenge.update({
@@ -278,7 +282,11 @@ export const POST = withErrorHandling(async function POST(
     if (actualRealUsed  > 0) updateData.balanceKes      = { decrement: actualRealUsed  };
     if (actualBonusUsed > 0) updateData.bonusBalanceKes = { decrement: actualBonusUsed };
     if (Object.keys(updateData).length > 0) {
-      await tx.user.update({ where: { id: user.id }, data: updateData });
+      const whereGuard: any = { id: user.id };
+      if (actualRealUsed  > 0) whereGuard.balanceKes      = { gte: actualRealUsed  };
+      if (actualBonusUsed > 0) whereGuard.bonusBalanceKes = { gte: actualBonusUsed };
+      const balUpdated = await tx.user.updateMany({ where: whereGuard, data: updateData });
+      if (balUpdated.count === 0) throw new Error('Insufficient balance');
     }
 
     // H-4 FIX: status guard prevents two users joining simultaneously.

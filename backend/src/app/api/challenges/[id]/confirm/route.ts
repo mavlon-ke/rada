@@ -63,7 +63,11 @@ export const POST = withErrorHandling(async function POST(
   // Referee resolves immediately at 5% — no extra gate needed.
   // Referee can decline their role via the /referee endpoint which switches to MUTUAL.
   if (isReferee && challenge.validatorType === 'REFEREE') {
-    return resolveChallenge(challenge, outcome, FEE_STANDARD, 'REFEREE');
+    return resolveChallenge(challenge, outcome, FEE_STANDARD, 'REFEREE')
+      .catch((err: any) => {
+        if (err.message?.includes('already resolved')) return NextResponse.json({ success: true, alreadyResolved: true, message: 'Challenge already resolved.' });
+        throw err;
+      });
   }
 
   // ── MUTUAL path — record this user's confirmation ────────────────────────
@@ -81,7 +85,11 @@ export const POST = withErrorHandling(async function POST(
 
   // If both parties agree → resolve at standard 5% fee
   if (aConfirm && bConfirm && aConfirm === bConfirm) {
-    return resolveChallenge(challenge, aConfirm as any, FEE_STANDARD, 'MUTUAL');
+    return resolveChallenge(challenge, aConfirm as any, FEE_STANDARD, 'MUTUAL')
+      .catch((err: any) => {
+        if (err.message?.includes('already resolved')) return NextResponse.json({ success: true, alreadyResolved: true, message: 'Challenge already resolved.' });
+        throw err;
+      });
   }
 
   // If both parties disagree AND 48h window has not yet started, start it now
