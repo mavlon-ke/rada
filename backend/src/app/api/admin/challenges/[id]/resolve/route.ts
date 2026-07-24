@@ -89,6 +89,7 @@ payouts = [
   }
 
   // Atomic resolution — wallet credit only
+  let alreadyResolved = false;
   await prisma.$transaction(async (tx) => {
     const claimed = await tx.marketChallenge.updateMany({
   where: { id: challenge.id, status: { in: ['ACTIVE', 'PENDING_RESOLUTION', 'DISPUTED'] }, resolution: null },
@@ -136,9 +137,16 @@ if (claimed.count === 0) throw new Error('Challenge already resolved — concurr
         },
       });
     }
+  }).catch((err: any) => {
+    if (err.message?.includes('already resolved')) { alreadyResolved = true; return; }
+    throw err;
   });
 
-  // No Paystack transfer — winnings are in the user's CheckRada wallet.
+  if (alreadyResolved) {
+    return NextResponse.json({ success: true, alreadyResolved: true, message: 'Challenge already resolved.' });
+  }
+
+  // No M-Pesa direct transfer — winnings are in the user's CheckRada wallet.
   // Users withdraw to M-Pesa via the standard withdrawal flow at their convenience.
 
   // M-5: platformRevenue.create is now inside the $transaction above — removed from here

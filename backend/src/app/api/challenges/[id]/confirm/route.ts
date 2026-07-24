@@ -178,7 +178,7 @@ if (claimed.count === 0) throw new Error('Challenge already resolved — concurr
     }
   });
 
-  // No Paystack transfer — winnings are in the user's CheckRada wallet.
+  // No M-Pesa direct transfer — winnings are in the user's CheckRada wallet.
   // Users withdraw to M-Pesa via the standard withdrawal flow at their convenience.
 
   // Record platform revenue for the challenge fee

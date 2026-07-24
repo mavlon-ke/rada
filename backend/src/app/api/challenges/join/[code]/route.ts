@@ -90,10 +90,12 @@ async function handleRefereeJoin(challenge: any, user: any, freshUser: any) {
       if (balUpdated.count === 0) throw new Error('Insufficient balance');
     }
 
-    const ch = await tx.marketChallenge.update({
-      where: { id: challenge.id },
+    const claimedCh = await tx.marketChallenge.updateMany({
+      where: { id: challenge.id, status: challenge.status },
       data:  { totalPool: { increment: stake }, status: newStatus },
     });
+    if (claimedCh.count === 0) throw new Error('Challenge slot already taken');
+    const ch = await tx.marketChallenge.findUnique({ where: { id: challenge.id } });
 
     await tx.transaction.create({
       data: {
