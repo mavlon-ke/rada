@@ -8,7 +8,7 @@
 //
 // CALLERS:
 //   - 9 call sites in src/app/api/... and src/lib/referrals/...
-//   - Paystack webhook uses raw prisma.notification.create directly and
+//   - M-Pesa Daraja webhook uses raw prisma.notification.create directly and
 //     calls sendWhatsAppNotification inline (separate path).
 
 import { prisma } from '@/lib/db/prisma';

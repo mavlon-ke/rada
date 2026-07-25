@@ -9,7 +9,7 @@
 //      → referee receives bonusBalanceKes (non-withdrawable, used to subsidise trades)
 //      → Referral.refereeRewardKes stamped (used as deposit-milestone flag)
 //      → Status stays PENDING (waiting for trade milestone)
-//      Called by: Paystack webhook after each successful deposit.
+//      Called by: M-pesa Daraja webhook after each successful deposit.
 //
 //   3. Referee's CUMULATIVE gross trade volume reaches minTradeKes
 //      → referrer receives real balanceKes (withdrawable)
@@ -30,7 +30,7 @@ import { createNotification } from '@/lib/notifications';
 
 // ── 1. Credit referee bonus on cumulative deposit milestone ──────────────────
 //
-// Called from the Paystack webhook after every confirmed deposit.
+// Called from the M-Pesa Daraja webhook after every confirmed deposit.
 // Sums ALL successful deposits for this user — fires once when the cumulative
 // total first crosses minDepositKes.
 //
