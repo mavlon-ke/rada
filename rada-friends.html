@@ -1496,8 +1496,9 @@ function loadChallenges() {
   .then(function(r) { return r.json(); })
   .then(function(d) {
     REF_QUEUE = (d.challenges || []).filter(function(c) {
-  return c.rawStatus !== 'RESOLVED' && c.rawStatus !== 'CANCELLED';
-}).map(function(c) {
+      var rs = c.rawStatus || c.status || '';
+      return rs !== 'RESOLVED' && rs !== 'CANCELLED';
+    }).map(function(c) {
       var rawSt = c.rawStatus || c.status || '';
       var isRefCreated = rawSt === 'PENDING_BOTH' || rawSt === 'PENDING_A' || rawSt === 'PENDING_B';
       return {
@@ -1516,24 +1517,27 @@ function loadChallenges() {
         winner:      Math.round(Number(c.totalPool) * 0.95),
       };
     });
-    renderRefQueue();
-
-    // Resolved referee challenges → merge into Settled History
+    // Resolved/cancelled referee challenges → Settled History
     var resolvedRef = (d.challenges || []).filter(function(c) {
-      return c.rawStatus === 'RESOLVED' || c.rawStatus === 'CANCELLED';
+      var rs = c.rawStatus || c.status || '';
+      return rs === 'RESOLVED' || rs === 'CANCELLED';
     }).map(function(c) {
       var winner = c.resolution;
       var aName  = c.userA && c.userA.name ? c.userA.name : 'Player A';
       var bName  = c.userB && c.userB.name ? c.userB.name : 'Player B';
+      var wSide  = winner === 'USER_A' ? 'A' : winner === 'USER_B' ? 'B' : winner === 'TIE' ? 'TIE' : null;
+      var wName  = winner === 'USER_A' ? aName : winner === 'USER_B' ? bName : null;
+      var rs     = c.rawStatus || c.status || '';
       return {
         id:          c.id,
         q:           c.question,
-        status:      c.rawStatus === 'CANCELLED' ? 'cancelled' : winner === 'TIE' ? 'tie' : 'resolved',
-        winner_side: winner === 'USER_A' ? 'A' : winner === 'USER_B' ? 'B' : winner === 'TIE' ? 'TIE' : null,
-        winner_name: winner === 'USER_A' ? aName : winner === 'USER_B' ? bName : null,
+        status:      rs === 'CANCELLED' ? 'cancelled' : wSide === 'TIE' ? 'tie' : 'resolved',
+        winner_side: wSide,
+        winner_name: wName,
         a:           { name: aName, stake: Number(c.stakePerPerson) },
         b:           { name: bName, stake: Number(c.stakePerPerson) },
         pool:        Number(c.totalPool),
+        payout:      '—',
         deadline:    c.eventExpiresAt ? new Date(c.eventExpiresAt).toLocaleDateString('en-KE', { day:'numeric', month:'short', year:'numeric' }) : '—',
         isRefereed:  true,
       };
@@ -1542,6 +1546,7 @@ function loadChallenges() {
       HISTORY = HISTORY.concat(resolvedRef);
       renderHistory();
     }
+    renderRefQueue();
   })
   .catch(function() { renderRefQueue(); });
 }
@@ -1856,6 +1861,25 @@ function challengeCard(c, isMine, isRef = false) {
 }
 
 function historyCard(c) {
+  // Referee history card — different layout since referee is neither winner nor loser
+  if (c.isRefereed) {
+    var refBadge = c.status === 'cancelled'
+      ? '<span class="cc-badge" style="background:rgba(107,114,128,0.1);color:#6b7280;border:1px solid rgba(107,114,128,0.2);">✕ Cancelled</span>'
+      : c.status === 'tie'
+      ? '<span class="cc-badge badge-pending">🤝 Tie</span>'
+      : c.winner_name
+      ? '<span class="cc-badge badge-open">✓ ' + esc(c.winner_name) + ' Won</span>'
+      : '<span class="cc-badge" style="background:rgba(107,114,128,0.1);color:#6b7280;border:1px solid rgba(107,114,128,0.2);">✓ Resolved</span>';
+    return '<div class="challenge-card" style="opacity:0.8">' +
+      '<div class="cc-header">' + refBadge + '<span class="cc-code">' + c.deadline + '</span></div>' +
+      '<div style="font-size:0.72rem;color:var(--purple);font-weight:600;margin-bottom:4px;">⚖️ You refereed this challenge</div>' +
+      '<div class="cc-q">' + esc(c.q) + '</div>' +
+      '<div class="cc-participants">' +
+        '<div class="cc-participant"><div class="cc-p-role">Challenger A</div><div class="cc-p-name">' + esc(c.a.name) + '</div></div>' +
+        '<div class="cc-participant"><div class="cc-p-role">Challenger B</div><div class="cc-p-name">' + esc(c.b.name) + '</div></div>' +
+      '</div></div>';
+  }
+
   const won      = c.status === 'resolved' && c.winner_side === 'A';
   const lost     = c.status === 'resolved' && c.winner_side === 'B';
   const unknown  = c.status === 'resolved' && !c.winner_side;
@@ -1871,7 +1895,6 @@ function historyCard(c) {
           : `<span class="cc-badge ${won ? 'badge-open' : 'badge-disputed'}">${won ? '✓ Won' : '✗ Lost'}</span>`}
         <span class="cc-code">${c.deadline}</span>
       </div>
-      ${c.isRefereed ? '<div style="font-size:0.72rem;color:var(--purple);font-weight:600;margin-bottom:4px;">⚖️ You refereed this challenge</div>' : ''}
       <div class="cc-q">${esc(c.q)}</div>
       <div class="cc-participants">
         <div class="cc-participant">
