@@ -1915,10 +1915,10 @@ function historyCard(c) {
           <div class="cc-p-name">${esc(c.b.name)}</div>
         </div>
       </div>
-      <div style="background:var(--bg3);border-radius:8px;padding:10px 12px;text-align:center">
-        <div style="font-size:0.7rem;color:var(--text-dim);margin-bottom:3px">M-Pesa Payout</div>
+      ${lost ? '' : <div style="background:var(--bg3);border-radius:8px;padding:10px 12px;text-align:center">
+        <div style="font-size:0.7rem;color:var(--text-dim);margin-bottom:3px">${c.status === 'cancelled' ? 'M-Pesa Refund' : 'M-Pesa Payout'}</div>
         <div style="font-family:var(--mono);font-weight:700;color:${won ? 'var(--ke-green)' : 'var(--text-dim)'}">${c.payout}</div>
-      </div>
+      </div>}
     </div>`;
 }
 
