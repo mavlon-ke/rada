@@ -1892,6 +1892,7 @@ function historyCard(c) {
   const won      = c.status === 'resolved' && c.winner_side === 'A';
   const lost     = c.status === 'resolved' && c.winner_side === 'B';
   const unknown  = c.status === 'resolved' && !c.winner_side;
+  const payoutHtml = lost ? '' : '<div style="background:var(--bg3);border-radius:8px;padding:10px 12px;text-align:center"><div style="font-size:0.7rem;color:var(--text-dim);margin-bottom:3px">' + (c.status === 'cancelled' ? 'M-Pesa Refund' : 'M-Pesa Payout') + '</div><div style="font-family:var(--mono);font-weight:700;color:' + (won ? 'var(--ke-green)' : 'var(--text-dim)') + '">' + c.payout + '</div></div>';
   return `
     <div class="challenge-card" style="opacity:0.8">
       <div class="cc-header">
@@ -1915,10 +1916,7 @@ function historyCard(c) {
           <div class="cc-p-name">${esc(c.b.name)}</div>
         </div>
       </div>
-      ${lost ? '' : <div style="background:var(--bg3);border-radius:8px;padding:10px 12px;text-align:center">
-        <div style="font-size:0.7rem;color:var(--text-dim);margin-bottom:3px">${c.status === 'cancelled' ? 'M-Pesa Refund' : 'M-Pesa Payout'}</div>
-        <div style="font-family:var(--mono);font-weight:700;color:${won ? 'var(--ke-green)' : 'var(--text-dim)'}">${c.payout}</div>
-      </div>}
+      ${payoutHtml}
     </div>`;
 }
 
