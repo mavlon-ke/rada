@@ -1393,6 +1393,7 @@ function userFetch(path, options) {
 var MY_CHALLENGES   = [];
 var REF_QUEUE       = [];
 var HISTORY         = [];
+var REFEREE_HISTORY = [];
 var currentResolveId = null;  // set when resolve modal opens
 var resolvingIds     = new Set();
 // DEMO_REGISTERED declared in shared block below — removed stub to avoid SyntaxError
@@ -1484,6 +1485,10 @@ function loadChallenges() {
         updatedAt:   c.updatedAt   || null,
       };
     });
+    // Merge any already-loaded referee history and sort combined list
+    HISTORY = HISTORY.concat(REFEREE_HISTORY).sort(function(a, b) {
+      return new Date(b.resolvedAt || b.updatedAt || 0) - new Date(a.resolvedAt || a.updatedAt || 0);
+    });
 
     renderMyChallenges();
     renderHistory();
@@ -1519,8 +1524,8 @@ function loadChallenges() {
         winner:      Math.round(Number(c.totalPool) * 0.95),
       };
     });
-    // Resolved/cancelled referee challenges → Settled History
-    var resolvedRef = (d.challenges || []).filter(function(c) {
+    // Store resolved referee challenges; merge with participant history
+    REFEREE_HISTORY = (d.challenges || []).filter(function(c) {
       var rs = c.rawStatus || c.status || '';
       return rs === 'RESOLVED' || rs === 'CANCELLED';
     }).map(function(c) {
@@ -1546,8 +1551,8 @@ function loadChallenges() {
         isRefereed:  true,
       };
     });
-    if (resolvedRef.length > 0) {
-      HISTORY = HISTORY.concat(resolvedRef).sort(function(a, b) {
+    if (REFEREE_HISTORY.length > 0) {
+      HISTORY = HISTORY.concat(REFEREE_HISTORY).sort(function(a, b) {
         return new Date(b.resolvedAt || b.updatedAt || 0) - new Date(a.resolvedAt || a.updatedAt || 0);
       });
       renderHistory();
@@ -1867,7 +1872,6 @@ function challengeCard(c, isMine, isRef = false) {
 }
 
 function historyCard(c) {
-  // Referee history — neither won nor lost, show who they ruled in favour of
   if (c.isRefereed) {
     var refBadge = c.status === 'cancelled'
       ? '<span class="cc-badge" style="background:rgba(107,114,128,0.1);color:#6b7280;border:1px solid rgba(107,114,128,0.2);">✕ Cancelled</span>'
@@ -1885,7 +1889,6 @@ function historyCard(c) {
         '<div class="cc-participant"><div class="cc-p-role">Challenger B</div><div class="cc-p-name">' + esc(c.b.name) + '</div></div>' +
       '</div></div>';
   }
-
   const won      = c.status === 'resolved' && c.winner_side === 'A';
   const lost     = c.status === 'resolved' && c.winner_side === 'B';
   const unknown  = c.status === 'resolved' && !c.winner_side;
