@@ -1480,6 +1480,7 @@ function loadChallenges() {
                    : isTie ? 'KES ' + Math.round(pool * 0.475).toLocaleString() + ' (Tie)'
                    : '—',
         deadline:    c.eventExpiresAt ? new Date(c.eventExpiresAt).toLocaleDateString('en-KE') : '—',
+        resolvedAt:  c.resolvedAt || null,
       };
     });
 
@@ -1539,11 +1540,14 @@ function loadChallenges() {
         pool:        Number(c.totalPool),
         payout:      '—',
         deadline:    c.eventExpiresAt ? new Date(c.eventExpiresAt).toLocaleDateString('en-KE', { day:'numeric', month:'short', year:'numeric' }) : '—',
+        resolvedAt:  c.resolvedAt || null,
         isRefereed:  true,
       };
     });
     if (resolvedRef.length > 0) {
-      HISTORY = HISTORY.concat(resolvedRef);
+      HISTORY = HISTORY.concat(resolvedRef).sort(function(a, b) {
+        return new Date(b.resolvedAt || 0) - new Date(a.resolvedAt || 0);
+      });
       renderHistory();
     }
     renderRefQueue();
