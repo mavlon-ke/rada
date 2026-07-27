@@ -1480,7 +1480,8 @@ function loadChallenges() {
                    : isTie ? 'KES ' + Math.round(pool * 0.475).toLocaleString() + ' (Tie)'
                    : '—',
         deadline:    c.eventExpiresAt ? new Date(c.eventExpiresAt).toLocaleDateString('en-KE') : '—',
-        resolvedAt:  c.resolvedAt || null,
+        resolvedAt:  c.resolvedAt  || null,
+        updatedAt:   c.updatedAt   || null,
       };
     });
 
@@ -1540,13 +1541,14 @@ function loadChallenges() {
         pool:        Number(c.totalPool),
         payout:      '—',
         deadline:    c.eventExpiresAt ? new Date(c.eventExpiresAt).toLocaleDateString('en-KE', { day:'numeric', month:'short', year:'numeric' }) : '—',
-        resolvedAt:  c.resolvedAt || null,
+        resolvedAt:  c.resolvedAt  || null,
+        updatedAt:   c.updatedAt   || null,
         isRefereed:  true,
       };
     });
     if (resolvedRef.length > 0) {
       HISTORY = HISTORY.concat(resolvedRef).sort(function(a, b) {
-        return new Date(b.resolvedAt || 0) - new Date(a.resolvedAt || 0);
+        return new Date(b.resolvedAt || b.updatedAt || 0) - new Date(a.resolvedAt || a.updatedAt || 0);
       });
       renderHistory();
     }
@@ -1865,7 +1867,7 @@ function challengeCard(c, isMine, isRef = false) {
 }
 
 function historyCard(c) {
-  // Referee history card — different layout since referee is neither winner nor loser
+  // Referee history — neither won nor lost, show who they ruled in favour of
   if (c.isRefereed) {
     var refBadge = c.status === 'cancelled'
       ? '<span class="cc-badge" style="background:rgba(107,114,128,0.1);color:#6b7280;border:1px solid rgba(107,114,128,0.2);">✕ Cancelled</span>'
