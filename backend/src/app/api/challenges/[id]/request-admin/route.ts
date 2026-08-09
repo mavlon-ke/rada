@@ -71,10 +71,18 @@ export const POST = withErrorHandling(async function POST(
   }
 
   // ── Mark as DISPUTED ─────────────────────────────────────────────────────
-  await prisma.marketChallenge.update({
-    where: { id: challenge.id },
+  // Status-guarded claim — prevents this write from stomping a challenge that
+  // resolved (or was already disputed) between our read above and this write.
+  const claimed = await prisma.marketChallenge.updateMany({
+    where: { id: challenge.id, status: { in: ['ACTIVE', 'PENDING_RESOLUTION'] } },
     data:  { status: 'DISPUTED' },
   });
+
+  if (claimed.count === 0) {
+    return NextResponse.json({
+      error: 'This challenge was just resolved or disputed. Refresh to see the latest status.',
+    }, { status: 409 });
+  }
 
   // ── Notify both participants in-app + WhatsApp ───────────────────────────
   const smsParticipants =

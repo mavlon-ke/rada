@@ -78,13 +78,21 @@ export const POST = withErrorHandling(async function POST(
   }
 
   // ── DECLINE ───────────────────────────────────────────────────────────────
-  await prisma.marketChallenge.update({
-    where: { id: challenge.id },
+  // Status-guarded claim — prevents this write from clearing the referee
+  // assignment on a challenge already resolved or cancelled since our read above.
+  const claimed = await prisma.marketChallenge.updateMany({
+    where: { id: challenge.id, status: { in: ['PENDING_JOIN', 'ACTIVE', 'PENDING_RESOLUTION'] } },
     data:  {
       refereeId:     null,
       validatorType: 'MUTUAL',
     },
   });
+
+  if (claimed.count === 0) {
+    return NextResponse.json({
+      error: 'This challenge is no longer awaiting referee action.',
+    }, { status: 409 });
+  }
 
   const declineMsg = `${refName} declined the referee role for "${challenge.question.slice(0, 60)}". The challenge will now be resolved by mutual consent (5% fee) or admin intervention (15% fee) if you cannot agree.`;
 

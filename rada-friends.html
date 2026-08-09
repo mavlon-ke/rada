@@ -3149,24 +3149,32 @@ function requestAdminIntervention(id, btn) {
     'Admin will review within 12 hours and contact both participants.'
   )) return;
 
-  // Disable button to prevent double-submit
   btn.disabled = true;
-  btn.textContent = '🕐 Request Submitted…';
+  btn.textContent = '🕐 Requesting…';
 
-  // Calls real backend: POST /api/challenges/{id}/request-admin
-  setTimeout(() => {
-    btn.textContent = '✅ Admin Notified';
-
-    showNotifToast(
-      '🚨 Admin Intervention Requested',
-      'Rada admin has been notified and will review your challenge within 12 hours. ' +
-      'Both participants will receive an SMS confirmation.',
-      6000
-    );
-
-    // In production the backend marks the challenge DISPUTED and SMSes both parties
-    console.log(`[ADMIN REQUEST] Challenge ${id} escalated to admin.`);
-  }, 1200);
+  userFetch('/api/challenges/' + id + '/request-admin', { method: 'POST' })
+    .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
+    .then(function(res) {
+      if (res.ok) {
+        btn.textContent = '✅ Admin Notified';
+        showNotifToast(
+          '🚨 Admin Intervention Requested',
+          'Rada admin has been notified and will review your challenge within 12 hours. ' +
+          'Both participants will receive an SMS confirmation.',
+          6000
+        );
+        loadChallenges();
+      } else {
+        btn.disabled = false;
+        btn.textContent = '🚨 Request Admin Intervention';
+        showNotifToast('❌ Error', res.d.error || 'Could not request admin intervention.', 6000);
+      }
+    })
+    .catch(function() {
+      btn.disabled = false;
+      btn.textContent = '🚨 Request Admin Intervention';
+      showNotifToast('❌ Network error', 'Please try again.', 6000);
+    });
 }
 
 </script>

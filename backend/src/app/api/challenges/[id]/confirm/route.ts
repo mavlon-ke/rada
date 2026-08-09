@@ -107,10 +107,12 @@ if (!updated) return NextResponse.json({ error: 'Challenge not found' }, { statu
       });
   }
 
-  // If both parties disagree AND 48h window has not yet started, start it now
+  // If both parties disagree AND 48h window has not yet started, start it now.
+  // Guarded on disputeDeadline: null so a duplicate/retried submission can't
+  // re-arm the clock or send a second "opponent submitted a result" notification.
   if (!updated.disputeDeadline) {
-    await prisma.marketChallenge.update({
-      where: { id: challenge.id },
+    await prisma.marketChallenge.updateMany({
+      where: { id: challenge.id, disputeDeadline: null },
       data:  { disputeDeadline: new Date(Date.now() + 48 * 60 * 60 * 1000) },
     });
   }
