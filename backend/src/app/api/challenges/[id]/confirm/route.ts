@@ -72,13 +72,28 @@ export const POST = withErrorHandling(async function POST(
 
   // ── MUTUAL path — record this user's confirmation ────────────────────────
   const updateData: Record<string, string> = {};
-  if (isUserA) updateData.userAConfirm = outcome;
-  if (isUserB) updateData.userBConfirm = outcome;
+if (isUserA) updateData.userAConfirm = outcome;
+if (isUserB) updateData.userBConfirm = outcome;
 
-  const updated = await prisma.marketChallenge.update({
-    where: { id: challenge.id },
-    data:  { ...updateData, status: 'PENDING_RESOLUTION' },
+// Status-guarded claim — same pattern as resolveChallenge()'s own guard.
+// Prevents this write from stomping status back to PENDING_RESOLUTION on a
+// row that a concurrent request has already resolved.
+const claimed = await prisma.marketChallenge.updateMany({
+  where: { id: challenge.id, status: { in: ['ACTIVE', 'PENDING_RESOLUTION'] } },
+  data:  { ...updateData, status: 'PENDING_RESOLUTION' },
+});
+
+if (claimed.count === 0) {
+  return NextResponse.json({
+    success: true,
+    alreadyResolved: true,
+    message: 'This challenge has already been resolved.',
   });
+}
+
+// updateMany doesn't return row data — fetch the fresh row for the match check.
+const updated = await prisma.marketChallenge.findUnique({ where: { id: challenge.id } });
+if (!updated) return NextResponse.json({ error: 'Challenge not found' }, { status: 404 });
 
   const aConfirm = isUserA ? outcome : updated.userAConfirm;
   const bConfirm = isUserB ? outcome : updated.userBConfirm;

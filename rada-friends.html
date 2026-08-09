@@ -3019,6 +3019,7 @@ function validatePhone(inputId, statusId) {
 
 // ── MUTUAL RESOLVE MODAL ──────────────────────────────────────────────────────
 function openMutualResolve(id) {
+  if (resolvingIds.has(id)) return;
   const ch = MY_CHALLENGES.find(c => c.id === id) || {};
   const html = `
     <div style="text-align:center;padding:20px 0 10px">
@@ -3043,18 +3044,21 @@ function openMutualResolve(id) {
   document.getElementById('resolveModal').classList.add('open');
 }
 function submitMutual(id, winner) {
+  if (resolvingIds.has(id)) return;
   var outcome = winner === 'a' ? 'USER_A' : winner === 'b' ? 'USER_B' : 'TIE';
+  resolvingIds.add(id);
+  closeModal('resolveModal');
   userFetch('/api/challenges/' + id + '/confirm', {
     method: 'POST',
     body:   JSON.stringify({ outcome: outcome }),
   })
   .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
   .then(function(res) {
-    closeModal('resolveModal');
     if (res.ok) {
       if (res.d.outcome) {
-        // Both agreed — resolved immediately
         showNotifToast('🏆 Challenge Resolved!', 'Both parties agreed. Winnings credited to your wallet at 5% fee.');
+      } else if (res.d.alreadyResolved) {
+        showNotifToast('✅ Already Resolved', 'This challenge was already settled.');
       } else {
         showNotifToast('✅ Resolution submitted!', 'Waiting for the other party to confirm. 5% fee if they agree, 15% if admin intervenes.');
       }
@@ -3064,9 +3068,9 @@ function submitMutual(id, winner) {
     }
   })
   .catch(function() {
-    closeModal('resolveModal');
     showNotifToast('❌ Network error', 'Please try again.');
-  });
+  })
+  .finally(function() { resolvingIds.delete(id); });
 }
 
 // ── NOTIFICATION HELPERS ──────────────────────────────────────────────────────
