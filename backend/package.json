@@ -12,6 +12,12 @@
     "db:seed": "tsx scripts/seed.ts",
     "db:generate": "prisma generate"
   },
+  "allowScripts": {
+    "@prisma/client": true,
+    "@prisma/engines": true,
+    "esbuild": true,
+    "prisma": true
+  },
   "dependencies": {
     "@prisma/client": "^5.10.0",
     "@radix-ui/react-dialog": "^1.0.5",
