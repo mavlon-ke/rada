@@ -18,6 +18,7 @@ import { prisma }                    from '@/lib/db/prisma';
 import { requireAuth }               from '@/lib/auth/session';
 import { displayName }               from '@/lib/user/display-name';
 import { withErrorHandling } from '@/lib/security/route-guard';
+export const dynamic = 'force-dynamic';
 
 export const GET = withErrorHandling(async function GET(req: NextRequest) {
   const user   = await requireAuth(req);
