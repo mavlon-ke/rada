@@ -4,6 +4,13 @@
 // SUCCESS with userId linked, and notifies them. Status-guarded so this can
 // only ever fire once per row — same pattern used throughout the platform's
 // money-moving routes.
+//
+// ATOMICITY FIX: the status-guarded claim (PENDING → SUCCESS) and the
+// wallet credit are now inside ONE $transaction, not two separate
+// operations. Previously, if the credit step failed after the claim had
+// already committed, the row would be stuck marked SUCCESS and linked to a
+// user whose wallet was never actually credited — with no PENDING state
+// left to retry from. Now both commit together or neither does.
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma }                    from '@/lib/db/prisma';
@@ -39,46 +46,53 @@ export const POST = withErrorHandling(async (
 
   const amountKes = Number(pending.amountKes);
 
-  // Status-guarded claim — prevents two admins (or a double-click) from
-  // reconciling the same PENDING row twice.
-  const claimed = await prisma.transaction.updateMany({
-    where: { id: transactionId, status: 'PENDING', userId: null },
-    data:  {
-      status:      'SUCCESS',
-      userId:      targetUser.id,
-      description: `${pending.description ?? ''} — manually reconciled by admin to ${darajaPhone(phone)}.`,
-    },
-  });
+  try {
+    await prisma.$transaction(async (tx) => {
+      // Status-guarded claim — prevents two admins (or a double-click) from
+      // reconciling the same PENDING row twice.
+      const claimed = await tx.transaction.updateMany({
+        where: { id: transactionId, status: 'PENDING', userId: null },
+        data:  {
+          status:      'SUCCESS',
+          userId:      targetUser.id,
+          description: `${pending.description ?? ''} — manually reconciled by admin to ${darajaPhone(phone)}.`,
+        },
+      });
 
-  if (claimed.count === 0) {
-    return NextResponse.json({ error: 'This deposit was just reconciled by someone else.' }, { status: 409 });
+      if (claimed.count === 0) {
+        throw new Error('ALREADY_RECONCILED');
+      }
+
+      const freshUser = await tx.user.findUnique({ where: { id: targetUser.id } });
+      if (!freshUser) return;
+      const newBalance = Number(freshUser.balanceKes) + amountKes;
+
+      await tx.user.update({
+        where: { id: targetUser.id },
+        data:  { balanceKes: { increment: amountKes } },
+      });
+
+      await tx.transaction.update({
+        where: { id: transactionId },
+        data:  { balAfter: newBalance },
+      });
+
+      await tx.notification.create({
+        data: {
+          userId:  targetUser.id,
+          type:    'DEPOSIT_CONFIRMED',
+          title:   '✅ Deposit confirmed',
+          message: `KES ${amountKes.toLocaleString()} has been added to your CheckRada wallet.`,
+          link:    '/rada-dashboard.html',
+        },
+      });
+    });
+  } catch (err: any) {
+    if (err.message === 'ALREADY_RECONCILED') {
+      return NextResponse.json({ error: 'This deposit was just reconciled by someone else.' }, { status: 409 });
+    }
+    throw err;
   }
-
-  await prisma.$transaction(async (tx) => {
-    const freshUser = await tx.user.findUnique({ where: { id: targetUser.id } });
-    if (!freshUser) return;
-    const newBalance = Number(freshUser.balanceKes) + amountKes;
-
-    await tx.user.update({
-      where: { id: targetUser.id },
-      data:  { balanceKes: { increment: amountKes } },
-    });
-
-    await tx.transaction.update({
-      where: { id: transactionId },
-      data:  { balAfter: newBalance },
-    });
-
-    await tx.notification.create({
-      data: {
-        userId:  targetUser.id,
-        type:    'DEPOSIT_CONFIRMED',
-        title:   '✅ Deposit confirmed',
-        message: `KES ${amountKes.toLocaleString()} has been added to your CheckRada wallet.`,
-        link:    '/rada-dashboard.html',
-      },
-    });
-  });
 
   void sendWhatsAppNotification(targetUser.id, 'DEPOSIT_CONFIRMED', [amountKes.toLocaleString()]);
 

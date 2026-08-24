@@ -12,11 +12,16 @@
 //      (userId: null) for manual admin reconciliation. Never dropped —
 //      this is real, irreversible M-Pesa money.
 //
-// IDEMPOTENCY: unlike STK (which updates a pre-existing PENDING row created
-// at deposit-initiation), there is no prior row here — the row is created
-// fresh on first receipt. Idempotency against a Safaricom retry is enforced
-// by the unique constraint on transaction.mpesaRef (= TransID); a duplicate
-// create() throws Prisma P2002, caught and treated as already-processed.
+// IDEMPOTENCY / ATOMICITY FIX: the matched-deposit write and the wallet
+// credit are now inside ONE $transaction, not two separate operations.
+// Previously, transaction.create() (status: SUCCESS) committed first,
+// standalone; if the separate wallet-credit $transaction then failed for
+// any reason, the row was permanently stuck — marked SUCCESS with
+// balAfter: 0, wallet never actually credited, and a Safaricom retry would
+// hit the P2002 duplicate-mpesaRef guard and return "Accepted" without ever
+// attempting the credit again. Now both commit together or neither does —
+// a failure fully rolls back, so a retry lands on a clean slate instead of
+// colliding with a phantom row.
 
 import { NextRequest, NextResponse }   from 'next/server';
 import { Prisma }                      from '@prisma/client';
@@ -52,10 +57,10 @@ export const POST = withErrorHandling(async (
     return NextResponse.json({ ResultCode: 0, ResultDesc: 'Accepted' });
   }
 
-  const transId   = String(body?.TransID ?? '');
-  const amountKes = Number(body?.TransAmount);
-  const msisdnRaw = String(body?.MSISDN ?? '');
-  const billRefRaw = String(body?.BillRefNumber ?? '');
+  const transId    = String(body?.TransID ?? '');
+  const amountKes   = Number(body?.TransAmount);
+  const msisdnRaw   = String(body?.MSISDN ?? '');
+  const billRefRaw  = String(body?.BillRefNumber ?? '');
 
   if (!transId || !amountKes || !msisdnRaw) {
     console.error('[Daraja C2B] Missing required fields in confirmation payload:', JSON.stringify(body).slice(0, 300));
@@ -78,19 +83,42 @@ export const POST = withErrorHandling(async (
 
   // ── Matched: credit the wallet ──────────────────────────────────────────
   if (matchedUser) {
-    let transaction;
     try {
-      transaction = await prisma.transaction.create({
-        data: {
-          userId:      matchedUser.id,
-          type:        'DEPOSIT',
-          amountKes:   amountKes,
-          balAfter:    0, // placeholder — the $transaction below sets the real value
-          mpesaRef:    transId,
-          phone:       msisdn,
-          status:      'SUCCESS',
-          description: `Paybill deposit of KES ${amountKes.toLocaleString()} confirmed (matched via ${matchedVia}). Receipt: ${transId}`,
-        },
+      await prisma.$transaction(async (tx) => {
+        const freshUser = await tx.user.findUnique({ where: { id: matchedUser!.id } });
+        if (!freshUser) {
+          console.error(`[Daraja C2B] Matched user ${matchedUser!.id} vanished before credit — wallet credit skipped`);
+          return;
+        }
+        const newBalance = Number(freshUser.balanceKes) + amountKes;
+
+        await tx.transaction.create({
+          data: {
+            userId:      matchedUser!.id,
+            type:        'DEPOSIT',
+            amountKes:   amountKes,
+            balAfter:    newBalance,
+            mpesaRef:    transId,
+            phone:       msisdn,
+            status:      'SUCCESS',
+            description: `Paybill deposit of KES ${amountKes.toLocaleString()} confirmed (matched via ${matchedVia}). Receipt: ${transId}`,
+          },
+        });
+
+        await tx.user.update({
+          where: { id: matchedUser!.id },
+          data:  { balanceKes: { increment: amountKes } },
+        });
+
+        await tx.notification.create({
+          data: {
+            userId:  matchedUser!.id,
+            type:    'DEPOSIT_CONFIRMED',
+            title:   '✅ Deposit confirmed',
+            message: `KES ${amountKes.toLocaleString()} has been added to your CheckRada wallet via Paybill.`,
+            link:    '/rada-dashboard.html',
+          },
+        });
       });
     } catch (err) {
       if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
@@ -99,35 +127,6 @@ export const POST = withErrorHandling(async (
       }
       throw err;
     }
-
-    await prisma.$transaction(async (tx) => {
-      const freshUser = await tx.user.findUnique({ where: { id: matchedUser!.id } });
-      if (!freshUser) {
-        console.error(`[Daraja C2B] Matched user ${matchedUser!.id} vanished before credit — wallet credit skipped`);
-        return;
-      }
-      const newBalance = Number(freshUser.balanceKes) + amountKes;
-
-      await tx.user.update({
-        where: { id: matchedUser!.id },
-        data:  { balanceKes: { increment: amountKes } },
-      });
-
-      await tx.transaction.update({
-        where: { id: transaction.id },
-        data:  { balAfter: newBalance },
-      });
-
-      await tx.notification.create({
-        data: {
-          userId:  matchedUser!.id,
-          type:    'DEPOSIT_CONFIRMED',
-          title:   '✅ Deposit confirmed',
-          message: `KES ${amountKes.toLocaleString()} has been added to your CheckRada wallet via Paybill.`,
-          link:    '/rada-dashboard.html',
-        },
-      });
-    });
 
     void sendWhatsAppNotification(matchedUser.id, 'DEPOSIT_CONFIRMED', [amountKes.toLocaleString()]);
     await creditRefereeBonusOnDeposit(matchedUser.id, amountKes);
