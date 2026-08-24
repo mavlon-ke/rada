@@ -9,6 +9,7 @@ import { requireAdmin, adminUnauthorized, logAdminAction } from '@/lib/auth/admi
 import { sanitizeText } from '@/lib/security/middleware';
 import { sendAdminAlert } from '@/lib/whatsapp/admin-alerts';
 import { withErrorHandling } from '@/lib/security/route-guard';
+import { darajaPhone } from '@/lib/daraja/daraja.service';
 
 export const dynamic = 'force-dynamic';
 
@@ -40,18 +41,25 @@ export const PATCH = withErrorHandling(async function PATCH(
 
   const { name, phone, suspended, balanceAdjustKes, adjustReason } = parsed.data;
 
+  // Normalise BEFORE the uniqueness check and the write. Un-normalised, this
+  // check compares raw strings ("0712345678" vs "254712345678") and would
+  // miss a real collision with an existing user, AND the eventual write
+  // would corrupt this user's own phone into a shape that OTP login, C2B
+  // deposit matching, and challenge phone-lookups all fail to find later.
+  const normalisedPhone = phone !== undefined ? darajaPhone(phone) : undefined;
+
   // Check phone uniqueness if changing
-  if (phone && phone !== user.phone) {
-    const existing = await prisma.user.findUnique({ where: { phone } });
+  if (normalisedPhone && normalisedPhone !== user.phone) {
+    const existing = await prisma.user.findUnique({ where: { phone: normalisedPhone } });
     if (existing) {
       return NextResponse.json({ error: 'Phone number already in use by another account' }, { status: 409 });
     }
   }
 
   const updateData: Record<string, any> = {};
-  if (name      !== undefined) updateData.name      = sanitizeText(name);
-  if (phone     !== undefined) updateData.phone     = phone;
-  if (suspended !== undefined) updateData.suspended = suspended;
+  if (name            !== undefined) updateData.name      = sanitizeText(name);
+  if (normalisedPhone !== undefined) updateData.phone      = normalisedPhone;
+  if (suspended       !== undefined) updateData.suspended = suspended;
 
   const updated = await prisma.$transaction(async (tx) => {
     let updatedUser = user;

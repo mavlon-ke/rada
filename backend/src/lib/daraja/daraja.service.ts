@@ -323,3 +323,58 @@ export async function b2cTransfer(params: B2CParams): Promise<B2CResult> {
   console.log(`[Daraja] B2C queued — OriginatorConvID: ${data.OriginatorConversationID}`);
   return data as B2CResult;
 }
+
+// ── C2B — Register Validation & Confirmation URLs (Paybill manual deposits) ──
+// One-time setup call — tells Safaricom where to send a webhook whenever
+// someone pays SHORT_CODE directly via Lipa na M-Pesa > Paybill, bypassing
+// STK Push entirely. Safe to call again if URLs ever need to change —
+// Safaricom simply overwrites the previous registration.
+//
+// ResponseType: 'Completed' — if the ValidationURL is ever unreachable or
+// times out, Safaricom proceeds straight to Confirmation instead of
+// cancelling the payment. Consistent with the design decision not to reject
+// legitimate payments at Validation based on Account Number content.
+
+const C2B_SECRET = process.env.DARAJA_C2B_SECRET!;
+
+export interface C2BRegisterResult {
+  ResponseCode:        string;
+  ResponseDescription: string;
+}
+
+export async function registerC2BUrl(): Promise<C2BRegisterResult> {
+  const token            = await getDarajaToken();
+  const validationUrl    = `${API_BASE}/api/payments/daraja/c2b-validation/${C2B_SECRET}`;
+  const confirmationUrl  = `${API_BASE}/api/payments/daraja/c2b-confirmation/${C2B_SECRET}`;
+
+  let res: Response;
+  try {
+    res = await fetch(`${DARAJA_BASE}/mpesa/c2b/v2/registerurl`, {
+      method:  'POST',
+      headers: {
+        Authorization:  `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        ShortCode:        SHORT_CODE,
+        ResponseType:     'Completed',
+        ConfirmationURL:  confirmationUrl,
+        ValidationURL:    validationUrl,
+      }),
+      signal: AbortSignal.timeout(15000),
+    });
+  } catch (err: any) {
+    if (err.name === 'TimeoutError') throw new Error('Daraja C2B registration request timed out.');
+    throw err;
+  }
+
+  const data = await res.json();
+
+  if (!res.ok || data.ResponseCode !== '0') {
+    console.error(`[Daraja C2B Register] status=${res.status} body=${JSON.stringify(data)}`);
+    throw new Error(data.errorMessage || data.ResponseDescription || 'C2B URL registration failed');
+  }
+
+  console.log(`[Daraja] C2B URLs registered — Validation: ${validationUrl} | Confirmation: ${confirmationUrl}`);
+  return data as C2BRegisterResult;
+}

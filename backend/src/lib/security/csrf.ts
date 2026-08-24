@@ -19,6 +19,8 @@ const CSRF_EXEMPT = [
   '/api/payments/daraja/stk-callback',
   '/api/payments/daraja/b2c-result',
   '/api/payments/daraja/b2c-timeout',
+  '/api/payments/daraja/c2b-validation',
+  '/api/payments/daraja/c2b-confirmation',
   // Admin routes use httpOnly cookie + SameSite=Lax which already blocks cross-site
   // CSRF at the browser level. The CSRF token layer is redundant here and was
   // misconfigured (generateCSRFToken never called = no token ever issued = every
