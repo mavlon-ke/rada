@@ -122,6 +122,7 @@ const TEMPLATE_IMAGE_URLS: Partial<Record<WhatsAppTemplateKey, string>> = {
   REFEREE_NOMINATED:           'https://checkrada.co.ke/assets/og/profile-checkrada-white.png',
   CHALLENGE_RESOLUTION_WARNING:'https://checkrada.co.ke/assets/og/profile-checkrada-white.png',
   CHALLENGE_RESOLUTION_WINDOW: 'https://checkrada.co.ke/assets/og/profile-checkrada.png',
+  CHALLENGE_ACCEPTED:          'https://checkrada.co.ke/assets/og/profile-checkrada.png',
 };
 
 // ─── In-memory config cache (60s TTL) ─────────────────────────────────────────
