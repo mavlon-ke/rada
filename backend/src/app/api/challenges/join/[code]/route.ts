@@ -331,7 +331,7 @@ export const POST = withErrorHandling(async function POST(
     message: `${joinerName} accepted your challenge "${challenge.question.slice(0, 50)}...". Pool: KES ${Number(updated.totalPool).toLocaleString()}`,
     link:    '/rada-friends.html',
     whatsapp: {
-      template:   'CHALLENGE_OPPONENT_STAKED',
+      template:   'CHALLENGE_ACCEPTED',
       parameters: [joinerName, Number(updated.totalPool).toLocaleString()],
     },
   });

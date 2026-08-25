@@ -74,6 +74,7 @@ export type WhatsAppTemplateKey =
   | 'REFERRAL_REWARD_CREDITED'
   | 'REFEREE_NOMINATED'
   | 'CHALLENGE_OPPONENT_STAKED'
+  | 'CHALLENGE_ACCEPTED'
   | 'CHALLENGE_RESOLUTION_WINDOW'
   | 'CHALLENGE_RESOLUTION_WARNING';
 
@@ -85,6 +86,7 @@ const TEMPLATE_NAMES: Record<WhatsAppTemplateKey, string> = {
   REFERRAL_REWARD_CREDITED:    'checkrada_referral_reward',
   REFEREE_NOMINATED:           'checkrada_referee_nominated',
   CHALLENGE_OPPONENT_STAKED:   'checkrada_challenge_staked',
+  CHALLENGE_ACCEPTED:          'checkrada_challenge_accepted', 
   CHALLENGE_RESOLUTION_WINDOW: 'checkrada_challenge_window',
   CHALLENGE_RESOLUTION_WARNING:'checkrada_challenge_warning',
 };
@@ -192,6 +194,7 @@ function isTypeEnabled(flags: ConfigFlags, key: WhatsAppTemplateKey): boolean {
     case 'REFERRAL_REWARD_CREDITED':    return flags.referralRewardCreditedEnabled;
     case 'REFEREE_NOMINATED':           return flags.refereeNominatedEnabled;
     case 'CHALLENGE_OPPONENT_STAKED':   return flags.challengeOpponentStakedEnabled;
+    case 'CHALLENGE_ACCEPTED':          return flags.challengeOpponentStakedEnabled; //shares the invite toggle - no dedicated flag for now
     case 'CHALLENGE_RESOLUTION_WINDOW': return flags.challengeResolutionWindowEnabled;
     case 'CHALLENGE_RESOLUTION_WARNING':return flags.challengeResolutionWarningEnabled;
     default:                             return false;
