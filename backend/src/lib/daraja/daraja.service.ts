@@ -370,7 +370,7 @@ export async function registerC2BUrl(): Promise<C2BRegisterResult> {
 
   const data = await res.json();
 
-  if (!res.ok || Number(data.ResponseCode) !== '0') {
+  if (!res.ok || Number(data.ResponseCode) !== 0) {
     console.error(`[Daraja C2B Register] status=${res.status} body=${JSON.stringify(data)}`);
     throw new Error(data.errorMessage || data.ResponseDescription || 'C2B URL registration failed');
   }
