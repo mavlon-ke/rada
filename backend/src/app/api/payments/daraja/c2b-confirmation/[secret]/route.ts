@@ -52,6 +52,8 @@ export const POST = withErrorHandling(async (
     return NextResponse.json({ ResultCode: 0, ResultDesc: 'Accepted' });
   }
 
+console.log(`[Daraja C2B] RAW BODY: ${JSON.stringify(body)}`);
+
   const transId    = String(body?.TransID ?? '');
   const amountKes   = Number(body?.TransAmount);
   const msisdnRaw   = String(body?.MSISDN ?? '');
