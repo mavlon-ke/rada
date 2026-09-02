@@ -1325,7 +1325,7 @@ document.addEventListener('DOMContentLoaded', function() {
           <span class="slider-label-text">Stake Amount</span>
           <div style="display:flex;align-items:center;gap:6px">
             <span style="font-size:0.72rem;color:var(--text-dim)">KES</span>
-            <input class="slider-val-input" id="stakeInput" type="number" min="20" max="20000" value="500" oninput="updateStake(this.value)">
+            <input class="slider-val-input" id="stakeInput" type="number" min="20" max="20000" value="500" oninput="updateStake(this.value)" onblur="onStakeBlur(this.value)">
           </div>
         </div>
         <div class="quick-stakes">
@@ -1930,7 +1930,20 @@ function setStake(val) {
   computePayout();
 }
 
-function updateStake(val) { setStake(parseInt(val) || 20); }
+function updateStake(val) {
+  var n = parseInt(val);
+  if (isNaN(n) || n < 20) return;
+  setStake(Math.min(20000, n));
+}
+function onStakeBlur(val) {
+  var n = parseInt(val) || 0;
+  if (n < 20) {
+    setStake(20);
+    var inp = document.getElementById('stakeInput');
+    inp.style.outline = '2px solid var(--purple)';
+    setTimeout(function() { inp.style.outline = ''; }, 600);
+  }
+}
 function updateSlider(val) { setStake(parseInt(val)); }
 
 
