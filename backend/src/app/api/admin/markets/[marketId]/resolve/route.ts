@@ -245,7 +245,7 @@ if (claimed.count === 0) {
       where: { marketId: market.id, active: true },
       data:  { active: false, deactivatedAt: new Date() },
     });
-  }, { timeout: 30000, maxWait: 10000 });
+  }, { timeout: 55000, maxWait: 10000 });
 
   console.log(
     `[RESOLVE] ${market.id} → ${outcome}. ` +
