@@ -4,14 +4,30 @@
 // already completed. Cannot be rejected; only acknowledged.
 //
 // MATCHING (agreed design):
-//   1. MSISDN (the phone that actually paid — Safaricom-attested, not
-//      user-typed) against User.phone. Unambiguous since phone is unique.
+//   1. MSISDN (the phone that actually paid). NOTE: Safaricom's C2B v2
+//      product masks this field on every confirmation — documented Daraja
+//      behavior, not specific to this platform or to STK-originated
+//      payments. This check is left in place in case Safaricom ever
+//      reverses it, but in practice it will not match today.
 //   2. Fallback: BillRefNumber (what the payer typed as Account Number,
-//      instructed to be their own phone) against User.phone.
+//      instructed to be their own phone) against User.phone. This is the
+//      mechanism that actually matches genuine deposits today.
 //   3. No match on either → logged as a PENDING, unattributed deposit
 //      (userId: null) for manual admin reconciliation. Never dropped —
 //      this is real, irreversible M-Pesa money. No exceptions — every
-//      unmatched case gets a PENDING row and an admin alert, always.
+//      genuinely unmatched case gets a PENDING row and an admin alert.
+//
+// STK-DUPLICATE GUARD: registering C2B on this shortcode causes Safaricom
+// to also send a C2B Confirmation for STK-completed payments, in addition
+// to the STK callback that already correctly credits the wallet. Since
+// MSISDN is masked (see above), the only reliable way to recognise this is
+// via the real M-Pesa receipt number, which STK's own success handlers
+// already record inside their transaction's `description` field. If this
+// confirmation's TransID already appears there, it's the exact same
+// real-world payment already credited — not a guess, an exact match on
+// Safaricom's own receipt code — so it's skipped before ever reaching the
+// unmatched/PENDING path. No schema change; nothing in the STK callback
+// path is touched by this file at all.
 //
 // IDEMPOTENCY / ATOMICITY: the matched-deposit write and the wallet
 // credit are inside ONE $transaction, not two separate operations.
@@ -52,8 +68,6 @@ export const POST = withErrorHandling(async (
     return NextResponse.json({ ResultCode: 0, ResultDesc: 'Accepted' });
   }
 
-console.log(`[Daraja C2B] RAW BODY: ${JSON.stringify(body)}`);
-
   const transId    = String(body?.TransID ?? '');
   const amountKes   = Number(body?.TransAmount);
   const msisdnRaw   = String(body?.MSISDN ?? '');
@@ -67,6 +81,21 @@ console.log(`[Daraja C2B] RAW BODY: ${JSON.stringify(body)}`);
   const msisdn = dbPhone(msisdnRaw);
 
   console.log(`[Daraja C2B] Confirmation — TransID: ${transId} | Amount: ${amountKes} | MSISDN: ${msisdn} | BillRef: ${billRefRaw}`);
+
+  // ── Guard: already credited via STK (or any other channel) ─────────────────
+  // Safaricom's C2B v2 masks MSISDN on every confirmation (documented product
+  // change, not something specific to STK) — so this doesn't rely on MSISDN
+  // at all. STK's own success handlers already record the real M-Pesa receipt
+  // number inside `description`. If this TransID already appears in an
+  // existing SUCCESS transaction, it's the same real-world payment already
+  // credited — not a guess, an exact match on Safaricom's own receipt code.
+  const alreadyCreditedViaStk = await prisma.transaction.findFirst({
+    where: { status: 'SUCCESS', description: { contains: transId } },
+  });
+  if (alreadyCreditedViaStk) {
+    console.log(`[Daraja C2B] Skipping — TransID ${transId} already credited via STK (transaction ${alreadyCreditedViaStk.id})`);
+    return NextResponse.json({ ResultCode: 0, ResultDesc: 'Accepted' });
+  }
 
   // ── Matching: MSISDN first, then BillRefNumber ─────────────────────────────
   let matchedUser = await prisma.user.findUnique({ where: { phone: msisdn } });
