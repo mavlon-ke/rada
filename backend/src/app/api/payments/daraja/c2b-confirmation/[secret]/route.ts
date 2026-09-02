@@ -10,18 +10,13 @@
 //      instructed to be their own phone) against User.phone.
 //   3. No match on either → logged as a PENDING, unattributed deposit
 //      (userId: null) for manual admin reconciliation. Never dropped —
-//      this is real, irreversible M-Pesa money.
+//      this is real, irreversible M-Pesa money. No exceptions — every
+//      unmatched case gets a PENDING row and an admin alert, always.
 //
-// IDEMPOTENCY / ATOMICITY FIX: the matched-deposit write and the wallet
-// credit are now inside ONE $transaction, not two separate operations.
-// Previously, transaction.create() (status: SUCCESS) committed first,
-// standalone; if the separate wallet-credit $transaction then failed for
-// any reason, the row was permanently stuck — marked SUCCESS with
-// balAfter: 0, wallet never actually credited, and a Safaricom retry would
-// hit the P2002 duplicate-mpesaRef guard and return "Accepted" without ever
-// attempting the credit again. Now both commit together or neither does —
-// a failure fully rolls back, so a retry lands on a clean slate instead of
-// colliding with a phantom row.
+// IDEMPOTENCY / ATOMICITY: the matched-deposit write and the wallet
+// credit are inside ONE $transaction, not two separate operations.
+// A failure fully rolls back, so a Safaricom retry lands on a clean
+// slate instead of colliding with a phantom row.
 
 import { NextRequest, NextResponse }   from 'next/server';
 import { Prisma }                      from '@prisma/client';
@@ -70,20 +65,6 @@ export const POST = withErrorHandling(async (
   const msisdn = dbPhone(msisdnRaw);
 
   console.log(`[Daraja C2B] Confirmation — TransID: ${transId} | Amount: ${amountKes} | MSISDN: ${msisdn} | BillRef: ${billRefRaw}`);
-  
-  // ── Guard against STK-originated echo notifications ─────────────────────
-  // Registering C2B on this shortcode caused Safaricom to also send a C2B
-  // Confirmation for STK-completed payments — STK and C2B ride the same
-  // underlying M-Pesa rail — in addition to the STK callback that already
-  // correctly credits the wallet. These echoes carry an MSISDN far longer
-  // than any real Kenyan phone number (observed: 43 digits vs. a genuine
-  // 12-digit MSISDN). A digit count this implausible can never be a real
-  // payer, so skip cleanly here — no PENDING row, no admin alert — instead
-  // of logging a false "unmatched deposit" for a payment already handled.
-  if (msisdn.length > 15) {
-    console.log(`[Daraja C2B] Skipping likely STK-echo confirmation (implausible MSISDN length ${msisdn.length}) — TransID ${transId}`);
-    return NextResponse.json({ ResultCode: 0, ResultDesc: 'Accepted' });
-  }
 
   // ── Matching: MSISDN first, then BillRefNumber ─────────────────────────────
   let matchedUser = await prisma.user.findUnique({ where: { phone: msisdn } });
