@@ -81,7 +81,7 @@ export const POST = withErrorHandling(async (
   // payer, so skip cleanly here — no PENDING row, no admin alert — instead
   // of logging a false "unmatched deposit" for a payment already handled.
   if (msisdn.length > 15) {
-    console.log([Daraja C2B] Skipping likely STK-echo confirmation (implausible MSISDN length ${msisdn.length}) — TransID ${transId});
+    console.log(`[Daraja C2B] Skipping likely STK-echo confirmation (implausible MSISDN length ${msisdn.length}) — TransID ${transId}`);
     return NextResponse.json({ ResultCode: 0, ResultDesc: 'Accepted' });
   }
 
