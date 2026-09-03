@@ -2077,6 +2077,38 @@ body::after {
   </div>
 </div>
 
+<!-- Reconcile Unmatched Paybill Deposit Modal -->
+<div class="modal-overlay" id="reconcilePaybillModal">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-head">
+      <div class="modal-title">⚠️ Reconcile Paybill Deposit</div>
+      <div class="modal-sub" id="reconcileSubtitle">—</div>
+    </div>
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:14px;">
+      <div style="background:var(--bg3);border-radius:10px;padding:12px;font-size:0.78rem;color:var(--text-dim);">
+        Account Number entered by payer: <strong id="reconcileDescText" style="color:var(--text);">—</strong>
+      </div>
+      <div>
+        <div class="stat-label" style="margin-bottom:4px;">Search by phone or name</div>
+        <div style="display:flex;gap:8px;">
+          <input class="form-input" id="reconcileSearchInput" placeholder="254712345678 or name" style="flex:1;box-sizing:border-box;">
+          <button class="act-btn act-gray" onclick="searchReconcileUsers()">🔍 Search</button>
+        </div>
+      </div>
+      <div id="reconcileResults" style="max-height:220px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;"></div>
+      <div id="reconcileSelected" style="display:none;background:var(--bg3);border-radius:10px;padding:12px;">
+        <div class="stat-label" style="margin-bottom:4px;">Crediting</div>
+        <div id="reconcileSelectedText" style="font-weight:600;"></div>
+      </div>
+      <div id="reconcileStatus" style="font-size:0.78rem;min-height:18px;"></div>
+      <div style="display:flex;gap:10px;">
+        <button class="act-btn act-gray" style="flex:1;padding:12px;" onclick="closeModal('reconcilePaybillModal')">Cancel</button>
+        <button id="reconcileConfirmBtn" class="act-btn act-green" style="flex:2;padding:12px;font-size:0.85rem;" onclick="confirmReconcilePaybill()" disabled>Confirm Credit</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Delete User Confirmation Modal -->
 <div class="modal-overlay" id="deleteUserModal">
   <div class="modal" style="max-width:480px">
@@ -2430,12 +2462,16 @@ function loadTxnsTable(page) {
     TXNS_DATA = (d.transactions || []).map(function(t) {
       var prefix = ['DEPOSIT','PAYOUT','CHALLENGE_PAYOUT','REFUND','SUGGESTION_REWARD','CREATOR_BOUNTY','REFERRAL_REWARD'].includes(t.type) ? '+' : '-';
       return {
-        user:   (t.user && t.user.name) ? t.user.name : (t.user && t.user.phone ? t.user.phone : '—'),
-        type:   t.type,
-        amount: prefix + 'KES ' + Number(t.amountKes).toLocaleString(),
-        ref:    t.mpesaRef || t.id.slice(0,8).toUpperCase(),
-        time:   timeAgo(t.createdAt),
-        status: t.status,
+        id:        t.id,
+        user:      (t.user && t.user.name) ? t.user.name : (t.user && t.user.phone ? t.user.phone : '—'),
+        type:      t.type,
+        amount:    prefix + 'KES ' + Number(t.amountKes).toLocaleString(),
+        ref:       t.mpesaRef || t.id.slice(0,8).toUpperCase(),
+        time:      timeAgo(t.createdAt),
+        status:    t.status,
+        unmatched: t.type === 'DEPOSIT' && t.status === 'PENDING' && !t.userId,
+        rawAmount: Number(t.amountKes),
+        rawDesc:   t.description || '',
       };
     });
 
@@ -2554,7 +2590,7 @@ function loadMarketsTable(page) {
         sourceNote:  m.sourceNote  || '',
         imageUrl:    m.imageUrl    || '',
         closesAt:    m.closesAt,
-        yes:    Math.round((m.yesPrice || 0.5) * 100),
+        yes:    Math.round((m.yesPrice ?? 0.5) * 100),
         volume: 'KES ' + Math.round((m.totalVolume || 0) / 1000) + 'K',
         trades: m.tradeCount || 0,
         closes: m.closesAt ? new Date(m.closesAt).toLocaleDateString('en-KE', { day:'numeric', month:'short', year:'numeric' }) : '—',
@@ -2683,17 +2719,128 @@ function renderTxnsTable() {
   tbody.innerHTML = TXNS_DATA.map(function(t) {
     var amtColor = t.amount.startsWith('+') ? 'var(--green)' : t.amount.startsWith('-') ? 'var(--red)' : 'var(--text)';
     var stBadge  = t.status === 'SUCCESS' ? '<span class="badge badge-green">OK</span>'
+      : t.unmatched ? '<span class="badge badge-red">⚠️ UNMATCHED</span>'
       : t.status === 'PENDING' ? '<span class="badge badge-amber">PENDING</span>'
       : '<span class="badge badge-red">FAILED</span>';
+    var actions = t.unmatched
+      ? '<div class="table-actions">' +
+          '<button class="act-btn act-green" style="padding:4px 8px;font-size:0.68rem;" onclick="openReconcileModal(\'' + t.id + '\')">Reconcile</button>' +
+          '<button class="act-btn act-gray" style="padding:4px 8px;font-size:0.68rem;" onclick="dismissPaybillDeposit(\'' + t.id + '\')">Dismiss</button>' +
+        '</div>'
+      : '';
     return '<tr>' +
       '<td style="font-weight:600">' + esc(t.user) + '</td>' +
       '<td><span class="badge badge-gray">' + fmtTxnType(t.type) + '</span></td>' +
       '<td class="mono" style="color:' + amtColor + '">' + t.amount + '</td>' +
       '<td class="mono" style="color:var(--text-dim);font-size:0.72rem">' + esc(t.ref) + '</td>' +
       '<td style="color:var(--text-dim)">' + t.time + '</td>' +
-      '<td>' + stBadge + '</td>' +
+      '<td>' + stBadge + actions + '</td>' +
     '</tr>';
   }).join('');
+}
+
+// ── PAYBILL DEPOSIT RECONCILIATION ──────────────────────────────────────────
+var reconcileTxnId       = null;
+var reconcileAmount      = 0;
+var reconcileSelectedUser = null;
+
+function openReconcileModal(txnId) {
+  var t = TXNS_DATA.find(function(x) { return x.id === txnId; });
+  if (!t) return;
+  reconcileTxnId        = txnId;
+  reconcileAmount       = t.rawAmount;
+  reconcileSelectedUser = null;
+
+  document.getElementById('reconcileSubtitle').textContent = 'KES ' + t.rawAmount.toLocaleString() + ' — awaiting reconciliation';
+  document.getElementById('reconcileDescText').textContent = t.rawDesc || '—';
+  document.getElementById('reconcileSearchInput').value = '';
+  document.getElementById('reconcileResults').innerHTML = '';
+  document.getElementById('reconcileSelected').style.display = 'none';
+  document.getElementById('reconcileStatus').innerHTML = '';
+  document.getElementById('reconcileConfirmBtn').disabled = true;
+
+  document.getElementById('reconcilePaybillModal').classList.add('open');
+}
+
+function searchReconcileUsers() {
+  var q = document.getElementById('reconcileSearchInput').value.trim();
+  var results = document.getElementById('reconcileResults');
+  if (!q) { results.innerHTML = ''; return; }
+  results.innerHTML = '<div style="color:var(--text-dim);font-size:0.78rem;">Searching…</div>';
+
+  adminFetch('/api/admin/users?q=' + encodeURIComponent(q) + '&limit=10')
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    var users = d.users || [];
+    if (!users.length) {
+      results.innerHTML = '<div style="color:var(--text-dim);font-size:0.78rem;">No matching users found.</div>';
+      return;
+    }
+    results.innerHTML = users.map(function(u) {
+      var name = u.name || '—';
+      return '<div class="table-actions" style="justify-content:space-between;align-items:center;background:var(--bg3);border-radius:8px;padding:8px 12px;">' +
+        '<div><div style="font-weight:600;">' + esc(name) + '</div>' +
+          '<div style="color:var(--text-dim);font-size:0.72rem;" class="mono">' + esc(u.phone) + '</div></div>' +
+        '<button class="act-btn act-green" style="padding:4px 10px;font-size:0.72rem;" onclick="selectReconcileUser(\'' + esc(u.phone) + '\',\'' + esc(name).replace(/'/g, "\\'") + '\')">Select</button>' +
+      '</div>';
+    }).join('');
+  })
+  .catch(function() {
+    results.innerHTML = '<div style="color:var(--red);font-size:0.78rem;">Search failed. Please try again.</div>';
+  });
+}
+
+function selectReconcileUser(phone, name) {
+  reconcileSelectedUser = { phone: phone, name: name };
+  document.getElementById('reconcileSelected').style.display = 'block';
+  document.getElementById('reconcileSelectedText').textContent = name + ' — ' + phone + ' — KES ' + reconcileAmount.toLocaleString();
+  document.getElementById('reconcileConfirmBtn').disabled = false;
+}
+
+function confirmReconcilePaybill() {
+  if (!reconcileSelectedUser || !reconcileTxnId) return;
+  var btn = document.getElementById('reconcileConfirmBtn');
+  var statusEl = document.getElementById('reconcileStatus');
+  btn.disabled = true;
+  statusEl.innerHTML = '<span style="color:var(--text-dim);">Crediting…</span>';
+
+  adminFetch('/api/admin/payments/c2b-deposits/' + reconcileTxnId + '/reconcile', {
+    method: 'POST',
+    body:   JSON.stringify({ phone: reconcileSelectedUser.phone }),
+  })
+  .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
+  .then(function(res) {
+    if (res.ok) {
+      statusEl.innerHTML = '<span style="color:var(--green);">✅ Credited successfully.</span>';
+      setTimeout(function() {
+        closeModal('reconcilePaybillModal');
+        loadTxnsTable(txnsCurrentPage);
+      }, 700);
+    } else {
+      statusEl.innerHTML = '<span style="color:var(--red);">' + esc(res.d.error || 'Could not reconcile.') + '</span>';
+      btn.disabled = false;
+      loadTxnsTable(txnsCurrentPage);
+    }
+  })
+  .catch(function() {
+    statusEl.innerHTML = '<span style="color:var(--red);">Network error. Please try again.</span>';
+    btn.disabled = false;
+  });
+}
+
+function dismissPaybillDeposit(txnId) {
+  if (!confirm('Dismiss this unmatched deposit? This does not delete it — it will be marked as not reconciled and kept for record.')) return;
+
+  adminFetch('/api/admin/payments/c2b-deposits/' + txnId + '/dismiss', { method: 'POST' })
+  .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
+  .then(function(res) {
+    if (!res.ok) alert('Error: ' + (res.d.error || 'Could not dismiss.'));
+    loadTxnsTable(txnsCurrentPage);
+  })
+  .catch(function() {
+    alert('Network error. Please try again.');
+    loadTxnsTable(txnsCurrentPage);
+  });
 }
 
 function renderRecentTxns() {
@@ -4541,8 +4688,8 @@ function renderB2B(categories, topMarkets) {
         return '<tr>'
           + '<td style="font-weight:600;max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="' + esc(r.title||'') + '">' + esc(r.title || '—') + '</td>'
           + '<td><span class="badge badge-gray">' + esc(r.category || '—') + '</span></td>'
-          + '<td class="mono" style="color:' + (r.yesPct > 50 ? 'var(--green)' : 'var(--text-mid)') + ';font-weight:700;">' + (r.yesPct || 50) + '%</td>'
-          + '<td class="mono" style="color:' + ((100 - (r.yesPct||50)) > 50 ? 'var(--red)' : 'var(--text-mid)') + ';font-weight:700;">' + (100 - (r.yesPct||50)) + '%</td>'
+          + '<td class="mono" style="color:' + (r.yesPct > 50 ? 'var(--green)' : 'var(--text-mid)') + ';font-weight:700;">' + (r.yesPct ?? 50) + '%</td>'
+          + '<td class="mono" style="color:' + ((100 - (r.yesPct??50)) > 50 ? 'var(--red)' : 'var(--text-mid)') + ';font-weight:700;">' + (100 - (r.yesPct??50)) + '%</td>'
           + '<td class="mono">KES ' + (r.avgStake || 0).toLocaleString() + '</td>'
           + '<td style="font-weight:700;color:' + convColor + '">' + esc(r.conviction || '—') + '</td>'
           + '<td class="mono">' + (r.forecasters || 0).toLocaleString() + '</td>'
@@ -4581,7 +4728,7 @@ function exportB2BCSV() {
   B2B_TOP_MARKETS.forEach(function(r) {
     lines.push([
       '"' + (r.title||'').replace(/"/g,'""') + '"',
-      r.category, r.yesPct, 100-(r.yesPct||50), r.avgStake, r.forecasters, r.conviction
+      r.category, r.yesPct, 100-(r.yesPct??50), r.avgStake, r.forecasters, r.conviction
     ].join(','));
   });
 
@@ -4965,10 +5112,10 @@ function loadReferralConfig() {
     var md = document.getElementById('minDepositInput');
     var mt = document.getElementById('minTradeInput');
     if (t) t.checked = cfg.active !== false;
-    if (r) r.value = cfg.referrerRewardKes || 50;
-    if (m) m.value = cfg.refereeMatchKes || 100;
-    if (md) md.value = cfg.minDepositKes || 100;
-    if (mt) mt.value = cfg.minTradeKes || 100;
+    if (r) r.value = cfg.referrerRewardKes ?? 50;
+    if (m) m.value = cfg.refereeMatchKes ?? 100;
+    if (md) md.value = cfg.minDepositKes ?? 100;
+    if (mt) mt.value = cfg.minTradeKes ?? 100;
     updateReferralPreview();
     checkReferralThresholds();
   }).catch(function(){});
@@ -5320,7 +5467,7 @@ function loadRevenuePanel() {
     var net = d.netRevenue || 0, netEl = document.getElementById('revNetRevenue');
     if (netEl) { netEl.textContent = fmt(net); netEl.style.color = net >= 0 ? '#166534' : '#ce1126'; }
     s('revNetBreakdown', fmt(d.grossTotal) + ' gross − ' + fmt(d.costSuggestion) + ' suggestion − ' + fmt(d.costReferral) + ' referral − ' + fmt(d.costBounty) + ' bounties − ' + fmt(d.costRoyalty) + ' royalties − ' + fmt(d.costB2cFees||0) + ' M-Pesa B2C fees');
-    s('revRateNote', 'Fee: ' + ((d.feeRate||0.05)*100).toFixed(1) + '% per trade  ·  Resolution cut: ' + ((d.cutRate||0.20)*100).toFixed(1) + '% of pool');
+    s('revRateNote', 'Fee: ' + (((d.feeRate ?? 0.05))*100).toFixed(1) + '% per trade  ·  Resolution cut: ' + (((d.cutRate ?? 0.20))*100).toFixed(1) + '% of pool');
     s('revVolTotal', fmt(d.tradeTotal)); s('revVolCount', (d.tradeCount||0).toLocaleString() + ' trades');
     s('revVolAvg', 'KES ' + Math.round(d.tradeAvg||0).toLocaleString() + ' avg');
     s('revDepTotal', fmt(d.totalDeposits)); s('revDepTotalCount', (d.depCount||0).toLocaleString() + ' transactions');
