@@ -1841,6 +1841,11 @@ function openWithdraw() { window.location.href = 'rada-dashboard.html#withdraw';
 var referralActive = true;  // default ON for demo; overridden by backend
 fetch(API_BASE + '/api/config/referral').then(r => r.json()).then(d => {
   referralActive = d.config?.active !== false;  // true unless explicitly false
+  var refCfg = d.config || {};
+  var refMD = document.getElementById('referMinDepositText'); if (refMD) refMD.textContent = 'KES ' + (refCfg.minDepositKes ?? 100) + '+';
+  var refRB = document.getElementById('referRefereeBonusText'); if (refRB) refRB.textContent = 'KES ' + (refCfg.refereeMatchKes ?? 100);
+  var refMT = document.getElementById('referMinTradeText'); if (refMT) refMT.textContent = 'KES ' + (refCfg.minTradeKes ?? 100) + '+';
+  var refRW = document.getElementById('referRewardText'); if (refRW) refRW.textContent = 'KES ' + (refCfg.referrerRewardKes ?? 50);
   // Update refer row visibility
   document.querySelectorAll('.acc-refer-row').forEach(el => {
     el.style.display = 'flex';  // always show when logged in, programme check on backend
@@ -2460,11 +2465,15 @@ function botLiveClick() {
           </div>
           <div class="refer-step">
             <div class="refer-step-icon">🧑🏾</div>
-            <div class="refer-step-text">Friend signs up &amp; deposits</div>
+            <div class="refer-step-text">Friend signs up &amp; deposits <span id="referMinDepositText">KES 100+</span></div>
           </div>
           <div class="refer-step">
             <div class="refer-step-icon">🎁</div>
-            <div class="refer-step-text">You both get bonus KES</div>
+            <div class="refer-step-text">Friend gets <span id="referRefereeBonusText">KES 100</span> bonus balance</div>
+          </div>
+          <div class="refer-step">
+            <div class="refer-step-icon">💰</div>
+            <div class="refer-step-text">Friend trades <span id="referMinTradeText">KES 100+</span> — you earn <span id="referRewardText">KES 50</span></div>
           </div>
         </div>
       </div>
@@ -2490,7 +2499,7 @@ function botLiveClick() {
 
       <!-- Note -->
       <div class="refer-note">
-        Bonus balance must be staked before withdrawal.<br>
+        Your friend's welcome bonus must be staked before withdrawal. Your own referral reward is real, withdrawable balance from the moment it's credited.<br>
         Programme subject to availability.
       </div>
 

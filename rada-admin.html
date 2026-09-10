@@ -5799,7 +5799,7 @@ function upLoadPositions() {
   document.getElementById('upPositionsContent').innerHTML = '<div class="up-loading">Loading...</div>';
   upFetch('positions', 1).then(function(d) {
     var html = '';
-    var cutPct = d.cutRate ? (d.cutRate*100).toFixed(0)+'%' : '20%';
+    var cutPct = ((d.cutRate ?? 0.20) * 100).toFixed(0) + '%';
 
     function posTable(arr, type) {
       if (!arr||!arr.length) return '<div class="up-empty">No ' + type + ' positions</div>';

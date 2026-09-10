@@ -671,8 +671,8 @@ body { background: var(--bg); color: var(--text); font-family: var(--font); min-
     <div style="display:flex;align-items:center;gap:14px;flex:1">
       <div class="creator-card-icon">💡</div>
       <div>
-        <div class="creator-card-title">Propose a Forecast Market · Earn 0.5% Per Trade</div>
-        <div class="creator-card-sub">Submit a YES/NO question. If approved and it hits KES 1,000 in volume, you earn 0.5% of every trade fee — credited to your CheckRada wallet while the market is active. Withdraw to M-Pesa anytime.</div>
+        <div class="creator-card-title">Propose a Question · Earn <span id="cfgRatePctAboutTitle">0.5%</span> Per Trade</div>
+        <div class="creator-card-sub">Submit a YES/NO question. If approved and it hits <span id="cfgThresholdAbout">KES 1,000</span> in volume, you earn <span id="cfgRatePctAboutSub">0.5%</span> of every trade fee — credited to your CheckRada wallet while the market is active. Withdraw to M-Pesa anytime.</div>
       </div>
     </div>
     <button class="btn-creator" onclick="window.location='rada-creator.html'">Become a Creator →</button>
@@ -744,6 +744,11 @@ var isLoggedIn = !!radaUser;
 var referralActive = true;  // default ON for demo; overridden by backend
 fetch('https://api.checkrada.co.ke/api/config/referral').then(r => r.json()).then(d => {
   referralActive = d.config?.active !== false;  // true unless explicitly false
+  var refCfg = d.config || {};
+  var refMD = document.getElementById('referMinDepositText'); if (refMD) refMD.textContent = 'KES ' + (refCfg.minDepositKes ?? 100) + '+';
+  var refRB = document.getElementById('referRefereeBonusText'); if (refRB) refRB.textContent = 'KES ' + (refCfg.refereeMatchKes ?? 100);
+  var refMT = document.getElementById('referMinTradeText'); if (refMT) refMT.textContent = 'KES ' + (refCfg.minTradeKes ?? 100) + '+';
+  var refRW = document.getElementById('referRewardText'); if (refRW) refRW.textContent = 'KES ' + (refCfg.referrerRewardKes ?? 50);
   // Update refer row visibility
   document.querySelectorAll('.acc-refer-row').forEach(el => {
     el.style.display = 'flex';  // always show when logged in, programme check on backend
@@ -1377,11 +1382,15 @@ document.addEventListener('DOMContentLoaded', function() {
           </div>
           <div class="refer-step">
             <div class="refer-step-icon">🧑🏾</div>
-            <div class="refer-step-text">Friend signs up &amp; deposits</div>
+            <div class="refer-step-text">Friend signs up &amp; deposits <span id="referMinDepositText">KES 100+</span></div>
           </div>
           <div class="refer-step">
             <div class="refer-step-icon">🎁</div>
-            <div class="refer-step-text">You both get bonus KES</div>
+            <div class="refer-step-text">Friend gets <span id="referRefereeBonusText">KES 100</span> bonus balance</div>
+          </div>
+          <div class="refer-step">
+            <div class="refer-step-icon">💰</div>
+            <div class="refer-step-text">Friend trades <span id="referMinTradeText">KES 100+</span> — you earn <span id="referRewardText">KES 50</span></div>
           </div>
         </div>
       </div>
@@ -1407,7 +1416,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
       <!-- Note -->
       <div class="refer-note">
-        Bonus balance must be staked before withdrawal.<br>
+        Your friend's welcome bonus must be staked before withdrawal. Your own referral reward is real, withdrawable balance from the moment it's credited.<br>
         Programme subject to availability.
       </div>
 
@@ -1527,6 +1536,32 @@ function openGetHelp() {
       window.location.href = 'rada-faq.html';
     });
 }
+
+// ── Load public platform config and substitute dynamic copy ────────────────
+//   Single fetch at page load. On failure, placeholder text remains as
+//   default (0.5% / KES 1,000) which keeps the page functional even if
+//   the config endpoint is down.
+(function loadPublicConfig() {
+  fetch(API_BASE + '/api/config/public', { credentials: 'omit' })
+    .then(function(r) { return r.ok ? r.json() : null; })
+    .then(function(cfg) {
+      if (!cfg) return;
+      var rate = Number(cfg.creatorRoyaltyRate);
+      if (!isNaN(rate)) {
+        var ratePct = (rate * 100).toFixed(rate < 0.01 ? 2 : 1).replace(/0+$/, '').replace(/\.$/, '') + '%';
+        var titleEl = document.getElementById('cfgRatePctAboutTitle');
+        var subEl   = document.getElementById('cfgRatePctAboutSub');
+        if (titleEl) titleEl.textContent = ratePct;
+        if (subEl)   subEl.textContent   = ratePct;
+      }
+      var threshold = Number(cfg.creatorRoyaltyThresholdKes);
+      if (!isNaN(threshold)) {
+        var thEl = document.getElementById('cfgThresholdAbout');
+        if (thEl) thEl.textContent = 'KES ' + threshold.toLocaleString();
+      }
+    })
+    .catch(function() { /* leave placeholder defaults in place */ });
+})();
 </script>
 </body>
 </html>

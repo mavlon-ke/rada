@@ -1646,7 +1646,7 @@ function renderMarkets(data) {
         <button class="empty-cta" onclick="window.location='rada-creator.html'">
           💡 Propose a Market
         </button>
-        <div class="empty-reward-tag">🎁 <span>Earn 0.5% per trade</span> — credited to your CheckRada wallet while the market is active. 5% forecasting fee applies per position.</div>
+        <div class="empty-reward-tag">🎁 <span>Earn <span id="cfgRatePctMarkets">0.5%</span> per trade</span> — credited to your CheckRada wallet while the market is active. 5% forecasting fee applies per position.</div>
       </div>
     `;
     return;
@@ -1859,7 +1859,7 @@ function searchMarkets(q) {
         '<button class="empty-cta" onclick="window.location=\'rada-creator.html\'">' +
         '  💡 Propose a Market' +
         '</button>' +
-        '<div class="empty-reward-tag">🎁 <span>Earn 0.5% per trade</span> — credited to your CheckRada wallet</div>' +
+        '<div class="empty-reward-tag">🎁 <span>Earn ' + (window.__cfgRoyaltyPct || '0.5%') + ' per trade</span> — credited to your CheckRada wallet</div>' +
         '</div>';
     }
     return;
@@ -2532,6 +2532,11 @@ function devLogout() {
 var referralActive = true;  // default ON for demo; overridden by backend
 fetch(API_BASE + '/api/config/referral').then(r => r.json()).then(d => {
   referralActive = d.config?.active !== false;  // true unless explicitly false
+  var refCfg = d.config || {};
+  var refMD = document.getElementById('referMinDepositText'); if (refMD) refMD.textContent = 'KES ' + (refCfg.minDepositKes ?? 100) + '+';
+  var refRB = document.getElementById('referRefereeBonusText'); if (refRB) refRB.textContent = 'KES ' + (refCfg.refereeMatchKes ?? 100);
+  var refMT = document.getElementById('referMinTradeText'); if (refMT) refMT.textContent = 'KES ' + (refCfg.minTradeKes ?? 100) + '+';
+  var refRW = document.getElementById('referRewardText'); if (refRW) refRW.textContent = 'KES ' + (refCfg.referrerRewardKes ?? 50);
   // Update refer row visibility
   document.querySelectorAll('.acc-refer-row').forEach(el => {
     el.style.display = 'flex';  // always show when logged in, programme check on backend
@@ -3318,11 +3323,15 @@ document.addEventListener('DOMContentLoaded', function() {
           </div>
           <div class="refer-step">
             <div class="refer-step-icon">🧑🏾</div>
-            <div class="refer-step-text">Friend signs up &amp; deposits</div>
+            <div class="refer-step-text">Friend signs up &amp; deposits <span id="referMinDepositText">KES 100+</span></div>
           </div>
           <div class="refer-step">
             <div class="refer-step-icon">🎁</div>
-            <div class="refer-step-text">You both get bonus KES</div>
+            <div class="refer-step-text">Friend gets <span id="referRefereeBonusText">KES 100</span> bonus balance</div>
+          </div>
+          <div class="refer-step">
+            <div class="refer-step-icon">💰</div>
+            <div class="refer-step-text">Friend trades <span id="referMinTradeText">KES 100+</span> — you earn <span id="referRewardText">KES 50</span></div>
           </div>
         </div>
       </div>
@@ -3348,7 +3357,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
       <!-- Note -->
       <div class="refer-note">
-        Bonus balance must be staked before withdrawal.<br>
+        Your friend's welcome bonus must be staked before withdrawal. Your own referral reward is real, withdrawable balance from the moment it's credited.<br>
         Programme subject to availability.
       </div>
 
@@ -3468,6 +3477,26 @@ function openGetHelp() {
       window.location.href = 'rada-faq.html';
     });
 }
+
+// ── Load public platform config and substitute dynamic copy ────────────────
+//   Single fetch at page load. Populates the static reward-tag span and
+//   caches the value for the dynamic no-results empty state built later.
+//   On failure, placeholder text (0.5%) remains in place.
+(function loadPublicConfig() {
+  fetch(API_BASE + '/api/config/public', { credentials: 'omit' })
+    .then(function(r) { return r.ok ? r.json() : null; })
+    .then(function(cfg) {
+      if (!cfg) return;
+      var rate = Number(cfg.creatorRoyaltyRate);
+      if (!isNaN(rate)) {
+        var ratePct = (rate * 100).toFixed(rate < 0.01 ? 2 : 1).replace(/0+$/, '').replace(/\.$/, '') + '%';
+        window.__cfgRoyaltyPct = ratePct;
+        var elMarkets = document.getElementById('cfgRatePctMarkets');
+        if (elMarkets) elMarkets.textContent = ratePct;
+      }
+    })
+    .catch(function() { /* leave placeholder defaults in place */ });
+})();
 </script>
 </body>
 </html>
