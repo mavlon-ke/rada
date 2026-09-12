@@ -302,7 +302,9 @@ export const POST = withErrorHandling(async function POST(req: NextRequest) {
     success:        true,
     challengeId:    challenge.id,
     accessCode,
-    shareUrl:       `${process.env.NEXT_PUBLIC_BASE_URL}/join/${accessCode}`,
+    // Hardcoded — see the comment in slug.ts's buildMarketShareUrl for why
+    // this specific domain is not env-var-driven.
+    shareUrl:       `https://go.checkrada.co.ke/join/${accessCode}`,
     isPublic,
     stkMessage,
     payment: {

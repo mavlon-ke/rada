@@ -122,7 +122,9 @@ export const GET = withErrorHandling(async function GET(req: NextRequest) {
       participantA:     displayName(ch.userA?.name, ch.userA?.phone) ?? 'Challenger A',
       participantB:     displayName(ch.userB?.name, ch.userB?.phone) ?? 'Challenger B',
       closesAt:         ch.eventExpiresAt,
-      shareUrl:         `${process.env.NEXT_PUBLIC_BASE_URL}/join/${ch.accessCode}`,
+      // Hardcoded — see the comment in slug.ts's buildMarketShareUrl for
+      // why this specific domain is not env-var-driven.
+      shareUrl:         `https://go.checkrada.co.ke/join/${ch.accessCode}`,
     }));
   }
 

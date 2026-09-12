@@ -48,7 +48,13 @@ export async function generateUniqueSlug(title: string): Promise<string> {
 export function buildMarketShareUrl(
   slug: string,
   creatorPhone?: string | null,
-  base = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://rada.co.ke'
+  // Hardcoded, not env-var-driven: this domain is a fixed, permanent
+  // choice for share-link previews specifically (see the Cloudflare
+  // Worker at go.checkrada.co.ke), not something that should ever vary
+  // by environment. An env var here previously risked silently falling
+  // back to a stale pre-rebrand domain if the variable was ever unset —
+  // this removes that failure mode entirely.
+  base = 'https://go.checkrada.co.ke'
 ): string {
   const url = `${base}/m/${slug}`;
   return creatorPhone ? `${url}?c=${encodeURIComponent(creatorPhone)}` : url;
