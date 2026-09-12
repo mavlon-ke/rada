@@ -2902,7 +2902,7 @@ function legacyCopy(text, onSuccess) {
 
 // ── CHALLENGE SHARE FUNCTIONS ────────────────────────────────────────────────
 function challengeUrl(slug, code) {
-  return `https://checkrada.co.ke/join/${slug}?code=${code}`;
+  return `https://go.checkrada.co.ke/join/${slug}?code=${code}`;
 }
 function challengeShareText(slug, code, q, stake) {
   return `Nimekuchallenge kwenye CheckRada! 🤝\n\n"${q || 'a challenge'}"\n\nStake: KES ${stake || ''} — inahifadhiwa kwenye escrow.\n\nJoini hapa:\n${challengeUrl(slug, code)}\n\nCode: ${code}\n\nMay the best one win! 🏆`;

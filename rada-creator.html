@@ -1313,8 +1313,8 @@ function copySlug(slug) {
     ? String(radaUser.phone).replace(/^\+/, '')
     : null;
   var link = phone
-    ? 'https://checkrada.co.ke/m/' + slug + '?c=' + encodeURIComponent(phone)
-    : 'https://checkrada.co.ke/m/' + slug;
+    ? 'https://go.checkrada.co.ke/m/' + slug + '?c=' + encodeURIComponent(phone)
+    : 'https://go.checkrada.co.ke/m/' + slug;
 
   // Try modern clipboard API first; fall back to a textarea trick for older
   // browsers (uncommon on Android Chrome but free defence-in-depth).
