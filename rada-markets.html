@@ -1976,7 +1976,7 @@ function updateWalletButton() {
     // ── Wallet covers full stake ─────────────────────────────────────────────
     walletPays = stake;
     mpesaPays  = 0;
-    btn.textContent = 'Forecast ' + label + ' →';
+    btn.textContent = 'Answer ' + label + ' →';
     // Show which wallet(s) contribute
     if (real >= stake) {
       breakdownText = 'KES ' + stake.toLocaleString() + ' from your CheckRada wallet';
@@ -2004,7 +2004,7 @@ function updateWalletButton() {
     // ── No wallet balance — full M-Pesa ──────────────────────────────────────
     walletPays = 0;
     mpesaPays  = stake;
-    btn.textContent = 'Forecast ' + label + ' via M-Pesa →';
+    btn.textContent = 'Answer ' + label + ' via M-Pesa →';
     breakdownText = 'KES ' + stake.toLocaleString() + ' via M-Pesa';
   }
 
