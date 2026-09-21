@@ -284,7 +284,9 @@ nav {
   padding: 16px 20px 12px;
   border-bottom: 1px solid var(--border);
 }
-.modal-market-q { font-weight: 600; font-size: 0.88rem; line-height: 1.4; margin-bottom: 10px; color: var(--text-mid); }
+.modal-market-q { font-weight: 600; font-size: 0.88rem; line-height: 1.4; color: var(--text-mid); }
+.modal-q-row { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 10px; }
+.modal-q-thumb { width: 44px; height: 44px; border-radius: 10px; object-fit: cover; flex-shrink: 0; background: var(--bg3); }
 
 /* Side selector */
 .side-selector { display: flex; gap: 8px; margin-bottom: 4px; }
@@ -1223,7 +1225,7 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
   </a>
   <nav class="h-nav">
-    <a class="active" href="rada-markets.html">Forecast Markets</a>
+    <a class="active" href="rada-markets.html">Questions</a>
     <a href="rada-portfolio.html">Portfolio</a>
     <a href="rada-leaderboard.html">Leaderboard</a>
     <a href="rada-data.html">Data Platform</a>
@@ -1290,7 +1292,7 @@ document.addEventListener('DOMContentLoaded', function() {
   <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
   <input class="search-box" style="flex:1;margin-bottom:0" placeholder="🔍 Search Questions..." oninput="searchMarkets(this.value)" onblur="if(!this.value)this.dataset.searching=''" onfocus="preSearchFilter=activeFilter">
   <button class="desktop-multi-btn" id="desktopMultiBtn" onclick="openMultiSheet()">
-    📋 Multi-Forecast <span class="dmb-badge" id="desktopMultiBadge">0</span>
+    📋 Multi-Questions <span class="dmb-badge" id="desktopMultiBadge">0</span>
   </button>
 </div>
 </div>
@@ -1308,7 +1310,10 @@ document.addEventListener('DOMContentLoaded', function() {
       <button class="modal-close-btn" onclick="closeModal()" aria-label="Close">✕</button>
     </div>
     <div class="modal-head">
-      <div class="modal-market-q" id="modalQuestion">Market question here</div>
+      <div class="modal-q-row">
+        <img class="modal-q-thumb" id="modalThumb" alt="" style="display:none;" onerror="this.style.display='none'">
+        <div class="modal-market-q" id="modalQuestion">Market question here</div>
+      </div>
       <div class="side-selector">
         <button class="side-btn side-btn-yes selected" id="sideYes" onclick="selectSide('YES')">
           YES <span id="sideYesPct" style="font-size:0.75rem;opacity:0.8">· 65%</span>
@@ -1384,7 +1389,7 @@ document.addEventListener('DOMContentLoaded', function() {
         <div class="msp-toast" id="mspToast">✓ Link copied!</div>
       </div>
       <div class="modal-legal">
-        By forecasting, you agree to the CheckRada Analyst Agreement. This is an incentivised information contribution, not a wager. Min stake: KES 20.
+        By answering, you agree to the CheckRada Analyst Agreement. This is an incentivised information contribution, not a wager. Min stake: KES 20.
       </div>
     </div>
   </div>
@@ -1646,7 +1651,7 @@ function renderMarkets(data) {
         <button class="empty-cta" onclick="window.location='rada-creator.html'">
           💡 Propose a Market
         </button>
-        <div class="empty-reward-tag">🎁 <span>Earn <span id="cfgRatePctMarkets">0.5%</span> per trade</span> — credited to your CheckRada wallet while the market is active. 5% forecasting fee applies per position.</div>
+        <div class="empty-reward-tag">🎁 <span>Earn <span id="cfgRatePctMarkets">0.5%</span> per trade</span> — credited to your CheckRada wallet while the market is active. 5% platform fee applies per position.</div>
       </div>
     `;
     return;
@@ -1874,6 +1879,16 @@ function openForecast(id, side = 'YES') {
   activeSide = side;
 
   document.getElementById('modalQuestion').textContent = activeMarket.q;
+  var modalThumb = document.getElementById('modalThumb');
+  if (modalThumb) {
+    if (activeMarket.imageUrl) {
+      modalThumb.src = activeMarket.imageUrl;
+      modalThumb.style.display = '';
+    } else {
+      modalThumb.removeAttribute('src');
+      modalThumb.style.display = 'none';
+    }
+  }
   document.getElementById('sideYesPct').textContent = `· ${activeMarket.yes}%`;
   document.getElementById('sideNoPct').textContent  = `· ${100 - activeMarket.yes}%`;
 
@@ -1892,7 +1907,7 @@ function closeModal() {
     _mpesaPollInterval = null;
     var btn = document.getElementById('forecastBtn');
     var breakdown = document.getElementById('walletBreakdown');
-    if (btn) { btn.disabled = false; btn.textContent = 'Forecast'; btn.style.background = ''; }
+    if (btn) { btn.disabled = false; btn.textContent = 'Answer'; btn.style.background = ''; }
     if (breakdown) breakdown.textContent = '';
   }
   document.getElementById('forecastModal').classList.remove('open');
@@ -1913,7 +1928,7 @@ function selectSide(side) {
   activeSide = side;
   document.getElementById('sideYes').classList.toggle('selected', side === 'YES');
   document.getElementById('sideNo').classList.toggle('selected',  side === 'NO');
-  document.getElementById('forecastBtn').textContent = `Forecast ${side} via M-Pesa →`;
+  document.getElementById('forecastBtn').textContent = `Answer ${side} via M-Pesa →`;
   document.getElementById('forecastBtn').classList.toggle('yes-active', side === 'YES');
   computePayout();
   updateWalletButton();
@@ -2107,7 +2122,7 @@ function submitForecast() {
     .then(function(res) {
       if (!res.ok) {
         btn.disabled = false;
-        btn.textContent = 'Forecast';
+        btn.textContent = 'Answer';
         if (breakdown) breakdown.textContent = '';
         alert('Payment failed: ' + (res.d.error || 'Could not initiate M-Pesa payment.'));
         return;
@@ -2142,7 +2157,7 @@ function submitForecast() {
           clearInterval(countdownTimer);
           _mpesaPollInterval = null;
           btn.disabled = false;
-          btn.textContent = 'Forecast';
+          btn.textContent = 'Answer';
           if (breakdown) breakdown.textContent = '';
           alert('M-Pesa payment timed out. Your STK push request has expired. Please try again.');
           return;
@@ -2158,8 +2173,8 @@ function submitForecast() {
             clearInterval(_mpesaPollInterval);
             clearInterval(countdownTimer);
             _mpesaPollInterval = null;
-            btn.textContent = 'Processing forecast...';
-            if (breakdown) breakdown.textContent = 'M-Pesa confirmed ✓ · Placing forecast...';
+            btn.textContent = 'Processing Answer...';
+            if (breakdown) breakdown.textContent = 'M-Pesa confirmed ✓ · Placing Answer...';
 
             // Update in-memory user with fresh balance
             try {
@@ -2181,7 +2196,7 @@ function submitForecast() {
     })
     .catch(function() {
       btn.disabled = false;
-      btn.textContent = 'Forecast';
+      btn.textContent = 'Answer';
       if (breakdown) breakdown.textContent = '';
       alert('Network error. Please try again.');
     });
@@ -2205,7 +2220,7 @@ function placeTrade(btn, breakdown, walletPays, mpesaPays) {
   .then(function(res) {
     if (res.ok) {
       btn.style.background = '#16a34a';
-      btn.textContent = '✓ Forecast Confirmed!';
+      btn.textContent = '✓ Answer Confirmed!';
       if (breakdown) breakdown.textContent = '';
 
       // Fetch fresh balance from server (trade route doesn't return newBalance)
@@ -2235,14 +2250,14 @@ function placeTrade(btn, breakdown, walletPays, mpesaPays) {
         closeModal();
         btn.disabled = false;
         btn.style.background = '';
-        btn.textContent = 'Forecast';
+        btn.textContent = 'Answer';
         updateWalletButton();
         loadMarkets(activeFilter || 'ALL');
       }, 1500);
     } else {
       btn.disabled = false;
       btn.style.background = '';
-      btn.textContent = 'Forecast';
+      btn.textContent = 'Answer';
       if (breakdown) breakdown.textContent = '';
       alert('Trade failed: ' + (res.d.error || 'Please try again.'));
     }
@@ -2250,7 +2265,7 @@ function placeTrade(btn, breakdown, walletPays, mpesaPays) {
   .catch(function() {
     btn.disabled = false;
     btn.style.background = '';
-    btn.textContent = 'Forecast';
+    btn.textContent = 'Answer';
     alert('Network error. Please try again.');
   });
 }
@@ -2498,8 +2513,8 @@ function modalFallbackShare(url, shareText) {
 
 <div class="m-bot-nav" id="mBotNav"><button class="m-bot-item" id="botHomeBtn" onclick="botHomeClick()"><span class="mbi">🏠</span><span>Home</span></button><button class="m-bot-item" id="botSearchBtn" onclick="botSearchClick()"><span class="mbi">🔍</span><span>Search Events</span></button><button class="m-bot-fab" onclick="openPredictSheet()"><div class="m-fab-circle">✦<div class="m-fab-badge" id="mFabBadge">0</div></div><span>Predict</span></button><button class="m-bot-item" id="botLiveBtn" onclick="botLiveClick()"><span class="mbi">📡</span><span>Live</span></button><button class="m-bot-item" id="botAccountBtn" onclick="openAccountTray()"><span class="mbi">👤</span><span>Account</span></button></div>
 <div class="notif-overlay" id="notifOverlay" onclick="if(event.target===this)closeNotifTray()"><div class="notif-tray"><div class="notif-tray-head"><div class="notif-tray-title">🔔 Notifications</div><button class="notif-mark-read" onclick="markAllRead()">Mark all read</button></div><div class="notif-tray-body" id="notifTrayBody"><div class="notif-empty">Loading...</div></div></div></div>
-<div class="predict-overlay" id="predictOverlay" onclick="if(event.target===this)closePredictSheet()"><div class="predict-sheet"><div class="predict-sheet-handle"></div><div class="predict-sheet-title">What would you like to do?</div><div class="predict-option" onclick="closePredictSheet();var btn=document.querySelector('.filter-btn');if(btn){filterCat(btn,'TRENDING');}document.querySelector('.market-grid')?.scrollIntoView({behavior:'smooth'});"><div class="predict-opt-icon">◈</div><div><div class="predict-opt-title">Forecast a Market</div><div class="predict-opt-sub">Pick YES or NO on any open market. Win KES when you're right.</div></div></div><div class="predict-option" onclick="closePredictSheet();window.location.href='rada-friends.html'"><div class="predict-opt-icon">🤝</div><div><div class="predict-opt-title">Create a Social Challenge</div><div class="predict-opt-sub">Challenge a friend privately. Stake KES 20–20,000.</div></div></div><div class="predict-option" id="predictMultiOpt" onclick="openMultiSheet()"><div class="predict-opt-icon">📋</div><div><div class="predict-opt-title">Submit Multi-Forecast</div><div class="predict-opt-sub" id="predictMultiSub">0 markets queued.</div></div></div></div></div>
-<div class="multi-overlay" id="multiOverlay" onclick="if(event.target===this)closeMultiSheet()"><div class="multi-sheet"><div class="multi-sheet-handle"></div><div class="multi-sheet-head"><div class="multi-sheet-title">📋 Multi-Forecast</div><div class="multi-sheet-sub">Each forecast is independent — one wrong call does not affect the rest</div></div><div class="multi-sheet-body" id="multiSheetBody"><div class="multi-empty">No forecasts queued. Tap &quot;+ Multi&quot; on any market card.</div></div><div class="multi-sheet-foot"><div class="multi-totals"><div class="multi-total-row"><span class="mtr-label">Total stake</span><span class="mtr-val" id="multiTotalStake">KES 0</span></div><div class="multi-total-row"><span class="mtr-label">Fees (5% each)</span><span class="mtr-val" id="multiTotalFee">KES 0</span></div></div><div class="multi-payment-info" id="multiPayInfo"></div><button class="btn-submit-multi" id="multiSubmitBtn" disabled onclick="submitMultiForecast()">Submit All via M-Pesa &rarr;</button></div></div></div>
+<div class="predict-overlay" id="predictOverlay" onclick="if(event.target===this)closePredictSheet()"><div class="predict-sheet"><div class="predict-sheet-handle"></div><div class="predict-sheet-title">What would you like to do?</div><div class="predict-option" onclick="closePredictSheet();var btn=document.querySelector('.filter-btn');if(btn){filterCat(btn,'TRENDING');}document.querySelector('.market-grid')?.scrollIntoView({behavior:'smooth'});"><div class="predict-opt-icon">◈</div><div><div class="predict-opt-title">Answer a Question</div><div class="predict-opt-sub">Pick YES or NO on any open market. Win KES when you're right.</div></div></div><div class="predict-option" onclick="closePredictSheet();window.location.href='rada-friends.html'"><div class="predict-opt-icon">🤝</div><div><div class="predict-opt-title">Create a Social Challenge</div><div class="predict-opt-sub">Challenge a friend privately. Stake KES 20–20,000.</div></div></div><div class="predict-option" id="predictMultiOpt" onclick="openMultiSheet()"><div class="predict-opt-icon">📋</div><div><div class="predict-opt-title">Submit Multi-Questions</div><div class="predict-opt-sub" id="predictMultiSub">0 markets queued.</div></div></div></div></div>
+<div class="multi-overlay" id="multiOverlay" onclick="if(event.target===this)closeMultiSheet()"><div class="multi-sheet"><div class="multi-sheet-handle"></div><div class="multi-sheet-head"><div class="multi-sheet-title">📋 Multi-Questions</div><div class="multi-sheet-sub">Each Question is independent — one wrong call does not affect the rest</div></div><div class="multi-sheet-body" id="multiSheetBody"><div class="multi-empty">No Answers queued. Tap &quot;+ Multi&quot; on any market card.</div></div><div class="multi-sheet-foot"><div class="multi-totals"><div class="multi-total-row"><span class="mtr-label">Total stake</span><span class="mtr-val" id="multiTotalStake">KES 0</span></div><div class="multi-total-row"><span class="mtr-label">Fees (5% each)</span><span class="mtr-val" id="multiTotalFee">KES 0</span></div></div><div class="multi-payment-info" id="multiPayInfo"></div><button class="btn-submit-multi" id="multiSubmitBtn" disabled onclick="submitMultiForecast()">Submit All via M-Pesa &rarr;</button></div></div></div>
 <div class="account-overlay" id="accountOverlay" onclick="if(event.target===this)closeAccountTray()"><div class="account-sheet"><div class="acc-sheet-handle"></div><div id="accLoggedOut"><div class="acc-head"><div class="acc-avatar">👤</div><div><div class="acc-name-txt">Welcome to CheckRada</div><div class="acc-bal-txt" style="color:#9284b8">Sign in to start forecasting</div></div></div><div class="acc-row" onclick="closeAccountTray();window.location.href='rada-auth.html'"><span class="acc-row-icon">🔑</span><span class="acc-row-label">Log In</span><span class="acc-row-arrow">&#8250;</span></div><div class="acc-row" onclick="closeAccountTray();window.location.href='rada-auth.html'"><span class="acc-row-icon">✨</span><span class="acc-row-label">Create Account</span><span class="acc-row-arrow">&#8250;</span></div><div class="acc-row" onclick="closeAccountTray();window.location.href='rada-about.html'"><span class="acc-row-icon">ℹ️</span><span class="acc-row-label">About CheckRada</span><span class="acc-row-arrow">&#8250;</span></div>
 <div class="acc-row" onclick="closeAccountTray();openGetHelp()"><span class="acc-row-icon">🆘</span><span class="acc-row-label">Get Help</span><span class="acc-row-arrow">&#8250;</span></div>
 </div><div id="accLoggedIn" style="display:none"><div class="acc-head"><div class="acc-avatar">🧑🏾</div><div><div class="acc-name-txt" id="accUserName">Forecaster</div><div class="acc-bal-txt" id="accUserBal">&#9679; KES 0 available</div></div></div><div class="acc-row" onclick="closeAccountTray();window.location.href='rada-portfolio.html'"><span class="acc-row-icon">◎</span><span class="acc-row-label">My Portfolio</span><span class="acc-row-arrow">&#8250;</span></div><div class="acc-row" onclick="closeAccountTray();window.location.href='rada-dashboard.html#deposit'"><span class="acc-row-icon">📥</span><span class="acc-row-label">Deposit via M-Pesa</span><span class="acc-row-arrow">&#8250;</span></div><div class="acc-row" onclick="closeAccountTray();window.location.href='rada-dashboard.html#withdraw'"><span class="acc-row-icon">📤</span><span class="acc-row-label">Withdraw</span><span class="acc-row-arrow">&#8250;</span></div><div class="acc-row acc-refer-row" onclick="openReferSheet()" style="display:none"><span class="acc-row-icon">🎁</span><span class="acc-row-label">Refer a Friend</span><span class="acc-row-arrow">&#8250;</span></div><div class="acc-row" onclick="closeAccountTray();openGetHelp()"><span class="acc-row-icon">🆘</span><span class="acc-row-label">Get Help</span><span class="acc-row-arrow">&#8250;</span></div>
@@ -2811,7 +2826,7 @@ function renderMultiSheet() {
   if (!body) return;
   var keys = Object.keys(multiItems);
   if (!keys.length) {
-    body.innerHTML = '<div class="multi-empty">No forecasts queued.<br>Tap "+ Multi" on any market card.</div>';
+    body.innerHTML = '<div class="multi-empty">No Answers queued.<br>Tap "+ Multi" on any market card.</div>';
     updateMultiTotals();
     return;
   }
@@ -2995,7 +3010,7 @@ function submitMultiForecast() {
       closeMultiSheet();
 
       if (errors.length === 0) {
-        showToast('✅ ' + successCount + ' forecast' + (successCount !== 1 ? 's' : '') + ' placed!');
+        showToast('✅ ' + successCount + ' answer' + (successCount !== 1 ? 's' : '') + ' placed!');
       } else if (successCount > 0) {
         showToast('⚠ ' + successCount + ' placed, ' + errors.length + ' failed: ' + errors[0]);
       } else {
