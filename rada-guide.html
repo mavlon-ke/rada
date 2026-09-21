@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- ═══ SEO META TAGS ═══ -->
+<meta name="description" content="A complete guide to using CheckRada — signing up, depositing via M-Pesa, forecasting, Social Challenges, referrals, the Creator Hub, and withdrawing.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://checkrada.co.ke/rada-guide.html">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="CheckRada">
+<meta property="og:title" content="CheckRada — How It Works">
+<meta property="og:description" content="A complete guide to using CheckRada — signing up, depositing via M-Pesa, forecasting, Social Challenges, referrals, the Creator Hub, and withdrawing.">
+<meta property="og:url" content="https://checkrada.co.ke/rada-guide.html">
+<meta property="og:image" content="https://checkrada.co.ke/assets/og/og-brand.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="CheckRada — How It Works">
+<meta property="og:locale" content="en_KE">
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="CheckRada — How It Works">
+<meta name="twitter:description" content="A complete guide to using CheckRada — signing up, depositing, forecasting, challenges, referrals, and withdrawing.">
+<meta name="twitter:image" content="https://checkrada.co.ke/assets/og/og-brand.png">
+<meta name="twitter:site" content="@checkrada">
+<!-- ═══════════════════════ -->
+<title>CheckRada — How It Works</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;900&family=Archivo:wght@700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --primary: #6d28d9;
+    --primary-dim: #ede9fe;
+    --text: #1a1035;
+    --text-mid: #4a4060;
+    --text-dim: #9284b8;
+    --border: #e5e0ff;
+    --bg: #faf9ff;
+    --bg2: #ffffff;
+    --green: #16a34a;
+    --green-dim: #f0fdf4;
+    --red: #ce1126;
+    --gold: #b45309;
+    --gold-dim: #fffbeb;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: 'Outfit', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 0.92rem;
+    line-height: 1.75;
+  }
+
+  .doc-header {
+    background: linear-gradient(135deg, #1a1035 0%, #2d1069 100%);
+    padding: 40px 24px 36px;
+    text-align: center;
+  }
+  .doc-header .badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: rgba(255,255,255,0.8);
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 4px 14px;
+    border-radius: 20px;
+    margin-bottom: 14px;
+  }
+  .doc-header h1 {
+    font-family: 'Archivo', sans-serif;
+    font-size: 1.8rem;
+    font-weight: 900;
+    color: #fff;
+    margin-bottom: 8px;
+  }
+  .doc-header .sub {
+    font-size: 0.85rem;
+    color: rgba(255,255,255,0.55);
+    max-width: 480px;
+    margin: 0 auto;
+    line-height: 1.5;
+  }
+
+  .back-nav {
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 10px 24px;
+  }
+  .back-nav a {
+    color: var(--primary);
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-decoration: none;
+  }
+
+  .doc-content {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 40px 24px 100px;
+  }
+
+  .jump-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 36px;
+  }
+  .jump-nav a {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--primary);
+    background: var(--primary-dim);
+    padding: 7px 13px;
+    border-radius: 20px;
+    text-decoration: none;
+  }
+
+  .step { margin-bottom: 44px; }
+  .step-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: #fff;
+    font-family: 'Archivo', sans-serif;
+    font-weight: 900;
+    font-size: 0.8rem;
+    margin-right: 10px;
+    flex-shrink: 0;
+  }
+  .step h2 {
+    font-family: 'Archivo', sans-serif;
+    font-size: 1.15rem;
+    font-weight: 900;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    margin-bottom: 14px;
+    scroll-margin-top: 20px;
+  }
+  .step h3 {
+    font-family: 'Archivo', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--primary);
+    margin: 22px 0 10px;
+  }
+  .step p { margin-bottom: 12px; color: var(--text-mid); }
+  .step ol, .step ul { margin: 0 0 12px 20px; color: var(--text-mid); }
+  .step li { margin-bottom: 6px; }
+  .step strong { color: var(--text); }
+
+  .green-box {
+    background: var(--green-dim);
+    border-left: 3px solid var(--green);
+    border-radius: 0 8px 8px 0;
+    padding: 12px 16px;
+    margin: 12px 0;
+    font-size: 0.85rem;
+    color: #14532d;
+  }
+  .gold-box {
+    background: var(--gold-dim);
+    border-left: 3px solid var(--gold);
+    border-radius: 0 8px 8px 0;
+    padding: 12px 16px;
+    margin: 12px 0;
+    font-size: 0.85rem;
+    color: #78350f;
+  }
+
+  .shots {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin: 18px 0 8px;
+  }
+  .shot-frame { text-align: center; }
+  .shot-frame img {
+    max-width: 230px;
+    width: 100%;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    box-shadow: 0 6px 20px rgba(109,40,217,0.10);
+    display: block;
+  }
+  .shot-frame .cap {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    margin-top: 8px;
+    max-width: 230px;
+  }
+
+  .cta {
+    display: block;
+    text-align: center;
+    background: var(--primary);
+    color: #fff;
+    text-decoration: none;
+    font-weight: 700;
+    padding: 16px;
+    border-radius: 12px;
+    margin-top: 50px;
+  }
+</style>
+</head>
+<body>
+
+<div class="doc-header">
+  <div class="badge">Help Centre</div>
+  <h1>How CheckRada Works</h1>
+  <div class="sub">Everything you need to know, from signing up to withdrawing your first payout.</div>
+</div>
+
+<div class="back-nav">
+  <a href="rada-markets.html">← Back to CheckRada</a>
+</div>
+
+<div class="doc-content">
+
+  <div class="jump-nav">
+    <a href="#start">Getting Started</a>
+    <a href="#deposit">Depositing</a>
+    <a href="#understand">Understanding a Question</a>
+    <a href="#forecast">Your First Forecast</a>
+    <a href="#multi">Multi-Forecast</a>
+    <a href="#challenges">Social Challenges</a>
+    <a href="#referral">Referrals</a>
+    <a href="#creator">Creator Hub</a>
+    <a href="#leaderboard">Leaderboard</a>
+    <a href="#withdraw">Withdrawing</a>
+  </div>
+
+  <div class="step" id="start">
+    <h2><span class="step-num">1</span>Getting Started</h2>
+    <p>Sign up with your phone number. We'll send a one-time verification code via WhatsApp — enter it to confirm your account. That's it, no paperwork, no waiting period.</p>
+  </div>
+
+  <div class="step" id="deposit">
+    <h2><span class="step-num">2</span>Depositing Money</h2>
+    <p>All deposits are made in Kenyan Shillings via M-Pesa. You'll find Deposit under your account menu, alongside Withdraw and Refer a Friend.</p>
+    <p><strong>The usual way — STK Push:</strong> Enter an amount and confirm. Your phone receives a prompt directly from M-Pesa — enter your PIN to complete it. Maximum deposit is <strong>KES 70,000</strong> per transaction.</p>
+    <div class="gold-box">
+      <strong>If the STK prompt doesn't arrive:</strong> go to M-Pesa → Lipa na M-Pesa → Paybill. Business Number <strong>4325275</strong>, Account Number: your CheckRada registered phone number. Your deposit usually reflects within a few minutes, and you'll get a WhatsApp confirmation once it's added.
+    </div>
+    <div class="shots">
+      <div class="shot-frame">
+        <img src="assets/help/account-menu.png" alt="CheckRada account menu showing Deposit via M-Pesa, Withdraw, and Refer a Friend options">
+        <div class="cap">Deposit and Withdraw both live in your account menu</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" id="understand">
+    <h2><span class="step-num">3</span>Understanding a Question</h2>
+    <p>Every question on CheckRada is a real-world YES/NO event — something that will genuinely happen or not, by a specific date. The percentages you see (e.g. YES 68% · NO 32%) reflect what the crowd currently believes, based on everyone's forecasts so far — they change as more people forecast, and they're not a guarantee of the outcome.</p>
+    <p>Minimum stake is <strong>KES 20</strong>, maximum is <strong>KES 20,000</strong> per question or Social Challenge. Before you confirm, the app always shows you the exact possible payout, your possible profit, and the current fee for that specific forecast — so you know precisely what you're agreeing to before you commit.</p>
+  </div>
+
+  <div class="step" id="forecast">
+    <h2><span class="step-num">4</span>Placing Your First Forecast</h2>
+    <ol>
+      <li>Open a question and read it carefully — check the closing date too.</li>
+      <li>Choose YES or NO, based on what you genuinely believe will happen.</li>
+      <li>Pick a stake amount — use a quick button (20 / 100 / 500 / 1K / 5K / 10K), the slider, or type your own amount directly.</li>
+      <li>Review the breakdown — possible payout, possible profit, and the fee.</li>
+      <li>Tap <strong>Answer YES →</strong> or <strong>Answer NO →</strong> to confirm. Your stake is deducted from your CheckRada wallet immediately.</li>
+    </ol>
+    <p>Once the closing date passes, the question stops accepting new stakes and waits to be resolved against the real outcome. If you're right, your payout — stake plus profit — is credited straight to your wallet automatically.</p>
+    <div class="shots">
+      <div class="shot-frame">
+        <img src="assets/help/forecast-buttons.png" alt="A CheckRada question card showing YES, NO, and plus Multi buttons">
+        <div class="cap">Every question card: YES, NO, and + Multi to queue it for later</div>
+      </div>
+      <div class="shot-frame">
+        <img src="assets/help/stake-panel.png" alt="CheckRada stake amount panel showing the slider, quick amount buttons, possible payout breakdown, and Answer YES button">
+        <div class="cap">After choosing YES or NO: set your stake and review the breakdown before confirming</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" id="multi">
+    <h2><span class="step-num">5</span>Multi-Forecast</h2>
+    <p>See the <strong>+ Multi</strong> button next to YES/NO? It lets you queue up several different questions and submit stakes on all of them in one go — paid directly from your CheckRada wallet balance, no M-Pesa prompt needed for the submission itself. Each forecast inside a Multi is completely independent — getting one wrong doesn't affect the others.</p>
+    <div class="shots">
+      <div class="shot-frame">
+        <img src="assets/help/multiforecast.png" alt="CheckRada Multi-Forecast screen showing several queued questions with individual stakes and a combined total">
+        <div class="cap">Queue several questions, review the combined total, submit once</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" id="challenges">
+    <h2><span class="step-num">6</span>Social Challenges</h2>
+    <p>Want to settle something with a friend directly, or referee a friendly bet between two other people? Social Challenges give you two different ways to create one.</p>
+
+    <h3>Option A — Create as Challenger</h3>
+    <p>You're a participant. Set your challenge question and stake, then add friends: challenge up to 100 people in one go, each with their own stake amount. Leave a friend's phone number blank to make it an <strong>open challenge</strong> — anyone with the code can join, not just the person you had in mind.</p>
+
+    <h3>Option B — Create as Referee</h3>
+    <p>You're not playing — you're judging. Set up the question and stake for one or more pairs of friends, and you decide the outcome when it's done. You pay nothing, and neither side even knows who they're up against.</p>
+
+    <div class="shots">
+      <div class="shot-frame">
+        <img src="assets/help/challenge-create.png" alt="Create a Social Challenge screen in Challenger mode, showing the question field and friend stake entry">
+        <div class="cap">Creating as Challenger — you're one of the participants</div>
+      </div>
+      <div class="shot-frame">
+        <img src="assets/help/challenge-referee.png" alt="Create a Social Challenge screen in Referee mode, showing challenge pairs and a resolution deadline">
+        <div class="cap">Creating as Referee — you judge, you don't stake</div>
+      </div>
+    </div>
+
+    <h3>Joining a challenge</h3>
+    <p>Got sent a 6-digit code on WhatsApp? Open the Social tab and enter it under "Got an Invite Code? Join a Challenge" to jump straight in and stake your side. Your active and past challenges — including anything waiting on you as a referee — are organized under My Challenges, Referee Queue, and Settled History on the same tab.</p>
+
+    <div class="shots">
+      <div class="shot-frame">
+        <img src="assets/help/social-join.png" alt="CheckRada Social tab showing My Challenges, Referee Queue, and Settled History tabs, with a field to enter an invite code">
+        <div class="cap">The Social tab: join with a code, or track your own challenges</div>
+      </div>
+    </div>
+
+    <p>If both sides agree on the outcome, it settles immediately. If you disagree, a neutral referee can step in — and if it still can't be resolved, CheckRada's team will. A fee applies to the pool either way, shown clearly when you create or join — it's higher specifically when platform intervention is needed, to cover that review.</p>
+
+    <div class="green-box">
+      If a challenge is cancelled before it settles, your stake is refunded — you won't lose money on a challenge that never actually happened.
+    </div>
+  </div>
+
+  <div class="step" id="referral">
+    <h2><span class="step-num">7</span>Referral Programme</h2>
+    <p>Share your referral code with a friend from the Refer a Friend screen. Here's exactly how the reward works — it happens in two separate steps, not all at once:</p>
+    <ol>
+      <li>Your friend signs up and deposits — once their deposits cross the minimum shown in-app, <strong>they</strong> receive a welcome bonus (a bonus balance to use on their own forecasts).</li>
+      <li>Only once your friend goes on to actually trade past a separate volume threshold do <strong>you</strong> receive your own referral reward — as real, fully withdrawable balance.</li>
+    </ol>
+    <p>Current thresholds and reward amounts are always shown live on the Refer a Friend screen, since they can be adjusted from time to time.</p>
+    <div class="shots">
+      <div class="shot-frame">
+        <img src="assets/help/referral.png" alt="CheckRada Refer a Friend screen showing the referral code, a how it works breakdown, and earnings so far">
+        <div class="cap">Your referral code, the two-step reward explained, and your running total</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" id="creator">
+    <h2><span class="step-num">8</span>Creator Hub</h2>
+    <p>Have a good question in mind? Propose it on the Creator Hub. Once the CheckRada team approves it and it's published, share your unique market link. Once trading on your question hits KES 1,000 in volume, you start earning a royalty on every trade — credited automatically to your wallet while the question stays active. The current royalty rate is shown on the Creator Hub, since it can be adjusted from time to time.</p>
+  </div>
+
+  <div class="step" id="leaderboard">
+    <h2><span class="step-num">9</span>Leaderboard</h2>
+    <p>Check the Leaders tab to see Kenya's top forecasters, ranked by accuracy and earnings. It's a good way to see who's calling things right — and a bit of extra motivation to sharpen your own track record.</p>
+  </div>
+
+  <div class="step" id="withdraw">
+    <h2><span class="step-num">10</span>Withdrawing Your Winnings</h2>
+    <p>Go to your account menu and choose Withdraw. Money goes straight to your registered M-Pesa number — minimum withdrawal is <strong>KES 100</strong>, maximum is <strong>KES 70,000</strong> per transaction, subject to Safaricom M-Pesa service availability.</p>
+    <div class="green-box">
+      Your winnings are yours the moment they're credited — withdraw whenever you like, there's no lock-in period.
+    </div>
+  </div>
+
+  <p style="text-align:center; color:var(--text-dim); font-size:0.85rem; margin-top:30px;">
+    Something not working, or a question this guide didn't cover? Check the <a href="rada-faq.html" style="color:var(--primary); font-weight:700;">FAQ</a>, or tap <strong>Get Help</strong> from your account menu to reach support directly.
+  </p>
+
+  <a class="cta" href="rada-markets.html">Start Earning →</a>
+
+</div>
+
+</body>
+</html>
