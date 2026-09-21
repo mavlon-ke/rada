@@ -13,7 +13,13 @@ const ConfigSchema = z.object({
   refereeMatchKes:   z.number().min(0).max(10000),
   minDepositKes:     z.number().min(0).max(10000),
   minTradeKes:       z.number().min(0).max(10000),
-});
+}).refine(
+  (data) => data.minTradeKes >= data.minDepositKes,
+  {
+    message: 'Minimum trade volume must be greater than or equal to minimum deposit — otherwise a referee could trigger the referrer reward without genuinely engaging.',
+    path: ['minTradeKes'],
+  }
+);
 
 export const GET = withErrorHandling(async function GET(req: NextRequest) {
   const admin = await requireAdmin(req);

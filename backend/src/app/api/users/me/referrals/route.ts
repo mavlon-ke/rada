@@ -30,7 +30,7 @@ export const GET = withErrorHandling(async function GET(req: NextRequest) {
     select: { referralCode: true },
   }))?.referralCode ?? '';
 
-  const shareMessage = `I've been using Rada to predict Kenyan events outcomes and winning real money. Join me — use my code ${referralCode} and we both get KES ${refereeReward}. rada.co.ke/join/${referralCode}`;
+  const shareMessage = `I've been using CheckRada to predict Kenyan events outcomes and winning real money. Join me — use my code ${referralCode} and we both get KES ${refereeReward}. checkrada.co.ke/join/${referralCode}`;
 
   return NextResponse.json({
     referralCode,

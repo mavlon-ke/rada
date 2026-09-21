@@ -1853,7 +1853,7 @@ body::after {
 
         <div style="background:#f0edff;border-radius:10px;padding:12px 14px;margin-bottom:16px;">
           <div style="font-size:0.65rem;font-weight:700;color:#4c1d95;margin-bottom:6px;">📱 WhatsApp Share Message Preview</div>
-          <div id="referralMsgPreview" style="font-size:0.7rem;color:#1a1035;line-height:1.7;font-style:italic;">"I've been using Rada to predict Kenyan events outcomes and winning real money. Join me — use my code [CODE] and we both get KES 100. checkrada.co.ke/join/[CODE]"</div>
+          <div id="referralMsgPreview" style="font-size:0.7rem;color:#1a1035;line-height:1.7;font-style:italic;">"I've been using CheckRada to predict Kenyan events outcomes and winning real money. Join me — use my code [CODE] and we both get KES 100. checkrada.co.ke/join/[CODE]"</div>
         </div>
 
         <button onclick="saveReferralConfig()" style="padding:12px 24px;background:#6d28d9;color:#fff;border:none;border-radius:10px;font-size:0.78rem;font-weight:700;cursor:pointer;font-family:inherit;">💾 Save Configuration</button>
@@ -5205,7 +5205,7 @@ function updateReferralPreview() {
   var amount = document.getElementById('refereeMatchInput');
   var prev   = document.getElementById('referralMsgPreview');
   if (prev && amount) {
-    prev.textContent = '"I\'ve been using Rada to predict Kenyan events outcomes and winning real money. Join me — use my code [CODE] and we both get KES ' + amount.value + '. checkrada.co.ke/join/[CODE]"';
+    prev.textContent = '"I\'ve been using CheckRada to predict Kenyan events outcomes and winning real money. Join me — use my code [CODE] and we both get KES ' + amount.value + '. checkrada.co.ke/join/[CODE]"';
   }
 }
 
@@ -5219,6 +5219,7 @@ function checkReferralThresholds() {
 function toggleReferralMaster(cb) {
   var lbl = document.getElementById('referralStatusLabel');
   if (lbl) { lbl.textContent = cb.checked ? 'ACTIVE' : 'PAUSED'; lbl.style.color = cb.checked ? '#16a34a' : '#ce1126'; }
+  saveReferralConfig();
 }
 
 function saveReferralConfig() {
@@ -5228,12 +5229,35 @@ function saveReferralConfig() {
   var minDep   = parseFloat((document.getElementById('minDepositInput')  || {value:100}).value);
   var minTrade = parseFloat((document.getElementById('minTradeInput')     || {value:100}).value);
   var statusEl = document.getElementById('referralSaveStatus');
-  if (statusEl) statusEl.textContent = 'Saving...';
+
+  // Client-side validation — catch bad input before hitting the network
+  if ([referrer, referee, minDep, minTrade].some(function(v){ return isNaN(v) || v < 0; })) {
+    if (statusEl) { statusEl.textContent = '❌ Please enter valid, non-negative numbers in all fields.'; statusEl.style.color = '#ce1126'; }
+    return;
+  }
+  if (minTrade < minDep) {
+    if (statusEl) { statusEl.textContent = '❌ Minimum trade volume must be \u2265 minimum deposit.'; statusEl.style.color = '#ce1126'; }
+    return;
+  }
+
+  if (statusEl) { statusEl.textContent = 'Saving...'; statusEl.style.color = '#4a4060'; }
   adminFetch('/api/admin/config/referral', {
     method:'POST', headers:{'Content-Type':'application/json'},
     body: JSON.stringify({ active: active, referrerRewardKes: referrer, refereeMatchKes: referee, minDepositKes: minDep, minTradeKes: minTrade })
-  }).then(function(){ if (statusEl) statusEl.textContent = '✅ Saved at ' + new Date().toLocaleTimeString(); })
-    .catch(function(){ if (statusEl) statusEl.textContent = '✅ Config saved (connect backend to persist)'; });
+  }).then(function(r) {
+    return r.json().then(function(d) { return { ok: r.ok, d: d }; });
+  }).then(function(res) {
+    if (res.ok) {
+      if (statusEl) { statusEl.textContent = '✅ Saved at ' + new Date().toLocaleTimeString(); statusEl.style.color = '#16a34a'; }
+    } else {
+      var msg = (res.d && res.d.error && res.d.error.fieldErrors && Object.keys(res.d.error.fieldErrors).length)
+        ? Object.values(res.d.error.fieldErrors).flat().join(' ')
+        : 'Save failed — please check the values and try again.';
+      if (statusEl) { statusEl.textContent = '❌ ' + msg; statusEl.style.color = '#ce1126'; }
+    }
+  }).catch(function() {
+    if (statusEl) { statusEl.textContent = '❌ Network error — changes were not saved. Please try again.'; statusEl.style.color = '#ce1126'; }
+  });
 }
 
 // ─── Creator Programme config ──────────────────────────────────────────────

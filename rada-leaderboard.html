@@ -1219,6 +1219,28 @@ function userFetch(path, options) {
   });
 }
 
+// ── Refresh balance from server on load ─────────────────────────────────────
+// Previously balance only refreshed after placing a trade, so deposit-triggered
+// credits (e.g. referral bonuses) were invisible until the next trade or a
+// dashboard visit. Fire-and-forget: doesn't block render, silently keeps
+// cached values if the request fails.
+if (radaUser && radaUser.id) {
+  userFetch('/api/users/me/profile')
+    .then(function(r) { return r.ok ? r.json() : null; })
+    .then(function(d) {
+      if (d && d.user) {
+        radaUser.balanceKes = Number(d.user.balanceKes || 0);
+        radaUser.bonusBalanceKes = Number(d.user.bonusBalanceKes || 0);
+        localStorage.setItem('rada_user', JSON.stringify(radaUser));
+        var mBalEl = document.getElementById('mTopBal');
+        var accBal = document.getElementById('accUserBal');
+        if (mBalEl) mBalEl.textContent = 'KES ' + radaUser.balanceKes.toLocaleString();
+        if (accBal) accBal.textContent = '● KES ' + radaUser.balanceKes.toLocaleString() + ' available';
+      }
+    })
+    .catch(function() {}); // silently keep cached values on failure
+}
+
 // Deposit/Withdraw redirect to dashboard (modals live there)
 function openDeposit()  { window.location.href = 'rada-dashboard.html#deposit';  }
 function openWithdraw() { window.location.href = 'rada-dashboard.html#withdraw'; }

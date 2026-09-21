@@ -3205,6 +3205,28 @@ var isLoggedIn = !!radaUser;
 
 var API_BASE = 'https://api.checkrada.co.ke';
 
+// ── Refresh balance from server on load ─────────────────────────────────────
+// Previously balance only refreshed after placing a trade, so deposit-triggered
+// credits (e.g. referral bonuses) were invisible until the next trade or a
+// dashboard visit. Fire-and-forget: doesn't block render, silently keeps
+// cached values if the request fails.
+if (radaUser && radaUser.id) {
+  userFetch('/api/users/me/profile')
+    .then(function(r) { return r.ok ? r.json() : null; })
+    .then(function(d) {
+      if (d && d.user) {
+        radaUser.balanceKes = Number(d.user.balanceKes || 0);
+        radaUser.bonusBalanceKes = Number(d.user.bonusBalanceKes || 0);
+        localStorage.setItem('rada_user', JSON.stringify(radaUser));
+        var mBalEl = document.getElementById('mTopBal');
+        var accBal = document.getElementById('accUserBal');
+        if (mBalEl) mBalEl.textContent = 'KES ' + radaUser.balanceKes.toLocaleString();
+        if (accBal) accBal.textContent = '● KES ' + radaUser.balanceKes.toLocaleString() + ' available';
+      }
+    })
+    .catch(function() {}); // silently keep cached values on failure
+}
+
 // userFetch is defined in the earlier <script> block on this page; this
 // shared-nav script reuses the same global function. Single source of truth
 // avoids drift between two definitions that need to be kept in sync.

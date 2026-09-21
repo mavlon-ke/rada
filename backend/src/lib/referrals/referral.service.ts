@@ -92,7 +92,7 @@ export async function creditRefereeBonusOnDeposit(
         userId:      refereeUserId,
         type:        'REFERRAL_REWARD',
         amountKes:   refereeBonus,
-        balAfter:    Number(updated.balanceKes),
+        balAfter:    Number(updated.bonusBalanceKes),
         status:      'SUCCESS',
         description: `Referral welcome bonus — KES ${refereeBonus} to use on your first forecasts. Make your first trades to unlock your referrer's reward.`,
       },
