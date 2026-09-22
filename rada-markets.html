@@ -1918,11 +1918,20 @@ document.getElementById('forecastModal').addEventListener('click', function(e) {
   var sheet = document.querySelector('#forecastModal .modal');
   if (sheet && !sheet.contains(e.target)) closeModal();
 });
-// Also close on touchstart for faster mobile response
+// Also close on touchstart for faster mobile response.
+// Not passive: when we're closing on a genuine backdrop tap, we must call
+// preventDefault() to suppress the browser's follow-up synthetic click event.
+// Without this, that synthetic click lands on whatever the closed modal
+// reveals underneath it (e.g. a nav link), causing an unintended navigation
+// immediately after the modal closes. Taps inside .modal never reach the
+// preventDefault() branch, so scrolling/buttons inside the modal are unaffected.
 document.getElementById('forecastModal').addEventListener('touchstart', function(e) {
   var sheet = document.querySelector('#forecastModal .modal');
-  if (sheet && !sheet.contains(e.target)) closeModal();
-}, { passive: true });
+  if (sheet && !sheet.contains(e.target)) {
+    e.preventDefault();
+    closeModal();
+  }
+}, { passive: false });
 
 function selectSide(side) {
   activeSide = side;
