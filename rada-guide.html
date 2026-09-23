@@ -13,7 +13,7 @@
 <meta property="og:title" content="CheckRada — How It Works">
 <meta property="og:description" content="A complete guide to using CheckRada — signing up, depositing via M-Pesa, forecasting, Social Challenges, referrals, the Creator Hub, and withdrawing.">
 <meta property="og:url" content="https://checkrada.co.ke/rada-guide.html">
-<meta property="og:image" content="https://checkrada.co.ke/assets/og/og-brand.png">
+<meta property="og:image" content="https://checkrada.co.ke/assets/og/og-markets.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="CheckRada — How It Works">
@@ -22,12 +22,12 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="CheckRada — How It Works">
 <meta name="twitter:description" content="A complete guide to using CheckRada — signing up, depositing, forecasting, challenges, referrals, and withdrawing.">
-<meta name="twitter:image" content="https://checkrada.co.ke/assets/og/og-brand.png">
+<meta name="twitter:image" content="https://checkrada.co.ke/assets/og/og-markets.png">
 <meta name="twitter:site" content="@checkrada">
 <!-- ═══════════════════════ -->
 <title>CheckRada — How It Works</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;900&family=Archivo:wght@700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;900&family=Archivo:wght@700;900&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
     --primary: #6d28d9;
@@ -45,6 +45,102 @@
     --gold-dim: #fffbeb;
   }
   * { margin:0; padding:0; box-sizing:border-box; }
+
+  /* ═══ How It Works — dark summary section, fully namespaced (hiw- prefix) to avoid any collision with the guide's own .step/.step-num classes below ═══ */
+  .hiw-section {
+    background: #0B1220;
+    padding: 56px 32px 64px;
+    font-family: 'Poppins', sans-serif;
+  }
+  .hiw-top-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 20px;
+    max-width: 760px;
+    margin: 0 auto 8px;
+  }
+  .hiw-brand { display:flex; align-items:center; gap:10px; }
+  .hiw-brand-dot { width:10px; height:10px; border-radius:50%; background:#6d28d9; flex-shrink:0; }
+  .hiw-brand-name { font-weight:700; font-size:1.5rem; color:#ffffff; }
+  .hiw-brand-name span { color:#a78bfa; }
+  .hiw-tagline { margin-top: 10px; font-weight: 600; font-size: 1rem; color: #a78bfa; }
+  .hiw-cta {
+    display: inline-block;
+    background: #6d28d9;
+    color: #fff;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 0.95rem;
+    padding: 13px 22px;
+    border-radius: 10px;
+    white-space: nowrap;
+  }
+  .hiw-h1 {
+    max-width: 760px;
+    margin: 24px auto 0;
+    font-weight: 700;
+    font-size: 2.4rem;
+    line-height: 1.15;
+    color: #ffffff;
+  }
+  .hiw-h1 .accent { color: #a78bfa; }
+  .hiw-sub {
+    max-width: 760px;
+    margin: 14px auto 0;
+    font-weight: 400;
+    font-size: 1.1rem;
+    color: rgba(255,255,255,0.62);
+    line-height: 1.5;
+  }
+  .hiw-path-wrap { position: relative; max-width: 760px; margin: 32px auto 0; }
+  .hiw-path-line {
+    position: absolute;
+    left: 27px; top: 20px; bottom: 40px;
+    width: 3px;
+    background: linear-gradient(180deg, #a78bfa 0%, #7c3aed 100%);
+  }
+  .hiw-step { display: flex; align-items: flex-start; gap: 20px; position: relative; padding: 18px 0; }
+  .hiw-step-num-wrap {
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    background: #0B1220;
+    border: 2.5px solid #a78bfa;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 2;
+  }
+  .hiw-step-num { font-weight: 700; font-size: 1.35rem; color: #F5B700; }
+  .hiw-step-label-row { display: flex; align-items: center; gap: 10px; }
+  .hiw-step-icon { width: 20px; height: 20px; flex-shrink: 0; }
+  .hiw-step-body { padding-top: 4px; }
+  .hiw-step-label { font-weight: 600; font-size: 1.15rem; color: #ffffff; margin-bottom: 4px; }
+  .hiw-step-desc { font-weight: 400; font-size: 0.98rem; color: rgba(255,255,255,0.6); line-height: 1.45; }
+  .hiw-trust-band {
+    max-width: 760px;
+    margin: 20px auto 0;
+    background: rgba(124,58,237,0.12);
+    border: 1px solid rgba(124,58,237,0.3);
+    border-radius: 14px;
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .hiw-trust-icon {
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    background: rgba(124,58,237,0.22);
+    color: #a78bfa;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+  }
+  .hiw-trust-text { font-size: 0.92rem; color: rgba(255,255,255,0.78); line-height: 1.45; }
+  .hiw-trust-text strong { color: #ffffff; font-weight: 600; }
+
   body {
     font-family: 'Outfit', sans-serif;
     background: var(--bg);
@@ -213,6 +309,81 @@
 </style>
 </head>
 <body>
+
+<section class="hiw-section">
+  <div class="hiw-top-row">
+    <div>
+      <div class="hiw-brand">
+        <div class="hiw-brand-dot"></div>
+        <div class="hiw-brand-name">Check<span>Rada</span></div>
+      </div>
+      <div class="hiw-tagline">Answer Right, Get Paid</div>
+    </div>
+    <a class="hiw-cta" href="rada-markets.html">Start Getting Paid →</a>
+  </div>
+
+  <h1 class="hiw-h1">How It <span class="accent">Works</span></h1>
+  <div class="hiw-sub">Five steps from sign-up to getting paid — for real Kenyan events, in Kenyan Shillings.</div>
+
+  <div class="hiw-path-wrap">
+    <div class="hiw-path-line"></div>
+
+    <div class="hiw-step">
+      <div class="hiw-step-num-wrap"><div class="hiw-step-num">1</div></div>
+      <div class="hiw-step-body">
+        <div class="hiw-step-label-row"><div class="hiw-step-label">Sign Up</div><svg class="hiw-step-icon" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/><path d="M9.5 8.5l2 2 3-3.5" stroke="#c4b5fd"/>
+        </svg></div>
+        <div class="hiw-step-desc">Phone number and a WhatsApp code. Done in under a minute.</div>
+      </div>
+    </div>
+
+    <div class="hiw-step">
+      <div class="hiw-step-num-wrap"><div class="hiw-step-num">2</div></div>
+      <div class="hiw-step-body">
+        <div class="hiw-step-label-row"><div class="hiw-step-label">Deposit</div><svg class="hiw-step-icon" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 7a2 2 0 012-2h11a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/><path d="M16 12h3a1 1 0 011 1v2a1 1 0 01-1 1h-3a2 2 0 010-4z"/><path d="M3 8h13"/>
+        </svg></div>
+        <div class="hiw-step-desc">Straight from your M-Pesa to your CheckRada wallet.</div>
+      </div>
+    </div>
+
+    <div class="hiw-step">
+      <div class="hiw-step-num-wrap"><div class="hiw-step-num">3</div></div>
+      <div class="hiw-step-body">
+        <div class="hiw-step-label-row"><div class="hiw-step-label">Choose a Question</div><svg class="hiw-step-icon" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="10.5" cy="10.5" r="6.5"/><path d="M19 19l-4.3-4.3"/>
+        </svg></div>
+        <div class="hiw-step-desc">Real Events — politics, entertainment, weather & more.</div>
+      </div>
+    </div>
+
+    <div class="hiw-step">
+      <div class="hiw-step-num-wrap"><div class="hiw-step-num">4</div></div>
+      <div class="hiw-step-body">
+        <div class="hiw-step-label-row"><div class="hiw-step-label">Answer YES or NO</div><svg class="hiw-step-icon" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 12.5l5 5L20 6.5"/>
+        </svg></div>
+        <div class="hiw-step-desc">Answer what you genuinely believe will happen.</div>
+      </div>
+    </div>
+
+    <div class="hiw-step">
+      <div class="hiw-step-num-wrap"><div class="hiw-step-num">5</div></div>
+      <div class="hiw-step-body">
+        <div class="hiw-step-label-row"><div class="hiw-step-label">Get Paid</div><svg class="hiw-step-icon" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="8" width="16" height="10" rx="1.5"/><path d="M10 13a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" stroke="#c4b5fd"/><path d="M6 15.5v-5M14 15.5v-5" stroke-width="1.3"/><path d="M6 5h16v10" stroke-width="1.3" opacity="0.55"/>
+        </svg></div>
+        <div class="hiw-step-desc">Got it right? Cash lands in your wallet automatically to withdraw.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="hiw-trust-band">
+    <div class="hiw-trust-icon">✓</div>
+    <div class="hiw-trust-text"><strong>Every question is real.</strong> No games of chance — just genuine Kenyan events, decided by what actually happens.</div>
+  </div>
+</section>
 
 <div class="doc-header">
   <div class="badge">Help Centre</div>
