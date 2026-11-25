@@ -735,14 +735,7 @@ body::after {
 .tbl,.data-table{min-width:600px;}
 
 </style>
-<!-- Google Analytics GA4 -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-C7QXV6BHCN"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-C7QXV6BHCN');
-</script>
+<!-- Google Analytics was removed from the admin console. Microsoft Clarity is kept as it was. -->
 <!-- Microsoft Clarity -->
 <script type="text/javascript">
   (function(c,l,a,r,i,t,y){
@@ -752,6 +745,258 @@ body::after {
   })(window,document,"clarity","script","vws3naz68i");
 </script>
 
+<script id="rc-frame-guard">/* Clickjacking guard: this admin page is never meant to be shown inside another page. If it is, hide it completely. */try{if(window.top!==window.self){document.documentElement.style.display="none";}}catch(e){document.documentElement.style.display="none";}</script>
+<style id="rc-controls-css">
+/* ═══════════════════════════════════════════════════════════════════════════
+   RC CONTROLS — platform switches, limits, M-Pesa balance, history, header badge.
+   Everything is prefixed "rc-" so it cannot collide with the existing page.
+   Mobile-first: base rules are the phone layout; wider screens add columns.
+   ═══════════════════════════════════════════════════════════════════════════ */
+/* Secondary text for the new controls: the page's own dim colour (#9284b8) is only 3.1-3.4:1 on white, below the WCAG AA minimum of 4.5:1 for small text. */
+:root { --rc-dim: #695c90; }
+.rc-wrap { margin: 0 0 22px; }
+.rc-wrap *, .rc-modal *, .rc-banner * { box-sizing: border-box; }
+.rc-sec-title { font-size: 0.7rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--rc-dim); margin: 0 0 8px; }
+.rc-sec-sub { font-size: 0.78rem; color: var(--rc-dim); margin: -4px 0 10px; line-height: 1.4; }
+
+.rc-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+.rc-card { background: #fff; border: 1px solid rgba(109,40,217,0.10); box-shadow: 0 2px 10px rgba(0,0,0,0.05); border-radius: 12px; padding: 14px; min-width: 0; }
+.rc-card-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+.rc-card-title { font-size: 0.86rem; font-weight: 700; color: #2e1065; margin: 0; }
+.rc-head-btn { margin-bottom: 10px; background: none; border: 0; padding: 0; font: inherit; color: inherit; text-align: left; display: flex; align-items: center; gap: 8px; width: 100%; cursor: pointer; min-height: 32px; }
+.rc-chev { margin-left: auto; transition: transform .15s; color: var(--rc-dim); font-size: 0.9rem; }
+.rc-collapsed .rc-chev { transform: rotate(-90deg); }
+.rc-collapsed .rc-card-body { display: none; }
+.rc-dim { color: var(--rc-dim); }
+.rc-small { font-size: 0.74rem; line-height: 1.45; }
+.rc-mono { font-family: 'IBM Plex Mono', monospace; }
+.rc-wrapword { overflow-wrap: anywhere; word-break: break-word; word-break: break-word; }
+
+/* ── switch rows ── */
+.rc-switch { padding: 12px 0; border-top: 1px solid var(--border); }
+.rc-switch:first-of-type { border-top: 0; padding-top: 2px; }
+.rc-switch-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.rc-switch-name { font-size: 0.95rem; font-weight: 700; color: var(--text); }
+.rc-pill { display: inline-flex; align-items: center; gap: 6px; border-radius: 100px; padding: 4px 11px; font-size: 0.7rem; font-weight: 700; letter-spacing: .4px; font-family: 'IBM Plex Mono', monospace; white-space: nowrap; }
+.rc-pill i { width: 7px; height: 7px; border-radius: 50%; background: currentColor; display: inline-block; }
+.rc-pill.on { background: rgba(22,163,74,0.10); color: #166534; border: 1px solid rgba(22,163,74,0.28); }
+.rc-pill.off { background: rgba(220,38,38,0.10); color: #b91c1c; border: 1px solid rgba(220,38,38,0.30); }
+.rc-pill.unk { background: #f0edff; color: var(--rc-dim); border: 1px solid var(--border); }
+.rc-switch-effect { margin: 6px 0 0; font-size: 0.76rem; color: var(--rc-dim); line-height: 1.45; }
+.rc-switch-meta { margin: 4px 0 0; font-size: 0.72rem; color: var(--rc-dim); }
+.rc-switch-msg { margin: 8px 0 0; padding: 8px 10px; border-radius: 8px; background: rgba(220,38,38,0.05); border: 1px solid rgba(220,38,38,0.18); font-size: 0.76rem; color: #7f1d1d; line-height: 1.45; }
+.rc-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+
+/* ── buttons & inputs ── */
+.rc-btn { appearance: none; -webkit-appearance: none; font-family: inherit; font-size: 0.8rem; font-weight: 700; border-radius: 10px; padding: 10px 16px; min-height: 44px; cursor: pointer; border: 1.5px solid transparent; line-height: 1.2; text-align: center; transition: background .12s, opacity .12s; }
+.rc-btn:disabled { opacity: .5; cursor: not-allowed; }
+.rc-btn:focus-visible, .rc-input:focus-visible, .rc-head-btn:focus-visible, .status-pill.rc-click:focus-visible { outline: 3px solid rgba(109,40,217,0.45); outline-offset: 2px; }
+.rc-btn.primary { background: #6d28d9; color: #fff; }
+.rc-btn.primary:hover:not(:disabled) { background: #5b21b6; }
+.rc-btn.danger { background: #dc2626; color: #fff; }
+.rc-btn.danger:hover:not(:disabled) { background: #b91c1c; }
+.rc-btn.warn { background: #fff; color: #b91c1c; border-color: rgba(220,38,38,0.45); }
+.rc-btn.warn:hover:not(:disabled) { background: rgba(220,38,38,0.06); }
+.rc-btn.ghost { background: #f0edff; color: #6d28d9; border-color: rgba(109,40,217,0.2); }
+.rc-btn.ghost:hover:not(:disabled) { background: #e5e0ff; }
+.rc-btn.sm { min-height: 36px; padding: 6px 12px; font-size: 0.72rem; border-radius: 8px; }
+.rc-input { width: 100%; min-height: 44px; background: #f0edff; border: 1px solid var(--border); border-radius: 9px; padding: 9px 12px; color: var(--text); font-family: inherit; font-size: 16px; outline: none; }
+.rc-input:focus { border-color: #6d28d9; background: #fff; }
+.rc-input[aria-invalid="true"] { border-color: #dc2626; background: #fff5f5; }
+textarea.rc-input { min-height: 84px; resize: vertical; line-height: 1.4; }
+.rc-label { display: block; font-size: 0.74rem; font-weight: 600; color: var(--text-mid); margin: 12px 0 5px; }
+.rc-hint { font-size: 0.72rem; color: var(--rc-dim); margin: 4px 0 0; line-height: 1.4; }
+.rc-error { margin: 12px 0 0; padding: 9px 11px; border-radius: 8px; background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; font-size: 0.8rem; line-height: 1.4; }
+.rc-note { margin: 10px 0 0; padding: 9px 11px; border-radius: 8px; background: rgba(245,158,11,0.10); border: 1px solid rgba(245,158,11,0.28); color: #92400e; font-size: 0.78rem; line-height: 1.45; }
+.rc-okbox { margin: 10px 0 0; padding: 9px 11px; border-radius: 8px; background: rgba(22,163,74,0.08); border: 1px solid rgba(22,163,74,0.25); color: #166534; font-size: 0.78rem; line-height: 1.45; }
+
+/* ── M-Pesa balance ── */
+.rc-big { font-family: 'IBM Plex Mono', monospace; font-weight: 700; font-size: 1.55rem; letter-spacing: -0.02em; color: #2e1065; margin: 2px 0 2px; overflow-wrap: anywhere; word-break: break-word; }
+.rc-kv { display: flex; justify-content: space-between; gap: 12px; padding: 6px 0; border-top: 1px solid var(--border); font-size: 0.78rem; }
+.rc-kv:first-of-type { border-top: 0; }
+.rc-kv > span:first-child { color: var(--rc-dim); }
+.rc-kv > span:last-child { font-weight: 600; text-align: right; overflow-wrap: anywhere; word-break: break-word; min-width: 0; }
+.rc-row2 { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; margin-top: 10px; }
+
+/* ── limits ── */
+.rc-usage { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; margin-bottom: 12px; }
+.rc-tile { background: #faf8ff; border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; min-width: 0; }
+.rc-tile-label { font-size: 0.7rem; font-weight: 600; color: var(--rc-dim); text-transform: uppercase; letter-spacing: .6px; }
+.rc-tile-val { font-family: 'IBM Plex Mono', monospace; font-weight: 700; font-size: 0.98rem; margin-top: 3px; overflow-wrap: anywhere; word-break: break-word; }
+.rc-bar { height: 7px; border-radius: 99px; background: #e5e0ff; overflow: hidden; margin-top: 7px; }
+.rc-bar > span { display: block; height: 100%; background: #7c3aed; border-radius: 99px; }
+.rc-bar.hot > span { background: #dc2626; }
+.rc-fields { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px 16px; }
+.rc-field { padding: 6px 0 10px; min-width: 0; }
+.rc-field .rc-label { margin-top: 4px; }
+.rc-field-meta { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+.rc-badge { display: inline-block; padding: 1px 7px; border-radius: 4px; font-size: 0.66rem; font-weight: 700; background: rgba(245,158,11,0.14); color: #92400e; font-family: 'IBM Plex Mono', monospace; }
+
+/* ── history ── */
+.rc-hist { list-style: none; margin: 0; padding: 0; }
+.rc-hist li { padding: 10px 0; border-top: 1px solid var(--border); font-size: 0.78rem; line-height: 1.45; }
+.rc-hist li:first-child { border-top: 0; }
+.rc-hist-sum { font-weight: 600; color: var(--text); overflow-wrap: anywhere; word-break: break-word; }
+.rc-hist-meta { color: var(--rc-dim); font-size: 0.72rem; margin-top: 2px; }
+.rc-hist-reason { margin-top: 3px; font-style: italic; color: var(--text-mid); overflow-wrap: anywhere; word-break: break-word; }
+.rc-empty { padding: 14px 4px; font-size: 0.8rem; color: var(--rc-dim); text-align: center; }
+
+/* ── header badge ── */
+.status-pill.rc-click { cursor: pointer; }
+.status-pill.rc-warn { background: rgba(220,38,38,0.10); border-color: rgba(220,38,38,0.35); color: #b91c1c; }
+.status-pill.rc-warn .status-dot { background: #dc2626; }
+.status-pill.rc-unknown { background: #f0edff; border-color: var(--border); color: var(--rc-dim); }
+.status-pill.rc-unknown .status-dot { background: #9284b8; animation: none; }
+.status-pill .rc-pill-short { display: none; }
+.topbar-right .status-pill { white-space: nowrap; flex-shrink: 0; }
+
+/* ── session banner ── */
+.rc-banner { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 10px 24px; background: #fef2f2; border-bottom: 1px solid #fecaca; color: #991b1b; font-size: 0.82rem; font-weight: 600; }
+.rc-banner a { background: #dc2626; color: #fff; border-radius: 8px; padding: 8px 14px; text-decoration: none; font-weight: 700; min-height: 36px; display: inline-flex; align-items: center; }
+
+/* ── modal (bottom sheet on phones, centred dialog on larger screens) ── */
+body.rc-lock { overflow: hidden; }
+.rc-overlay { position: fixed; inset: 0; z-index: 700; background: rgba(26,16,53,0.62); backdrop-filter: blur(3px); display: flex; align-items: flex-end; justify-content: center; padding: 0; }
+.rc-modal { background: #fff; width: 100%; max-height: 92vh; max-height: 92dvh; overflow-y: auto; -webkit-overflow-scrolling: touch; border-radius: 18px 18px 0 0; box-shadow: 0 -10px 40px rgba(0,0,0,0.30); padding: 18px 16px 16px; padding: 18px 16px calc(16px + env(safe-area-inset-bottom)); border-top: 4px solid #6d28d9; }
+.rc-modal.danger { border-top-color: #dc2626; }
+.rc-modal-title { font-size: 1.02rem; font-weight: 800; color: #2e1065; margin: 0 0 10px; line-height: 1.3; }
+.rc-p { margin: 0 0 8px; font-size: 0.84rem; line-height: 1.5; }
+.rc-quote { margin: 0 0 10px; padding: 9px 11px; background: #faf8ff; border-left: 3px solid #7c3aed; border-radius: 6px; font-size: 0.84rem; line-height: 1.5; overflow-wrap: anywhere; word-break: break-word; }
+.rc-modal-actions { display: flex; flex-direction: column-reverse; gap: 8px; margin-top: 16px; }
+.rc-modal-actions .rc-btn { width: 100%; }
+.rc-check { list-style: none; margin: 8px 0 0; padding: 0; }
+.rc-check li { display: flex; gap: 9px; padding: 8px 0; border-top: 1px solid var(--border); font-size: 0.8rem; line-height: 1.45; }
+.rc-check li:first-child { border-top: 0; }
+.rc-check .ic { flex: 0 0 18px; font-weight: 800; }
+.rc-check .ok .ic { color: #15803d; }
+.rc-check .bad .ic { color: #b91c1c; }
+.rc-check .mid .ic { color: #b45309; }
+.rc-check .wait .ic { color: var(--rc-dim); }
+.rc-check b { font-weight: 700; }
+.rc-results { margin: 10px 0 0; padding: 0; list-style: none; font-size: 0.78rem; }
+.rc-results li { padding: 6px 0; border-top: 1px solid var(--border); overflow-wrap: anywhere; word-break: break-word; }
+
+/* ── revenue panel extras ── */
+.rc-rev { margin: 0 0 14px; padding: 14px 16px; }
+.rc-rev-label { font-size: 0.7rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--rc-dim); margin-bottom: 4px; }
+.rc-rev-num { font-family: 'IBM Plex Mono', monospace; font-weight: 800; font-size: 1.5rem; overflow-wrap: anywhere; word-break: break-word; }
+.rc-rev-sub { font-size: 0.75rem; color: var(--rc-dim); margin-top: 4px; line-height: 1.45; overflow-wrap: anywhere; word-break: break-word; }
+
+/* ═══ tablet ═══ */
+@media (min-width: 641px) {
+  .rc-modal-actions { flex-direction: row; justify-content: flex-end; }
+  .rc-modal-actions .rc-btn { width: auto; min-width: 120px; }
+  .rc-overlay { align-items: center; padding: 20px; }
+  .rc-modal { max-width: 520px; border-radius: 16px; border-top-width: 4px; padding: 20px 22px 20px; }
+  .rc-row2 { grid-template-columns: 1fr 1fr; }
+  .rc-usage { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .rc-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (min-width: 768px) {
+  .rc-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+  .rc-span2 { grid-column: 1 / -1; }
+  .rc-card { padding: 16px 18px; }
+  .rc-fields { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+/* ═══ desktop ═══ */
+@media (min-width: 1100px) {
+  .rc-btn { min-height: 38px; padding: 8px 16px; }
+  .rc-btn.sm { min-height: 32px; }
+  .rc-input { min-height: 38px; font-size: 14px; }
+  .rc-fields { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px 14px; }
+  .rc-big { font-size: 1.8rem; }
+}
+/* ═══ phones ═══ */
+@media (max-width: 640px) {
+  .rc-banner { padding: 10px 14px; }
+  .rc-card { padding: 13px; border-radius: 11px; }
+  .rc-actions .rc-btn { flex: 1 1 140px; }
+  .rc-modal { padding-left: 14px; padding-right: 14px; }
+}
+@media (max-width: 480px) {
+  .status-pill .rc-pill-long { display: none; }
+  .status-pill .rc-pill-short { display: inline; }
+}
+@media (hover: none) and (pointer: coarse) {
+  .rc-btn.sm { min-height: 44px; }
+}
+@media (prefers-reduced-motion: reduce) { .rc-chev, .rc-btn { transition: none; } }
+
+
+/* ═══ PHONE FIX FOR THE EXISTING PAGE ═══
+   On phones, 13 of the 23 panels made the whole page ~650px wide (the tables have min-width:600px and .main, a flex
+   item, refuses to shrink below its content), which pushed the header's status badge and "+ New Market" button off the
+   right edge. Letting .main shrink makes each table scroll inside its own card instead (the cards already allow it).
+   Phones only: tablet and desktop were never affected and are untouched. */
+/* Below 360px the header's parts (menu button, breadcrumb, status badge, + New Market) need ~357px side by side, which
+   forces a sideways scroll on small or older phones and foldables. The breadcrumb is redundant there (every panel shows
+   its own title just below), so only it is hidden; the badge and the button stay visible. */
+@media (max-width: 359px) {
+  .topbar .breadcrumb { display: none; }
+}
+@media (max-width: 767px) {
+  .main { min-width: 0; }
+  .two-col { grid-template-columns: minmax(0, 1fr); }
+  .two-col > *, .stat-row > * { min-width: 0; }
+}
+
+/* ═══ HEADER THAT CANNOT FORCE THE PAGE WIDER ═══
+   The header is a fixed-height flex row that never shrinks, so on any narrow screen it pushed the whole page wider
+   (and the status badge / + New Market button off the edge). Now the breadcrumb is what gives way (it shortens with an
+   ellipsis), spacing tightens on small phones, and on extreme zoom the button shows just "+". These rules only change
+   anything when the header would otherwise overflow: at normal widths the header looks exactly as before. */
+.topbar-left { min-width: 0; flex: 1 1 auto; }
+.topbar-left .breadcrumb { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.topbar-right { flex-shrink: 0; }
+@media (max-width: 400px) {
+  .topbar { padding-left: 10px; padding-right: 10px; gap: 6px; }
+  .topbar-left { gap: 6px; }
+  .mobile-menu-btn { margin-right: 4px; }
+  .topbar-right { gap: 5px; }
+  .topbar-right .topbar-btn { padding: 5px 8px; font-size: 0.7rem; }          /* header button ONLY: the page reuses .topbar-btn for 29 buttons inside panels */
+  .topbar-right .status-pill { padding: 4px 8px; }
+}
+@media (max-width: 300px) {
+  .topbar-left .breadcrumb { display: none; }
+}
+@media (max-width: 260px) {
+  .topbar-right .topbar-btn { font-size: 0; padding: 5px 10px; }
+  .topbar-right .topbar-btn::before { content: '+'; font-size: 1rem; line-height: 1; }
+}
+
+/* ═══ REVENUE PANEL — make the existing fixed grids collapse on small screens ═══
+   The panel is laid out with inline two- and three-column grids that never collapse, so on a phone the
+   labels collide with the large numbers. These rules only apply to #panel-revenue and only on small
+   screens; they change layout only, never content. */
+@media (max-width: 640px) {
+  #panel-revenue .table-card { padding-left: 14px !important; padding-right: 14px !important; }
+  #panel-revenue [style*="grid-template-columns:1fr 1fr"],
+  #panel-revenue [style*="grid-template-columns:repeat(3,1fr)"] { grid-template-columns: minmax(0, 1fr) !important; }
+  #panel-revenue .table-card > div[style*="justify-content:space-between"][style*="align-items:center"] { flex-direction: column; align-items: flex-start !important; gap: 6px; }
+  #panel-revenue [style*="padding:10px 8px 10px 0"], #panel-revenue [style*="padding:10px 0 10px 8px"],
+  #panel-revenue [style*="padding:9px 8px 9px 0"], #panel-revenue [style*="padding:9px 0 9px 8px"] { padding-left: 0 !important; padding-right: 0 !important; }
+  #panel-revenue .stat-val, #panel-revenue .rc-rev-num { overflow-wrap: anywhere; word-break: break-word; }
+}
+
+/* ── User Management: sortable headings and the join date/time cell ───────────────────────────────── */
+#panel-users .tbl th.rc-sortable { cursor: pointer; user-select: none; -webkit-user-select: none; }
+#panel-users .tbl th.rc-sortable:hover { color: var(--text); }
+#panel-users .tbl th.rc-sortable:focus-visible { outline: 2px solid #6d28d9; outline-offset: -2px; border-radius: 4px; }
+#panel-users .tbl th .rc-sort-arrow { display: inline-block; min-width: 1.1em; margin-left: 3px; font-size: 0.8em; color: #6d28d9; }
+#panel-users .tbl td.rc-joined { font-size: 0.78rem; }
+#panel-users .filter-row .filter-select { flex: 0 1 auto; max-width: 100%; }
+
+/* Tablets, laptops and desktops (768px and up): the phone rules above (the page area and its grids may shrink, so a table or a
+   row of cards that is too wide for the room scrolls or squeezes instead of stretching the whole page sideways) did not reach
+   these widths. The Dashboard, for example, pushed the page up to 127px sideways between 1100px and 1249px. Same mechanism,
+   same effect, extended. When everything fits, nothing changes. */
+@media (min-width: 768px) {
+  .main { min-width: 0; }
+  .two-col > *, .stat-row > * { min-width: 0; }
+}
+}
+
+</style>
 </head>
 <body>
 
@@ -1143,10 +1388,23 @@ body::after {
           <option value="active">Active</option>
           <option value="frozen">Frozen</option>
         </select>
+        <select class="filter-select" id="userSortFilter" onchange="loadUsersTable(1)" aria-label="Sort users">
+          <option value="">Sort: Newest first</option>
+          <option value="oldest">Sort: Oldest first</option>
+          <option value="phone_asc">Sort: Phone (low to high)</option>
+          <option value="phone_desc">Sort: Phone (high to low)</option>
+          <option value="name_asc">Sort: Name (A to Z)</option>
+          <option value="name_desc">Sort: Name (Z to A)</option>
+        </select>
       </div>
       <div class="table-card" style="box-shadow:0 2px 12px rgba(0,0,0,0.05);">
         <table class="tbl">
-          <thead><tr><th>User</th><th>Phone</th><th>Status</th><th>Balance</th><th>Volume</th><th>Joined</th><th>Actions</th></tr></thead>
+          <thead><tr>
+            <th class="rc-sortable" data-sortfield="name" tabindex="0" title="Sort by name" onclick="setUserSort('name')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();setUserSort('name');}">User<span class="rc-sort-arrow" aria-hidden="true"></span></th>
+            <th class="rc-sortable" data-sortfield="phone" tabindex="0" title="Sort by phone number" onclick="setUserSort('phone')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();setUserSort('phone');}">Phone<span class="rc-sort-arrow" aria-hidden="true"></span></th>
+            <th>Status</th><th>Balance</th><th>Volume</th>
+            <th class="rc-sortable" data-sortfield="joined" tabindex="0" title="Sort by date joined" onclick="setUserSort('joined')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();setUserSort('joined');}">Joined (EAT)<span class="rc-sort-arrow" aria-hidden="true"></span></th>
+            <th>Actions</th></tr></thead>
           <tbody id="usersTableBody"></tbody>
         </table>
       </div>
@@ -1391,8 +1649,8 @@ body::after {
       <div class="stat-row" style="margin-bottom:8px;">
         <div class="stat-card"><div class="stat-label">Total Deposits Ever</div><div class="stat-val" id="revDepTotal">&#x2014;</div><div class="stat-change" id="revDepTotalCount" style="color:var(--text-dim);">&#x2014; transactions</div></div>
         <div class="stat-card"><div class="stat-label">Total Withdrawals Ever</div><div class="stat-val" id="revWdTotal">&#x2014;</div><div class="stat-change" id="revWdTotalCount" style="color:var(--text-dim);">&#x2014; transactions</div></div>
-        <div class="stat-card"><div class="stat-label">Net Cash Position</div><div class="stat-val" id="revNetCash">&#x2014;</div><div class="stat-change" style="color:var(--text-dim);">Deposits &#x2212; Withdrawals</div></div>
-        <div class="stat-card"><div class="stat-label">B2C Withdrawal Fees</div><div class="stat-val" id="revPaystackFees">&#x2014;</div><div class="stat-change" style="color:var(--text-dim);">Calculated per Safaricom tariff</div></div>
+        <div class="stat-card"><div class="stat-label">Net Flow (not cash)</div><div class="stat-val" id="revNetCash">&#x2014;</div><div class="stat-change" style="color:var(--text-dim);">App deposits &#x2212; withdrawals. Not the account balance.</div></div>
+        <div class="stat-card"><div class="stat-label">B2C Withdrawal Fees</div><div class="stat-val" id="revPaystackFees">&#x2014;</div><div class="stat-change" style="color:var(--text-dim);">Estimate per Safaricom tariff</div></div>
       </div>
       <div style="font-size:0.7rem;font-weight:700;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;margin:20px 0 8px;">Liquidity &#x2014; Current Snapshot</div>
       <div class="table-card" style="margin-bottom:8px;padding:16px 20px;">
@@ -1402,7 +1660,7 @@ body::after {
           <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 8px 10px 0;border-bottom:1px solid var(--border);"><div><div style="font-size:0.82rem;color:var(--text-dim);">Pending Deposits</div><div style="font-size:0.68rem;color:var(--text-dim);">M-Pesa initiated (last 2 hrs) — older STK pushes are stale</div></div><span style="font-family:var(--mono);font-size:0.9rem;font-weight:700;color:var(--primary);" id="revPendingDep">&#x2014;</span></div>
           <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0 10px 8px;border-bottom:1px solid var(--border);"><div><div style="font-size:0.82rem;color:var(--text-dim);">Pending Withdrawals</div><div style="font-size:0.68rem;color:var(--text-dim);">In-flight (last 10 min) — deducted from wallets, not yet sent</div></div><span style="font-family:var(--mono);font-size:0.9rem;font-weight:700;color:#ce1126;" id="revPendingWd">&#x2014;</span></div>
         </div>
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0 4px;margin-top:8px;border-top:2px solid var(--border);"><div><div style="font-size:0.85rem;font-weight:700;">Liquidity Gap</div><div style="font-size:0.68rem;color:var(--text-dim);">Net Cash &#x2212; Total Liability (wallets + markets + challenges).</div></div><div style="font-family:var(--mono);font-size:1.2rem;font-weight:800;" id="revLiquidityGap">&#x2014;</div></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0 4px;margin-top:8px;border-top:2px solid var(--border);"><div><div style="font-size:0.85rem;font-weight:700;">Flow gap (not real cash)</div><div style="font-size:0.68rem;color:var(--text-dim);">Net flow &#x2212; total liability (wallets owed + markets + challenges). See Real cash cover below.</div></div><div style="font-family:var(--mono);font-size:1.2rem;font-weight:800;" id="revLiquidityGap">&#x2014;</div></div>
           </div>
           <div style="margin-top:10px;padding:10px;background:rgba(206,17,38,0.05);border:1px solid rgba(206,17,38,0.15);border-radius:8px;">
             <div style="font-size:0.7rem;font-weight:700;color:var(--text-dim);margin-bottom:8px;">TOTAL PLATFORM LIABILITY BREAKDOWN</div>
@@ -2333,6 +2591,52 @@ var USERS_CURRENT_PAGE = 1;
 var USERS_LIMIT        = 50;
 var _userSearchTimer   = null;
 
+// ── Users panel: join date + time (EAT) and sorting ─────────────────────────────────────────────────────────
+// Same text as the Activity feed's Users tab, e.g. "22 Nov 2026, 22:46 EAT". Self-contained, so it does not depend on
+// the order the page's scripts load in; a test proves it matches fmtEAT() for every date.
+function usersJoinedText(iso) {
+  if (!iso) return '—';
+  var d = new Date(iso);
+  if (isNaN(d.getTime())) return '—';
+  var eat = new Date(d.getTime() + 3 * 60 * 60 * 1000);
+  var M   = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return eat.getUTCDate() + ' ' + M[eat.getUTCMonth()] + ' ' + eat.getUTCFullYear()
+    + ', ' + String(eat.getUTCHours()).padStart(2, '0')
+    + ':' + String(eat.getUTCMinutes()).padStart(2, '0') + ' EAT';
+}
+// Clicking a column heading changes the same "Sort" box (the box is the one source of truth), then reloads page 1.
+var USERS_REQ_SEQ = 0;   // numbers every users request; only the newest one may draw the table
+// Date and time stay together as two pieces that only wrap BETWEEN them ("22 Nov 2026," then "22:46 EAT"), so the column stays narrow.
+function usersJoinedHtml(text) {
+  var t = String(text == null ? '—' : text);
+  var parts = t.split(', ');
+  if (parts.length !== 2) return esc(t);
+  return '<span style="white-space:nowrap">' + esc(parts[0]) + ',</span> <span style="white-space:nowrap">' + esc(parts[1]) + '</span>';
+}
+function setUserSort(field) {
+  var sel = document.getElementById('userSortFilter'); if (!sel) return;
+  var cur = sel.value, next = '';
+  if (field === 'name')   next = (cur === 'name_asc')  ? 'name_desc'  : 'name_asc';
+  if (field === 'phone')  next = (cur === 'phone_asc') ? 'phone_desc' : 'phone_asc';
+  if (field === 'joined') next = (cur === '')          ? 'oldest'     : '';
+  sel.value = next;
+  loadUsersTable(1);
+}
+// Shows an arrow on the heading that is currently sorting (up = ascending, down = descending).
+function updateUserSortIndicators() {
+  var cur = ((document.getElementById('userSortFilter') || {}).value || '');
+  var state = { name: cur === 'name_asc' ? 'asc' : cur === 'name_desc' ? 'desc' : '',
+                phone: cur === 'phone_asc' ? 'asc' : cur === 'phone_desc' ? 'desc' : '',
+                joined: cur === 'oldest' ? 'asc' : (cur === '' ? 'desc' : '') };
+  var ths = document.querySelectorAll('#panel-users th[data-sortfield]');
+  for (var i = 0; i < ths.length; i++) {
+    var s = state[ths[i].getAttribute('data-sortfield')] || '';
+    var arrow = ths[i].querySelector('.rc-sort-arrow');
+    if (arrow) arrow.textContent = s === 'asc' ? '▲' : s === 'desc' ? '▼' : '';
+    ths[i].setAttribute('aria-sort', s === 'asc' ? 'ascending' : s === 'desc' ? 'descending' : 'none');
+  }
+}
+
 // Debounce search so we don't fire on every keystroke
 function debounceUserSearch(val) {
   clearTimeout(_userSearchTimer);
@@ -2342,6 +2646,8 @@ function debounceUserSearch(val) {
 function loadUsersTable(page) {
   page = page || USERS_CURRENT_PAGE;
   USERS_CURRENT_PAGE = page;
+  updateUserSortIndicators();
+  var mySeq = ++USERS_REQ_SEQ;   // an older, slower answer must never replace a newer one
 
   var tbody = document.getElementById('usersTableBody');
   if (tbody) tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--text-dim);">Loading...</td></tr>';
@@ -2353,10 +2659,13 @@ function loadUsersTable(page) {
   if (q)                     url += '&q='         + encodeURIComponent(q);
   if (status === 'active')   url += '&suspended=false';
   if (status === 'frozen')   url += '&suspended=true';
+  var sortChoice = ((document.getElementById('userSortFilter') || {}).value || '');
+  if (sortChoice)            url += '&sort=' + encodeURIComponent(sortChoice);   // nothing is added for the default (newest first), so the request is exactly what it always was
 
   adminFetch(url)
-  .then(function(r) { return r.json(); })
+  .then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })   // a failed answer must say "Failed to load users."; before, it looked like an empty list
   .then(function(d) {
+    if (mySeq !== USERS_REQ_SEQ) return;   // a newer request has started: this answer is out of date
     USERS_DATA = (d.users || []).map(function(u) {
       return {
         id:      u.id,
@@ -2365,7 +2674,7 @@ function loadUsersTable(page) {
         kyc:     u.kycStatus,
         balance: 'KES ' + Number(u.balanceKes).toLocaleString(),
         volume:  u.tradeVolume >= 1000 ? 'KES ' + Math.round(u.tradeVolume/1000) + 'K' : 'KES ' + u.tradeVolume,
-        joined:    new Date(u.createdAt).toLocaleDateString('en-KE', { month:'short', year:'numeric' }),
+        joined:    usersJoinedText(u.createdAt),
         suspended: u.suspended || false,
       };
     });
@@ -2385,6 +2694,7 @@ function loadUsersTable(page) {
     renderUsersPagination(page, total, d.limit || USERS_LIMIT);
   })
   .catch(function() {
+    if (mySeq !== USERS_REQ_SEQ) return;   // an out-of-date failure must not wipe a newer answer
     if (tbody) tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#ce1126;padding:20px;">Failed to load users.</td></tr>';
   });
 }
@@ -2661,7 +2971,7 @@ function renderUsersTable() {
       '<td>' + kycBadge + '</td>' +
       '<td class="mono">' + (u.balance||'—') + '</td>' +
       '<td class="mono" style="color:var(--text-dim)">' + (u.volume||'—') + '</td>' +
-      '<td style="color:var(--text-dim)">' + (u.joined||'—') + '</td>' +
+      '<td class="rc-joined" style="color:var(--text-dim)">' + usersJoinedHtml(u.joined) + '</td>' +
       '<td style="display:flex;gap:5px;flex-wrap:wrap;">' + viewUserBtn + ' ' + editUserBtn + ' ' + reviewBtn + ' ' + freezeUserBtn + ' ' + deleteUserBtn + '</td>' +
     '</tr>';
   }).join('');
@@ -5510,6 +5820,7 @@ function loadRevenuePanel() {
     s('revPendingWd', fmt(d.pendingWithdrawals) + ' (' + (d.pendingWdCount||0) + ')');
     var gap = d.liquidityGap || 0, gapEl = document.getElementById('revLiquidityGap');
     if (gapEl) { gapEl.textContent = fmt(gap); gapEl.style.color = gap >= 0 ? '#166534' : '#ce1126'; }
+    try { if (window.RCControls) window.RCControls.renderRevenue(d); } catch (e) { console.error(e); }
     window.revAllRecords = d.recent || []; // pre-cached; rendered by Revenue Analytics panel
     loadRevenueLiquidity(); // loadRevenueMonthly() and filterRecentRecords() now in Revenue Analytics panel
   }).catch(function(err) { console.error('loadRevenuePanel:', err); });
@@ -5719,7 +6030,7 @@ function upLoadOverview() {
       '+' + esc(u.phone||'') + ' &nbsp;·&nbsp; ' + esc(u.kycStatus||'') +
       ' &nbsp;·&nbsp; ' + esc(u.role||'USER') +
       ' &nbsp;·&nbsp; Integrity: ' + (u.integrityScore||0) +
-      ' &nbsp;·&nbsp; Joined: ' + upDate(u.createdAt);
+      ' &nbsp;·&nbsp; Joined: ' + esc(usersJoinedText(u.createdAt));
 
     // Freeze btn
     var fb = document.getElementById('upFreezeBtn');
@@ -5764,7 +6075,7 @@ function upLoadOverview() {
       + '<div class="up-info-row"><div class="up-info-key">Account Status</div><div class="up-info-val">' + (u.suspended ? '<span class="badge badge-red">FROZEN</span>' : '<span class="badge badge-green">ACTIVE</span>') + '</div></div>'
       + '<div class="up-info-row"><div class="up-info-key">WhatsApp Opted Out</div><div class="up-info-val">' + (u.whatsappOptedOut ? 'Yes' : 'No') + '</div></div>'
       + '<div class="up-info-row"><div class="up-info-key">Referral Code</div><div class="up-info-val mono">' + esc(u.referralCode||'—') + '</div></div>'
-      + '<div class="up-info-row"><div class="up-info-key">Joined</div><div class="up-info-val">' + upDate(u.createdAt) + '</div></div>'
+      + '<div class="up-info-row"><div class="up-info-key">Joined</div><div class="up-info-val">' + esc(usersJoinedText(u.createdAt)) + '</div></div>'
       + '</div>';
 
     // Referrer
@@ -6500,5 +6811,684 @@ function adminLogOut() {
   </div><!-- /up-container -->
 </div><!-- /userProfileModal -->
 
+<!-- RC controls v1 (built on rada-admin.html, base md5 78b466c048ef) -->
+<script id="rc-controls-js">
+/* ═══════════════════════════════════════════════════════════════════════════
+   RC CONTROLS  (v1)
+   Platform switches (withdrawals / deposits / trades), withdrawal limits, M-Pesa balance, change history,
+   test alert, live header badge, session-expiry banner, and the extra figures on the Revenue panel.
+
+   SAFETY
+   * Self-contained: one IIFE, one global (window.RCControls). Nothing here replaces or edits an existing
+     function of the page; it only ADDS elements, and reads API_BASE (already defined by the page).
+   * Everything shown from the server is written with textContent / createElement — never as HTML — so a
+     pause message, a history reason or an error text can never run as script.
+   * Every entry point is wrapped so that a failure here can never break the rest of the admin page.
+   * Nothing is changed on the server without an explicit confirmation box.
+   ═══════════════════════════════════════════════════════════════════════════ */
+(function () {
+  'use strict';
+  if (window.RCControls) return;
+  try { if (window.top !== window.self) return; } catch (e) { return; }      // never run inside another page's frame (clickjacking guard; the page itself is hidden by the guard in <head>)
+
+  var API   = (typeof API_BASE === 'string' && API_BASE) ? API_BASE : 'https://api.checkrada.co.ke';
+  var LOGIN = 'rada-admin-login.html';
+  var POLL_MS = 60000;
+
+  var SW = {
+    withdrawals: { label: 'Withdrawals', lower: 'withdrawals', effect: 'Stops customers cashing out. Payout results and refunds still process.' },
+    deposits:    { label: 'Deposits',    lower: 'deposits',    effect: 'Stops new M-Pesa prompts. Payments customers have already sent are still credited.' },
+    trades:      { label: 'Trading',     lower: 'trading',     effect: 'Stops new trades. Resolving, voiding and refunding markets still works.' }
+  };
+  var LIMIT_ORDER = ['minAccountAgeHours', 'maxCountPer24h', 'maxKesPer24h', 'breakerWindowMinutes', 'breakerMaxKes'];
+  var LIMIT_UNIT  = { minAccountAgeHours: 'hours', maxCountPer24h: 'withdrawals', maxKesPer24h: 'KES', breakerWindowMinutes: 'minutes', breakerMaxKes: 'KES' };
+
+  var state = {
+    switches: null, msgMax: 160, defaultMessages: {},
+    wd: null, usage: null, limitsDirty: false,
+    flt: null, hist: [], histNext: null, histLoaded: false,
+    busy: {}, failures: 0, expired: false, lastSwitchRefresh: 0, inflight: {}, pendingSw: false,
+    seq: { flt: 0, lim: 0, hist: 0 }          // request counters: an answer is used only if it belongs to the LATEST request
+  };
+
+  /* ───────────────────────────── small helpers ───────────────────────────── */
+  function h(tag, attrs, kids) {
+    var el = document.createElement(tag);
+    if (attrs) for (var k in attrs) {
+      if (!Object.prototype.hasOwnProperty.call(attrs, k)) continue;
+      var v = attrs[k];
+      if (v === null || v === undefined || v === false) continue;
+      if (k === 'class') el.className = v;
+      else if (k === 'text') el.textContent = v;
+      else if (k.slice(0, 2) === 'on' && typeof v === 'function') el.addEventListener(k.slice(2), v);
+      else el.setAttribute(k, v === true ? '' : String(v));
+    }
+    if (kids) for (var i = 0; i < kids.length; i++) {
+      var c = kids[i]; if (c === null || c === undefined || c === false) continue;
+      el.appendChild(typeof c === 'string' ? document.createTextNode(c) : c);
+    }
+    return el;
+  }
+  function clear(el) { while (el.firstChild) el.removeChild(el.firstChild); return el; }
+  function num(n) { return Number(n || 0).toLocaleString('en-US', { maximumFractionDigits: 2 }); }
+  function kes(n) { return 'KES\u00A0' + num(n); }          // non-breaking space: "KES" never separates from its number
+  function ago(iso) {
+    if (!iso) return '';
+    var t = new Date(iso).getTime(); if (isNaN(t)) return '';
+    var m = Math.max(0, Math.round((Date.now() - t) / 60000));
+    if (m < 1) return 'just now'; if (m < 60) return m + ' min ago';
+    if (m < 1440) return Math.round(m / 60) + ' h ago'; return Math.round(m / 1440) + ' d ago';
+  }
+  function eat(iso) {
+    var d = new Date(iso); if (isNaN(d.getTime())) return '';
+    try { return d.toLocaleString('en-GB', { timeZone: 'Africa/Nairobi', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hour12: false }) + ' EAT'; }
+    catch (e) { return d.toISOString(); }
+  }
+  function toast(msg) { try { if (typeof window.showToast === 'function') window.showToast(msg); } catch (e) { /* cosmetic */ } }
+  function safe(fn) { return function () { try { var r = fn.apply(this, arguments); if (r && typeof r.catch === 'function') r.catch(function (e) { console.error('[RCControls]', e); }); return r; } catch (e) { console.error('[RCControls]', e); } }; }
+
+  /* ───────────────────────────── network ───────────────────────────── */
+  function api(method, path, body) {
+    var opts = { method: method, credentials: 'include', headers: { 'Content-Type': 'application/json' } };
+    if (body !== undefined) opts.body = JSON.stringify(body);
+    return fetch(API + path, opts).then(function (res) {
+      return res.text().then(function (txt) {
+        var data = null; try { data = txt ? JSON.parse(txt) : null; } catch (e) { data = null; }
+        if (res.status === 401) markExpired();
+        return { ok: res.ok, status: res.status, data: (data && typeof data === 'object') ? data : {} };
+      });
+    }, function () { return { ok: false, status: 0, network: true, data: {} }; });
+  }
+  function errMsg(r) {
+    if (r.network) return 'Could not reach the server, so nothing was changed. Check your connection and try again.';
+    if (r.status === 401) return 'Your admin session has expired. Sign in again to continue.';
+    if (r.data && r.data.error) return String(r.data.error);
+    if (r.status >= 500) return 'The server had a problem (HTTP ' + r.status + '). The screen has been refreshed so you can see the real state before trying again.';
+    return 'Something went wrong (HTTP ' + r.status + ').';
+  }
+
+  /* ───────────────────────────── session expiry ───────────────────────────── */
+  function markExpired() {
+    if (state.expired) return;
+    state.expired = true;
+    try {
+      var main = document.querySelector('.main'), top = document.querySelector('.topbar');
+      if (main && !document.getElementById('rcSession')) {
+        var b = h('div', { class: 'rc-banner', id: 'rcSession', role: 'alert' }, [
+          h('span', { text: 'Your admin session has expired. Nothing was changed. Sign in again to continue.' }),
+          h('a', { href: LOGIN, text: 'Sign in again' })
+        ]);
+        if (top && top.parentNode === main) top.insertAdjacentElement('afterend', b); else main.insertBefore(b, main.firstChild);
+      }
+    } catch (e) { /* cosmetic */ }
+    updateBadge();
+  }
+
+  /* ───────────────────────────── modal ───────────────────────────── */
+  var modalCtl = null;
+  function closeModal() {
+    if (!modalCtl) return;
+    var c = modalCtl; modalCtl = null;
+    document.removeEventListener('keydown', c.onKey, true);
+    if (c.overlay.parentNode) c.overlay.parentNode.removeChild(c.overlay);
+    document.body.classList.remove('rc-lock');
+    try { if (c.prev && c.prev.focus) c.prev.focus(); } catch (e) { /* ignore */ }
+  }
+  function openModal(opts) {
+    closeModal();
+    var prev = document.activeElement;
+    var overlay = h('div', { class: 'rc-overlay' });
+    var box = h('div', { class: 'rc-modal' + (opts.tone === 'danger' ? ' danger' : ''), role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'rcModalTitle' });
+    var title = h('h2', { class: 'rc-modal-title', id: 'rcModalTitle', text: opts.title });
+    var errBox = h('div', { class: 'rc-error', role: 'alert', hidden: true });
+    var actionsEl = h('div', { class: 'rc-modal-actions' });
+    box.appendChild(title); box.appendChild(opts.body); box.appendChild(errBox); box.appendChild(actionsEl);
+    overlay.appendChild(box);
+
+    var ctl = { overlay: overlay, box: box, prev: prev, busy: false, dirty: false, buttons: {} };
+    box.addEventListener('input', function () { ctl.dirty = true; });        // the admin has typed something: a stray tap outside must not throw it away
+    ctl.setError = function (msg) { if (msg) { errBox.textContent = msg; errBox.hidden = false; } else { errBox.textContent = ''; errBox.hidden = true; } };
+    ctl.setBusy = function (on, label) {
+      ctl.busy = !!on;
+      Object.keys(ctl.buttons).forEach(function (id) { var b = ctl.buttons[id]; b.disabled = !!on || b.rcLocked === true; if (b.rcBusyLabel) { b.textContent = on && label ? label : b.rcLabel; } });
+      box.setAttribute('aria-busy', on ? 'true' : 'false');
+    };
+    ctl.enable = function (id, on) { var b = ctl.buttons[id]; if (b) { b.rcLocked = !on; b.disabled = ctl.busy || !on; } };
+    ctl.close = closeModal;
+
+    (opts.actions || []).forEach(function (a) {
+      var btn = h('button', { type: 'button', class: 'rc-btn ' + (a.kind || 'ghost'), text: a.label });
+      btn.rcLabel = a.label; btn.rcBusyLabel = !!a.busy;
+      if (a.disabled) { btn.rcLocked = true; btn.disabled = true; }
+      btn.addEventListener('click', function () {
+        if (ctl.busy) return;
+        if (a.cancel) { closeModal(); return; }
+        ctl.setError('');
+        var r; try { r = a.onClick(ctl); } catch (e) { console.error('[RCControls]', e); ctl.setError('Something went wrong in the page. Nothing was changed.'); return; }
+        if (r && typeof r.catch === 'function') r.catch(function (e) { console.error('[RCControls]', e); ctl.setBusy(false); ctl.setError('Something went wrong in the page. Check the current state before trying again.'); });
+      });
+      ctl.buttons[a.id || a.label] = btn; actionsEl.appendChild(btn);
+    });
+
+    ctl.onKey = function (e) {
+      if (e.key === 'Escape') { if (!ctl.busy) { e.stopPropagation(); closeModal(); } return; }
+      if (e.key !== 'Tab') return;
+      var f = box.querySelectorAll('button:not([disabled]), input:not([disabled]), textarea:not([disabled]), a[href], select:not([disabled])');
+      if (!f.length) return;
+      var first = f[0], last = f[f.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+      else if (!box.contains(document.activeElement)) { e.preventDefault(); first.focus(); }
+    };
+    document.addEventListener('keydown', ctl.onKey, true);
+    overlay.addEventListener('mousedown', function (e) { if (e.target === overlay && !ctl.busy && !ctl.dirty) closeModal(); });
+    document.body.appendChild(overlay); document.body.classList.add('rc-lock');
+    modalCtl = ctl;
+    var af = box.querySelector('[data-autofocus]') || box.querySelector('input, textarea') || box.querySelector('button.rc-btn:not(.ghost)') || box.querySelector('button');
+    try { if (af) af.focus(); } catch (e) { /* ignore */ }
+    if (typeof opts.onOpen === 'function') opts.onOpen(ctl);
+    return ctl;
+  }
+
+  /* ───────────────────────────── header badge ───────────────────────────── */
+  function pausedList() {
+    if (!state.switches) return [];
+    return ['withdrawals', 'deposits', 'trades'].filter(function (n) { return state.switches[n] && state.switches[n].enabled === false; });
+  }
+  function updateBadge() {
+    var pill = document.querySelector('.topbar-right .status-pill');
+    if (!pill) return;
+    var long = 'Systems Operational', short = 'Operational', mode = 'ok', tip = 'All switches are ON';
+    var p = pausedList();
+    if (state.expired) { mode = 'unknown'; long = 'Session expired'; short = 'Expired'; tip = 'Sign in again'; }
+    else if (!state.switches && state.failures >= 2) { mode = 'unknown'; long = 'Status unavailable'; short = 'Unknown'; tip = 'Could not read the switch state'; }
+    else if (p.length === 1) { mode = 'warn'; long = '\u26A0 ' + SW[p[0]].label + ' paused'; short = '\u26A0 Paused'; tip = SW[p[0]].label + ' is paused \u2014 tap to open the controls'; }
+    else if (p.length > 1) { mode = 'warn'; long = '\u26A0 ' + p.length + ' switches paused'; short = '\u26A0 ' + p.length + ' paused'; tip = p.map(function (n) { return SW[n].label; }).join(', ') + ' paused \u2014 tap to open the controls'; }
+    clear(pill);
+    pill.appendChild(h('div', { class: 'status-dot' }));
+    pill.appendChild(h('span', { class: 'rc-pill-long', text: long }));
+    pill.appendChild(h('span', { class: 'rc-pill-short', text: short }));
+    pill.classList.toggle('rc-warn', mode === 'warn');
+    pill.classList.toggle('rc-unknown', mode === 'unknown');
+    pill.setAttribute('title', tip); pill.setAttribute('aria-label', long);
+    if (!pill.rcBound) {                                       // listeners are bound once; role/tabindex follow the mode below
+      pill.rcBound = true;
+      var go = function () { var q = pausedList(); if (!q.length) return; var to = q.every(function (n) { return n === 'trades'; }) ? 'markets' : 'transactions'; if (typeof window.showPanel === 'function') window.showPanel(to, null); };
+      pill.addEventListener('click', go);
+      pill.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
+    }
+    if (mode === 'warn') { pill.classList.add('rc-click'); pill.setAttribute('role', 'button'); pill.setAttribute('tabindex', '0'); }
+    else { pill.classList.remove('rc-click'); pill.removeAttribute('role'); pill.removeAttribute('tabindex'); }
+  }
+
+  /* ───────────────────────────── switches ───────────────────────────── */
+  function switchRow(name) {
+    var m = SW[name], st = state.switches && state.switches[name];
+    var known = !!st, on = known && st.enabled !== false;
+    var busy = !!state.busy[name];
+    var pillEl = h('span', { class: 'rc-pill ' + (known ? (on ? 'on' : 'off') : 'unk'), role: 'status' }, [h('i'), known ? (on ? 'ON' : 'PAUSED') : (state.failures >= 2 ? 'UNAVAILABLE' : 'CHECKING')]);
+    var meta = known ? (st.updatedAt ? 'Last changed by ' + (st.updatedBy || 'an admin') + ' \u00B7 ' + ago(st.updatedAt) : 'Never changed (default: ON)') : 'Reading the current state\u2026';
+    var kids = [
+      h('div', { class: 'rc-switch-top' }, [h('span', { class: 'rc-switch-name', text: m.label }), pillEl]),
+      h('p', { class: 'rc-switch-effect', text: m.effect }),
+      h('p', { class: 'rc-switch-meta', text: meta, title: st && st.updatedAt ? eat(st.updatedAt) : null })
+    ];
+    if (known && !on) kids.push(h('div', { class: 'rc-switch-msg rc-wrapword' }, ['Customers see: \u201C' + st.message + '\u201D']));
+    var main = h('button', { type: 'button', class: 'rc-btn ' + (on ? 'warn' : 'primary'), 'data-rc': 'toggle-' + name, text: on ? 'Pause ' + m.lower : 'Re-open ' + m.lower, disabled: !known || busy, onclick: safe(function () { if (on) pauseFlow(name); else reopenFlow(name); }) });
+    var edit = h('button', { type: 'button', class: 'rc-btn ghost', 'data-rc': 'msg-' + name, text: 'Edit message', disabled: !known || busy, onclick: safe(function () { messageFlow(name); }) });
+    kids.push(h('div', { class: 'rc-actions' }, [main, edit]));
+    return h('div', { class: 'rc-switch', 'data-switch': name }, kids);
+  }
+  function renderSwitches() {
+    var a = document.getElementById('rcTxnSwitches'); if (a) { clear(a); a.appendChild(switchRow('withdrawals')); a.appendChild(switchRow('deposits')); }
+    var b = document.getElementById('rcMktSwitches'); if (b) { clear(b); b.appendChild(switchRow('trades')); }
+  }
+  async function refreshSwitches() {
+    if (state.inflight.sw) { state.pendingSw = true; return; }      // asked for while one is running: run once more straight after, so a change is never missed
+    state.inflight.sw = true;
+    try {
+      var r = await api('GET', '/api/admin/settings/switches');
+      if (r.ok && r.data.switches && typeof r.data.switches === 'object') {
+        state.switches = r.data.switches; state.msgMax = r.data.messageMax || 160; state.defaultMessages = r.data.defaultMessages || {};
+        state.failures = 0; state.lastSwitchRefresh = Date.now();
+      } else if (r.status !== 401) { state.failures++; }
+    } finally { state.inflight.sw = false; }
+    try { renderSwitches(); updateBadge(); } catch (e) { console.error('[RCControls] the switches could not be drawn', e); }
+    if (state.pendingSw) { state.pendingSw = false; return refreshSwitches(); }
+  }
+
+  async function doSwitchChange(ctl, name, payload, doneText) {
+    state.busy[name] = true; ctl.setBusy(true, 'Saving\u2026'); renderSwitches();
+    var r = await api('PUT', '/api/admin/settings/switches', Object.assign({ 'switch': name }, payload));
+    state.busy[name] = false;
+    if (r.ok && r.data.switches) {
+      state.switches = r.data.switches; state.failures = 0; renderSwitches(); updateBadge(); loadHistory(true);
+      ctl.close();
+      toast(r.data.changed === false ? SW[name].label + ': already in that state, nothing changed' : (doneText + (r.data.auditLogged === false ? ' (the history entry could not be saved)' : '')));
+      return;
+    }
+    ctl.setBusy(false); ctl.setError(errMsg(r)); renderSwitches();
+    if (r.network || r.status >= 500) refreshSwitches();
+  }
+
+  function pauseFlow(name) {
+    var m = SW[name], st = state.switches && state.switches[name]; if (!st) return;
+    var reason = h('input', { type: 'text', class: 'rc-input', id: 'rcReason', maxlength: '200', placeholder: 'Reason (optional) \u2014 saved in the history', autocomplete: 'off' });
+    var body = h('div', null, [
+      h('p', { class: 'rc-p', text: 'Customers will see this message while ' + m.lower + ' is paused:' }),
+      h('blockquote', { class: 'rc-quote', text: st.message }),
+      h('p', { class: 'rc-p rc-dim', text: m.effect }),
+      h('label', { class: 'rc-label', for: 'rcReason', text: 'Reason' }), reason
+    ]);
+    openModal({ title: 'Pause ' + m.lower + '?', tone: 'danger', body: body, actions: [
+      { label: 'Cancel', kind: 'ghost', cancel: true, id: 'cancel' },
+      { label: 'Pause ' + m.lower, kind: 'danger', id: 'go', busy: true, onClick: function (ctl) { var v = reason.value.trim(); return doSwitchChange(ctl, name, v ? { enabled: false, reason: v } : { enabled: false }, m.label + ' paused'); } }
+    ] });
+  }
+
+  function checkItem(kind, text, strong) {
+    return h('li', { class: kind }, [h('span', { class: 'ic', 'aria-hidden': 'true', text: kind === 'ok' ? '\u2713' : kind === 'bad' ? '\u2715' : kind === 'mid' ? '!' : '\u2026' }), h('span', null, strong ? [h('b', { text: strong }), ' ' + text] : [text])]);
+  }
+  async function fillChecklist(name, list) {
+    clear(list); list.appendChild(checkItem('wait', 'Loading the checklist\u2026'));
+    var rev = null, wd = null;
+    var rs = await Promise.all([name === 'trades' ? Promise.resolve(null) : api('GET', '/api/admin/revenue'), name === 'withdrawals' ? api('GET', '/api/admin/settings/withdrawals') : Promise.resolve(null)]);
+    rev = rs[0]; wd = rs[1];
+    clear(list);
+    if (name === 'trades') { list.appendChild(checkItem('ok', 'Customers will be able to place trades again on all open markets.')); return; }
+    if (!rev || !rev.ok) { list.appendChild(checkItem('mid', 'Could not load the checklist (' + (rev ? errMsg(rev) : 'no answer') + '). You can still re-open.')); return; }
+    var d = rev.data, f = d.float || null;
+    if (name === 'withdrawals') {
+      if (f && f.known) {
+        var cover = f.cashCover;
+        if (cover >= 0) list.appendChild(checkItem('ok', kes(f.estimatedKes) + (f.isEstimate ? ' (estimate)' : '') + ' in the M-Pesa account covers everything owed (' + kes(d.totalLiability) + '), with ' + kes(cover) + ' to spare.', 'Balance:'));
+        else list.appendChild(checkItem('bad', 'The M-Pesa account holds ' + kes(f.estimatedKes) + (f.isEstimate ? ' (estimate)' : '') + ' but customers are owed ' + kes(d.totalLiability) + ' \u2014 a shortfall of ' + kes(-cover) + '. Payouts above the balance will fail at M-Pesa.', 'Balance:'));
+        if (f.ageMinutes > 1440) list.appendChild(checkItem('mid', 'The balance was last confirmed ' + ago(f.asOf) + '. Type in a fresh one from the M-Pesa portal if you can.', 'Old balance:'));
+      } else list.appendChild(checkItem('mid', 'No M-Pesa balance has been captured yet, so cover cannot be checked. Customers are owed ' + kes(d.totalLiability) + '.', 'Balance:'));
+      list.appendChild(checkItem((d.pendingWdCount || 0) > 0 ? 'mid' : 'ok', (d.pendingWdCount || 0) + ' payout(s) in progress' + ((d.pendingWdCount || 0) > 0 ? ' (' + kes(d.pendingWithdrawals) + ')' : '') + '.', 'Payouts:'));
+      if (wd && wd.ok && wd.data.usage && wd.data.settings) {
+        var u = wd.data.usage, s = wd.data.settings;
+        list.appendChild(u.breakerTripped ? checkItem('bad', 'The breaker is TRIPPED (' + kes(u.outInWindowKes) + ' left in the last ' + u.windowMinutes + ' min). Re-opening will not help until the hour rolls on.', 'Breaker:') : checkItem('ok', 'Not tripped (' + kes(u.outInWindowKes) + ' out in the last ' + u.windowMinutes + ' min' + (s.breakerMaxKes > 0 ? ', limit ' + kes(s.breakerMaxKes) : ', breaker off') + ').', 'Breaker:'));
+        list.appendChild(checkItem('ok', s.minAccountAgeHours + ' h wait \u00B7 ' + s.maxCountPer24h + ' per day \u00B7 ' + kes(s.maxKesPer24h) + ' per day per customer (0 = rule off).', 'Limits in force:'));
+      }
+    } else {
+      list.appendChild(checkItem((d.pendingDepCount || 0) > 0 ? 'mid' : 'ok', (d.pendingDepCount || 0) + ' M-Pesa payment(s) waiting for confirmation' + ((d.pendingDepCount || 0) > 0 ? ' (' + kes(d.pendingDeposits) + ')' : '') + '.', 'Pending:'));
+      list.appendChild(checkItem('ok', 'Customers will be able to start M-Pesa payments again.'));
+    }
+  }
+  function reopenFlow(name) {
+    var m = SW[name]; if (!state.switches || !state.switches[name]) return;
+    var list = h('ul', { class: 'rc-check', 'aria-live': 'polite' });
+    var typed = h('input', { type: 'text', class: 'rc-input', id: 'rcOpenWord', autocomplete: 'off', autocapitalize: 'characters', spellcheck: 'false', placeholder: 'OPEN', 'data-autofocus': '1', 'aria-label': 'Type OPEN to confirm' });
+    var body = h('div', null, [
+      h('p', { class: 'rc-p', text: 'Check this before customers can use ' + m.lower + ' again:' }), list,
+      h('label', { class: 'rc-label', for: 'rcOpenWord', text: 'Type OPEN to confirm' }), typed
+    ]);
+    var ctl = openModal({ title: 'Re-open ' + m.lower + '?', body: body, actions: [
+      { label: 'Cancel', kind: 'ghost', cancel: true, id: 'cancel' },
+      { label: 'Re-open ' + m.lower, kind: 'primary', id: 'go', busy: true, disabled: true, onClick: function (c) { return doSwitchChange(c, name, { enabled: true }, m.label + ' re-opened'); } }
+    ] });
+    typed.addEventListener('input', function () { ctl.enable('go', typed.value.trim().toUpperCase() === 'OPEN'); });
+    typed.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); var b = ctl.buttons.go; if (b && !b.disabled) b.click(); } });
+    fillChecklist(name, list).catch(function () { clear(list); list.appendChild(checkItem('mid', 'Could not load the checklist. You can still re-open.')); });
+  }
+
+  function messageFlow(name) {
+    var m = SW[name], st = state.switches && state.switches[name]; if (!st) return;
+    var max = state.msgMax || 160, def = (state.defaultMessages && state.defaultMessages[name]) || '';
+    var ta = h('textarea', { class: 'rc-input', id: 'rcMsg', rows: '3', 'aria-describedby': 'rcMsgCount', 'data-autofocus': '1' }); ta.value = st.customMessage || st.message || '';
+    var count = h('p', { class: 'rc-hint', id: 'rcMsgCount' });
+    var body = h('div', null, [
+      h('p', { class: 'rc-p', text: 'This is what customers see while ' + m.lower + ' is paused.' }),
+      h('label', { class: 'rc-label', for: 'rcMsg', text: 'Message' }), ta, count,
+      h('p', { class: 'rc-hint rc-wrapword', text: 'Default: \u201C' + def + '\u201D' })
+    ]);
+    var upd = function () { var n = ta.value.replace(/[\u0000-\u001F]+/g, ' ').trim().length; count.textContent = n + ' / ' + max + ' characters'; ta.setAttribute('aria-invalid', n > max || n === 0 ? 'true' : 'false'); };
+    ta.addEventListener('input', upd); upd();
+    var save = function (ctl, value) { return doSwitchChange(ctl, name, { message: value }, m.label + ' message saved'); };
+    openModal({ title: 'Edit the ' + m.lower + ' message', body: body, actions: [
+      { label: 'Cancel', kind: 'ghost', cancel: true, id: 'cancel' },
+      { label: 'Use default message', kind: 'ghost', id: 'def', onClick: function (ctl) { return save(ctl, null); } },
+      { label: 'Save message', kind: 'primary', id: 'go', busy: true, onClick: function (ctl) {
+          var v = ta.value.replace(/[\u0000-\u001F]+/g, ' ').replace(/ {2,}/g, ' ').trim();
+          if (!v) { ctl.setError('The message cannot be empty. Use \u201CUse default message\u201D to go back to the standard text.'); return; }
+          if (v.length > max) { ctl.setError('The message must be ' + max + ' characters or fewer (it is ' + v.length + ').'); return; }
+          if (/[<>]/.test(v)) { ctl.setError('The message cannot contain < or >.'); return; }
+          return save(ctl, v);
+        } }
+    ] });
+  }
+
+  /* ───────────────────────────── M-Pesa balance ───────────────────────────── */
+  async function loadFloat() {
+    var my = ++state.seq.flt;
+    var r = await api('GET', '/api/admin/settings/float');
+    if (my !== state.seq.flt) return;                                  // a newer request exists: this answer may be out of date
+    if (r.ok && r.data.float && typeof r.data.float === 'object') state.flt = r.data.float;
+    try { renderFloat(); } catch (e) { console.error('[RCControls] the balance could not be drawn', e); }
+  }
+  function renderFloat() {
+    var box = document.getElementById('rcFloat'); if (!box) return;
+    clear(box);
+    var f = state.flt;
+    if (!f) { box.appendChild(h('p', { class: 'rc-empty', text: 'Loading the M-Pesa balance\u2026' })); }
+    else if (!f.known) {
+      box.appendChild(h('p', { class: 'rc-p', text: 'No M-Pesa balance has been captured yet.' }));
+      box.appendChild(h('p', { class: 'rc-hint', text: 'It is recorded automatically from the next Paybill payment. You can also type it in from the M-Pesa portal below.' }));
+    } else {
+      box.appendChild(h('div', { class: 'rc-tile-label', text: f.isEstimate ? 'Estimated balance now' : 'Confirmed balance' }));
+      box.appendChild(h('div', { class: 'rc-big', 'data-rc': 'float-big', text: kes(f.isEstimate ? f.estimatedKes : f.kes) }));
+      var src = f.source === 'MANUAL' ? 'typed in by an admin' + (f.note ? ' (' + f.note + ')' : '') : 'from a Paybill confirmation' + (f.ref ? ' (receipt ' + f.ref + ')' : '');
+      box.appendChild(h('div', null, [
+        h('div', { class: 'rc-kv' }, [h('span', { text: 'Last confirmed' }), h('span', { text: kes(f.kes) })]),
+        h('div', { class: 'rc-kv' }, [h('span', { text: 'As of' }), h('span', { text: eat(f.asOf) + ' \u00B7 ' + ago(f.asOf), title: f.asOf })]),
+        h('div', { class: 'rc-kv' }, [h('span', { text: 'Source' }), h('span', { text: src })]),
+        f.isEstimate ? h('div', { class: 'rc-kv' }, [h('span', { text: 'Payouts since then' }), h('span', { text: f.payoutsSinceCount + ' (' + kes(f.payoutsSinceKes) + ') + about ' + kes(f.estimatedFeesKes) + ' fees' })]) : null
+      ]));
+      if (f.ageMinutes > 1440) box.appendChild(h('div', { class: 'rc-note', text: 'This balance was last confirmed ' + ago(f.asOf) + '. Type in a fresh one if you can.' }));
+    }
+    var kesIn = h('input', { type: 'text', inputmode: 'decimal', class: 'rc-input', id: 'rcFloatKes', placeholder: 'e.g. 12500', autocomplete: 'off', 'aria-label': 'M-Pesa balance in KES' });
+    var noteIn = h('input', { type: 'text', class: 'rc-input', id: 'rcFloatNote', placeholder: 'Note (optional)', maxlength: '100', autocomplete: 'off', 'aria-label': 'Note' });
+    var btn = h('button', { type: 'button', class: 'rc-btn ghost', 'data-rc': 'float-save', text: 'Save typed balance', onclick: safe(function () { floatFlow(kesIn, noteIn); }) });
+    box.appendChild(h('label', { class: 'rc-label', for: 'rcFloatKes', text: 'Type the balance from the M-Pesa portal' }));
+    box.appendChild(h('div', { class: 'rc-row2' }, [kesIn, noteIn]));
+    box.appendChild(h('div', { class: 'rc-actions' }, [btn]));
+  }
+  function floatFlow(kesIn, noteIn) {
+    var raw = kesIn.value.replace(/,/g, '').trim(), v = Number(raw);
+    if (!raw || !isFinite(v) || v < 0 || v > 100000000) { kesIn.setAttribute('aria-invalid', 'true'); toast('Enter the balance as a number, e.g. 12500'); kesIn.focus(); return; }
+    kesIn.setAttribute('aria-invalid', 'false');
+    var f = state.flt, note = noteIn.value.trim();
+    var body = h('div', null, [
+      h('p', { class: 'rc-p', text: 'Set the recorded M-Pesa balance to ' + kes(v) + '?' }),
+      f && f.known ? h('p', { class: 'rc-p rc-dim', text: 'Currently ' + kes(f.isEstimate ? f.estimatedKes : f.kes) + (f.isEstimate ? ' (estimate)' : '') + ', as of ' + ago(f.asOf) + '.' }) : null,
+      h('p', { class: 'rc-hint', text: 'The next Paybill payment will update it automatically. This is saved in the history and sent to the admin WhatsApp.' })
+    ]);
+    openModal({ title: 'Save the M-Pesa balance?', body: body, actions: [
+      { label: 'Cancel', kind: 'ghost', cancel: true, id: 'cancel' },
+      { label: 'Save balance', kind: 'primary', id: 'go', busy: true, onClick: async function (ctl) {
+          ctl.setBusy(true, 'Saving\u2026');
+          var r = await api('PUT', '/api/admin/settings/float', note ? { kes: v, note: note } : { kes: v });
+          if (r.ok && r.data.float) { state.flt = r.data.float; renderFloat(); loadHistory(true); ctl.close(); toast('M-Pesa balance saved' + (r.data.auditLogged === false ? ' (the history entry could not be saved)' : '')); }
+          else { ctl.setBusy(false); ctl.setError(errMsg(r)); }
+        } }
+    ] });
+  }
+
+  /* ───────────────────────────── withdrawal limits ───────────────────────────── */
+  // The server always sends these tables; this makes the page safe even if an answer is incomplete or corrupt.
+  function normSettings(s) {
+    if (!s || typeof s !== 'object') return null;
+    ['defaults', 'limits', 'overridden', 'updatedBy', 'updatedAt'].forEach(function (k) { if (!s[k] || typeof s[k] !== 'object' || Array.isArray(s[k])) s[k] = {}; });
+    return s;
+  }
+  function limitOf(s, n) { var l = s.limits && s.limits[n]; return (l && typeof l === 'object') ? l : { label: n, min: 0, max: 0 }; }
+  function usageTiles(u, s) {
+    var box = document.getElementById('rcUsage'); if (!box) return; clear(box);
+    if (!u || !s) { box.appendChild(h('p', { class: 'rc-empty', text: 'Loading live usage\u2026' })); return; }
+    var max = s.breakerMaxKes, pct = max > 0 ? Math.min(100, Math.round(u.outInWindowKes * 100 / max)) : 0;
+    box.appendChild(h('div', { class: 'rc-tile' }, [
+      h('div', { class: 'rc-tile-label', text: 'Out in the last ' + u.windowMinutes + ' min' }),
+      h('div', { class: 'rc-tile-val', 'data-rc': 'usage-window', text: kes(u.outInWindowKes) + (max > 0 ? ' of ' + kes(max) : ' (breaker off)') }),
+      max > 0 ? h('div', { class: 'rc-bar' + (u.breakerTripped ? ' hot' : ''), role: 'img', 'aria-label': pct + ' percent of the breaker limit' }, [h('span', { style: 'width:' + pct + '%' })]) : null,
+      u.breakerTripped ? h('div', { class: 'rc-hint', style: 'color:#b91c1c;font-weight:700', text: 'Breaker TRIPPED: withdrawals are paused for everyone.' }) : null
+    ]));
+    box.appendChild(h('div', { class: 'rc-tile' }, [h('div', { class: 'rc-tile-label', text: 'Last 24 hours' }), h('div', { class: 'rc-tile-val', 'data-rc': 'usage-day', text: u.countLast24h + ' withdrawals \u00B7 ' + kes(u.outLast24hKes) })]));
+    box.appendChild(h('div', { class: 'rc-tile' }, [h('div', { class: 'rc-tile-label', text: 'Payouts in progress' }), h('div', { class: 'rc-tile-val', 'data-rc': 'usage-pending', text: String(u.pendingNow) })]));
+  }
+  async function loadLimits(force) {
+    var my = ++state.seq.lim;
+    var r = await api('GET', '/api/admin/settings/withdrawals');
+    if (my !== state.seq.lim) return;
+    if (r.ok && r.data.settings) { state.wd = normSettings(r.data.settings); state.usage = (r.data.usage && typeof r.data.usage === 'object') ? r.data.usage : null; }
+    if (force) state.limitsDirty = false;
+    try { renderLimits(); } catch (e) { console.error('[RCControls] the limits could not be drawn', e); }
+  }
+  function limitInputs() { return Array.prototype.slice.call(document.querySelectorAll('#rcLimitFields input[data-limit]')); }
+  function currentChanges() {
+    var s = state.wd, out = [];
+    if (!s) return out;
+    limitInputs().forEach(function (inp) { var n = inp.getAttribute('data-limit'); var raw = inp.value.trim(); if (raw !== '' && Number(raw) !== Number(s[n])) out.push({ name: n, from: s[n], toRaw: raw, input: inp }); });
+    return out;
+  }
+  function markDirty() {
+    var dirty = currentChanges().length > 0; state.limitsDirty = dirty;
+    var save = document.querySelector('[data-rc="limits-save"]'), disc = document.querySelector('[data-rc="limits-discard"]');
+    if (save) save.disabled = !dirty; if (disc) disc.disabled = !dirty;
+  }
+  function renderLimits() {
+    var s = state.wd; usageTiles(state.usage, s);
+    var box = document.getElementById('rcLimitFields'); if (!box) return;
+    if (!s) { clear(box); box.appendChild(h('p', { class: 'rc-empty', text: 'Loading the limits\u2026' })); return; }
+    if (state.limitsDirty && box.querySelector('input')) return;      // never overwrite what the admin is typing
+    clear(box);
+    LIMIT_ORDER.forEach(function (n) {
+      var lim = limitOf(s, n);
+      var inp = h('input', { type: 'number', inputmode: 'numeric', class: 'rc-input', id: 'rcL_' + n, 'data-limit': n, min: String(lim.min), max: String(lim.max), step: '1', value: String(s[n]), 'aria-describedby': 'rcLH_' + n });
+      inp.addEventListener('input', function () { inp.setAttribute('aria-invalid', 'false'); markDirty(); });
+      var over = s.overridden && s.overridden[n];
+      var meta = h('div', { class: 'rc-field-meta' }, [
+        h('span', { class: 'rc-hint', id: 'rcLH_' + n, text: 'Default ' + num(s.defaults[n]) + ' ' + LIMIT_UNIT[n] + ' \u00B7 range ' + num(lim.min) + '\u2013' + num(lim.max) + ' (0 = off)' }),
+        over ? h('span', { class: 'rc-badge', text: 'CHANGED' }) : null
+      ]);
+      var kids = [h('label', { class: 'rc-label', for: 'rcL_' + n, text: lim.label }), inp, meta];
+      if (over) {
+        kids.push(h('div', { class: 'rc-field-meta' }, [
+          h('span', { class: 'rc-hint', text: 'Set by ' + ((s.updatedBy && s.updatedBy[n]) || 'an admin') + (s.updatedAt && s.updatedAt[n] ? ' \u00B7 ' + ago(s.updatedAt[n]) : '') }),
+          h('button', { type: 'button', class: 'rc-btn ghost sm', 'data-rc': 'reset-' + n, text: 'Reset to default', onclick: safe(function () { resetFlow(n); }) })
+        ]));
+      }
+      box.appendChild(h('div', { class: 'rc-field' }, kids));
+    });
+    markDirty();
+  }
+  function describeChange(label, from, to, name) {
+    return label + ': ' + num(from) + ' \u2192 ' + num(to) + ' ' + LIMIT_UNIT[name] + (Number(to) === 0 ? '  (this switches the rule OFF)' : '');
+  }
+  function saveLimitsFlow() {
+    var s = state.wd; if (!s) return;
+    var ch = currentChanges(); if (!ch.length) return;
+    var problems = [];
+    ch.forEach(function (c) {
+      var lim = limitOf(s, c.name), v = Number(c.toRaw);
+      if (!isFinite(v) || Math.floor(v) !== v) problems.push(lim.label + ' must be a whole number'); else if (v < lim.min || v > lim.max) problems.push(lim.label + ' must be between ' + num(lim.min) + ' and ' + num(lim.max) + '; use 0 to switch this rule off');
+      if (problems.length && problems[problems.length - 1]) c.input.setAttribute('aria-invalid', 'true');
+    });
+    if (problems.length) { toast(problems[0]); return; }
+    var off = ch.some(function (c) { return Number(c.toRaw) === 0; });
+    var list = h('ul', { class: 'rc-check' }, ch.map(function (c) { return checkItem(Number(c.toRaw) === 0 ? 'mid' : 'ok', describeChange(limitOf(s, c.name).label, c.from, Number(c.toRaw), c.name)); }));
+    var reason = h('input', { type: 'text', class: 'rc-input', id: 'rcLimReason', maxlength: '200', placeholder: 'Reason (optional) \u2014 saved in the history', autocomplete: 'off' });
+    var body = h('div', null, [h('p', { class: 'rc-p', text: 'Apply these withdrawal limits? They take effect on the very next withdrawal.' }), list,
+      off ? h('div', { class: 'rc-note', text: 'A value of 0 switches that rule off completely. Only do this on purpose.' }) : null,
+      h('label', { class: 'rc-label', for: 'rcLimReason', text: 'Reason' }), reason]);
+    openModal({ title: 'Save withdrawal limits?', tone: off ? 'danger' : undefined, body: body, actions: [
+      { label: 'Cancel', kind: 'ghost', cancel: true, id: 'cancel' },
+      { label: 'Save limits', kind: off ? 'danger' : 'primary', id: 'go', busy: true, onClick: async function (ctl) {
+          ctl.setBusy(true, 'Saving\u2026');
+          var payload = {}; ch.forEach(function (c) { payload[c.name] = Number(c.toRaw); }); var rs = reason.value.trim(); if (rs) payload.reason = rs;
+          var r = await api('PUT', '/api/admin/settings/withdrawals', payload);
+          if (r.ok) { state.limitsDirty = false; await loadLimits(true); loadHistory(true); ctl.close(); toast('Withdrawal limits saved'); }
+          else { ctl.setBusy(false); ctl.setError(errMsg(r)); }
+        } }
+    ] });
+  }
+  function resetFlow(name) {
+    var s = state.wd; if (!s) return; var lim = limitOf(s, name);
+    var body = h('div', null, [h('p', { class: 'rc-p', text: 'Reset \u201C' + lim.label + '\u201D to its built-in default of ' + num(s.defaults[name]) + ' ' + LIMIT_UNIT[name] + '? It is now ' + num(s[name]) + '.' })]);
+    openModal({ title: 'Reset to default?', body: body, actions: [
+      { label: 'Cancel', kind: 'ghost', cancel: true, id: 'cancel' },
+      { label: 'Reset to default', kind: 'primary', id: 'go', busy: true, onClick: async function (ctl) {
+          ctl.setBusy(true, 'Saving\u2026'); var p = {}; p[name] = null;
+          var r = await api('PUT', '/api/admin/settings/withdrawals', p);
+          if (r.ok) { state.limitsDirty = false; await loadLimits(true); loadHistory(true); ctl.close(); toast(lim.label + ' reset to default'); }
+          else { ctl.setBusy(false); ctl.setError(errMsg(r)); }
+        } }
+    ] });
+  }
+
+  /* ───────────────────────────── history ───────────────────────────── */
+  async function loadHistory(reset) {
+    var my = ++state.seq.hist;
+    if (reset) { state.hist = []; state.histNext = null; }
+    var path = '/api/admin/settings/history?limit=20' + (!reset && state.histNext ? '&before=' + encodeURIComponent(state.histNext) : '');
+    var r = await api('GET', path);
+    if (my !== state.seq.hist) return;
+    if (r.ok && Array.isArray(r.data.entries)) { var ok = r.data.entries.filter(function (e) { return e && typeof e === 'object'; }); state.hist = reset ? ok : state.hist.concat(ok); state.histNext = r.data.nextBefore || null; state.histLoaded = true; }
+    try { renderHistory(); } catch (e) { console.error('[RCControls] the history could not be drawn', e); }
+  }
+  function renderHistory() {
+    var box = document.getElementById('rcHistory'); if (!box) return; clear(box);
+    if (!state.histLoaded) { box.appendChild(h('p', { class: 'rc-empty', text: 'Loading the history\u2026' })); return; }
+    if (!state.hist.length) { box.appendChild(h('p', { class: 'rc-empty', text: 'No changes recorded yet.' })); return; }
+    var ul = h('ul', { class: 'rc-hist' });
+    state.hist.forEach(function (e) {
+      ul.appendChild(h('li', null, [
+        h('div', { class: 'rc-hist-sum', text: e.summary }),
+        h('div', { class: 'rc-hist-meta', text: e.adminName + ' \u00B7 ' + ago(e.at) + ' \u00B7 ' + eat(e.at), title: e.at }),
+        e.reason ? h('div', { class: 'rc-hist-reason', text: 'Reason: ' + e.reason }) : null
+      ]));
+    });
+    box.appendChild(ul);
+    if (state.histNext) box.appendChild(h('div', { class: 'rc-actions' }, [h('button', { type: 'button', class: 'rc-btn ghost sm', 'data-rc': 'hist-more', text: 'Load more', onclick: safe(function () { loadHistory(false); }) })]));
+  }
+
+  /* ───────────────────────────── test alert ───────────────────────────── */
+  function alertFlow() {
+    var body = h('div', null, [h('p', { class: 'rc-p', text: 'This sends one real WhatsApp message to every admin number, so you can confirm alerts reach you.' }), h('p', { class: 'rc-hint', text: 'Limited to 10 test alerts per hour. The message says it is a test.' })]);
+    var resultBox = h('div'); body.appendChild(resultBox);
+    openModal({ title: 'Send a test alert?', body: body, actions: [
+      { label: 'Close', kind: 'ghost', cancel: true, id: 'cancel' },
+      { label: 'Send test alert', kind: 'primary', id: 'go', busy: true, onClick: async function (ctl) {
+          ctl.setBusy(true, 'Sending\u2026'); clear(resultBox);
+          var r = await api('POST', '/api/admin/alerts/test', { type: 'basic' });
+          ctl.setBusy(false);
+          if (!r.ok && !(r.data && r.data.summary)) { ctl.setError(errMsg(r)); return; }
+          var d = r.data, results = Array.isArray(d.results) ? d.results : [], okAll = results.length > 0 && results.every(function (x) { return x.ok; });
+          resultBox.appendChild(h('div', { class: okAll ? 'rc-okbox' : 'rc-note', text: d.summary || 'Done.' }));
+          if (results.length) resultBox.appendChild(h('ul', { class: 'rc-results' }, results.map(function (x) {
+            return h('li', null, [(x.to || 'recipient') + ' \u2014 ' + (x.ok ? 'accepted by Meta' + (x.fellBack ? ' (used the OLD template)' : '') : 'FAILED' + (x.metaMessage ? ': ' + x.metaMessage : '') + (x.metaCode ? ' (code ' + x.metaCode + ')' : ''))]);
+          })));
+          ctl.buttons.go.textContent = 'Send again';
+        } }
+    ] });
+  }
+
+  /* ───────────────────────────── build the panels ───────────────────────────── */
+  function card(title, bodyId, opts) {
+    opts = opts || {};
+    var body = h('div', { class: 'rc-card-body' });
+    var kids = body; var head;
+    if (opts.collapsible) {
+      var chev = h('span', { class: 'rc-chev', 'aria-hidden': 'true', text: '\u25BE' });
+      head = h('button', { type: 'button', class: 'rc-head-btn', 'aria-expanded': opts.open === false ? 'false' : 'true', 'aria-controls': bodyId }, [h('span', { class: 'rc-card-title', text: title }), chev]);
+    } else head = h('div', { class: 'rc-card-head' }, [h('h3', { class: 'rc-card-title', text: title })]);
+    body.id = bodyId;
+    var c = h('div', { class: 'rc-card' + (opts.span2 ? ' rc-span2' : '') + (opts.collapsible && opts.open === false ? ' rc-collapsed' : '') + (opts.extra ? ' ' + opts.extra : '') }, [head, kids]);
+    if (opts.collapsible) head.addEventListener('click', function () { var col = c.classList.toggle('rc-collapsed'); head.setAttribute('aria-expanded', col ? 'false' : 'true'); });
+    return { el: c, body: body };
+  }
+  function buildTxn() {
+    var host = document.querySelector('#panel-transactions .page-sub'); if (!host || document.getElementById('rcTxn')) return;
+    var narrow = window.matchMedia && window.matchMedia('(max-width: 767px)').matches;
+    var wrap = h('section', { class: 'rc-wrap', id: 'rcTxn', 'aria-label': 'Platform controls' });
+    wrap.appendChild(h('div', { class: 'rc-sec-title', text: 'Platform controls' }));
+    wrap.appendChild(h('p', { class: 'rc-sec-sub', text: 'Pause or re-open money movement. A change applies to the very next customer request.' }));
+    var grid = h('div', { class: 'rc-grid' });
+    var c1 = card('Money switches', 'rcTxnSwitches'); c1.body.id = 'rcTxnSwitches';
+    var c2 = card('M-Pesa balance', 'rcFloat'); c2.body.id = 'rcFloat';
+    var c3 = card('Withdrawal limits', 'rcLimitsBody', { collapsible: true, open: true, span2: true });
+    c3.body.appendChild(h('div', { id: 'rcUsage', class: 'rc-usage' }));
+    c3.body.appendChild(h('div', { id: 'rcLimitFields', class: 'rc-fields' }));
+    c3.body.appendChild(h('div', { class: 'rc-actions' }, [
+      h('button', { type: 'button', class: 'rc-btn primary', 'data-rc': 'limits-save', text: 'Save limits', disabled: true, onclick: safe(saveLimitsFlow) }),
+      h('button', { type: 'button', class: 'rc-btn ghost', 'data-rc': 'limits-discard', text: 'Discard changes', disabled: true, onclick: safe(function () { state.limitsDirty = false; renderLimits(); }) }),
+      h('button', { type: 'button', class: 'rc-btn ghost', 'data-rc': 'limits-refresh', text: 'Refresh', onclick: safe(function () { loadLimits(true); }) })
+    ]));
+    var c4 = card('WhatsApp alerts', 'rcAlertBody');
+    c4.body.appendChild(h('p', { class: 'rc-p rc-dim', text: 'Switch changes, limit changes and security events are sent to the admin WhatsApp numbers.' }));
+    c4.body.appendChild(h('div', { class: 'rc-actions' }, [h('button', { type: 'button', class: 'rc-btn ghost', 'data-rc': 'alert-test', text: 'Send test alert', onclick: safe(alertFlow) })]));
+    var c5 = card('Change history', 'rcHistBody', { collapsible: true, open: !narrow, span2: true });
+    c5.body.appendChild(h('div', { id: 'rcHistory' }));
+    [c1, c2, c3, c4, c5].forEach(function (c) { grid.appendChild(c.el); });
+    wrap.appendChild(grid); host.insertAdjacentElement('afterend', wrap);
+    renderSwitches(); renderFloat(); renderLimits(); renderHistory();
+  }
+  function buildMkt() {
+    var host = document.querySelector('#panel-markets .page-sub'); if (!host || document.getElementById('rcMkt')) return;
+    var wrap = h('section', { class: 'rc-wrap', id: 'rcMkt', 'aria-label': 'Trading control' });
+    wrap.appendChild(h('div', { class: 'rc-sec-title', text: 'Trading control' }));
+    var c = card('Trading switch', 'rcMktSwitches'); c.body.id = 'rcMktSwitches';
+    wrap.appendChild(h('div', { class: 'rc-grid' }, [c.el])); host.insertAdjacentElement('afterend', wrap);
+    renderSwitches();
+  }
+
+  /* ───────────────────────────── when a panel is shown ───────────────────────────── */
+  function isShown(el) { return !!el && window.getComputedStyle(el).display !== 'none'; }
+  function watch(id, fn) {
+    var el = document.getElementById(id); if (!el || typeof MutationObserver === 'undefined') return;
+    var last = false;
+    new MutationObserver(function () { var s = isShown(el); if (s && !last) safe(fn)(); last = s; }).observe(el, { attributes: true, attributeFilter: ['style', 'class'] });
+    last = isShown(el); if (last) safe(fn)();
+  }
+  var txnAt = 0;
+  function onTxn() { txnAt = Date.now(); refreshSwitches(); loadFloat(); loadLimits(false); loadHistory(true); }
+  function onMkt() { refreshSwitches(); }
+
+  /* ───────────────────────────── revenue panel extras ───────────────────────────── */
+  function ensureAfter(anchor, id) {
+    var ex = document.getElementById(id); if (ex) return ex;
+    var el = h('div', { id: id }); anchor.insertAdjacentElement('afterend', el); return el;
+  }
+  function renderRevenue(d) {
+    try {
+      if (!d) return;
+      var good = '#166534', bad = '#ce1126';
+      var netEl = document.getElementById('revNetRevenue'), netCard = netEl && netEl.closest('.table-card');
+      if (netCard) {
+        var lossBox = ensureAfter(netCard, 'rcRevLoss'); clear(lossBox);
+        var n = Number(d.negativeWalletCount || 0), loss = Number(d.negativeWalletsKes || 0);
+        if (n > 0) {
+          var after = Number(d.netAfterLosses || 0);
+          lossBox.appendChild(h('div', { class: 'table-card rc-rev' }, [
+            h('div', { class: 'rc-rev-label', text: 'Net revenue after unrecovered losses' }),
+            h('div', { class: 'rc-rev-num', 'data-rc': 'rev-after', style: 'color:' + (after >= 0 ? good : bad), text: kes(after) }),
+            h('div', { class: 'rc-rev-sub', text: kes(d.netRevenue) + ' net revenue \u2212 ' + kes(loss) + ' lost in ' + n + ' negative wallet' + (n === 1 ? '' : 's') + ' (money that left and was never deposited).' })
+          ]));
+        }
+      }
+      var gapEl = document.getElementById('revLiquidityGap'), gapCard = gapEl && gapEl.closest('.table-card');
+      if (gapCard) {
+        var cov = ensureAfter(gapCard, 'rcRevCover'); clear(cov);
+        var f = d.float, kids = [h('div', { class: 'rc-rev-label', text: 'Real cash cover (M-Pesa balance vs what is owed)' })];
+        if (f && f.known) {
+          var cover = Number(f.cashCover || 0), est = Number(f.estimatedKes || 0);
+          kids.push(h('div', { class: 'rc-rev-num', 'data-rc': 'rev-cover', style: 'color:' + (cover >= 0 ? good : bad), text: (cover >= 0 ? '+' : '\u2212') + kes(Math.abs(cover)) }));
+          kids.push(h('div', { class: 'rc-rev-sub', text: 'M-Pesa balance ' + kes(est) + (f.isEstimate ? ' (estimate)' : ' (confirmed)') + ' \u2212 total owed ' + kes(d.totalLiability) + '. Balance last confirmed ' + ago(f.asOf) + '.' }));
+          if (cover < 0) kids.push(h('div', { class: 'rc-rev-sub', style: 'color:' + bad + ';font-weight:700', text: 'To cover every wallet and pool you need about ' + kes(-cover) + ' more in the M-Pesa account.' }));
+        } else {
+          kids.push(h('div', { class: 'rc-rev-num', style: 'color:var(--text-dim)', text: 'Unknown' }));
+          kids.push(h('div', { class: 'rc-rev-sub', text: 'No M-Pesa balance captured yet. It appears after the next Paybill payment, or type it in on the Transactions page.' }));
+        }
+        if (Number(d.negativeWalletCount || 0) > 0) kids.push(h('div', { class: 'rc-rev-sub', text: 'Unrecovered losses: ' + kes(d.negativeWalletsKes) + ' in ' + d.negativeWalletCount + ' negative wallet(s) \u2014 not counted as owed.' }));
+        cov.appendChild(h('div', { class: 'table-card rc-rev' }, kids));
+      }
+    } catch (e) { console.error('[RCControls] revenue extras', e); }
+  }
+
+  /* ───────────────────────────── start ───────────────────────────── */
+  function init() {
+    try {
+      buildTxn(); buildMkt();
+      watch('panel-transactions', onTxn); watch('panel-markets', onMkt);
+      refreshSwitches(); updateBadge();
+      setInterval(function () { if (!state.expired && !document.hidden) refreshSwitches(); }, POLL_MS);      // a hidden tab does not poll; it refreshes the moment you come back (below)
+      document.addEventListener('visibilitychange', function () { if (!document.hidden && !state.expired && Date.now() - state.lastSwitchRefresh > 20000) refreshSwitches(); });
+    } catch (e) { console.error('[RCControls] init failed — the rest of the page is unaffected', e); }
+  }
+  window.RCControls = { renderRevenue: renderRevenue, refresh: function () { return refreshSwitches(); }, _state: state };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+})();
+
+</script>
 </body>
 </html>
