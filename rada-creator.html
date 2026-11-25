@@ -701,6 +701,17 @@ td{padding:14px 16px;font-size:0.8rem;border-bottom:1px solid rgba(109,40,217,0.
   })(window,document,"clarity","script","vws3naz68i");
 </script>
 
+<script id="rc-safe-output">
+/* Output-safety helpers: server text is escaped before it is written into the page. */
+function rcEsc(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+/* For text the SERVER has already HTML-escaped (names, questions and titles inside notifications): valid entities such as &amp; are kept so the text displays exactly as before, but any raw < > or stray & is neutralised. */
+function rcEscEnt(s) { return String(s == null ? '' : s).replace(/&(?!(?:amp|lt|gt|quot|apos|#\d{1,6}|#x[0-9a-fA-F]{1,6});)/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+/* A link that is safe to open: "#", a page of this site, or an https:// address. javascript:, data: and the like become "#". */
+function rcSafeLink(u) { var s = String(u == null ? '' : u).trim(); if (!s || s === '#') return '#'; if (/^https:\/\//i.test(s)) return s; if (s.indexOf('//') === 0) return '#'; if (/^[^\/?#]*:/.test(s)) return '#'; return s; }
+/* An https image address made safe for an attribute or a CSS url(...): characters that could break out are percent-encoded; anything that is not https gives "". */
+function rcSafeImg(u) { var s = String(u == null ? '' : u).trim(); if (!/^https:\/\//i.test(s)) return ''; return s.replace(/[\u0000-\u0020\u007F"'`<>()\\{}|^]/g, function (c) { return '%' + ('0' + c.charCodeAt(0).toString(16).toUpperCase()).slice(-2); }); }
+function rcSafeBg(c) { return (typeof c === 'string' && /^#[0-9a-fA-F]{3,8}$/.test(c)) ? c : '#1a1035'; }
+</script>
 </head>
 <body>
 
@@ -1922,24 +1933,113 @@ function updateMultiTotals() {
   }
 }
 
+// Places the forecasts for real: one POST /api/markets/{id}/trade per item, in order (same code as rada-markets.html).
+// (This page previously only waited 1.2 s and showed "forecasts submitted" without sending anything.)
 function submitMultiForecast() {
   var keys = Object.keys(multiItems);
   if (!keys.length) return;
+
   var btn = document.getElementById('multiSubmitBtn');
-  if (btn) { btn.disabled = true; btn.textContent = 'Submitting...'; }
-  // In production: call POST /api/markets/[id]/trade for each item sequentially
-  setTimeout(() => {
-    keys.forEach(id => {
-      delete multiItems[id];
-      var mbtn = document.getElementById('multibtn_' + id);
-      if (mbtn) { mbtn.textContent = '+ Multi'; mbtn.classList.remove('added'); }
-      var card = document.getElementById('mcard_' + id);
-      if (card) card.style.borderColor = '';
+  if (btn) { btn.disabled = true; btn.textContent = 'Processing...'; }
+
+  // Calculate bonus split across all trades — use bonus first, then real balance
+  var realBal  = Number((radaUser && radaUser.balanceKes)      || 0);
+  var bonusBal = Number((radaUser && radaUser.bonusBalanceKes) || 0);
+  var bonusLeft = bonusBal; // track how much bonus remains to allocate
+
+  // Build trade list with per-trade bonus allocation
+  var trades = keys.map(function(id) {
+    var item = multiItems[id];
+    var stake = item.stake || 0;
+    var bonusForThis = Math.min(bonusLeft, stake);
+    bonusLeft -= bonusForThis;
+    return { marketId: id, side: item.side, amountKes: stake, bonusAmountKes: bonusForThis };
+  });
+
+  // Submit trades sequentially — stop on first failure
+  var successCount = 0;
+  var placed = {};   // marketIds whose trade really went through: only these are cleared from the list
+  var errors = [];
+
+  function submitNext(i) {
+    if (i >= trades.length) {
+      // All done
+      if (btn) { btn.disabled = false; btn.textContent = 'Submit All →'; }
+
+      // Clear submitted items from multiItems
+      trades.filter(function(x) { return placed[x.marketId]; }).forEach(function(t) {      // the ones that succeeded (not simply "the first N"): a failed item must stay so it is not lost and a placed one cannot be sent twice
+        delete multiItems[t.marketId];
+        var mbtn = document.getElementById('multibtn_' + t.marketId);
+        if (mbtn) { mbtn.textContent = '+ Multi'; mbtn.classList.remove('added'); }
+        var card = document.getElementById('mcard_' + t.marketId);
+        if (card) card.style.borderColor = '';
+      });
+      updateFabBadge();
+      closeMultiSheet();
+
+      if (errors.length === 0) {
+        showToast('✅ ' + successCount + ' answer' + (successCount !== 1 ? 's' : '') + ' placed!');
+      } else if (successCount > 0) {
+        showToast('⚠ ' + successCount + ' placed, ' + errors.length + ' failed: ' + errors[0]);
+      } else {
+        showToast('❌ Failed: ' + errors[0]);
+      }
+
+      // Refresh balance from backend
+      userFetch('/api/users/me/profile')
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          if (d.user) {
+            var fresh = d.user;
+            var bal = Number(fresh.balanceKes || 0);
+            try {
+              var stored = JSON.parse(localStorage.getItem('rada_user') || 'null');
+              if (stored) {
+                stored.balanceKes = bal;
+                stored.bonusBalanceKes = Number(fresh.bonusBalanceKes || 0);
+                localStorage.setItem('rada_user', JSON.stringify(stored));
+                radaUser = stored;
+              }
+            } catch(e) {}
+            var mBalEl = document.getElementById('mTopBal');
+            var accBal = document.getElementById('accUserBal');
+            if (mBalEl) mBalEl.textContent = 'KES ' + bal.toLocaleString();
+            if (accBal) accBal.textContent = '● KES ' + bal.toLocaleString() + ' available';
+          }
+        }).catch(function() {});
+
+      return;
+    }
+
+    var t = trades[i];
+    userFetch('/api/markets/' + t.marketId + '/trade', {
+      method: 'POST',
+      body: JSON.stringify({
+        side:           t.side,
+        amountKes:      t.amountKes,
+        bonusAmountKes: t.bonusAmountKes,
+      }),
+    })
+    .then(function(r) {
+      return r.json().then(function(d) { return { ok: r.ok, d: d }; });
+    })
+    .then(function(res) {
+      if (res.ok && res.d.success) {
+        successCount++;
+        placed[t.marketId] = true;
+      } else {
+        var msg = (res.d && typeof res.d.error === 'string') ? res.d.error : 'Trade failed';
+        errors.push(msg);
+      }
+      submitNext(i + 1);
+    })
+    .catch(function(err) {
+      errors.push('Network error');
+      submitNext(i + 1);
     });
-    updateFabBadge();
-    closeMultiSheet();
-    showToast('✅ ' + keys.length + ' forecasts submitted!');
-  }, 1200);
+  }
+
+  submitNext(0);
 }
 
 // ── Promotional carousel ──────────────────────────────────────────────────────
@@ -1982,13 +2082,13 @@ function renderCarousel() {
   if (!track || !promoSlides.length) return;
 
   track.innerHTML = promoSlides.map((s, i) => `
-    <div class="promo-slide" style="background:${s.bgColour || '#1a1035'}">
-      ${s.imageUrl ? `<div class="promo-slide-bg" style="background-image:url('${s.imageUrl}')"></div><div class="promo-slide-overlay"></div>` : ''}
+    <div class="promo-slide" style="background:${rcSafeBg(s.bgColour)}">
+      ${rcSafeImg(s.imageUrl) ? `<div class="promo-slide-bg" style="background-image:url('${rcSafeImg(s.imageUrl)}')"></div><div class="promo-slide-overlay"></div>` : ''}
       <div class="promo-slide-content" style="color:#fff;">
-        ${s.tag ? `<div class="promo-slide-tag" style="background:rgba(255,255,255,0.15);color:rgba(255,255,255,0.9)">${s.tag}</div>` : ''}
-        <div class="promo-slide-title">${s.title}</div>
-        ${s.subtitle ? `<div class="promo-slide-sub">${s.subtitle}</div>` : ''}
-        ${s.ctaText ? `<button class="promo-slide-cta" style="background:#6d28d9;color:#fff;" onclick="promoCtaClick('${s.ctaLink || '#'}')">${s.ctaText}</button>` : ''}
+        ${s.tag ? `<div class="promo-slide-tag" style="background:rgba(255,255,255,0.15);color:rgba(255,255,255,0.9)">${rcEsc(s.tag)}</div>` : ''}
+        <div class="promo-slide-title">${rcEsc(s.title)}</div>
+        ${s.subtitle ? `<div class="promo-slide-sub">${rcEsc(s.subtitle)}</div>` : ''}
+        ${s.ctaText ? `<button class="promo-slide-cta" style="background:#6d28d9;color:#fff;" data-cta="${rcEsc(rcSafeLink(s.ctaLink))}" onclick="promoCtaClick(this.dataset.cta)">${rcEsc(s.ctaText)}</button>` : ''}
       </div>
       <button class="promo-dismiss" onclick="dismissPromo()">✕</button>
     </div>`).join('');
@@ -2028,7 +2128,7 @@ function dismissPromo() {
 }
 
 function promoCtaClick(link) {
-  if (link && link !== '#') window.location.href = link;
+  if (link && link !== '#' && rcSafeLink(link) === link) window.location.href = link;
 }
 
 // ── Live filter ───────────────────────────────────────────────────────────────

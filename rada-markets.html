@@ -1172,6 +1172,17 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
   </script>
+<script id="rc-safe-output">
+/* Output-safety helpers: server text is escaped before it is written into the page. */
+function rcEsc(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+/* For text the SERVER has already HTML-escaped (names, questions and titles inside notifications): valid entities such as &amp; are kept so the text displays exactly as before, but any raw < > or stray & is neutralised. */
+function rcEscEnt(s) { return String(s == null ? '' : s).replace(/&(?!(?:amp|lt|gt|quot|apos|#\d{1,6}|#x[0-9a-fA-F]{1,6});)/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+/* A link that is safe to open: "#", a page of this site, or an https:// address. javascript:, data: and the like become "#". */
+function rcSafeLink(u) { var s = String(u == null ? '' : u).trim(); if (!s || s === '#') return '#'; if (/^https:\/\//i.test(s)) return s; if (s.indexOf('//') === 0) return '#'; if (/^[^\/?#]*:/.test(s)) return '#'; return s; }
+/* An https image address made safe for an attribute or a CSS url(...): characters that could break out are percent-encoded; anything that is not https gives "". */
+function rcSafeImg(u) { var s = String(u == null ? '' : u).trim(); if (!/^https:\/\//i.test(s)) return ''; return s.replace(/[\u0000-\u0020\u007F"'`<>()\\{}|^]/g, function (c) { return '%' + ('0' + c.charCodeAt(0).toString(16).toUpperCase()).slice(-2); }); }
+function rcSafeBg(c) { return (typeof c === 'string' && /^#[0-9a-fA-F]{3,8}$/.test(c)) ? c : '#1a1035'; }
+</script>
 </head>
 <body>
 
@@ -1660,7 +1671,7 @@ function renderMarkets(data) {
   grid.innerHTML = data.map((m, i) => `
     <div class="market-card" id="mcard_${m.id}" style="opacity:1!important;visibility:visible!important;" onclick="openForecast('${m.id}')">
       <div class="card-title-row">
-        ${m.imageUrl ? `<div class="card-thumb"><img src="${m.imageUrl}" alt="" loading="lazy" onerror="this.parentElement.style.display='none'"></div>` : ''}
+        ${rcSafeImg(m.imageUrl) ? `<div class="card-thumb"><img src="${rcSafeImg(m.imageUrl)}" alt="" loading="lazy" onerror="this.parentElement.style.display='none'"></div>` : ''}
         <div class="card-title-content">
           <div class="card-category"><div class="cat-dot"></div>${m.cat}</div>
           ${m.creator ? `<div class="creator-badge">💡 ${esc(m.creator)} · Creator</div>` : ''}
@@ -1726,14 +1737,14 @@ function renderTrending() {
   ` + ranked.map((m, i) => `
     <div class="market-card" id="mcard_${m.id}" onclick="openForecast('${m.id}')">
       <div class="card-title-row">
-        ${m.imageUrl ? `<div class="card-thumb"><img src="${m.imageUrl}" alt="" loading="lazy" onerror="this.parentElement.style.display='none'"></div>` : ''}
+        ${rcSafeImg(m.imageUrl) ? `<div class="card-thumb"><img src="${rcSafeImg(m.imageUrl)}" alt="" loading="lazy" onerror="this.parentElement.style.display='none'"></div>` : ''}
         <div class="card-title-content">
           <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
             <span class="trend-rank">#${i+1}</span>
             <div class="card-category" style="margin-bottom:0"><div class="cat-dot"></div>${m.cat}</div>
           </div>
           <div style="margin-bottom:6px;">${trendBadges(m)}</div>
-          ${m.creator ? `<div class="creator-badge">💡 ${m.creator} · Creator</div>` : ''}
+          ${m.creator ? `<div class="creator-badge">💡 ${rcEscEnt(m.creator)} · Creator</div>` : ''}
           <div class="card-question">${esc(m.q)}</div>
         </div>
       </div>
@@ -2674,8 +2685,8 @@ function loadNotifications() {
       <div class="notif-item ${n.read ? '' : 'unread'}" data-notif-id="${n.id}" onclick="tapNotif(event, '${n.id}','${n.link||''}')">
         <div class="notif-icon">${icons[n.type] || '🔔'}</div>
         <div class="notif-content">
-          <div class="notif-title-txt">${n.title}</div>
-          <div class="notif-msg-txt">${n.message}</div>
+          <div class="notif-title-txt">${rcEscEnt(n.title)}</div>
+          <div class="notif-msg-txt">${rcEscEnt(n.message)}</div>
           <div class="notif-time-txt">${timeAgo(n.createdAt)}</div>
         </div>
         ${!n.read ? '<div class="notif-unread-dot"></div>' : ''}
@@ -3000,6 +3011,7 @@ function submitMultiForecast() {
 
   // Submit trades sequentially — stop on first failure
   var successCount = 0;
+  var placed = {};   // marketIds whose trade really went through: only these are cleared from the list
   var errors = [];
 
   function submitNext(i) {
@@ -3008,7 +3020,7 @@ function submitMultiForecast() {
       if (btn) { btn.disabled = false; btn.textContent = 'Submit All →'; }
 
       // Clear submitted items from multiItems
-      trades.slice(0, successCount).forEach(function(t) {
+      trades.filter(function(x) { return placed[x.marketId]; }).forEach(function(t) {      // the ones that succeeded (not simply "the first N"): a failed item must stay so it is not lost and a placed one cannot be sent twice
         delete multiItems[t.marketId];
         var mbtn = document.getElementById('multibtn_' + t.marketId);
         if (mbtn) { mbtn.textContent = '+ Multi'; mbtn.classList.remove('added'); }
@@ -3067,6 +3079,7 @@ function submitMultiForecast() {
     .then(function(res) {
       if (res.ok && res.d.success) {
         successCount++;
+        placed[t.marketId] = true;
       } else {
         var msg = (res.d && typeof res.d.error === 'string') ? res.d.error : 'Trade failed';
         errors.push(msg);
@@ -3122,13 +3135,13 @@ function renderCarousel() {
   if (!track || !promoSlides.length) return;
 
   track.innerHTML = promoSlides.map((s, i) => `
-    <div class="promo-slide" style="background:${s.bgColour || '#1a1035'}">
-      ${s.imageUrl ? `<div class="promo-slide-bg" style="background-image:url('${s.imageUrl}')"></div><div class="promo-slide-overlay"></div>` : ''}
+    <div class="promo-slide" style="background:${rcSafeBg(s.bgColour)}">
+      ${rcSafeImg(s.imageUrl) ? `<div class="promo-slide-bg" style="background-image:url('${rcSafeImg(s.imageUrl)}')"></div><div class="promo-slide-overlay"></div>` : ''}
       <div class="promo-slide-content" style="color:#fff;">
-        ${s.tag ? `<div class="promo-slide-tag" style="background:rgba(255,255,255,0.15);color:rgba(255,255,255,0.9)">${s.tag}</div>` : ''}
-        <div class="promo-slide-title">${s.title}</div>
-        ${s.subtitle ? `<div class="promo-slide-sub">${s.subtitle}</div>` : ''}
-        ${s.ctaText ? `<button class="promo-slide-cta" style="background:#6d28d9;color:#fff;" onclick="promoCtaClick('${s.ctaLink || '#'}')">${s.ctaText}</button>` : ''}
+        ${s.tag ? `<div class="promo-slide-tag" style="background:rgba(255,255,255,0.15);color:rgba(255,255,255,0.9)">${rcEsc(s.tag)}</div>` : ''}
+        <div class="promo-slide-title">${rcEsc(s.title)}</div>
+        ${s.subtitle ? `<div class="promo-slide-sub">${rcEsc(s.subtitle)}</div>` : ''}
+        ${s.ctaText ? `<button class="promo-slide-cta" style="background:#6d28d9;color:#fff;" data-cta="${rcEsc(rcSafeLink(s.ctaLink))}" onclick="promoCtaClick(this.dataset.cta)">${rcEsc(s.ctaText)}</button>` : ''}
       </div>
       <button class="promo-dismiss" onclick="dismissPromo()">✕</button>
     </div>`).join('');
@@ -3168,7 +3181,7 @@ function dismissPromo() {
 }
 
 function promoCtaClick(link) {
-  if (link && link !== '#') window.location.href = link;
+  if (link && link !== '#' && rcSafeLink(link) === link) window.location.href = link;
 }
 
 // ── Live filter ───────────────────────────────────────────────────────────────
